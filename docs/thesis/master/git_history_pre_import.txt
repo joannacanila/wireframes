@@ -1,0 +1,55 @@
+dae6183 | 2026-11-15 | v2.12: MiT-B1 and ConvNeXt-Tiny backbones, probability fusion (opt-in), Depth Anything V2 analysis
+eff526a | 2026-11-15 | v2.11: final test table (clean/lowlight identical, synthetic night 0.0090 -> 0.0313) and UI re-check
+e51fbe2 | 2026-11-15 | v2.11: dual-polarity night wire detection, full-mask exposure, field inspection console
+7cdb244 | 2026-11-15 | v2.10.1: fix live HTTP 500 (schema migration) and harden image ingestion
+1f1aefa | 2026-11-15 | v2.10: glare gate, output-identical latency rewrite, scoped lint
+5989657 | 2026-11-15 | v2.9: corroborated pole verdicts, grade reasons, demo output; three negative results
+dc1177b | 2026-11-15 | v2.8: span stitching, explainable hazard verdict, reliability grade, robustness
+7867d56 | 2026-11-15 | v2.7: 1024 px, blur resilience, full-resolution wire segmentation (WireNet)
+010d11b | 2026-11-14 | v2.6 baseline: Chapter III pipeline, dual portals, revised taxonomy, MPS-trained model
+7376b47 | 2026-11-11 | refactor: complete Chapter III mathematical pipeline and frontend alignment
+90e1bc4 | 2026-11-06 | Real-model readiness (load once, clean missing/corrupt handling with health ready=false and 503 uploads, thread-safe inference, broad class aliases with unknown->Other) + exports work with mock/test data when Include Mock is checked (MOCK/UNVERIFIED watermark, per-record labels, GeoJSON verified/contains_unverified, CSV is_mock/is_public/verified), verified-only by default incl. public tips, clear no-records/skipped/server-error messages, PDF None-confidence fix
+7daa0d0 | 2026-11-05 | Guest upload rate limit in public mode (WIREFRAME_GUEST_UPLOAD_LIMIT, default 10/15min, 429 + Retry-After before any file write, batch counts as 1); GPS source device/manual/exif stored and labeled consistently in UI and PDF
+03bc4f5 | 2026-11-03 | Full-system audit fixes: logout revokes server session; batch persists notes and cleans up partial uploads on failure; calibration safety uses analysis band + clearance (parity with /result and PDF); GeoJSON counts records skipped for missing GPS
+52d3feb | 2026-11-03 | GPS + risk consistency (batch GPS, persisted fix, geolocation errors, in-app browser banner), worst-case Overall Safety shared by UI/PDF/exports, rejected-result crash fix, no server paths in events; analyze info box sizing fix; right-aligned mock badge
+5e4fb3e | 2026-10-27 | Deps: upgrade fastapi 0.162.0, starlette 1.10.0, Pillow 13.0.0, python-multipart 0.0.32, pytest 9.1.1 (pip-audit: 114 -> 0 known vulnerabilities)
+b622e2e | 2026-10-27 | Security S3: enforce CSP (inline allowed for now; strict policy kept as Report-Only), single public-mode guard 404s dev pages (any path/case/encoding) and *.test.js
+0528993 | 2026-10-27 | Security S2: security headers middleware (nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy geolocation=self, COOP), CSP report-only, HSTS in public mode, no-store on /api/*
+bc3b6ef | 2026-10-27 | Dashboard Recent Analyses honors 'Include Mock Data' (verified-only when unchecked, public+mock when checked) + 'Public tip' badge
+affc2cc | 2026-10-27 | Security S1: public-deployment mode (-Public/-PublicOrigin), Secure cookies when public, bind 127.0.0.1 by default, right-most XFF only from loopback proxy, CSRF origin allowlist, docs off unless WIREFRAME_DOCS=1, hide states-preview in public, no password echo; all demo creds saved to file, seed updates only demo_admin line
+922fcb1 | 2026-10-27 | Fix regression: 'Include Mock Data' checkbox now includes mock/public test records in dashboard stats; unchecked stays verified-only (is_mock=0 AND is_public=0). MPC ranking/PDF unchanged.
+1771ce3 | 2026-10-27 | Batch C: tz-aware UTC helper (naive-compatible), validate GPS/location before saving upload + safe cleanup, health 'ready' flag, seed --ensure (no password rotation), -Clean removes WAL/SHM/password file
+01f3ad0 | 2026-10-19 | Data integrity: exclude public tips from MPC ranking, fix trend cutoff format, shared GPS validation for single+batch, purge all mock files safely, safer path containment
+7e8a80a | 2026-10-19 | Fix demo-flow bugs: cancel for single uploads, batch tab thumbnails, Results stepper step, safe toFixed guards, heatmap links to analysis, heatmap re-expand on resize
+fd732fe | 2026-10-19 | Analyze: clear upload queue after successful submit (no accidental batch accumulation); fail-safe upload errors
+b98d75a | 2026-10-19 | Dashboard: unified grid, KPI icons/centering, Recent Analyses, adaptive heatmap, empty states; verified-only stats; single risk-band source (0-100 scale)
+bc33bb6 | 2026-10-18 | Light mode: gold headings and dashboard stat tiles (--heading-color, --heading-color-strong); dark unchanged
+04e4763 | 2026-10-18 | Landing header: theme toggle and Login use CTA accent gradient in both themes
+df3702c | 2026-10-18 | Demo admin: --reset flag, anchored DB path, run_demo writes credentials file on first seed
+a0c8a05 | 2026-10-18 | Perf: inline theme init (no dark-mode flash), no transition-all, batched DOM writes, lazy images, throttled resize, safe parallel init; History now loads user before rendering
+7a7b64b | 2026-10-18 | Landing: staggered fade-up, slow background zoom, CTA glow pulse; respects reduced motion
+e5eb890 | 2026-10-18 | Public UX: desktop-only Login, no guest menu on phones, full-width CTA, landing fits one screen on phones
+37ed3f0 | 2026-10-18 | Mobile: responsive guest flow, hamburger menu, scoped tablet grid, desktop-only notice on admin pages, responsive tests
+1318a2a | 2026-10-17 | Real model integration prep: model.names mapping + aliases, 503 when model missing, health model_loaded, configurable conf/iou/device, is_mock persisted
+e4cdef1 | 2026-10-17 | Hide rejected/no_wires in History by default (admin/lgu include_invalid), stats note, regression test update
+920e11d | 2026-10-17 | Pre-defense cleanup: realistic mock clearance, skipped-export toast, rejected rows in summary PDF, README mock note
+060099a | 2026-10-17 | Theme: working light/dark toggle, theme-aware HUD, readable safety badges, unified buttons, token symmetry test
+854dd2b | 2026-10-17 | Demo admin seed script (mock mode only), run_demo -SeedAdmin, tests
+1553b7b | 2026-10-17 | UI: Analyze HUD styling, design tokens, 2-point calibration markup
+7f4c6b5 | 2026-10-17 | Batch B: real calibration recompute, ground reference + margin persisted, safe parsing, no fake Safe/zero clearance, PDF margin, filename guard, tests
+456dd97 | 2026-10-16 | Audit Batch A: safe upload filenames, CSV injection guard, XSS escaping, CSRF origin check, no_wires wording, batch limits, tests
+4df5a8e | 2026-10-15 | Dashboard: auto-show mock stats with DEMO/MOCK label when no real analyses exist; fix mock toggle markup
+90c86f2 | 2026-10-14 | Guest mobile fixes, friendly rejection reasons, DEMO/MOCK label, confirmation only for complete with wires, final events fetch
+d3558c5 | 2026-10-14 | Ignore passwords*.txt
+14d215d | 2026-10-14 | Roll up lowest-wire clearance; add near/no_wires/no_pole statuses; unify safetyPresentation
+0edfa09 | 2026-10-14 | Mobile: viewport meta, responsive header, camera/gallery chooser, 44px touch targets
+7bdf45c | 2026-10-14 | Fix pipeline crash: draw float centerline with cv2.polylines; add end-to-end regression tests
+7a0bb1a | 2026-10-13 | CRS: use chord sag_to_span instead of bbox sag_ratio (provisional params)
+6a8fc9a | 2026-10-12 | Catenary: fit hanging and arch orientations; column-median centerline
+3c95340 | 2026-10-12 | Pipeline: wire class whitelist, stronger PEC normalization test, test hygiene
+6332857 | 2026-10-12 | Real-mode: BGR input, inference params, class normalization, pole selection
+7b75106 | 2026-10-12 | ML merge: case-insensitive class names and dry-run
+9ceba50 | 2026-10-12 | Fix mock class names and Dashboard class distribution
+cf006e3 | 2026-10-12 | ML pipeline: safer merge/split, per-class eval, training args
+3f6d1d6 | 2026-10-11 | Fix timestamps to Manila time
+650f02d | 2026-10-11 | Initial commit

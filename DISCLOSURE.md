@@ -8,6 +8,75 @@ was claimed and no Table 3.10 target had been measured on test; it was out of da
 
 ---
 
+## v2.13: ground-structure gate, field guidance, field screener redesign (branch `main`)
+
+Full methods and tables: `docs/thesis/chapter4_v2.13_cv_ui.md`. The shipped WireNet-R34 (`ab2353c7`) is frozen and
+was not retrained or modified; YOLO11-seg and the Chapter III mathematics (catenary fit, CRS, VNI) are unchanged.
+Every threshold was decided on the 22 validation photos; a change was adopted only if validation span tolerant
+mAP50 stayed at or above the shipped 0.0397.
+
+**Hardware.** Official latency figures: the 8 GB Apple M1 (MPS), as for every version since v2.6. The unit tests,
+the browser verification and the documentation build were also run on a Windows 11 PC (Python 3.13.17, CPU only);
+no Windows timing is reported as, or mixed with, an M1 latency figure.
+
+### Added
+* **Ground gate** (`app/pipeline/scene.py`, `HybridSegmenter._ground_gate`; config `segmentation.ground_gate: true`,
+  `ground_gate_share: 0.5`). UperNet-ConvNeXt-T trained on ADE20K (`openmmlab/upernet-convnext-tiny`, MIT licence,
+  60 M parameters) labels ground classes at 384 px (0.26 s on the M1; 98.8% agreement with 576 px on the problem
+  photo). A span with ≥ 50% of its pixels on road / sidewalk / floor / earth / path / grass / field / sand / dirt
+  track / runway / rug is not scored and is returned in `suppressed_spans` with its reason; the result is flagged
+  `ground_structures_suppressed`. The parser is skipped when no span reaches the lower half of the frame, and the
+  gate fails open (`ground_gate_unavailable`) when the parser cannot load. SegFormer-B0 was rejected because of its
+  NVIDIA research-only licence.
+* **Field guidance** (`app/services/reasons.py`): per-span `action` (`wire_action`) and photo-level
+  `retake_guidance` (`retake_summary`, when ≥ 40% of the non-drop spans are unmeasured).
+* **Field screener redesign** (`app/web/field.html`, `assets/field.css`, `assets/field.js`; `viewer.js`
+  `setOpacity`): dark theme by default with light toggle, Geist, gold accent, glass panels; hero verdict card
+  (HAZARD DETECTED / REVIEW REQUIRED / NOT AT RISK / RETAKE PHOTO, worst CRS, measured vs total spans, one next
+  action); Original / Detected spans / Full wire mask control with an overlay opacity slider; diagnostics in a
+  collapsed drawer; 200–300 ms transitions; shimmer loader.
+* `scripts/ui_check.py --mock` (four scenarios from one genuine `/result` payload, Playwright routing), the `v2.13`
+  config in `scripts/stress_test_all_conditions.py`, `--no-ground-gate` in `latency_profile`,
+  `ml/experiments/v213_enhance.py`, `v213_filters.py`, `v213_unlabelled.py`.
+* `transformers` moved into the runtime `requirements.txt` (it was listed only in `requirements-ml.txt` as a v2.12
+  experiment dependency, so a runtime-only install would have left the adopted gate permanently unavailable).
+
+### Tested and rejected (all on validation)
+* **Always-on CLAHE on L\***: tolerant mAP50 0.0397 -> 0.0356 (strict 0.0068 -> 0.0117).
+* **Oriented black-hat tubeness blend**: β = 0.25 / 0.5 / 1 / 2 gave 0.0387 / 0.0367 / 0.0280 / 0.0336
+  (`v213_enhance_val.jsonl`).
+* **12° bridging**: 0.0357–0.0381 (60 px / 25° gave 0.0407, within noise; 70 px / 25° kept).
+* **Closed-loop and isolated-below-network rules**: removed 0 labelled wires on validation but removed real wires on
+  unlabelled street photos (validation labels are incomplete for such wires).
+* **Upward-bulge rules**: removed labelled wires (1–2 true-positive spans).
+
+### Known limitations
+* A fence-rail trace on the problem photo (#18) is not removed: the scene parser labels the railing as building, and
+  no cue separates railings from real cables in front of facades. The trace is unmeasured and does not affect the
+  verdict.
+* The gate's benefit is shown on unlabelled live photos only; the validation crops contain no ground.
+* A first M1 latency profile under load (load average 5.8) showed gate-on jumps larger than the 0.26 s parser cost
+  (night pole 2.29 -> 4.23 s, demo photo 2 1.98 -> 3.24 s). The < 3.0 s target is open until a quiet re-run.
+
+### Verified
+* Windows, Python 3.13.17: **508 passed, 4 skipped** (skips need `ultralytics` / `albumentations`); scoped ruff
+  clean. New: `tests/test_v213_ground_gate.py` (fake scene parser, offline), `tests/test_v213_reasons.py` (guidance
+  and the API's `suppressed_spans`, flags, `action`, `retake_guidance`), `tests/test_v213_viewer_opacity.py` (Node).
+* Browser (Chrome, `--mock`): 16 / 16 scenario × theme × viewport combinations pass, zero console errors
+  (`docs/thesis/results/ui_check_v213.json`).
+* **Bug found and fixed**: at 390 px the spans table scrolled sideways inside its panel and clipped each span's
+  reason and retake instruction; below 520 px each span is now a card.
+* Ground gate on validation: 0 spans removed, tolerant mAP50 unchanged at 0.0397 (`v213_filters_val.json`).
+
+### Pending (M1 with the dataset and models)
+* **[PENDING QUIET M1 RUN]** latency re-measurement, gate off / on, on a quiet machine.
+* **[PENDING QUIET M1 RUN]** whole-pipeline golden check with the gate on
+  (`--check docs/thesis/results/v210_pipeline_golden_v29_val.json`).
+* **[PENDING QUIET M1 RUN]** the test split, once, on frozen v2.13 (`--configs v2.13`).
+* The real-photo mode of `scripts/ui_check.py` with the models installed.
+
+---
+
 ## v2.12: complementary backbones, probability fusion, monocular depth (branch `v2.12-multi-model-ensemble`)
 
 Full methods and tables: `docs/thesis/chapter4_v2.12_ensemble.md`. The shipped WireNet-R34 (`ab2353c7`),

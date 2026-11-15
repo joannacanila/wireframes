@@ -21,7 +21,7 @@ pip install -r requirements-dev.txt          # runtime + tests
 python -m scripts.create_admin engr.yourname   # first admin account (password prompted; no default)
 uvicorn app.main:app --reload                 # / landing · /workspace field screener · /admin command centre · /docs API
 python -m scripts.seed_synthetic --n 8        # optional: SYNTHETIC demo poles (codes SYN-…)
-pytest                                        # 351 tests
+pytest                                        # 508 tests (+4 that need requirements-ml.txt)
 ```
 
 The trained segmentation model is not in the repository. Without `models/wireframe-yolo11m-seg.pt`, the
@@ -82,6 +82,7 @@ python -m scripts.stress_test_all_conditions --split val --out runs/stress.jsonl
 python -m scripts.server_check --repeat 3 --out runs/server_check.json   # end-to-end API + PDF check, real models
 python -m scripts.live_upload_check --base http://127.0.0.1:8000   # real-HTTP upload check of a RUNNING server
 python -m scripts.ui_check --base http://127.0.0.1:8000            # headless-Chrome check of /workspace (Playwright)
+python -m scripts.ui_check --mock --base http://127.0.0.1:8000     # v2.13: same check on mocked results, no model needed
 ruff check .                                                            # project only (pyproject excludes .agents/, venvs, data)
 python -m ml.calibrate_vni path/to/local_calibration_images --write    # q01, q99
 python -m ml.evaluate segmentation --data datasets/wireframe_seg/data.yaml --split test   # once, final
@@ -101,7 +102,9 @@ uncorroborated spans are listed as notes. Results and limitations:
 verdict stability) and [`docs/thesis/chapter4_v2.11_field_ui.md`](docs/thesis/chapter4_v2.11_field_ui.md)
 (night/dual-polarity detection, full-mask exposure, the field console) and
 [`docs/thesis/chapter4_v2.12_ensemble.md`](docs/thesis/chapter4_v2.12_ensemble.md) (MiT-B1 and ConvNeXt-Tiny
-backbones, probability fusion, Depth Anything V2); a defense reference is in
+backbones, probability fusion, Depth Anything V2) and
+[`docs/thesis/chapter4_v2.13_cv_ui.md`](docs/thesis/chapter4_v2.13_cv_ui.md) (ground-structure gate, retake
+guidance, the redesigned field screener); a defense reference is in
 [`docs/thesis/defense_summary_v2.9.md`](docs/thesis/defense_summary_v2.9.md). Everything is consolidated in
 [`docs/thesis/MASTER_CHAPTER4_MANUSCRIPT.md`](docs/thesis/MASTER_CHAPTER4_MANUSCRIPT.md)
 (`python -m scripts.build_master_manuscript`).
@@ -110,6 +113,12 @@ All training, evaluation and latency figures were measured on one Apple Silicon 
 memory (MPS). The v2.12 three-model fusion is available as an opt-in, slower configuration:
 `segmentation.wirenet_weights: models/v212_ensemble.json` (needs `models/v212_mitb1.pt` and
 `models/v212_convnext_t.pt`, which are not committed; about 4.7 s per photo on the M1).
+
+Since v2.13 a pretrained ADE20K scene parser (UperNet-ConvNeXt-T, MIT licence, downloaded from the Hugging Face
+Hub on first use) suppresses wire traces lying on the road or pavement (kerbs, manholes); they are returned as
+`suppressed_spans` with the reason and never scored (`segmentation.ground_gate`). Unmeasured spans carry an
+`action` and the result a photo-level `retake_guidance`. If the parser cannot load, every span is kept and the
+result is flagged `ground_gate_unavailable`.
 
 See [`DISCLOSURE.md`](DISCLOSURE.md) for everything this version changed, what was verified, and what is
 still open.

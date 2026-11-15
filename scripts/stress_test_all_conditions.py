@@ -37,7 +37,8 @@ CONFIGS = {"enhancement_off": ({"enhancement": {"mode": "off", "fallback": False
            "v2.9": ({"segmentation": {"dual_polarity": False}}, True),
            "v2.10": ({"segmentation": {"dual_polarity": False}}, True),
            "v2.11": ({}, True),
-           "v2.12": ({}, True)}  # v2.12 ships the v2.11 pipeline (fusion not adopted: latency, Chapter 4 v2.12)
+           "v2.12": ({}, True),  # v2.12 ships the v2.11 pipeline (fusion not adopted: latency, Chapter 4 v2.12)
+           "v2.13": ({}, True)}  # frozen v2.13: the shipped config, i.e. v2.12 + the ground gate (Chapter 4 v2.13)
 
 
 def main() -> None:

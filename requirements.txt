@@ -13,3 +13,4 @@ reportlab>=4.2
 pyyaml>=6
 httpx>=0.27
 segmentation-models-pytorch>=0.3,<1  # WireNet inference (app/pipeline/wirenet.py)
+transformers>=4.57,<5                # v2.13 ground gate: UperNet-ConvNeXt-T scene parser (app/pipeline/scene.py)
