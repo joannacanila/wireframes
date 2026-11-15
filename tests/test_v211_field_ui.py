@@ -192,14 +192,20 @@ def test_shipped_config_enables_dual_polarity(cfg):
     assert s.dual_polarity and s.dual_polarity_max_mean_l == 40.0 and s.dual_polarity_ratio == 1.2
 
 
-def test_field_page_and_assets_are_the_v211_console(client):
+def test_field_page_and_assets_are_the_v213_console(client):
+    # v2.13 redesign (supersedes the v2.11 console strings): dark-by-default landing tokens, Geist type,
+    # Original / Detected spans / Full wire mask view control, collapsed diagnostics drawer, shimmer loader.
     page = client.get("/workspace")
     assert page.status_code == 200
     html = page.text
-    assert 'class="fs-root"' in html and "detected by model" not in html
+    assert 'class="fs-root"' in html and 'data-theme="dark"' in html and "detected by model" not in html
+    assert "family=Geist" in html and 'id="working"' in html and "sk-scan" in html
     js = client.get("/assets/field.js").text
-    for needle in ("Full WireNet mask", "Inspected spans", "Statistical and algorithmic diagnostics",
-                   "Retake / upload new photo", "data-layer=\"photo\"", "reason"):
+    for needle in ('data-view="photo"', 'data-view="spans"', 'data-view="mask"', "Full wire mask",
+                   'id="opacity"', 'id="diag"', 'id="verdict-pill"', "Model and CV diagnostics",
+                   "Inspected spans", "Ground structures ignored", "retake_guidance", "reason"):
         assert needle in js
+    for pill in ("Hazard detected", "Review required", "Not at risk", "Retake photo"):
+        assert pill in js
     css = client.get("/assets/field.css").text
-    assert "#F4F6F8" in css and "#CBD5E1" in css and "#0b0f17" not in css
+    assert "fx-shimmer" in css and ".fx-drawer[data-open]" in css and ".glass" in css
