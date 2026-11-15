@@ -1,0 +1,9 @@
+# Segmentation training and inference (Section 3.6.3). Install on the training Mac.
+-r requirements.txt
+ultralytics>=8.3,<9
+torch>=2.4
+torchvision>=0.19
+roboflow>=1.1.37
+albumentations>=1.4.4,<3      # field-degradation training augmentations (ml.train)
+segmentation-models-pytorch>=0.3,<1  # WireNet (full-resolution wire segmentation)
+transformers>=4.57,<5          # v2.12 experiments only: Depth Anything V2 Small (ml/experiments/depth_*.py)

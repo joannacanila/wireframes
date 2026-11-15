@@ -1,0 +1,19 @@
+{
+ "clean": {
+  "instances": 127,
+  "below_15": 7,
+  "min_mean_l": 11.8
+ },
+ "lowlight": {
+  "instances": 31,
+  "below_15": 22,
+  "below_15_true_veg": 1,
+  "min_mean_l": 4.3
+ },
+ "night": {
+  "instances": 66,
+  "below_15": 13,
+  "below_15_true_veg": 0,
+  "min_mean_l": 4.2
+ }
+}

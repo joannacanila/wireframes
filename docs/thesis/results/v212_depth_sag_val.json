@@ -1,0 +1,5357 @@
+{
+ "spans": 666,
+ "spearman_recession_vs_sag": {
+  "rho": 0.06288928331742638,
+  "p": 0.10490213200382674
+ },
+ "terciles": [
+  {
+   "tercile": "low recession",
+   "spans": 222,
+   "high_share": 0.03153153153153153,
+   "median_sag_ratio": 0.0015148300489559766
+  },
+  {
+   "tercile": "middle",
+   "spans": 222,
+   "high_share": 0.07207207207207207,
+   "median_sag_ratio": 0.0017497196761399325
+  },
+  {
+   "tercile": "high recession",
+   "spans": 222,
+   "high_share": 0.1036036036036036,
+   "median_sag_ratio": 0.0022915803086745587
+  }
+ ],
+ "rows": [
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.006750790312220789,
+   "level": "low",
+   "chord_px": 365.76566624450595,
+   "recession": 0.10205745697021484
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 2.109215337678276e-10,
+   "level": "low",
+   "chord_px": 106.09929967456979,
+   "recession": 0.06001519411802292
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.01054167193386185,
+   "level": "low",
+   "chord_px": 156.165593701102,
+   "recession": 0.03947724401950836
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0033267214032473512,
+   "level": "low",
+   "chord_px": 163.79474269456216,
+   "recession": 0.1297568529844284
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.001236170031154348,
+   "level": "low",
+   "chord_px": 131.40960098397437,
+   "recession": 0.05688973143696785
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.004236875418970318,
+   "level": "low",
+   "chord_px": 140.00532839645524,
+   "recession": 0.06918880343437195
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 4.4110401537757074e-09,
+   "level": "low",
+   "chord_px": 410.4190316825617,
+   "recession": 0.12795628607273102
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 8.689825909248178e-09,
+   "level": "low",
+   "chord_px": 286.1704545127419,
+   "recession": 0.01937490701675415
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 8.981894416706489e-09,
+   "level": "low",
+   "chord_px": 324.2069536142816,
+   "recession": 0.011969193816184998
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 5.845845677822983e-09,
+   "level": "low",
+   "chord_px": 194.48601957397068,
+   "recession": 0.007504329085350037
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 4.738036814089553e-09,
+   "level": "low",
+   "chord_px": 133.0387783969547,
+   "recession": 0.018097229301929474
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 1.2062237245997901e-08,
+   "level": "low",
+   "chord_px": 230.28429740107424,
+   "recession": 0.001355871558189392
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0009672834623540737,
+   "level": "low",
+   "chord_px": 227.15012553732453,
+   "recession": 0.029127560555934906
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007237039724273808,
+   "level": "low",
+   "chord_px": 143.27350768388135,
+   "recession": 0.009193122386932373
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.000392208046180012,
+   "level": "low",
+   "chord_px": 124.12276043873655,
+   "recession": 0.0565812811255455
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 1.5498539998486779e-09,
+   "level": "low",
+   "chord_px": 102.03111028437989,
+   "recession": 0.1353503316640854
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.021551341536348013,
+   "level": "medium",
+   "chord_px": 365.3791750302353,
+   "recession": 0.04332248866558075
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02920980669174324,
+   "level": "high",
+   "chord_px": 199.1760195342615,
+   "recession": 0.05408748239278793
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 3.259178826398565e-09,
+   "level": "low",
+   "chord_px": 119.24041393033913,
+   "recession": 0.03538881614804268
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.010399983520606027,
+   "level": "low",
+   "chord_px": 133.29369004988672,
+   "recession": 0.008090910501778126
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.01769852840526852,
+   "level": "medium",
+   "chord_px": 135.038759781391,
+   "recession": 0.014171332120895386
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 6.190553751542436e-09,
+   "level": "low",
+   "chord_px": 407.0105251264979,
+   "recession": 0.06206143647432327
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00538258282428782,
+   "level": "low",
+   "chord_px": 160.00071685531628,
+   "recession": 0.0006999969482421875
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0063223221548695694,
+   "level": "low",
+   "chord_px": 293.9213807131531,
+   "recession": 0.3587280511856079
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.022988482840141693,
+   "level": "medium",
+   "chord_px": 976.924070134875,
+   "recession": 0.5440002679824829
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 1.3997452819323275e-08,
+   "level": "low",
+   "chord_px": 173.33822300955512,
+   "recession": 0.20828977227210999
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.013179417566588967,
+   "level": "medium",
+   "chord_px": 497.59462209016795,
+   "recession": 0.0738113671541214
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0020688789019529257,
+   "level": "low",
+   "chord_px": 395.8141997150735,
+   "recession": 0.40092363953590393
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 3.522443871179576e-09,
+   "level": "low",
+   "chord_px": 107.96101247002078,
+   "recession": 0.17319078743457794
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0009719114735653722,
+   "level": "low",
+   "chord_px": 187.11035160275873,
+   "recession": 0.01183462142944336
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 5.325684374859932e-09,
+   "level": "low",
+   "chord_px": 257.8084161518792,
+   "recession": 0.06272292137145996
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003839609110939652,
+   "level": "low",
+   "chord_px": 400.1057199483843,
+   "recession": 0.18463358283042908
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0025236544984002865,
+   "level": "low",
+   "chord_px": 318.34378455609993,
+   "recession": 0.18800674378871918
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 1.4036645700505425e-10,
+   "level": "low",
+   "chord_px": 223.02190451528443,
+   "recession": 0.15179766714572906
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.016650805701629946,
+   "level": "medium",
+   "chord_px": 201.23972900581103,
+   "recession": 0.11484235525131226
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.009856976746027243,
+   "level": "low",
+   "chord_px": 353.45290481098,
+   "recession": 0.3332846164703369
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 1.5691924976643863e-09,
+   "level": "low",
+   "chord_px": 203.02539707885168,
+   "recession": 0.1442544311285019
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 612.200039680068,
+   "recession": 0.16961181163787842
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.020113032704762238,
+   "level": "medium",
+   "chord_px": 146.03397965942042,
+   "recession": 0.13639548420906067
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.01006529936983769,
+   "level": "low",
+   "chord_px": 273.39734755902975,
+   "recession": 0.10277930647134781
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 2.1749572103277892e-09,
+   "level": "low",
+   "chord_px": 279.00261480350144,
+   "recession": 0.06216032803058624
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 3.3943662682803613e-09,
+   "level": "low",
+   "chord_px": 192.88004089591755,
+   "recession": 0.03177788853645325
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003490655483024228,
+   "level": "low",
+   "chord_px": 851.1276494463567,
+   "recession": 0.20531471073627472
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 1.2031575219141755e-08,
+   "level": "low",
+   "chord_px": 469.6514680919871,
+   "recession": 0.08517946302890778
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02093487595065112,
+   "level": "medium",
+   "chord_px": 373.61735312644106,
+   "recession": 0.06082010269165039
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007775306898850568,
+   "level": "low",
+   "chord_px": 300.47289938850855,
+   "recession": 0.1379513144493103
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0010660000508446105,
+   "level": "low",
+   "chord_px": 346.5060949203923,
+   "recession": 0.06923219561576843
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002283148419358343,
+   "level": "low",
+   "chord_px": 120.09590080733335,
+   "recession": 0.2699972987174988
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.06507542887389967,
+   "level": "high",
+   "chord_px": 169.0320562100952,
+   "recession": 0.43745726346969604
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0019694318691783497,
+   "level": "low",
+   "chord_px": 337.7387759661352,
+   "recession": 0.10383513569831848
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0032088258867866656,
+   "level": "low",
+   "chord_px": 643.3861249356356,
+   "recession": 0.16142289340496063
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.000806633497504579,
+   "level": "low",
+   "chord_px": 155.42669890050306,
+   "recession": 0.08200709521770477
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.020089094646732763,
+   "level": "medium",
+   "chord_px": 226.86319731963766,
+   "recession": 0.04471383988857269
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 194.01553328467608,
+   "recession": 0.11319979280233383
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.899075411026637e-09,
+   "level": "low",
+   "chord_px": 138.25445931071158,
+   "recession": 0.0006664665415883064
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0005782658544273609,
+   "level": "low",
+   "chord_px": 279.0544973835915,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.637452105312708e-09,
+   "level": "low",
+   "chord_px": 337.3640499615506,
+   "recession": 0.19771507382392883
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.3369079629126822e-09,
+   "level": "low",
+   "chord_px": 335.5382418648648,
+   "recession": 0.002915658988058567
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.5178890228115325e-09,
+   "level": "low",
+   "chord_px": 116.1383617780711,
+   "recession": 0.0077820634469389915
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.001639023966205628,
+   "level": "low",
+   "chord_px": 321.91288218266715,
+   "recession": 0.20839273929595947
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003943320053281385,
+   "level": "low",
+   "chord_px": 338.5479798089998,
+   "recession": 0.004745597951114178
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 5.56732616631368e-09,
+   "level": "low",
+   "chord_px": 551.7458429849808,
+   "recession": 0.09442997723817825
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.010723553474262014,
+   "level": "low",
+   "chord_px": 657.897746911203,
+   "recession": 0.23942123353481293
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002152113707185921,
+   "level": "low",
+   "chord_px": 505.1730793926058,
+   "recession": 0.3048474192619324
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002883041356834044,
+   "level": "low",
+   "chord_px": 494.9281238326714,
+   "recession": 0.12823812663555145
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00014419405684695178,
+   "level": "low",
+   "chord_px": 523.529789719653,
+   "recession": 0.11484652757644653
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 8.85764154142423e-10,
+   "level": "low",
+   "chord_px": 259.19962070472803,
+   "recession": 0.15781180560588837
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 6.82279321933126e-09,
+   "level": "low",
+   "chord_px": 432.4717663402666,
+   "recession": 0.16558235883712769
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0010604588289126618,
+   "level": "low",
+   "chord_px": 220.66202374965474,
+   "recession": 0.03964538872241974
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 3.119092309909943e-09,
+   "level": "low",
+   "chord_px": 508.93027902430555,
+   "recession": 0.11924716830253601
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00174627882064832,
+   "level": "low",
+   "chord_px": 159.92987488021723,
+   "recession": 0.04785829782485962
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 4.277567217228414e-09,
+   "level": "low",
+   "chord_px": 397.3103450054176,
+   "recession": 0.2801835238933563
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002910542269514021,
+   "level": "low",
+   "chord_px": 165.5794482083536,
+   "recession": 0.06154215335845947
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 7.197349459653658e-09,
+   "level": "low",
+   "chord_px": 287.4236300140875,
+   "recession": 0.376578152179718
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00016151694046923727,
+   "level": "low",
+   "chord_px": 302.681456459254,
+   "recession": 0.3477763533592224
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 6.836698861911699e-09,
+   "level": "low",
+   "chord_px": 127.16155162321917,
+   "recession": 0.04974806308746338
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 4.008499796105785e-09,
+   "level": "low",
+   "chord_px": 279.3284102226277,
+   "recession": 0.08639419078826904
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 6.690677467215477e-09,
+   "level": "low",
+   "chord_px": 268.2174415770042,
+   "recession": 0.0013412097468972206
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 1.2613115103165589e-09,
+   "level": "low",
+   "chord_px": 303.09168119095824,
+   "recession": 0.2814808487892151
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.008020250044914348,
+   "level": "low",
+   "chord_px": 281.05702278316136,
+   "recession": 0.2340959906578064
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00409363618205745,
+   "level": "low",
+   "chord_px": 129.21814309930687,
+   "recession": 0.08696842193603516
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00659956096212024,
+   "level": "low",
+   "chord_px": 109.14109317887737,
+   "recession": 0.044276684522628784
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 6.542754795127655e-09,
+   "level": "low",
+   "chord_px": 337.5273513013781,
+   "recession": 0.2567514181137085
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.013795534973691057,
+   "level": "medium",
+   "chord_px": 394.9415702171256,
+   "recession": 0.36526480317115784
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003859213004947056,
+   "level": "low",
+   "chord_px": 327.66988214836636,
+   "recession": 0.1894465833902359
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.08770284320180134,
+   "level": "high",
+   "chord_px": 161.67690091175135,
+   "recession": 0.025168102234601974
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 3.362454615606198e-09,
+   "level": "low",
+   "chord_px": 175.6111173051074,
+   "recession": 0.1633712500333786
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.033126201424631525,
+   "level": "high",
+   "chord_px": 117.36799018853748,
+   "recession": 0.11494602262973785
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.000506536892363681,
+   "level": "low",
+   "chord_px": 151.68170871841338,
+   "recession": 0.21463710069656372
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0393450155596657,
+   "level": "high",
+   "chord_px": 121.91630496400863,
+   "recession": 0.035270676016807556
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 8.1364024409968e-09,
+   "level": "low",
+   "chord_px": 141.0991035195918,
+   "recession": 0.02623744308948517
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 1.3609833463381736e-08,
+   "level": "low",
+   "chord_px": 109.12866070418931,
+   "recession": 0.11080789566040039
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00450282635377845,
+   "level": "low",
+   "chord_px": 167.99576618031867,
+   "recession": 0.08632056415081024
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "class": "telecom-cable",
+   "sag_ratio": 0.01576895229268583,
+   "level": "medium",
+   "chord_px": 128.97626009414373,
+   "recession": 0.26613205671310425
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.002413387751065824,
+   "level": "low",
+   "chord_px": 524.8571362245812,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0012398266421311788,
+   "level": "low",
+   "chord_px": 494.33613584595395,
+   "recession": 0.01332978717982769
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.949390292286757e-09,
+   "level": "low",
+   "chord_px": 183.20039869919688,
+   "recession": 0.003136115148663521
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003735761063026091,
+   "level": "low",
+   "chord_px": 206.4116022415638,
+   "recession": 0.014662290923297405
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.432385049572478e-09,
+   "level": "low",
+   "chord_px": 136.28407303181982,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.002620258341091838,
+   "level": "low",
+   "chord_px": 478.562019528993,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0018313159626252222,
+   "level": "low",
+   "chord_px": 191.56971425254523,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0046686803770790205,
+   "level": "low",
+   "chord_px": 357.44147003184446,
+   "recession": 0.003283487632870674
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.030318103915951862,
+   "level": "high",
+   "chord_px": 363.316120541022,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.002117124032716766,
+   "level": "low",
+   "chord_px": 153.99022762518106,
+   "recession": 0.002551645040512085
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.001173524191486698,
+   "level": "low",
+   "chord_px": 319.794938254266,
+   "recession": 0.03316938877105713
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008789768412142065,
+   "level": "low",
+   "chord_px": 257.9340048317148,
+   "recession": 0.18117205798625946
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.01769075788798763,
+   "level": "medium",
+   "chord_px": 277.087454283868,
+   "recession": 0.00019158050417900085
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 1.894120596601986e-09,
+   "level": "low",
+   "chord_px": 432.2843674158639,
+   "recession": 0.06321316212415695
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 7.492077503605675e-09,
+   "level": "low",
+   "chord_px": 762.1399492699901,
+   "recession": 0.3702896237373352
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 6.88152518047527e-09,
+   "level": "low",
+   "chord_px": 726.7573264964651,
+   "recession": 0.782396674156189
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0028365700350144085,
+   "level": "low",
+   "chord_px": 389.3907992109816,
+   "recession": 0.9974520802497864
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0061106208476570225,
+   "level": "low",
+   "chord_px": 210.68656723762413,
+   "recession": 0.10827933996915817
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0038464743887712625,
+   "level": "low",
+   "chord_px": 554.8088637324933,
+   "recession": 0.9763197898864746
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0014240049713159031,
+   "level": "low",
+   "chord_px": 266.87916463593524,
+   "recession": 0.06816989183425903
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00785986144771746,
+   "level": "low",
+   "chord_px": 540.6389088724236,
+   "recession": 0.42973747849464417
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.004384913116943963,
+   "level": "low",
+   "chord_px": 557.2219975615959,
+   "recession": 0.39330601692199707
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 240.31466791566635,
+   "recession": 0.06212174892425537
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003826393963063256,
+   "level": "low",
+   "chord_px": 152.02817724859693,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 6.95910072967649e-10,
+   "level": "low",
+   "chord_px": 116.51159153294634,
+   "recession": 0.08259987831115723
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 7.246008183242884e-09,
+   "level": "low",
+   "chord_px": 190.12917478648785,
+   "recession": 0.08484729379415512
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 3.557034027663085e-09,
+   "level": "low",
+   "chord_px": 145.1052574121838,
+   "recession": 0.14939197897911072
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003491231193044428,
+   "level": "low",
+   "chord_px": 225.46607132017147,
+   "recession": 0.02929292432963848
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 6.590562515437954e-09,
+   "level": "low",
+   "chord_px": 158.80228995722226,
+   "recession": 0.0008058436214923859
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 1.0286661619072684e-09,
+   "level": "low",
+   "chord_px": 129.37839609376425,
+   "recession": 0.009084170684218407
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02154831797744413,
+   "level": "medium",
+   "chord_px": 269.5031087585442,
+   "recession": 0.21303793787956238
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 1.0386575946308445e-08,
+   "level": "low",
+   "chord_px": 103.50864683426319,
+   "recession": 0.005045600235462189
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 9.59900121328768e-09,
+   "level": "low",
+   "chord_px": 132.73254693912665,
+   "recession": 0.00047356635332107544
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.012847845505669106,
+   "level": "medium",
+   "chord_px": 383.28243046108076,
+   "recession": 0.1115950495004654
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007412819621644895,
+   "level": "low",
+   "chord_px": 142.27210034428134,
+   "recession": 0.18998488783836365
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "class": "telecom-cable",
+   "sag_ratio": 7.068958607544701e-09,
+   "level": "low",
+   "chord_px": 105.94468933561923,
+   "recession": 0.04309718310832977
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 290.499078664306,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0005253277635113391,
+   "level": "low",
+   "chord_px": 453.3740595826203,
+   "recession": 0.24068985879421234
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.141612794588049e-09,
+   "level": "low",
+   "chord_px": 277.3347458691089,
+   "recession": 0.0003967583179473877
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0010237577881936474,
+   "level": "low",
+   "chord_px": 254.41778957298905,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008166202941669849,
+   "level": "low",
+   "chord_px": 231.94994831217167,
+   "recession": 3.247056156396866e-05
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 241.4982234476827,
+   "recession": 0.1790281981229782
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.832947517491717e-09,
+   "level": "low",
+   "chord_px": 187.9434763154228,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0011080940000202928,
+   "level": "low",
+   "chord_px": 134.4989020348905,
+   "recession": 0.17294618487358093
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.5749143679060394e-09,
+   "level": "low",
+   "chord_px": 208.42294440528482,
+   "recession": 0.05172644555568695
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.020541175528975726,
+   "level": "medium",
+   "chord_px": 177.61334891006155,
+   "recession": 0.00038928259164094925
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.4978419282117772e-09,
+   "level": "low",
+   "chord_px": 322.19471116117387,
+   "recession": 0.19598126411437988
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.78655558857224e-09,
+   "level": "low",
+   "chord_px": 376.40514287188506,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0012587024007672542,
+   "level": "low",
+   "chord_px": 295.38374053115604,
+   "recession": 0.006945121102035046
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00793729327330772,
+   "level": "low",
+   "chord_px": 257.8584545442412,
+   "recession": 0.005527970381081104
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.022056461602569136,
+   "level": "medium",
+   "chord_px": 147.57002052889615,
+   "recession": 0.04328564554452896
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.07175819606607663,
+   "level": "high",
+   "chord_px": 199.81346712111798,
+   "recession": 0.08258349448442459
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 3.4569010915114503e-10,
+   "level": "low",
+   "chord_px": 121.11812865699078,
+   "recession": 0.023242034018039703
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0022494149141594503,
+   "level": "low",
+   "chord_px": 172.05498522127496,
+   "recession": 0.0032878220081329346
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0174607525189306,
+   "level": "medium",
+   "chord_px": 259.8200996753609,
+   "recession": 0.10830998420715332
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.012574161141615062,
+   "level": "medium",
+   "chord_px": 111.13673122263774,
+   "recession": 0.13630911707878113
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 3.5464489354540703e-09,
+   "level": "low",
+   "chord_px": 101.87674914252469,
+   "recession": 0.006491991691291332
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002291877160179922,
+   "level": "low",
+   "chord_px": 283.6112030420663,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.001611177300222482,
+   "level": "low",
+   "chord_px": 192.16473940986427,
+   "recession": 0.25371500849723816
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.005580839241031602,
+   "level": "low",
+   "chord_px": 341.16459656405846,
+   "recession": 0.07363086938858032
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0005212757547881667,
+   "level": "low",
+   "chord_px": 179.5317982703458,
+   "recession": 0.07177820801734924
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.010140010131129204,
+   "level": "low",
+   "chord_px": 133.41624381622356,
+   "recession": 0.17903029918670654
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.03947570433463457,
+   "level": "high",
+   "chord_px": 350.39649103258006,
+   "recession": 0.17573916912078857
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.021924930181355263,
+   "level": "medium",
+   "chord_px": 203.51947996144798,
+   "recession": 0.020292192697525024
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.017592569039866227,
+   "level": "medium",
+   "chord_px": 311.8000215701176,
+   "recession": 0.16122430562973022
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.025042495123068054,
+   "level": "high",
+   "chord_px": 159.01586735031424,
+   "recession": 0.5043939352035522
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 4.52419027183817e-09,
+   "level": "low",
+   "chord_px": 139.19249706059034,
+   "recession": 0.10635789483785629
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0035837562058378906,
+   "level": "low",
+   "chord_px": 163.20425382766146,
+   "recession": 0.43560492992401123
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.020014944727491435,
+   "level": "medium",
+   "chord_px": 192.3573150925602,
+   "recession": 0.07074645161628723
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 5.397712721790149e-09,
+   "level": "low",
+   "chord_px": 534.2644945272219,
+   "recession": 0.2551425099372864
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.009198399114470854,
+   "level": "low",
+   "chord_px": 139.8049973137676,
+   "recession": 0.37655335664749146
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 187.5144558506554,
+   "recession": 0.30492451786994934
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 7.859208894959654e-09,
+   "level": "low",
+   "chord_px": 159.77428076388586,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.017615517326624322,
+   "level": "medium",
+   "chord_px": 106.0283326596619,
+   "recession": 0.31721675395965576
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.017223905906762663,
+   "level": "medium",
+   "chord_px": 169.5461421214247,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.08768189798418996,
+   "level": "high",
+   "chord_px": 233.04554032230172,
+   "recession": 0.13567578792572021
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0065752500383706594,
+   "level": "low",
+   "chord_px": 120.41215386346451,
+   "recession": 0.013652843423187733
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 7.961542515199649e-09,
+   "level": "low",
+   "chord_px": 103.93468620834231,
+   "recession": 0.028089556843042374
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 9.26490810130406e-09,
+   "level": "low",
+   "chord_px": 135.8125135439771,
+   "recession": 0.19858597218990326
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0025760445754118674,
+   "level": "low",
+   "chord_px": 228.41768515138023,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007839200394762548,
+   "level": "low",
+   "chord_px": 131.94823986385526,
+   "recession": 0.1960262656211853
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.033470105875433837,
+   "level": "high",
+   "chord_px": 103.18332148238466,
+   "recession": 0.2011585533618927
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 6.18777578180676e-09,
+   "level": "low",
+   "chord_px": 169.38238245926138,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002242679979234961,
+   "level": "low",
+   "chord_px": 167.53443779594744,
+   "recession": 0.07758587598800659
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0031058929714571043,
+   "level": "low",
+   "chord_px": 207.05045152973042,
+   "recession": 0.2095905989408493
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "class": "telecom-cable",
+   "sag_ratio": 0.017410521069294273,
+   "level": "medium",
+   "chord_px": 167.34287886279796,
+   "recession": 0.14609134197235107
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0012756777172370053,
+   "level": "low",
+   "chord_px": 619.9719667665787,
+   "recession": 0.07059430330991745
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 9.268228225045074e-10,
+   "level": "low",
+   "chord_px": 459.6142854334096,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0020717360018552605,
+   "level": "low",
+   "chord_px": 156.2842826475005,
+   "recession": 0.18063604831695557
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0003876518881563997,
+   "level": "low",
+   "chord_px": 642.3045797372495,
+   "recession": 0.10746558010578156
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.939169388259395e-09,
+   "level": "low",
+   "chord_px": 563.6667740285873,
+   "recession": 0.05763442814350128
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.8689853839391754e-09,
+   "level": "low",
+   "chord_px": 329.51371915437164,
+   "recession": 0.03028561733663082
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.020523818399778918,
+   "level": "medium",
+   "chord_px": 415.71389818276623,
+   "recession": 9.547383524477482e-05
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00010293272677747572,
+   "level": "low",
+   "chord_px": 641.319861416562,
+   "recession": 0.1774352341890335
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 9.092685914010764e-10,
+   "level": "low",
+   "chord_px": 568.4270582280511,
+   "recession": 0.14838796854019165
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.922477566232868e-09,
+   "level": "low",
+   "chord_px": 311.99790321684185,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0070413331473679775,
+   "level": "low",
+   "chord_px": 522.7362245006382,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.59416008740977e-09,
+   "level": "low",
+   "chord_px": 155.0982985651686,
+   "recession": 0.2694739103317261
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.006207757560745875,
+   "level": "low",
+   "chord_px": 468.86032785431104,
+   "recession": 0.0001507496926933527
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.002795573561586003,
+   "level": "low",
+   "chord_px": 403.6273345984499,
+   "recession": 0.04303920641541481
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0024458025754648207,
+   "level": "low",
+   "chord_px": 358.8719743149645,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0036042935576671726,
+   "level": "low",
+   "chord_px": 423.42697411868545,
+   "recession": 0.14295339584350586
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0029002357052330175,
+   "level": "low",
+   "chord_px": 346.2225197920626,
+   "recession": 0.0017046949360519648
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0036929472361322464,
+   "level": "low",
+   "chord_px": 212.04597700899785,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.9669511176572236e-08,
+   "level": "low",
+   "chord_px": 117.92042185989877,
+   "recession": 0.05611634999513626
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.005452749375514831,
+   "level": "low",
+   "chord_px": 152.27873720030613,
+   "recession": 0.0005079908296465874
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.006835632824878065,
+   "level": "low",
+   "chord_px": 206.30768828278366,
+   "recession": 0.02015768736600876
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.001613924478204982,
+   "level": "low",
+   "chord_px": 130.63396727791442,
+   "recession": 0.002663145074620843
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00399889112459874,
+   "level": "low",
+   "chord_px": 130.36133243705726,
+   "recession": 0.002663145074620843
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0012205318887358284,
+   "level": "low",
+   "chord_px": 131.18012609027943,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00487161244979392,
+   "level": "low",
+   "chord_px": 108.55774505873681,
+   "recession": 0.04638522118330002
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "telecom-cable",
+   "sag_ratio": 5.91689319796815e-09,
+   "level": "low",
+   "chord_px": 120.57453315318034,
+   "recession": 0.07439625263214111
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "telecom-cable",
+   "sag_ratio": 0.008219259016844598,
+   "level": "low",
+   "chord_px": 245.3073222477487,
+   "recession": 0.1294826716184616
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "telecom-cable",
+   "sag_ratio": 1.0034787264860053e-08,
+   "level": "low",
+   "chord_px": 148.6626125174495,
+   "recession": 0.1385505497455597
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002954637085401119,
+   "level": "low",
+   "chord_px": 144.79201006918223,
+   "recession": 0.024307169020175934
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.0320132704343606e-09,
+   "level": "low",
+   "chord_px": 233.59415484086654,
+   "recession": 0.16598984599113464
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.009454757445923124,
+   "level": "low",
+   "chord_px": 150.3792485116033,
+   "recession": 1.055654138326645e-06
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 6.805450680593466e-09,
+   "level": "low",
+   "chord_px": 179.482178548255,
+   "recession": 0.23965604603290558
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 6.950813696141758e-09,
+   "level": "low",
+   "chord_px": 169.6797455415519,
+   "recession": 0.08226901292800903
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.002400183955181495,
+   "level": "low",
+   "chord_px": 462.33317452770797,
+   "recession": 0.21470268070697784
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 8.100162413145422e-12,
+   "level": "low",
+   "chord_px": 331.92161426289687,
+   "recession": 0.09316681325435638
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0019569811369543337,
+   "level": "low",
+   "chord_px": 315.6052469127755,
+   "recession": 0.09269725531339645
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003590448132018248,
+   "level": "low",
+   "chord_px": 306.2539565875138,
+   "recession": 0.053294047713279724
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.04536786482881716,
+   "level": "high",
+   "chord_px": 454.521947919386,
+   "recession": 0.2099548578262329
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.5679935064202045e-09,
+   "level": "low",
+   "chord_px": 249.6096813776889,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004660676906084462,
+   "level": "low",
+   "chord_px": 529.0385545257395,
+   "recession": 0.22819361090660095
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.010346208695524512,
+   "level": "low",
+   "chord_px": 196.51036250127328,
+   "recession": 0.07510843873023987
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007737902128089417,
+   "level": "low",
+   "chord_px": 159.96852969114363,
+   "recession": 0.06328225880861282
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007034590857147491,
+   "level": "low",
+   "chord_px": 218.35451005623312,
+   "recession": 0.015990909188985825
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004567724205191231,
+   "level": "low",
+   "chord_px": 225.5783254118991,
+   "recession": 3.130827099084854e-05
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.2922780346519608e-09,
+   "level": "low",
+   "chord_px": 119.5661007567804,
+   "recession": 0.01853322982788086
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.011610431896220628,
+   "level": "low",
+   "chord_px": 106.7531956161231,
+   "recession": 0.0366705060005188
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.012931125615119379,
+   "level": "medium",
+   "chord_px": 207.68563718928746,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0268179471083977,
+   "level": "high",
+   "chord_px": 159.48479351800987,
+   "recession": 0.15004657208919525
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007148229478870821,
+   "level": "low",
+   "chord_px": 200.448045824031,
+   "recession": 0.0003602649085223675
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008264787227756313,
+   "level": "low",
+   "chord_px": 139.58165746075642,
+   "recession": 6.984919309616089e-09
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.5891618873496026e-09,
+   "level": "low",
+   "chord_px": 205.30512540231726,
+   "recession": 0.11621539294719696
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0008929300325699768,
+   "level": "low",
+   "chord_px": 278.12190007543484,
+   "recession": 0.2074091136455536
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004646518358992603,
+   "level": "low",
+   "chord_px": 201.93663496535473,
+   "recession": 0.04446684569120407
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00013965651775684835,
+   "level": "low",
+   "chord_px": 169.9590673394955,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 190.36805414973622,
+   "recession": 0.024393931031227112
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.014651333515791367,
+   "level": "medium",
+   "chord_px": 356.1808593585306,
+   "recession": 0.021815016865730286
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003846992145510711,
+   "level": "low",
+   "chord_px": 259.8396159245727,
+   "recession": 0.09859307110309601
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00024656878182786294,
+   "level": "low",
+   "chord_px": 110.12875803768091,
+   "recession": 0.19473224878311157
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 4.690606698891324e-09,
+   "level": "low",
+   "chord_px": 343.8033699423421,
+   "recession": 0.13872241973876953
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.016632164922387217,
+   "level": "medium",
+   "chord_px": 229.92829166988255,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 1.5705200992215187e-08,
+   "level": "low",
+   "chord_px": 127.41358567856345,
+   "recession": 0.012953629717230797
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003221522803787114,
+   "level": "low",
+   "chord_px": 110.83971940343999,
+   "recession": 0.052264273166656494
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0028407313655942515,
+   "level": "low",
+   "chord_px": 172.48884186087614,
+   "recession": 0.08822588622570038
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 5.392854268981324e-09,
+   "level": "low",
+   "chord_px": 102.27421931434847,
+   "recession": 0.11989849805831909
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003787974596303068,
+   "level": "low",
+   "chord_px": 126.50123840583099,
+   "recession": 0.00029283761978149414
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.026751008962819352,
+   "level": "high",
+   "chord_px": 365.1286332203248,
+   "recession": 0.047480300068855286
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 8.413822406486533e-09,
+   "level": "low",
+   "chord_px": 136.78983338540948,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.013773671434872384,
+   "level": "medium",
+   "chord_px": 189.07067979589897,
+   "recession": 0.21624968945980072
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.004504148404004418,
+   "level": "low",
+   "chord_px": 126.42948149780119,
+   "recession": 0.19451652467250824
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 0.053801581939768126,
+   "level": "high",
+   "chord_px": 194.20925032626295,
+   "recession": 0.021715771406888962
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 8.721215339557603e-09,
+   "level": "low",
+   "chord_px": 145.8579966788026,
+   "recession": 0.009694211184978485
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "class": "telecom-cable",
+   "sag_ratio": 7.456103561464007e-09,
+   "level": "low",
+   "chord_px": 159.50932935742978,
+   "recession": 0.016670651733875275
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007882803989277976,
+   "level": "low",
+   "chord_px": 305.90856179718696,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 6.5064883342941635e-09,
+   "level": "low",
+   "chord_px": 251.17154682387942,
+   "recession": 0.1687009036540985
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.979755833742731e-09,
+   "level": "low",
+   "chord_px": 1006.538745916834,
+   "recession": 0.046644534915685654
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.006791782391913439,
+   "level": "low",
+   "chord_px": 296.8055156687511,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.011195762222681883,
+   "level": "low",
+   "chord_px": 251.26615738878903,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.000772779513456822,
+   "level": "low",
+   "chord_px": 883.092127834487,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.002221058987381868,
+   "level": "low",
+   "chord_px": 537.9121039813292,
+   "recession": 0.000752738444134593
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.013594027413367758,
+   "level": "medium",
+   "chord_px": 401.63468495699595,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.005052362377956292,
+   "level": "low",
+   "chord_px": 544.2727450051475,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008736973648986533,
+   "level": "low",
+   "chord_px": 369.7651420147927,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0005376377180522601,
+   "level": "low",
+   "chord_px": 459.78211946375603,
+   "recession": 0.0018730687443166971
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.000603029752256136,
+   "level": "low",
+   "chord_px": 482.4244210966896,
+   "recession": 0.004073964897543192
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003163252192970916,
+   "level": "low",
+   "chord_px": 499.7192017167024,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0024953110820924856,
+   "level": "low",
+   "chord_px": 320.0327344732018,
+   "recession": 0.15426594018936157
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.0858832844219296e-10,
+   "level": "low",
+   "chord_px": 465.4372346801061,
+   "recession": 0.1666671633720398
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.12054379411019e-09,
+   "level": "low",
+   "chord_px": 189.5912319374745,
+   "recession": 0.022821223363280296
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0017348719717671583,
+   "level": "low",
+   "chord_px": 208.29984065464967,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 412.78619872078974,
+   "recession": 0.08548244833946228
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.05779767012463726,
+   "level": "high",
+   "chord_px": 120.98540464550773,
+   "recession": 0.04826373606920242
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.7116530926630638e-07,
+   "level": "low",
+   "chord_px": 122.63598323792482,
+   "recession": 0.004073964897543192
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 1.039763799352269e-08,
+   "level": "low",
+   "chord_px": 115.31837973417426,
+   "recession": 0.0435786247253418
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 0.010692934297268886,
+   "level": "low",
+   "chord_px": 718.6812332107545,
+   "recession": 0.11489425599575043
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00368418646121973,
+   "level": "low",
+   "chord_px": 359.0361875515564,
+   "recession": 0.003932321909815073
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0028179831773756385,
+   "level": "low",
+   "chord_px": 140.32271481872178,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02690968497605407,
+   "level": "high",
+   "chord_px": 381.4872290593809,
+   "recession": 0.18658043444156647
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 207.20078566770763,
+   "recession": 0.06622779369354248
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002287736334406696,
+   "level": "low",
+   "chord_px": 119.66742776151752,
+   "recession": 0.06983715295791626
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 5.9327545184935305e-09,
+   "level": "low",
+   "chord_px": 326.37891895889305,
+   "recession": 0.23532092571258545
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 4.904944641837325e-09,
+   "level": "low",
+   "chord_px": 162.26999439799272,
+   "recession": 0.13539066910743713
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 7.2137429085123875e-09,
+   "level": "low",
+   "chord_px": 451.36305408576317,
+   "recession": 0.24172621965408325
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00823454563257135,
+   "level": "low",
+   "chord_px": 147.77093603790763,
+   "recession": 0.023513928055763245
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0034805161999955244,
+   "level": "low",
+   "chord_px": 480.90317180899893,
+   "recession": 0.20432640612125397
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.9853024791654754e-09,
+   "level": "low",
+   "chord_px": 864.3147938864352,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008593953539698388,
+   "level": "low",
+   "chord_px": 465.47990263777314,
+   "recession": 0.17955553531646729
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0035131791878886495,
+   "level": "low",
+   "chord_px": 285.76209875976616,
+   "recession": 0.000772278755903244
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.8316907043039116e-09,
+   "level": "low",
+   "chord_px": 651.0444757649601,
+   "recession": 0.163412407040596
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0004096130257695686,
+   "level": "low",
+   "chord_px": 321.82526128007083,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.01798956632983433,
+   "level": "medium",
+   "chord_px": 175.17686256120632,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.5302521884857838e-09,
+   "level": "low",
+   "chord_px": 132.13353814769488,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0056226154289853,
+   "level": "low",
+   "chord_px": 119.97425379425123,
+   "recession": 0.1233559399843216
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0033211983944119727,
+   "level": "low",
+   "chord_px": 129.12835048215206,
+   "recession": 0.062243860214948654
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.010451444249518016,
+   "level": "low",
+   "chord_px": 310.9079346669801,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.3650235081822383e-10,
+   "level": "low",
+   "chord_px": 145.03372858331548,
+   "recession": 0.09470948576927185
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.02358656742886434,
+   "level": "medium",
+   "chord_px": 216.49580805999392,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.009077290814503208,
+   "level": "low",
+   "chord_px": 490.79395683614376,
+   "recession": 0.07011764496564865
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008501843647169664,
+   "level": "low",
+   "chord_px": 409.2578590861027,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0008993776694226392,
+   "level": "low",
+   "chord_px": 134.64217485593517,
+   "recession": 0.00047857780009508133
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.078988979800929e-09,
+   "level": "low",
+   "chord_px": 160.4835190233616,
+   "recession": 0.19534681737422943
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.612023337664427e-09,
+   "level": "low",
+   "chord_px": 157.04484574969175,
+   "recession": 0.04805852472782135
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 6.107904352145626e-09,
+   "level": "low",
+   "chord_px": 167.39307340063075,
+   "recession": 0.17847633361816406
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.01147263796984484,
+   "level": "low",
+   "chord_px": 157.94481085329855,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.019613337949327948,
+   "level": "medium",
+   "chord_px": 121.29107277520508,
+   "recession": 0.0002730032429099083
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.006224596518826406,
+   "level": "low",
+   "chord_px": 544.4393722310111,
+   "recession": 0.012436695396900177
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.008598085887926071,
+   "level": "low",
+   "chord_px": 404.84257865764766,
+   "recession": 0.22128385305404663
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002672913822277689,
+   "level": "low",
+   "chord_px": 448.0982207427552,
+   "recession": 0.16600778698921204
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.004072822608132352,
+   "level": "low",
+   "chord_px": 443.5342228737251,
+   "recession": 0.15281327068805695
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00912394748911013,
+   "level": "low",
+   "chord_px": 136.5654772912519,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 3.6140854321708975e-09,
+   "level": "low",
+   "chord_px": 166.19602023771637,
+   "recession": 0.433002769947052
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 2.254556453498086e-08,
+   "level": "low",
+   "chord_px": 316.47307292818806,
+   "recession": 0.3091900944709778
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002300012197990774,
+   "level": "low",
+   "chord_px": 211.59244071471338,
+   "recession": 0.2699924409389496
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.015007942014267353,
+   "level": "medium",
+   "chord_px": 447.75425845614546,
+   "recession": 0.2896271347999573
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.07134722434763194,
+   "level": "high",
+   "chord_px": 253.68816572074905,
+   "recession": 0.22110356390476227
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.030167626244004212,
+   "level": "high",
+   "chord_px": 146.34317768989814,
+   "recession": 0.0075287967920303345
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0017531605316315451,
+   "level": "low",
+   "chord_px": 363.1380556218206,
+   "recession": 0.0604984425008297
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.029379868254258607,
+   "level": "high",
+   "chord_px": 298.42826327953884,
+   "recession": 0.13401369750499725
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "class": "telecom-cable",
+   "sag_ratio": 3.635724635616919e-09,
+   "level": "low",
+   "chord_px": 190.79352015052473,
+   "recession": 0.1611465960741043
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0028475240268383746,
+   "level": "low",
+   "chord_px": 117.53370820712883,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.02413089115458989,
+   "level": "high",
+   "chord_px": 178.16836889092232,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.4499396947844475e-09,
+   "level": "low",
+   "chord_px": 428.0060120949196,
+   "recession": 0.020591160282492638
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.0454975505750382e-09,
+   "level": "low",
+   "chord_px": 1069.1661881927478,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 1063.0067485215968,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00029494263637684155,
+   "level": "low",
+   "chord_px": 621.1528605559536,
+   "recession": 0.14693868160247803
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.458627494234023e-09,
+   "level": "low",
+   "chord_px": 515.4290324445441,
+   "recession": 0.17801226675510406
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0004641409842629468,
+   "level": "low",
+   "chord_px": 259.4273250590007,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.285756323286004e-09,
+   "level": "low",
+   "chord_px": 276.8656660934054,
+   "recession": 0.14798882603645325
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 9.386789093710278e-09,
+   "level": "low",
+   "chord_px": 574.6014679777776,
+   "recession": 0.18567591905593872
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.369638494699056e-09,
+   "level": "low",
+   "chord_px": 122.12959036552233,
+   "recession": 0.0019921669736504555
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.006679191790211619,
+   "level": "low",
+   "chord_px": 526.2415112057024,
+   "recession": 0.16907472908496857
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0009922720758255394,
+   "level": "low",
+   "chord_px": 124.46351680686709,
+   "recession": 0.15371859073638916
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.000914439157431007,
+   "level": "low",
+   "chord_px": 135.9432774719218,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.524039349372853e-09,
+   "level": "low",
+   "chord_px": 214.12230292329414,
+   "recession": 0.0028090463019907475
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 8.073948597997075e-09,
+   "level": "low",
+   "chord_px": 727.0345321178246,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.4103825685501593e-08,
+   "level": "low",
+   "chord_px": 138.68334282439693,
+   "recession": 0.14210821688175201
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004417828196745033,
+   "level": "low",
+   "chord_px": 124.90133100068446,
+   "recession": 0.22157077491283417
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00315179435077516,
+   "level": "low",
+   "chord_px": 467.6546207957035,
+   "recession": 0.07984355837106705
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008684858137687235,
+   "level": "low",
+   "chord_px": 126.28887719772973,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "telecom-cable",
+   "sag_ratio": 6.445039820842686e-09,
+   "level": "low",
+   "chord_px": 137.03581495864532,
+   "recession": 0.09126309305429459
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "telecom-cable",
+   "sag_ratio": 8.069010533670765e-09,
+   "level": "low",
+   "chord_px": 427.0162750080382,
+   "recession": 0.1702311486005783
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "telecom-cable",
+   "sag_ratio": 8.982394447468905e-10,
+   "level": "low",
+   "chord_px": 584.1760510473363,
+   "recession": 0.06674563884735107
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0009244053896884498,
+   "level": "low",
+   "chord_px": 431.55086604644094,
+   "recession": 0.17383022606372833
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003221575843774821,
+   "level": "low",
+   "chord_px": 391.86701021069535,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0019229603705439849,
+   "level": "low",
+   "chord_px": 491.3762213112893,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0023614087317990087,
+   "level": "low",
+   "chord_px": 609.2368089823467,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0032323767585809354,
+   "level": "low",
+   "chord_px": 781.4866745288679,
+   "recession": 1.8701888620853424e-05
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0045631116141235635,
+   "level": "low",
+   "chord_px": 469.3381632851549,
+   "recession": 0.0070693157613277435
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004129571967330695,
+   "level": "low",
+   "chord_px": 646.8469184279068,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0022319718331979574,
+   "level": "low",
+   "chord_px": 525.974131152992,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.023719288981476804,
+   "level": "medium",
+   "chord_px": 429.1837772384391,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.01572155106481358,
+   "level": "medium",
+   "chord_px": 385.1802531546886,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 9.019036932533023e-09,
+   "level": "low",
+   "chord_px": 248.25302927804742,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.591184595033402e-09,
+   "level": "low",
+   "chord_px": 270.76032531733927,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.8568387251259246e-09,
+   "level": "low",
+   "chord_px": 562.8379433130425,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.16609124920041e-09,
+   "level": "low",
+   "chord_px": 927.3517995961905,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0014914914255588407,
+   "level": "low",
+   "chord_px": 338.5962289365686,
+   "recession": 0.1321115642786026
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 9.073243356198028e-09,
+   "level": "low",
+   "chord_px": 853.1486877971918,
+   "recession": 0.05333927273750305
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 938.8713412795106,
+   "recession": 0.0049513643607497215
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.008226704405267916,
+   "level": "low",
+   "chord_px": 183.36348831154973,
+   "recession": 0.19592484831809998
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.71737379402492e-09,
+   "level": "low",
+   "chord_px": 414.80059367439634,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.177221836738344e-09,
+   "level": "low",
+   "chord_px": 172.89761631207185,
+   "recession": 0.131005197763443
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.0176652000810796e-08,
+   "level": "low",
+   "chord_px": 204.89730249994392,
+   "recession": 0.0679108053445816
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0035437597470979695,
+   "level": "low",
+   "chord_px": 629.2110749758547,
+   "recession": 0.13251279294490814
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.005543220183418205,
+   "level": "low",
+   "chord_px": 101.09803286885162,
+   "recession": 0.05340411514043808
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0016057568383745892,
+   "level": "low",
+   "chord_px": 447.3608475382772,
+   "recession": 0.14059430360794067
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004411639903357729,
+   "level": "low",
+   "chord_px": 304.2349799412699,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.417352608536297e-09,
+   "level": "low",
+   "chord_px": 212.62037679245176,
+   "recession": 0.020210333168506622
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.7079962525410014e-09,
+   "level": "low",
+   "chord_px": 139.07474995757966,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 3.3205024498471306e-09,
+   "level": "low",
+   "chord_px": 206.2273180957021,
+   "recession": 0.014403358101844788
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0034902210685584844,
+   "level": "low",
+   "chord_px": 149.84489445486145,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0008395937620722453,
+   "level": "low",
+   "chord_px": 421.05817116454637,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 1.1647178459938375e-07,
+   "level": "low",
+   "chord_px": 374.6653571750302,
+   "recession": 0.049776360392570496
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0002720513863844053,
+   "level": "low",
+   "chord_px": 126.77931078208329,
+   "recession": 0.008280821144580841
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007139096158985998,
+   "level": "low",
+   "chord_px": 196.00174990420987,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.015243651995472531,
+   "level": "medium",
+   "chord_px": 249.95182137016374,
+   "recession": 0.06500393897294998
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 2.425298458745431e-09,
+   "level": "low",
+   "chord_px": 165.14718335799654,
+   "recession": 0.0142819844186306
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.010223171094255702,
+   "level": "low",
+   "chord_px": 239.4951384661513,
+   "recession": 0.03217872232198715
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0003795476358184216,
+   "level": "low",
+   "chord_px": 129.85829184204542,
+   "recession": 0.04695756733417511
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.05387486218773908,
+   "level": "high",
+   "chord_px": 374.0918338181158,
+   "recession": 0.0588592067360878
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 4.589731871345914e-09,
+   "level": "low",
+   "chord_px": 138.9050107690776,
+   "recession": 0.022936969995498657
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.03175069218967143,
+   "level": "high",
+   "chord_px": 160.29345938547928,
+   "recession": 0.02900804951786995
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.276234575635606e-09,
+   "level": "low",
+   "chord_px": 261.32683265367103,
+   "recession": 9.628362022340298e-06
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.9987136649983108e-10,
+   "level": "low",
+   "chord_px": 519.8905291755075,
+   "recession": 0.09634440392255783
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0006359147856259855,
+   "level": "low",
+   "chord_px": 438.7962138043126,
+   "recession": 0.16687175631523132
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.9895013043865325e-09,
+   "level": "low",
+   "chord_px": 386.15820027995426,
+   "recession": 0.07464388757944107
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.0039814331594519e-08,
+   "level": "low",
+   "chord_px": 353.1063937527675,
+   "recession": 0.13565398752689362
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004290810926491745,
+   "level": "low",
+   "chord_px": 290.89839258974115,
+   "recession": 0.0005866555729880929
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.021484197196445107,
+   "level": "medium",
+   "chord_px": 237.34085431594016,
+   "recession": 6.485276389867067e-05
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.911982846187612e-09,
+   "level": "low",
+   "chord_px": 335.95078450101,
+   "recession": 0.0011592687806114554
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007957627513881885,
+   "level": "low",
+   "chord_px": 540.218672232424,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007042795002222456,
+   "level": "low",
+   "chord_px": 508.7529421176562,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.010973300067301264,
+   "level": "low",
+   "chord_px": 452.68014826213624,
+   "recession": 0.0005418525543063879
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003378596448465316,
+   "level": "low",
+   "chord_px": 469.1544086241042,
+   "recession": 4.24007885158062e-06
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 435.8285730365578,
+   "recession": 0.24788376688957214
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0016476422406557134,
+   "level": "low",
+   "chord_px": 329.12842188887953,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003046593076078563,
+   "level": "low",
+   "chord_px": 418.7317873226575,
+   "recession": 0.25328344106674194
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0045094762762079256,
+   "level": "low",
+   "chord_px": 369.1542469623988,
+   "recession": 0.24996612966060638
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003859422905803617,
+   "level": "low",
+   "chord_px": 302.2017713130048,
+   "recession": 0.001157089602202177
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0034402515861541656,
+   "level": "low",
+   "chord_px": 167.20855258163536,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.018583460059801375,
+   "level": "medium",
+   "chord_px": 1022.3058426276881,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.710643131643982e-09,
+   "level": "low",
+   "chord_px": 216.81347587803364,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.29232593897575e-10,
+   "level": "low",
+   "chord_px": 765.3995046188958,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 1021.1289654232928,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.013003306771587501,
+   "level": "medium",
+   "chord_px": 403.1767991969155,
+   "recession": 0.161846324801445
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.4079331002036751e-08,
+   "level": "low",
+   "chord_px": 215.35992313898626,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.655828448786845e-09,
+   "level": "low",
+   "chord_px": 176.9598766007449,
+   "recession": 7.078051567077637e-08
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0007565390848245269,
+   "level": "low",
+   "chord_px": 196.92900085076752,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.4338629380387837e-09,
+   "level": "low",
+   "chord_px": 161.47306233202286,
+   "recession": 0.011368532665073872
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.59110144476773e-09,
+   "level": "low",
+   "chord_px": 467.4563230325564,
+   "recession": 0.002670908346772194
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 6.339319462307425e-09,
+   "level": "low",
+   "chord_px": 499.4880969641468,
+   "recession": 0.0034014591947197914
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.03414471476514069,
+   "level": "high",
+   "chord_px": 119.85358316264433,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.006629101996289406,
+   "level": "low",
+   "chord_px": 434.2024081101494,
+   "recession": 0.12844358384609222
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.579886072220297e-09,
+   "level": "low",
+   "chord_px": 378.365249411375,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0034339698865188555,
+   "level": "low",
+   "chord_px": 383.5247897081891,
+   "recession": 0.034918081015348434
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.963122083466681e-09,
+   "level": "low",
+   "chord_px": 206.16452355905702,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 362.8632957894663,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.04049948522185885,
+   "level": "high",
+   "chord_px": 196.58887906348164,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.009189281713178222,
+   "level": "low",
+   "chord_px": 154.9073710424881,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.023429949403678534,
+   "level": "medium",
+   "chord_px": 180.751062240466,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 1.115802676871073e-09,
+   "level": "low",
+   "chord_px": 437.4283914477114,
+   "recession": 0.03297637775540352
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.000588899049993751,
+   "level": "low",
+   "chord_px": 103.62788463943846,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.015346293842782013,
+   "level": "medium",
+   "chord_px": 205.81256657834726,
+   "recession": 0.0006393240764737129
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 1.0471731903690992e-08,
+   "level": "low",
+   "chord_px": 116.99744900807231,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02178368758692477,
+   "level": "medium",
+   "chord_px": 154.25677119259825,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.016044585000147733,
+   "level": "medium",
+   "chord_px": 391.291036427104,
+   "recession": 0.12429361045360565
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007737880991810307,
+   "level": "low",
+   "chord_px": 581.0022099806652,
+   "recession": 0.05648127198219299
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0012514015368017648,
+   "level": "low",
+   "chord_px": 265.17232512963284,
+   "recession": 0.124293252825737
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 5.228779258783468e-09,
+   "level": "low",
+   "chord_px": 336.8717042390403,
+   "recession": 0.013830135576426983
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 1.6859766995600162e-08,
+   "level": "low",
+   "chord_px": 195.17713170088666,
+   "recession": 0.10243120789527893
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 8.10710723742446e-10,
+   "level": "low",
+   "chord_px": 293.00885064308255,
+   "recession": 0.0005176868289709091
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007676677978798275,
+   "level": "low",
+   "chord_px": 244.33588292438586,
+   "recession": 0.25059688091278076
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 5.424291977306807e-08,
+   "level": "low",
+   "chord_px": 451.0075535346374,
+   "recession": 0.1237906664609909
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "class": "telecom-cable",
+   "sag_ratio": 4.210948673702249e-09,
+   "level": "low",
+   "chord_px": 1016.2722874122658,
+   "recession": 0.28133854269981384
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.9710664930589003e-09,
+   "level": "low",
+   "chord_px": 1079.2190388965935,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0077218177018781,
+   "level": "low",
+   "chord_px": 388.1076220175471,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.4270680443001017e-09,
+   "level": "low",
+   "chord_px": 511.0876630236531,
+   "recession": 0.24035727977752686
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.025324984079106078,
+   "level": "high",
+   "chord_px": 1162.855731020302,
+   "recession": 0.9513795375823975
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.9647916873257147e-09,
+   "level": "low",
+   "chord_px": 172.32727661863746,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 6.321580810131358e-09,
+   "level": "low",
+   "chord_px": 1068.4192329289663,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.3036712506953895e-09,
+   "level": "low",
+   "chord_px": 604.0916486385083,
+   "recession": 0.3182844817638397
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0010784525036656631,
+   "level": "low",
+   "chord_px": 455.85203289132073,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0005154688448396356,
+   "level": "low",
+   "chord_px": 202.19769219868772,
+   "recession": 0.2251877784729004
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0004245255571458785,
+   "level": "low",
+   "chord_px": 169.26282313854284,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.01568990110430633,
+   "level": "medium",
+   "chord_px": 141.63936344443476,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 3.692894992166906e-05,
+   "level": "low",
+   "chord_px": 202.00991173023914,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.002109088564257351,
+   "level": "low",
+   "chord_px": 135.69581591306147,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 9.779048387099535e-10,
+   "level": "low",
+   "chord_px": 184.72365547872954,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.0873476780272784e-09,
+   "level": "low",
+   "chord_px": 135.08783356239636,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002054256659526452,
+   "level": "low",
+   "chord_px": 113.10054211452648,
+   "recession": 0.010089963674545288
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 7.177166338132377e-09,
+   "level": "low",
+   "chord_px": 214.64845646129203,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 0.03903734205424297,
+   "level": "high",
+   "chord_px": 380.2546179518199,
+   "recession": 0.14020133018493652
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 5.170150811473689e-09,
+   "level": "low",
+   "chord_px": 433.55891294978545,
+   "recession": 1.0039377229986712e-05
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0033989767050472243,
+   "level": "low",
+   "chord_px": 348.05468007676876,
+   "recession": 0.06281990557909012
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 2.2611623163900314e-10,
+   "level": "low",
+   "chord_px": 308.4178504442778,
+   "recession": 0.15207473933696747
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 1.0774491075629549e-08,
+   "level": "low",
+   "chord_px": 142.1696778541026,
+   "recession": 0.09330381453037262
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 1.5949596766800635e-09,
+   "level": "low",
+   "chord_px": 105.51773996044571,
+   "recession": 0.3293667137622833
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00534615526994026,
+   "level": "low",
+   "chord_px": 141.04819232179295,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.06836516499204189,
+   "level": "high",
+   "chord_px": 1055.9072031237408,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0024436538457506597,
+   "level": "low",
+   "chord_px": 187.4475752402005,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.95095699372205e-09,
+   "level": "low",
+   "chord_px": 549.2865288684171,
+   "recession": 0.014642897993326187
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.006454993091321199,
+   "level": "low",
+   "chord_px": 400.8942259563345,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.55654368397463e-09,
+   "level": "low",
+   "chord_px": 427.9338909534025,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.9431773026714975e-09,
+   "level": "low",
+   "chord_px": 267.12830458111915,
+   "recession": 0.017729295417666435
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0018848741230155443,
+   "level": "low",
+   "chord_px": 444.92979834992417,
+   "recession": 0.1743723452091217
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.005211356618944673,
+   "level": "low",
+   "chord_px": 109.05866628985613,
+   "recession": 0.1725003570318222
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.0313008706223042e-08,
+   "level": "low",
+   "chord_px": 242.87472601558684,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0010572516880720927,
+   "level": "low",
+   "chord_px": 295.96511503609054,
+   "recession": 0.14014653861522675
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.009403739821636198,
+   "level": "low",
+   "chord_px": 308.8171005345497,
+   "recession": 0.030211584642529488
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.02143053671619156,
+   "level": "medium",
+   "chord_px": 379.7066107204928,
+   "recession": 0.03789111226797104
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.009503930421932691,
+   "level": "low",
+   "chord_px": 274.69305094689753,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 8.711359532938027e-09,
+   "level": "low",
+   "chord_px": 283.04919449392827,
+   "recession": 0.16692034900188446
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.009058430845309867,
+   "level": "low",
+   "chord_px": 305.17213501340393,
+   "recession": 0.028874624520540237
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0014554505548454054,
+   "level": "low",
+   "chord_px": 224.16828799368196,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0012336945024371492,
+   "level": "low",
+   "chord_px": 210.00083996017497,
+   "recession": 0.0009382775751873851
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.624347840103962e-09,
+   "level": "low",
+   "chord_px": 214.5851202102863,
+   "recession": 0.028792593628168106
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.014566655105011865,
+   "level": "medium",
+   "chord_px": 310.05567653905155,
+   "recession": 0.17775322496891022
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.015048315841210944,
+   "level": "medium",
+   "chord_px": 542.6054276426532,
+   "recession": 0.05386539176106453
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.014405893266272438,
+   "level": "medium",
+   "chord_px": 270.3034456363705,
+   "recession": 0.05222798138856888
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0007911837457182001,
+   "level": "low",
+   "chord_px": 266.5528923494784,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0004625192880922687,
+   "level": "low",
+   "chord_px": 108.50683515261237,
+   "recession": 9.416573448106647e-06
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0025325190687821293,
+   "level": "low",
+   "chord_px": 152.3549899462593,
+   "recession": 0.2090694010257721
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0022665324344039645,
+   "level": "low",
+   "chord_px": 158.89475669170736,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0007420122790510333,
+   "level": "low",
+   "chord_px": 158.85931079781238,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007956388109380508,
+   "level": "low",
+   "chord_px": 174.17495770155267,
+   "recession": 0.24167285859584808
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0043779552320403325,
+   "level": "low",
+   "chord_px": 177.03386677801652,
+   "recession": 0.019393978640437126
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.010450908045458777,
+   "level": "low",
+   "chord_px": 243.8602521830238,
+   "recession": 0.03355688974261284
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0027170205051732484,
+   "level": "low",
+   "chord_px": 270.1485228148357,
+   "recession": 0.004312668927013874
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.1781823893982766e-09,
+   "level": "low",
+   "chord_px": 148.9670573108888,
+   "recession": 0.022624973207712173
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0014971493028235975,
+   "level": "low",
+   "chord_px": 200.7879050617795,
+   "recession": 0.007984872907400131
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.005450165645270484,
+   "level": "low",
+   "chord_px": 171.74598668667002,
+   "recession": 0.00011921230179723352
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.027257449346089712,
+   "level": "high",
+   "chord_px": 223.8439326136143,
+   "recession": 0.03449339419603348
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.007563916462970772,
+   "level": "low",
+   "chord_px": 316.39823022667827,
+   "recession": 0.002919849008321762
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.01102372314083881,
+   "level": "low",
+   "chord_px": 169.85973742483975,
+   "recession": 0.0005564913153648376
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.028009959230582186,
+   "level": "high",
+   "chord_px": 460.19132741461317,
+   "recession": 0.0003331066109240055
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 1.4105432002451462e-08,
+   "level": "low",
+   "chord_px": 271.42585030720073,
+   "recession": 0.017748922109603882
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.023691331822075334,
+   "level": "medium",
+   "chord_px": 206.8745806000423,
+   "recession": 0.016250409185886383
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.001574209543066548,
+   "level": "low",
+   "chord_px": 116.5142274385834,
+   "recession": 0.004052087664604187
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 6.380909229823826e-09,
+   "level": "low",
+   "chord_px": 270.0267675948636,
+   "recession": 0.28631848096847534
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.004329749117080308,
+   "level": "low",
+   "chord_px": 112.4227990449175,
+   "recession": 0.001979924738407135
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02419986419096605,
+   "level": "high",
+   "chord_px": 485.4286739529864,
+   "recession": 0.032216086983680725
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.016308477118260778,
+   "level": "medium",
+   "chord_px": 111.15012682852448,
+   "recession": 0.005957063287496567
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0039913796236383005,
+   "level": "low",
+   "chord_px": 169.5059764906921,
+   "recession": 0.11472085118293762
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.021965722055182116,
+   "level": "medium",
+   "chord_px": 467.43731078623176,
+   "recession": 0.1527872532606125
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0053194805331311604,
+   "level": "low",
+   "chord_px": 357.81497757121866,
+   "recession": 0.03515936806797981
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 6.658882370877361e-09,
+   "level": "low",
+   "chord_px": 178.06918598575857,
+   "recession": 0.10214981436729431
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.03398450909550483,
+   "level": "high",
+   "chord_px": 106.53906034676137,
+   "recession": 0.07260216027498245
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0074929437693600975,
+   "level": "low",
+   "chord_px": 676.5858590567557,
+   "recession": 0.24831938743591309
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.03308303615882329,
+   "level": "high",
+   "chord_px": 211.45475384505713,
+   "recession": 0.16296140849590302
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "class": "telecom-cable",
+   "sag_ratio": 0.042638822390853974,
+   "level": "high",
+   "chord_px": 104.13818433695894,
+   "recession": 0.05422316491603851
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 6.607555533392315e-09,
+   "level": "low",
+   "chord_px": 286.04657681251274,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.2848712197154237e-09,
+   "level": "low",
+   "chord_px": 338.3730707900676,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0022105680538386354,
+   "level": "low",
+   "chord_px": 564.122141481999,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 739.7059595040413,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.004296372969794985,
+   "level": "low",
+   "chord_px": 846.518660203985,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0022635885895632593,
+   "level": "low",
+   "chord_px": 526.0424076280035,
+   "recession": 0.013299633748829365
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0023143083741901257,
+   "level": "low",
+   "chord_px": 462.84352028567116,
+   "recession": 0.1843465119600296
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0035887094648281107,
+   "level": "low",
+   "chord_px": 284.1670728412001,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.8926716920935087e-10,
+   "level": "low",
+   "chord_px": 117.59237873413993,
+   "recession": 0.031738437712192535
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.1340847631323326e-08,
+   "level": "low",
+   "chord_px": 107.65709681983925,
+   "recession": 0.013371463865041733
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 515.8175196061111,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0007554160157808167,
+   "level": "low",
+   "chord_px": 244.89291407110574,
+   "recession": 0.15542055666446686
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 4.814796773997979e-09,
+   "level": "low",
+   "chord_px": 603.8750111293646,
+   "recession": 0.12588374316692352
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02369069840495736,
+   "level": "medium",
+   "chord_px": 253.84284178096976,
+   "recession": 0.10243429243564606
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0003240676923513016,
+   "level": "low",
+   "chord_px": 208.51228085051116,
+   "recession": 0.11464419960975647
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 1.0055927665084596e-08,
+   "level": "low",
+   "chord_px": 240.2286144700636,
+   "recession": 0.00891171395778656
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 1.68076599745721e-08,
+   "level": "low",
+   "chord_px": 253.36212146358434,
+   "recession": 0.02351239323616028
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 3.938859977365733e-09,
+   "level": "low",
+   "chord_px": 123.12158965034202,
+   "recession": 0.10226651281118393
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003305473007631128,
+   "level": "low",
+   "chord_px": 260.0023647339013,
+   "recession": 0.05376870930194855
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 0.011448135002011216,
+   "level": "low",
+   "chord_px": 400.15254704366623,
+   "recession": 0.03260388970375061
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 4.727614191053224e-09,
+   "level": "low",
+   "chord_px": 227.74000525482026,
+   "recession": 0.06510135531425476
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 5.020308939488577e-09,
+   "level": "low",
+   "chord_px": 149.385305528699,
+   "recession": 0.2322794795036316
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "class": "telecom-cable",
+   "sag_ratio": 9.438415812953335e-10,
+   "level": "low",
+   "chord_px": 108.27406103821563,
+   "recession": 0.131623312830925
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 1212.0435868428308,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 1217.7105267071129,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.8480860934055356e-10,
+   "level": "low",
+   "chord_px": 1199.51813280797,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0018467254460912842,
+   "level": "low",
+   "chord_px": 501.26293845675633,
+   "recession": 5.755878191848751e-07
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00011917596742772228,
+   "level": "low",
+   "chord_px": 349.5414699184914,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0011329905409265483,
+   "level": "low",
+   "chord_px": 889.8054817576244,
+   "recession": 0.02274005301296711
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00196587967651868,
+   "level": "low",
+   "chord_px": 916.0624750690791,
+   "recession": 0.1389310210943222
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "class": "power-distribution-lines",
+   "sag_ratio": 2.6230661282318963e-08,
+   "level": "low",
+   "chord_px": 685.3408392252787,
+   "recession": 0.00012904067989438772
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.143771748963226e-09,
+   "level": "low",
+   "chord_px": 202.20894037902627,
+   "recession": 0.0376252681016922
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "class": "telecom-cable",
+   "sag_ratio": 1.145697270118385e-08,
+   "level": "low",
+   "chord_px": 277.57608932823507,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.000220684227583229,
+   "level": "low",
+   "chord_px": 420.892180464499,
+   "recession": 0.012202167883515358
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 449.3826186785681,
+   "recession": 0.0065534040331840515
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0003396185239274982,
+   "level": "low",
+   "chord_px": 223.35608723481351,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.1574472034095392e-08,
+   "level": "low",
+   "chord_px": 985.1786507167473,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0011376412147394808,
+   "level": "low",
+   "chord_px": 393.59580397323396,
+   "recession": 0.11679583787918091
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.6745924454831724e-09,
+   "level": "low",
+   "chord_px": 380.87286864500186,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0030966870349440575,
+   "level": "low",
+   "chord_px": 452.5568583954482,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.015604090053024038,
+   "level": "medium",
+   "chord_px": 435.6952652888843,
+   "recession": 0.13175180554389954
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.0036323216403541e-08,
+   "level": "low",
+   "chord_px": 368.8846075557991,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "power-distribution-lines",
+   "sag_ratio": 9.059793614223698e-09,
+   "level": "low",
+   "chord_px": 281.6150104444006,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 6.521812949667964e-09,
+   "level": "low",
+   "chord_px": 547.9851273444333,
+   "recession": 0.1326756626367569
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003801803450270379,
+   "level": "low",
+   "chord_px": 435.43220111786985,
+   "recession": 0.09468922764062881
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002196719326778612,
+   "level": "low",
+   "chord_px": 219.42238962906194,
+   "recession": 0.024980682879686356
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0029306388006320057,
+   "level": "low",
+   "chord_px": 316.47016877284767,
+   "recession": 0.06804436445236206
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.000833768026314395,
+   "level": "low",
+   "chord_px": 149.19000019132855,
+   "recession": 0.05547504127025604
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.013670439157969167,
+   "level": "medium",
+   "chord_px": 346.6634061721311,
+   "recession": 0.1078750342130661
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.005577348949882854,
+   "level": "low",
+   "chord_px": 207.77127029539975,
+   "recession": 0.011266514658927917
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.008896810298107904,
+   "level": "low",
+   "chord_px": 149.27130584784368,
+   "recession": 0.0316135436296463
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.005565910137674301,
+   "level": "low",
+   "chord_px": 178.1381607069612,
+   "recession": 0.011597588658332825
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003159061573385153,
+   "level": "low",
+   "chord_px": 265.0848413610072,
+   "recession": 0.21877886354923248
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 2.7195879151207304e-09,
+   "level": "low",
+   "chord_px": 405.58158897868776,
+   "recession": 0.16345085203647614
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 8.092673543526067e-09,
+   "level": "low",
+   "chord_px": 193.42721053874925,
+   "recession": 0.09518204629421234
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.021980887455999156,
+   "level": "medium",
+   "chord_px": 136.21914691313629,
+   "recession": 0.03301700949668884
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.09183523309655242,
+   "level": "high",
+   "chord_px": 221.8178400352918,
+   "recession": 0.010073140263557434
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.011176412995760963,
+   "level": "low",
+   "chord_px": 252.5573054364646,
+   "recession": 0.1263953447341919
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 7.877929392259547e-09,
+   "level": "low",
+   "chord_px": 291.79419054999,
+   "recession": 0.010148897767066956
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.004215319807840781,
+   "level": "low",
+   "chord_px": 123.87748086925397,
+   "recession": 0.10523428022861481
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0018231603936208105,
+   "level": "low",
+   "chord_px": 236.1587995892635,
+   "recession": 0.02548961527645588
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00031909457599696336,
+   "level": "low",
+   "chord_px": 295.03805224980056,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0005841352572392759,
+   "level": "low",
+   "chord_px": 412.7240768676699,
+   "recession": 0.19397631287574768
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.00315872485936656,
+   "level": "low",
+   "chord_px": 472.99981575360545,
+   "recession": 0.019918980076909065
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0013074471240014367,
+   "level": "low",
+   "chord_px": 404.6582918666993,
+   "recession": 0.15196259319782257
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0105791938467528,
+   "level": "low",
+   "chord_px": 356.3873884225827,
+   "recession": 0.05684177950024605
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.950760852486534e-09,
+   "level": "low",
+   "chord_px": 633.822398984007,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 8.215513942505862e-10,
+   "level": "low",
+   "chord_px": 287.8497183945403,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.016323781461592066,
+   "level": "medium",
+   "chord_px": 264.0864798562254,
+   "recession": 0.005347312893718481
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.751380252286256e-09,
+   "level": "low",
+   "chord_px": 170.86525451347316,
+   "recession": 0.19986757636070251
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.1987118247723802,
+   "level": "high",
+   "chord_px": 402.05005844186644,
+   "recession": 0.21333487331867218
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0095522420302546,
+   "level": "low",
+   "chord_px": 231.8205566114716,
+   "recession": 0.20804841816425323
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 8.20080370719849e-09,
+   "level": "low",
+   "chord_px": 213.15329707085937,
+   "recession": 0.09633395075798035
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 0.03547436263683477,
+   "level": "high",
+   "chord_px": 226.0408865008014,
+   "recession": 0.31718355417251587
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 1.2953914623600454e-09,
+   "level": "low",
+   "chord_px": 174.57193450817357,
+   "recession": 0.38257643580436707
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 3.6076719599787744e-09,
+   "level": "low",
+   "chord_px": 100.65291275032457,
+   "recession": 0.04437285661697388
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 3.0974272225903766e-09,
+   "level": "low",
+   "chord_px": 180.15040508598568,
+   "recession": 0.008553259074687958
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 0.004362393543211154,
+   "level": "low",
+   "chord_px": 105.0703897347806,
+   "recession": 0.025783807039260864
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 5.908619977410059e-09,
+   "level": "low",
+   "chord_px": 140.11243691547074,
+   "recession": 0.009185254573822021
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 2.137610681169317e-09,
+   "level": "low",
+   "chord_px": 139.7880988483696,
+   "recession": 0.08308282494544983
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 5.3378823603888005e-09,
+   "level": "low",
+   "chord_px": 120.99408850704712,
+   "recession": 0.2868557274341583
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00883940142154798,
+   "level": "low",
+   "chord_px": 151.3562113110549,
+   "recession": 0.26100486516952515
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 0.020260851334535156,
+   "level": "medium",
+   "chord_px": 103.62971572005146,
+   "recession": 0.29822805523872375
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 3.926875387639728e-09,
+   "level": "low",
+   "chord_px": 243.68063382044065,
+   "recession": 0.15391741693019867
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 6.617898254502289e-10,
+   "level": "low",
+   "chord_px": 331.58652352716507,
+   "recession": 0.15495891869068146
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "class": "telecom-cable",
+   "sag_ratio": 0.055482414002649444,
+   "level": "high",
+   "chord_px": 121.82919958424087,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0007658596344261252,
+   "level": "low",
+   "chord_px": 670.3377340008724,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0010656880056649394,
+   "level": "low",
+   "chord_px": 276.95796733472866,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 4.981153619131188e-10,
+   "level": "low",
+   "chord_px": 173.72196386392724,
+   "recession": 0.0037487579975277185
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 5.018958524026206e-09,
+   "level": "low",
+   "chord_px": 896.5991638128138,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 7.269088067610557e-09,
+   "level": "low",
+   "chord_px": 262.38274908672525,
+   "recession": 0.17477191984653473
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 186.29415604410832,
+   "recession": 0.17095427215099335
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.005123317569452958,
+   "level": "low",
+   "chord_px": 585.34970075216,
+   "recession": 0.18254728615283966
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.003938963338597947,
+   "level": "low",
+   "chord_px": 426.92270304024055,
+   "recession": 0.1852707713842392
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 758.7068352358823,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.0748346919613075e-05,
+   "level": "low",
+   "chord_px": 110.61883382975688,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.05546951481848684,
+   "level": "high",
+   "chord_px": 186.02217171342147,
+   "recession": 0.02473089098930359
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0022152364273398642,
+   "level": "low",
+   "chord_px": 226.24020647344224,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0016975093436000753,
+   "level": "low",
+   "chord_px": 177.12776797706076,
+   "recession": 0.003459392813965678
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 6.514463868725467e-09,
+   "level": "low",
+   "chord_px": 136.03185305736062,
+   "recession": 0.06507296860218048
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 1.1710443844845663e-08,
+   "level": "low",
+   "chord_px": 211.33035383101736,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0015924926895525744,
+   "level": "low",
+   "chord_px": 313.00784583234497,
+   "recession": 0.00031110402778722346
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.008728964778426298,
+   "level": "low",
+   "chord_px": 103.29254966791778,
+   "recession": 0.03359066694974899
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.020914664591355457,
+   "level": "medium",
+   "chord_px": 164.44148458880687,
+   "recession": 0.07264310866594315
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02124129583847169,
+   "level": "medium",
+   "chord_px": 346.0015201755239,
+   "recession": 0.03738698735833168
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.008407302459481632,
+   "level": "low",
+   "chord_px": 222.0942443732301,
+   "recession": 0.022439301013946533
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 9.937347368966655e-09,
+   "level": "low",
+   "chord_px": 140.06053972658563,
+   "recession": 0.06512416154146194
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.009671630624515842,
+   "level": "low",
+   "chord_px": 288.5907748592394,
+   "recession": 0.0889466404914856
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0025845027663102776,
+   "level": "low",
+   "chord_px": 326.134930694542,
+   "recession": 0.059891413897275925
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 1.2718834165271935e-09,
+   "level": "low",
+   "chord_px": 277.4942046569146,
+   "recession": 0.0003842450678348541
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 213.00515885543015,
+   "recession": 0.07124129682779312
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "class": "telecom-cable",
+   "sag_ratio": 0.020777805320448706,
+   "level": "medium",
+   "chord_px": 105.31834567529508,
+   "recession": 0.010510515421628952
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.005089936087219631,
+   "level": "low",
+   "chord_px": 313.4030341583668,
+   "recession": 0.08427050709724426
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 0.0052605934540518595,
+   "level": "low",
+   "chord_px": 398.13282158885386,
+   "recession": 0.4359811246395111
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "power-distribution-lines",
+   "sag_ratio": 1.1808954194983848e-08,
+   "level": "low",
+   "chord_px": 313.4732092998118,
+   "recession": 0.009060859680175781
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 6.635532008963665e-09,
+   "level": "low",
+   "chord_px": 286.26090204493244,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.005017346095194359,
+   "level": "low",
+   "chord_px": 338.94722590523105,
+   "recession": 0.53891921043396
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003619059103971832,
+   "level": "low",
+   "chord_px": 118.93028358478709,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 4.975841550474614e-10,
+   "level": "low",
+   "chord_px": 390.17539451213827,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 4.2334599989039376e-11,
+   "level": "low",
+   "chord_px": 235.69133027200334,
+   "recession": 0.0002265647053718567
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0029016648403908506,
+   "level": "low",
+   "chord_px": 290.04033316864616,
+   "recession": 0.11318498849868774
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 2.6391074717230363e-09,
+   "level": "low",
+   "chord_px": 204.86072198626567,
+   "recession": 0.10107964277267456
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.027358398889402547,
+   "level": "high",
+   "chord_px": 283.60241073928887,
+   "recession": 0.23632138967514038
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.024321985546918293,
+   "level": "high",
+   "chord_px": 285.1978861584066,
+   "recession": 0.1814250349998474
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 1.3191415504264762e-08,
+   "level": "low",
+   "chord_px": 142.0330703012629,
+   "recession": 0.1340821385383606
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 8.440867659171682e-09,
+   "level": "low",
+   "chord_px": 240.8966042044265,
+   "recession": 0.6923761367797852
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0,
+   "level": "low",
+   "chord_px": 188.51566502651553,
+   "recession": 0.07017308473587036
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 5.307819677712387e-09,
+   "level": "low",
+   "chord_px": 127.58951124293648,
+   "recession": 0.10145998001098633
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 7.104627896556546e-09,
+   "level": "low",
+   "chord_px": 570.0930873961166,
+   "recession": 0.3657015860080719
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.03755028263573433,
+   "level": "high",
+   "chord_px": 395.23485067769224,
+   "recession": 0.2458650767803192
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007040449825389912,
+   "level": "low",
+   "chord_px": 517.112392882137,
+   "recession": 0.05095306783914566
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 7.195494446130801e-09,
+   "level": "low",
+   "chord_px": 134.68699460014358,
+   "recession": 0.29031074047088623
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.05666959063116744,
+   "level": "high",
+   "chord_px": 214.6843980933307,
+   "recession": 0.27770477533340454
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.02022691687480597,
+   "level": "medium",
+   "chord_px": 453.28139445702504,
+   "recession": 0.03117050603032112
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.009688861797006794,
+   "level": "low",
+   "chord_px": 327.9666967618552,
+   "recession": 0.0
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0114549171880726,
+   "level": "low",
+   "chord_px": 420.003581834351,
+   "recession": 0.028181729838252068
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.005061585996352615,
+   "level": "low",
+   "chord_px": 288.0662865012602,
+   "recession": 0.4183538556098938
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 8.250504221937562e-09,
+   "level": "low",
+   "chord_px": 521.3245626619644,
+   "recession": 0.12948501110076904
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.002320191355627589,
+   "level": "low",
+   "chord_px": 300.6134635362784,
+   "recession": 0.13931870460510254
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0013187976448095838,
+   "level": "low",
+   "chord_px": 100.54249207486752,
+   "recession": 0.2042863368988037
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 3.09073125080154e-10,
+   "level": "low",
+   "chord_px": 211.26839901664292,
+   "recession": 0.15745458006858826
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0035239538053789747,
+   "level": "low",
+   "chord_px": 313.94335261019353,
+   "recession": 0.013151023536920547
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.025414965218976467,
+   "level": "high",
+   "chord_px": 289.4414344324582,
+   "recession": 0.6144927740097046
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.012389516368750271,
+   "level": "medium",
+   "chord_px": 111.70248945943433,
+   "recession": 0.0805167481303215
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003667664346439542,
+   "level": "low",
+   "chord_px": 507.04412970697774,
+   "recession": 0.3845864236354828
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.007897764843932942,
+   "level": "low",
+   "chord_px": 420.14447788458784,
+   "recession": 0.2424902617931366
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 5.502184118250567e-09,
+   "level": "low",
+   "chord_px": 282.2949733916236,
+   "recession": 0.09822028875350952
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 6.924680958624159e-10,
+   "level": "low",
+   "chord_px": 140.32815665013933,
+   "recession": 0.07252564281225204
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.01110320927081302,
+   "level": "low",
+   "chord_px": 113.38952774704705,
+   "recession": 0.13732725381851196
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0029177185026682765,
+   "level": "low",
+   "chord_px": 187.95843396680317,
+   "recession": 0.34714409708976746
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.05194882809278,
+   "level": "high",
+   "chord_px": 307.95150365115956,
+   "recession": 0.2649996876716614
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.0064500933442080835,
+   "level": "low",
+   "chord_px": 358.24860814004114,
+   "recession": 0.21531927585601807
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.045974119409938854,
+   "level": "high",
+   "chord_px": 435.8195922658158,
+   "recession": 0.23567360639572144
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.00502160659172982,
+   "level": "low",
+   "chord_px": 345.39536948627824,
+   "recession": 0.5243023633956909
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 4.849070136286276e-09,
+   "level": "low",
+   "chord_px": 187.74955323480066,
+   "recession": 0.18157467246055603
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 4.640007989684633e-09,
+   "level": "low",
+   "chord_px": 361.34803997124413,
+   "recession": 0.08599987626075745
+  },
+  {
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "class": "telecom-cable",
+   "sag_ratio": 0.003097373038751439,
+   "level": "low",
+   "chord_px": 198.484523548113,
+   "recession": 0.009152233600616455
+  }
+ ]
+}

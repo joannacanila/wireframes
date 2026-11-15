@@ -1,0 +1,231 @@
+# WIREFRAME analysis parameters (thesis Section 3.3.5: "The weights and limits are
+# read from a configuration file so that they can be changed without altering the
+# program").
+#
+# Every block carries `provisional: true` until it is calibrated in the second part
+# of the study (Table 3.1). Provisional values are propagated into every result as a
+# flag, and they are printed in every report, so no output can be mistaken for a
+# calibrated engineering assessment.
+
+version: 1
+
+acquisition:                      # Section 3.3.1 acquisition envelope
+  provisional: true               # "checked in a pilot capture before the main collection"
+  focal_length_35mm: [24, 50]     # mm equivalent
+  distance_m: [5, 15]
+  elevation_deg: [30, 60]
+  daylight_hours: [6, 18]         # local capture time used as the daylight proxy
+  min_side_px: 320                # objective quality check (Figure 3.6); not a blur heuristic
+
+preprocessing:                    # Section 3.6.1, Algorithm 1
+  size: 640
+  letterbox_fill: 114             # Ultralytics padding value, so training and inference match
+  gaussian_kernel: 5              # fixed for all images so VNI values stay comparable
+  gaussian_smoothing: true        # the study compares VNI with and without smoothing
+
+enhancement:                      # segmentation input only; never the VNI path (Section 3.6.2)
+  provisional: true               # thresholds decide whether a step runs; check on field photos
+  mode: auto                      # off | auto (measured per photo) | always
+  working_long_side: 1024         # enhance at the model's input scale (fast; same as training)
+  clahe_clip_limit: 2.0           # CLAHE on CIELAB L, 8 x 8 tiles
+  clahe_tiles: 8
+  denoise_sigma_min: 6.0          # Immerkaer noise sigma that triggers non-local-means denoising
+  denoise_strength: 0.9           # NLM h = strength x sigma, clipped to 3-15
+  dark_l_max: 0.0                # mean L at or below -> CLAHE; 0 = off (v2.8: dark-triggered CLAHE cost 0.04 power IoU in low light)
+  low_contrast_max: 12.0          # std of L at or below -> CLAHE
+  overexposed_frac_min: 0.25      # share of L > 97 at or above -> CLAHE
+  blur_laplacian_max: 60.0        # variance of Laplacian at or below -> unsharp mask
+  unsharp_sigma: 1.0
+  unsharp_amount: 0.6             # at the blur threshold; blur-adaptive up to unsharp_amount_max
+  unsharp_amount_max: 1.5         # at sharpness 0 (linear in the variance of the Laplacian)
+  unsharp_threshold: 4.0
+  # Blur fallback: when a degraded photo gives no wires, or at least fallback_unscored_share of its
+  # wires cannot be scored, segment again with stronger CLAHE + unsharp and a mirrored pass,
+  # merge by mask NMS, and keep the result only if more wires are scored.
+  fallback: true
+  fallback_unscored_share: 0.5
+  fallback_clahe_clip_limit: 3.0
+  fallback_unsharp_amount: 1.2
+  fallback_tta_hflip: true
+  # v2.8 (validation stress benchmark, Chapter 4 v2.8 section 4.8.3)
+  edge_denoise: true              # bilateral filter for moderate noise / JPEG blocking (JPEG q20: +0.011 power)
+  edge_denoise_sigma_min: 3.0
+  jpeg_blockiness_min: 1.3        # 8 px block-boundary / interior gradient ratio (clean ~1.0, q20 ~1.4-1.7)
+  # v2.9 candidates, evaluated on validation and NOT adopted (Chapter 4 v2.9, section 4.11.1):
+  motion_route: false             # motion-blur router: +0.021 power pixel IoU but -0.003 to -0.008 span tolerant mAP50
+  motion_coherence_min: 0.16      # still used to name "camera shake" in the reliability reason
+  deblock: false                  # 8 px boundary filter: JPEG tolerant mAP50 tie, strict 0.0058 -> 0.0043
+  retinex: false                  # tested and rejected: lowered low-light and glare accuracy
+
+vni:                              # Section 3.6.2, Equations 1-4, Table 3.7
+  provisional: true
+  radius_factor: 0.15             # r_L = factor * min(M, N) / 2 ; study also examines 0.10, 0.20
+  # Equation 3 excludes only r = 0, but the Hann window spreads the image mean (DC) into the
+  # bins at r = 1..2, so VNI_raw also depends on scene brightness (same texture: dark 0.47,
+  # bright 0.04). `true` subtracts the mean before windowing and removes that dependence.
+  # `false` is Equation 3 exactly as written in Chapter III. Set `true` on 2026-11-12 because the
+  # team's specification requires an illumination-invariant VNI; the manuscript's Equation 3
+  # should state that the image mean is removed before the Hann window.
+  remove_mean: true
+  q01: 0.034001                   # ml.calibrate_vni, 2026-11-14, remove_mean on, r_L factor 0.15
+  q99: 0.243397
+  calibration_set: "Wireframes-Prelabelled-Datasets 2026-11-14 export, train split, 69 public images (provisional: Section 3.4.6 calibrates on local images)"           # name/size of the calibration set once computed
+  bands:                          # upper bounds, inclusive (Table 3.7)
+    - {label: Low, max: 0.25}
+    - {label: Moderate, max: 0.50}
+    - {label: High, max: 0.75}
+    - {label: Severe, max: 1.00}
+
+segmentation:                     # Section 3.6.3, Algorithm 3
+  weights: models/wireframe-yolo11m-seg.pt
+  imgsz: 1024
+  iou_nms: 0.45                   # study setting; Ultralytics default is 0.7
+  conf_min: 0.2                  # provisional; to be set on the validation set to maximize F1
+  conf_provisional: false
+  trained_enhancement: auto       # enhancement mode the installed model was trained with (ml.train)
+  mask_threshold: 0.5
+  device: auto
+  # Full-resolution wire refinement (v2.7): YOLO picks the spans, WireNet (U-Net) supplies the
+  # pixels; YOLO's 1/4-resolution masks cannot represent a 2 px wire. null = YOLO masks only.
+  wirenet_weights: models/wirenet-r34.pt
+  wirenet_dilate_frac: 0.006      # coarse-mask dilation x longer image side (6 px at 1024)
+  wirenet_instances: skeleton     # spans from WireNet's class map (YOLO proposes too few wires)
+  wirenet_tta: flip               # mirrored pass, probabilities averaged (+0.3 s; multi-scale rejected: 2-3 s, +0.001)
+  # v2.11 dual polarity (Chapter 4 v2.11): dark photos (mean L* <= 40) are also segmented with L* inverted, and
+  # the inverted pass is used when it finds >= 1.2x the wire pixels. Validation: 0 of 176 daytime cases switch;
+  # 22 / 22 synthetic night photos switch (tolerant IoU power 0.185 -> 0.495, telecom 0.132 -> 0.401).
+  dual_polarity: true
+  dual_polarity_max_mean_l: 40.0
+  dual_polarity_ratio: 1.2
+  # v2.13 ground gate (Chapter 4 v2.13): spans lying >= 50% on road / sidewalk / floor (ADE20K scene parser,
+  # UperNet-ConvNeXt-T, MIT) are kerb or manhole edges: listed as suppressed, never scored. Validation: removes 0
+  # spans (no ground in the crops); live problem photo: removes the 4 road traces, incl. a false CRS 8.6 span.
+  ground_gate: true
+  ground_gate_share: 0.5
+  # span extraction, chosen by coordinate-descent ablation on the validation split (Chapter 4 v2.8;
+  # docs/thesis/results/v28_span_sweep.jsonl): validation tolerant mAP50 0.0296 -> 0.0397
+  span_min_px: 30
+  span_min_len: 15                # minimum skeleton piece length before joining
+  span_max_turn_deg: 35           # collinearity tolerance through a junction
+  span_cluster_radius: 5          # junction points within 5 px = one crossing (2 px: 0.0262, a clear loss)
+  span_max_gap: 70                # collinear gap bridging (100: 0.0330, 150: 0.0321)
+  span_gap_angle_deg: 25          # 25-35 deg within noise; the stricter value is kept
+  span_draw_bridge: true
+  span_min_stitched_len: 90       # 90-200 px within noise; the least restrictive value is kept
+
+centerline:                       # Section 3.6.4, Algorithm 4
+  provisional: true
+  l_min_px: 30                    # spur branches shorter than this are pruned
+  n_min_points: 20                # fewer points -> "too short to fit"
+
+catenary:                         # Section 3.6.5, Equations 6-8
+  provisional: true
+  max_rel_residual: 0.02          # tau: RMS residual / chord length; set on validation set
+  border_margin_frac: 0.01        # endpoint within this fraction of the image side -> truncated
+  max_function_evals: 4000
+
+crs:                              # Section 3.6.5, Equation 10, Table 1.2
+  provisional: true
+  class_weights:                  # initial value 1 for every class (no preference)
+    abandoned-wire: 1.0
+    power-distribution-lines: 1.0
+    telecom-cable: 1.0
+  # delta_lim,0: allowable sag ratio under reference conditions. The thesis assumes no
+  # value (to be derived from conductor design sag/tension data with the consulting
+  # engineer). These are DEVELOPMENT PLACEHOLDERS so that the pipeline can run; every
+  # CRS computed with them carries the flag `development_limits`.
+  delta_lim0:
+    abandoned-wire: 0.040
+    power-distribution-lines: 0.040
+    telecom-cable: 0.040
+  levels:                         # Low < 3.0 <= Medium <= 6.0 < High
+    low_below: 3.0
+    high_above: 6.0
+  # v2.8 measurement-precision gate: CRS only when sigma / L <= f * delta_lim, with sigma = 1 px
+  # skeleton noise, f = 0.25, delta_lim = 0.040 -> L >= 100 px. Shorter spans: status too_short.
+  min_chord_px: 100.0
+  # v2.9 service-drop split (chord steeper than N deg -> no CRS). OFF: a visual audit of 24 validation
+  # "drops" found pole-to-pole spans seen steeply in upward-looking photos, not drops (Chapter 4 v2.9 4.11.2).
+  max_span_inclination_deg: 0.0
+
+engineering:                      # Section 3.6.5, Equation 9, Table 3.8
+  provisional: true
+  # Reference state for the change-of-state relation. Conductor values below are
+  # ILLUSTRATIVE (typical published magnitudes) and must be replaced with the data
+  # sheets of the conductors found in the study area.
+  reference_temperature_c: 25.0
+  air_density: 1.225              # kg/m^3
+  drag_coefficient: 1.0
+  conductors:
+    power-distribution-lines:     # e.g. ACSR 1/0 class conductor
+      weight_n_per_m: 2.12
+      diameter_m: 0.0101
+      area_m2: 6.24e-5
+      elastic_modulus_pa: 7.6e10
+      thermal_expansion_per_c: 1.91e-5
+      reference_tension_n: 2900.0
+    telecom-cable:                # cable lashed to a steel messenger strand; the class now
+                                  # also covers fiber optic drops, which share this entry
+      weight_n_per_m: 3.10
+      diameter_m: 0.0200
+      area_m2: 3.10e-5
+      elastic_modulus_pa: 1.86e11
+      thermal_expansion_per_c: 1.15e-5
+      reference_tension_n: 3500.0
+    abandoned-wire:               # unknown conductor: same as distribution conductor
+      weight_n_per_m: 2.12
+      diameter_m: 0.0101
+      area_m2: 6.24e-5
+      elastic_modulus_pa: 7.6e10
+      thermal_expansion_per_c: 1.91e-5
+      reference_tension_n: 2900.0
+
+vegetation:                       # revised taxonomy (2026-11-14); not a Chapter III equation
+  provisional: true
+  # Vegetation masks are never fitted or scored (no CRS, no MSPI input). A wire whose mask
+  # lies within contact_margin_frac x the image's longer side of a Vegetation mask, over at
+  # least min_contact_share of the wire's pixels, is flagged `vegetation_contact`. Both
+  # values are development defaults to be set with the consulting engineer.
+  contact_margin_frac: 0.01
+  min_contact_share: 0.02
+
+hazard:                           # v2.8 explainable verdict on top of CRS (app/pipeline/hazard.py)
+  enabled: true
+  veg_moderate_px: 15             # power within 15 px of vegetation -> MODERATE; contact -> HIGH (team rule)
+  loose_ends: false               # off: ~10 candidates per photo, mostly mask gaps and hardware terminations (Chapter 4 v2.8)
+  loose_end_tau: 0.5
+  border_px: 12
+  isolation_px: 8
+  cluster_px: 25
+  cluster_n: 2
+  # v2.9 pole-level sag aggregation: a band counts only when more spans are in it than the per-span
+  # test-retest false-alarm rate p0 explains (one-sided binomial test). p0 measured on validation over
+  # all scored spans (photo vs mirrored photo, 492 matched pairs,
+  # docs/thesis/results/v29_span_geometry_summary_all_val.json); alpha is the conventional 0.05, not tuned.
+  sag_rule: corroborated
+  p0_high: 0.050
+  p0_medium: 0.090
+  alpha: 0.05
+  low_frame_frac: 0.0             # low-hanging drop proxy; OFF with the drop split (it depends on it)
+
+quality:                          # v2.8 reliability grade (app/pipeline/quality.py); thresholds calibrated
+  enabled: true                   # on the validation stress set (Chapter 4 v2.8)
+  grade_a: 0.78
+  grade_b: 0.66
+  grade_c: 0.64
+  min_wire_pixels: 500
+  min_mean_l: 8.0
+  max_clipped: 0.85
+  # v2.10 glare gate (Chapter 4 v2.10): >= 60% near-white pixels AND thin dark lines < 15 L* units of
+  # contrast -> Retake (NOT AT RISK becomes INCONCLUSIVE). Validation: catches 17/17 glare dropouts,
+  # 0 of 5 silent NOT AT RISK left; fires on 3/22 bright-sky controls; never on non-bright photos.
+  glare_gate: true
+  glare_bright_min: 0.6
+  glare_line_contrast_max: 15.0
+
+mspi:                             # Section 3.6.6, Equation 11, Algorithm 6
+  provisional: true
+  alpha: 0.3333333333333333
+  beta: 0.3333333333333333
+  gamma: 0.3333333333333334
+  sensitivity_step: 0.1

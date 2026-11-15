@@ -1,0 +1,65 @@
+[
+ {
+  "max_gap": 70,
+  "gap_angle_deg": 25,
+  "tolerant_map50": 0.039675286620609394,
+  "strict_map50": 0.006807441275859851,
+  "spans": 828,
+  "power_recall": 0.21337579617834396,
+  "telecom_recall": 0.08761329305135952
+ },
+ {
+  "max_gap": 60,
+  "gap_angle_deg": 12,
+  "tolerant_map50": 0.03666401878128683,
+  "strict_map50": 0.006749619250709546,
+  "spans": 859,
+  "power_recall": 0.19745222929936307,
+  "telecom_recall": 0.09667673716012085
+ },
+ {
+  "max_gap": 70,
+  "gap_angle_deg": 12,
+  "tolerant_map50": 0.03788300300451875,
+  "strict_map50": 0.00678755368793987,
+  "spans": 862,
+  "power_recall": 0.20382165605095542,
+  "telecom_recall": 0.09365558912386707
+ },
+ {
+  "max_gap": 100,
+  "gap_angle_deg": 12,
+  "tolerant_map50": 0.03810023418234661,
+  "strict_map50": 0.006828942654592569,
+  "spans": 855,
+  "power_recall": 0.21019108280254778,
+  "telecom_recall": 0.09365558912386707
+ },
+ {
+  "max_gap": 60,
+  "gap_angle_deg": 25,
+  "tolerant_map50": 0.04067051568686509,
+  "strict_map50": 0.006735820640887618,
+  "spans": 831,
+  "power_recall": 0.21337579617834396,
+  "telecom_recall": 0.09365558912386707
+ },
+ {
+  "max_gap": 100,
+  "gap_angle_deg": 25,
+  "tolerant_map50": 0.037781046202270255,
+  "strict_map50": 0.006819805372749884,
+  "spans": 795,
+  "power_recall": 0.21019108280254778,
+  "telecom_recall": 0.07854984894259819
+ },
+ {
+  "max_gap": 150,
+  "gap_angle_deg": 12,
+  "tolerant_map50": 0.03566066277683222,
+  "strict_map50": 0.00688848817612725,
+  "spans": 845,
+  "power_recall": 0.19745222929936307,
+  "telecom_recall": 0.09365558912386707
+ }
+]

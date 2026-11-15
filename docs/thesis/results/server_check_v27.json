@@ -1,0 +1,183 @@
+{
+ "segmenter": "HybridSegmenter",
+ "ready": true,
+ "yolo_classes": [
+  "Vegetation",
+  "abandoned-wire",
+  "power-distribution-lines",
+  "telecom-cable"
+ ],
+ "instances_mode": "skeleton",
+ "config": {
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "imgsz": 1024,
+  "conf_min": 0.2,
+  "wirenet_weights": "models/wirenet-r34.pt",
+  "wirenet_instances": "skeleton"
+ },
+ "runs": [
+  {
+   "image": "Screenshot 2026-11-03 145516_j",
+   "kind": "standard",
+   "status": "complete",
+   "source": "model",
+   "wires": 15,
+   "scored": 15,
+   "by_class": {
+    "telecom-cable": 15
+   },
+   "vegetation": 2,
+   "max_crs": 10.0,
+   "level": "high",
+   "vni": 0.7475457643492589,
+   "flags": [
+    "vegetation_contact"
+   ],
+   "seconds": 2.9,
+   "pdf": true
+  },
+  {
+   "image": "Screenshot 2026-11-03 145516_j",
+   "kind": "degraded",
+   "status": "complete",
+   "source": "model",
+   "wires": 9,
+   "scored": 7,
+   "by_class": {
+    "telecom-cable": 9
+   },
+   "vegetation": 0,
+   "max_crs": 10.0,
+   "level": "high",
+   "vni": 0.043679616995984584,
+   "flags": [
+    "enhanced:clahe",
+    "enhanced:unsharp"
+   ],
+   "seconds": 1.4,
+   "pdf": true
+  },
+  {
+   "image": "Screenshot 2026-11-03 145557_j",
+   "kind": "standard",
+   "status": "complete",
+   "source": "model",
+   "wires": 56,
+   "scored": 39,
+   "by_class": {
+    "telecom-cable": 56
+   },
+   "vegetation": 0,
+   "max_crs": 10.0,
+   "level": "high",
+   "vni": 0.3636639063274621,
+   "flags": [],
+   "seconds": 2.2,
+   "pdf": true
+  },
+  {
+   "image": "Screenshot 2026-11-03 145557_j",
+   "kind": "degraded",
+   "status": "complete",
+   "source": "model",
+   "wires": 20,
+   "scored": 18,
+   "by_class": {
+    "telecom-cable": 16,
+    "power-distribution-lines": 4
+   },
+   "vegetation": 0,
+   "max_crs": 10.0,
+   "level": "high",
+   "vni": 0.0,
+   "flags": [
+    "enhanced:clahe",
+    "enhanced:unsharp"
+   ],
+   "seconds": 1.5,
+   "pdf": true
+  },
+  {
+   "image": "Screenshot 2026-11-03 145603_j",
+   "kind": "standard",
+   "status": "complete",
+   "source": "model",
+   "wires": 69,
+   "scored": 45,
+   "by_class": {
+    "telecom-cable": 69
+   },
+   "vegetation": 0,
+   "max_crs": 10.0,
+   "level": "high",
+   "vni": 0.3905963784692729,
+   "flags": [
+    "enhanced:clahe"
+   ],
+   "seconds": 2.4,
+   "pdf": true
+  },
+  {
+   "image": "Screenshot 2026-11-03 145603_j",
+   "kind": "degraded",
+   "status": "complete",
+   "source": "model",
+   "wires": 21,
+   "scored": 16,
+   "by_class": {
+    "telecom-cable": 15,
+    "power-distribution-lines": 6
+   },
+   "vegetation": 0,
+   "max_crs": 8.375,
+   "level": "high",
+   "vni": 0.0,
+   "flags": [
+    "enhanced:clahe",
+    "enhanced:unsharp"
+   ],
+   "seconds": 1.5,
+   "pdf": true
+  },
+  {
+   "image": "Screenshot 2026-11-03 145634_j",
+   "kind": "standard",
+   "status": "complete",
+   "source": "model",
+   "wires": 127,
+   "scored": 90,
+   "by_class": {
+    "telecom-cable": 120,
+    "power-distribution-lines": 7
+   },
+   "vegetation": 0,
+   "max_crs": 10.0,
+   "level": "high",
+   "vni": 0.4160445597595145,
+   "flags": [],
+   "seconds": 3.9,
+   "pdf": true
+  },
+  {
+   "image": "Screenshot 2026-11-03 145634_j",
+   "kind": "degraded",
+   "status": "complete",
+   "source": "model",
+   "wires": 94,
+   "scored": 76,
+   "by_class": {
+    "telecom-cable": 82,
+    "power-distribution-lines": 12
+   },
+   "vegetation": 0,
+   "max_crs": 10.0,
+   "level": "high",
+   "vni": 0.1084518538765232,
+   "flags": [
+    "enhanced:unsharp"
+   ],
+   "seconds": 2.8,
+   "pdf": true
+  }
+ ]
+}

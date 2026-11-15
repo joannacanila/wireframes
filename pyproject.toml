@@ -1,0 +1,24 @@
+[project]
+name = "wireframe"
+version = "2.0.0"
+description = "Vision-based diagnostic framework for urban overhead wire infrastructure risk assessment"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning:starlette.*", "ignore:.*httpx.*:DeprecationWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+# Lint only the project. Agent/tool folders, virtualenvs and data are not project code (v2.10: a
+# `ruff check --fix .` in v2.9 rewrote two untracked files under .agents/). force-exclude keeps the
+# exclusion even when a path is passed explicitly (editors, pre-commit).
+extend-exclude = [".agents", ".claude", ".venv", "venv", "datasets", "runs", "var", "models"]
+force-exclude = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "NPY"]
+ignore = ["E501", "E701", "E702", "B008"]

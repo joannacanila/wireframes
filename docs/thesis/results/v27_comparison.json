@@ -1,0 +1,1117 @@
+{
+ "v2.6 640 yolo | test": {
+  "n_images": 21,
+  "conf_threshold": 0.2,
+  "map50": 0.0005077430820005077,
+  "map50_95": 5.0774308200050766e-05,
+  "per_class": {
+   "Vegetation": {
+    "n_gt": 38,
+    "n_pred": 3,
+    "tp": 0,
+    "fp": 3,
+    "fn": 38,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.0020309723280020307,
+    "ap50_95": 0.00020309723280020306,
+    "mean_mask_iou": null
+   },
+   "abandoned-wire": {
+    "n_gt": 7,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 7,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "power-distribution-lines": {
+    "n_gt": 253,
+    "n_pred": 39,
+    "tp": 0,
+    "fp": 39,
+    "fn": 253,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "telecom-cable": {
+    "n_gt": 361,
+    "n_pred": 11,
+    "tp": 0,
+    "fp": 11,
+    "fn": 361,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   }
+  },
+  "tolerant_2px": {
+   "note": "supplementary: masks widened by 2 px (at 1024) before IoU; not Equation 5",
+   "map50": 0.0005077430820005077,
+   "map50_95": 5.812652857060267e-05,
+   "per_class": {
+    "Vegetation": {
+     "n_gt": 38,
+     "n_pred": 3,
+     "tp": 0,
+     "fp": 3,
+     "fn": 38,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "ap50": 0.0020309723280020307,
+     "ap50_95": 0.00023250611428241068,
+     "mean_mask_iou": null
+    },
+    "abandoned-wire": {
+     "n_gt": 7,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 7,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "power-distribution-lines": {
+     "n_gt": 253,
+     "n_pred": 39,
+     "tp": 0,
+     "fp": 39,
+     "fn": 253,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "telecom-cable": {
+     "n_gt": 361,
+     "n_pred": 11,
+     "tp": 0,
+     "fp": 11,
+     "fn": 361,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    }
+   }
+  },
+  "fallback": {
+   "pass": 1,
+   "used": 1
+  },
+  "imgsz": 640,
+  "weights": "runs/wireframe/_keep/v26-640.pt",
+  "wirenet": null,
+  "instances": "yolo-only",
+  "degraded": false,
+  "enhancement": "auto"
+ },
+ "1024 yolo | test": {
+  "n_images": 21,
+  "conf_threshold": 0.2,
+  "map50": 0.01983454924439812,
+  "map50_95": 0.004223553934340802,
+  "per_class": {
+   "Vegetation": {
+    "n_gt": 38,
+    "n_pred": 11,
+    "tp": 4,
+    "fp": 7,
+    "fn": 34,
+    "precision": 0.36363636363636365,
+    "recall": 0.10526315789473684,
+    "f1": 0.16326530612244897,
+    "ap50": 0.0792079207920792,
+    "ap50_95": 0.01688118811881188,
+    "mean_mask_iou": 0.5837584882974625
+   },
+   "abandoned-wire": {
+    "n_gt": 7,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 7,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "power-distribution-lines": {
+    "n_gt": 253,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 253,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "telecom-cable": {
+    "n_gt": 361,
+    "n_pred": 4,
+    "tp": 0,
+    "fp": 4,
+    "fn": 361,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.00013027618551328816,
+    "ap50_95": 1.3027618551328815e-05,
+    "mean_mask_iou": null
+   }
+  },
+  "tolerant_2px": {
+   "note": "supplementary: masks widened by 2 px (at 1024) before IoU; not Equation 5",
+   "map50": 0.019850995000490146,
+   "map50_95": 0.004239963144308177,
+   "per_class": {
+    "Vegetation": {
+     "n_gt": 38,
+     "n_pred": 11,
+     "tp": 4,
+     "fp": 7,
+     "fn": 34,
+     "precision": 0.36363636363636365,
+     "recall": 0.10526315789473684,
+     "f1": 0.16326530612244897,
+     "ap50": 0.0792079207920792,
+     "ap50_95": 0.01691419141914191,
+     "mean_mask_iou": 0.5862696766853333
+    },
+    "abandoned-wire": {
+     "n_gt": 7,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 7,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "power-distribution-lines": {
+     "n_gt": 253,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 253,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "telecom-cable": {
+     "n_gt": 361,
+     "n_pred": 4,
+     "tp": 0,
+     "fp": 4,
+     "fn": 361,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "ap50": 0.0001960592098813842,
+     "ap50_95": 4.566115809079605e-05,
+     "mean_mask_iou": null
+    }
+   }
+  },
+  "fallback": {
+   "pass": 2,
+   "used": 2
+  },
+  "imgsz": 1024,
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "wirenet": null,
+  "instances": "yolo-only",
+  "degraded": false,
+  "enhancement": "auto"
+ },
+ "1024 hybrid (WireNet spans) | test": {
+  "n_images": 21,
+  "conf_threshold": 0.2,
+  "map50": 0.020388568767327534,
+  "map50_95": 0.004283765001682741,
+  "per_class": {
+   "Vegetation": {
+    "n_gt": 38,
+    "n_pred": 11,
+    "tp": 4,
+    "fp": 7,
+    "fn": 34,
+    "precision": 0.36363636363636365,
+    "recall": 0.10526315789473684,
+    "f1": 0.16326530612244897,
+    "ap50": 0.0792079207920792,
+    "ap50_95": 0.01688118811881188,
+    "mean_mask_iou": 0.5837584882974625
+   },
+   "abandoned-wire": {
+    "n_gt": 7,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 7,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "power-distribution-lines": {
+    "n_gt": 253,
+    "n_pred": 466,
+    "tp": 8,
+    "fp": 458,
+    "fn": 245,
+    "precision": 0.017167381974248927,
+    "recall": 0.03162055335968379,
+    "f1": 0.022253129346314324,
+    "ap50": 0.0021473382859521473,
+    "ap50_95": 0.00022068036919522068,
+    "mean_mask_iou": 0.5414843410253525
+   },
+   "telecom-cable": {
+    "n_gt": 361,
+    "n_pred": 910,
+    "tp": 4,
+    "fp": 906,
+    "fn": 357,
+    "precision": 0.004395604395604396,
+    "recall": 0.0110803324099723,
+    "f1": 0.006294256490952006,
+    "ap50": 0.00019901599127879533,
+    "ap50_95": 3.319151872386597e-05,
+    "mean_mask_iou": 0.5830274820327759
+   }
+  },
+  "tolerant_2px": {
+   "note": "supplementary: masks widened by 2 px (at 1024) before IoU; not Equation 5",
+   "map50": 0.03746399249466262,
+   "map50_95": 0.006960287532618623,
+   "per_class": {
+    "Vegetation": {
+     "n_gt": 38,
+     "n_pred": 11,
+     "tp": 4,
+     "fp": 7,
+     "fn": 34,
+     "precision": 0.36363636363636365,
+     "recall": 0.10526315789473684,
+     "f1": 0.16326530612244897,
+     "ap50": 0.0792079207920792,
+     "ap50_95": 0.01691419141914191,
+     "mean_mask_iou": 0.5862696766853333
+    },
+    "abandoned-wire": {
+     "n_gt": 7,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 7,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "power-distribution-lines": {
+     "n_gt": 253,
+     "n_pred": 466,
+     "tp": 47,
+     "fp": 419,
+     "fn": 206,
+     "precision": 0.10085836909871244,
+     "recall": 0.1857707509881423,
+     "f1": 0.13073713490959665,
+     "ap50": 0.06704791958835803,
+     "ap50_95": 0.010247291646699875,
+     "mean_mask_iou": 0.5873465335115473
+    },
+    "telecom-cable": {
+     "n_gt": 361,
+     "n_pred": 910,
+     "tp": 18,
+     "fp": 892,
+     "fn": 343,
+     "precision": 0.01978021978021978,
+     "recall": 0.04986149584487535,
+     "f1": 0.028324154209284025,
+     "ap50": 0.003600129598213278,
+     "ap50_95": 0.000679667064632708,
+     "mean_mask_iou": 0.6080556511878967
+    }
+   }
+  },
+  "fallback": {
+   "pass": 0,
+   "used": 0
+  },
+  "imgsz": 1024,
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "wirenet": "models/wirenet-r34.pt",
+  "instances": "skeleton",
+  "degraded": false,
+  "enhancement": "auto"
+ },
+ "v2.6 640 yolo | test degraded": {
+  "n_images": 21,
+  "conf_threshold": 0.2,
+  "map50": 0.0002856054836252856,
+  "map50_95": 5.508105755630509e-05,
+  "per_class": {
+   "Vegetation": {
+    "n_gt": 38,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 38,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0011424219345011425,
+    "ap50_95": 0.00022032423022522036,
+    "mean_mask_iou": null
+   },
+   "abandoned-wire": {
+    "n_gt": 7,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 7,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "power-distribution-lines": {
+    "n_gt": 253,
+    "n_pred": 5,
+    "tp": 0,
+    "fp": 5,
+    "fn": 253,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "telecom-cable": {
+    "n_gt": 361,
+    "n_pred": 1,
+    "tp": 0,
+    "fp": 1,
+    "fn": 361,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   }
+  },
+  "tolerant_2px": {
+   "note": "supplementary: masks widened by 2 px (at 1024) before IoU; not Equation 5",
+   "map50": 0.0002856054836252856,
+   "map50_95": 5.508105755630509e-05,
+   "per_class": {
+    "Vegetation": {
+     "n_gt": 38,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 38,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0011424219345011425,
+     "ap50_95": 0.00022032423022522036,
+     "mean_mask_iou": null
+    },
+    "abandoned-wire": {
+     "n_gt": 7,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 7,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "power-distribution-lines": {
+     "n_gt": 253,
+     "n_pred": 5,
+     "tp": 0,
+     "fp": 5,
+     "fn": 253,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "telecom-cable": {
+     "n_gt": 361,
+     "n_pred": 1,
+     "tp": 0,
+     "fp": 1,
+     "fn": 361,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    }
+   }
+  },
+  "fallback": {
+   "pass": 20,
+   "used": 8
+  },
+  "imgsz": 640,
+  "weights": "runs/wireframe/_keep/v26-640.pt",
+  "wirenet": null,
+  "instances": "yolo-only",
+  "degraded": true,
+  "enhancement": "auto"
+ },
+ "1024 yolo | test degraded": {
+  "n_images": 21,
+  "conf_threshold": 0.2,
+  "map50": 0.010457920792079209,
+  "map50_95": 0.005030940594059405,
+  "per_class": {
+   "Vegetation": {
+    "n_gt": 38,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 38,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.041831683168316834,
+    "ap50_95": 0.02012376237623762,
+    "mean_mask_iou": null
+   },
+   "abandoned-wire": {
+    "n_gt": 7,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 7,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "power-distribution-lines": {
+    "n_gt": 253,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 253,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "telecom-cable": {
+    "n_gt": 361,
+    "n_pred": 2,
+    "tp": 0,
+    "fp": 2,
+    "fn": 361,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   }
+  },
+  "tolerant_2px": {
+   "note": "supplementary: masks widened by 2 px (at 1024) before IoU; not Equation 5",
+   "map50": 0.010457920792079209,
+   "map50_95": 0.006003850385038504,
+   "per_class": {
+    "Vegetation": {
+     "n_gt": 38,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 38,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.041831683168316834,
+     "ap50_95": 0.024015401540154017,
+     "mean_mask_iou": null
+    },
+    "abandoned-wire": {
+     "n_gt": 7,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 7,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "power-distribution-lines": {
+     "n_gt": 253,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 253,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "telecom-cable": {
+     "n_gt": 361,
+     "n_pred": 2,
+     "tp": 0,
+     "fp": 2,
+     "fn": 361,
+     "precision": 0.0,
+     "recall": 0.0,
+     "f1": 0.0,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    }
+   }
+  },
+  "fallback": {
+   "pass": 20,
+   "used": 14
+  },
+  "imgsz": 1024,
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "wirenet": null,
+  "instances": "yolo-only",
+  "degraded": true,
+  "enhancement": "auto"
+ },
+ "1024 hybrid (WireNet spans) | test degraded": {
+  "n_images": 21,
+  "conf_threshold": 0.2,
+  "map50": 0.007947922204353523,
+  "map50_95": 0.0025280012556245855,
+  "per_class": {
+   "Vegetation": {
+    "n_gt": 38,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 38,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.031711745028492666,
+    "ap50_95": 0.010101867572156196,
+    "mean_mask_iou": null
+   },
+   "abandoned-wire": {
+    "n_gt": 7,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 7,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "power-distribution-lines": {
+    "n_gt": 253,
+    "n_pred": 523,
+    "tp": 2,
+    "fp": 521,
+    "fn": 251,
+    "precision": 0.0038240917782026767,
+    "recall": 0.007905138339920948,
+    "f1": 0.005154639175257731,
+    "ap50": 4.286142900004286e-05,
+    "ap50_95": 6.429214350006429e-06,
+    "mean_mask_iou": 0.5453088283538818
+   },
+   "telecom-cable": {
+    "n_gt": 361,
+    "n_pred": 523,
+    "tp": 1,
+    "fp": 522,
+    "fn": 360,
+    "precision": 0.0019120458891013384,
+    "recall": 0.002770083102493075,
+    "f1": 0.002262443438914027,
+    "ap50": 3.7082359921385395e-05,
+    "ap50_95": 3.7082359921385395e-06,
+    "mean_mask_iou": 0.5480607151985168
+   }
+  },
+  "tolerant_2px": {
+   "note": "supplementary: masks widened by 2 px (at 1024) before IoU; not Equation 5",
+   "map50": 0.012354130797055657,
+   "map50_95": 0.0032322792528623988,
+   "per_class": {
+    "Vegetation": {
+     "n_gt": 38,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 38,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.031711745028492666,
+     "ap50_95": 0.010785817546100961,
+     "mean_mask_iou": null
+    },
+    "abandoned-wire": {
+     "n_gt": 7,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 7,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "power-distribution-lines": {
+     "n_gt": 253,
+     "n_pred": 523,
+     "tp": 22,
+     "fp": 501,
+     "fn": 231,
+     "precision": 0.04206500956022945,
+     "recall": 0.08695652173913043,
+     "f1": 0.05670103092783505,
+     "ap50": 0.012204228104724466,
+     "ap50_95": 0.0015344580127962405,
+     "mean_mask_iou": 0.561719916083596
+    },
+    "telecom-cable": {
+     "n_gt": 361,
+     "n_pred": 523,
+     "tp": 6,
+     "fp": 517,
+     "fn": 355,
+     "precision": 0.011472275334608031,
+     "recall": 0.01662049861495845,
+     "f1": 0.013574660633484163,
+     "ap50": 0.005500550055005501,
+     "ap50_95": 0.0006088414525523934,
+     "mean_mask_iou": 0.5862594048182169
+    }
+   }
+  },
+  "fallback": {
+   "pass": 0,
+   "used": 0
+  },
+  "imgsz": 1024,
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "wirenet": "models/wirenet-r34.pt",
+  "instances": "skeleton",
+  "degraded": true,
+  "enhancement": "auto"
+ },
+ "1024 hybrid (WireNet spans) | test degraded no-enhancement": {
+  "n_images": 21,
+  "conf_threshold": 0.2,
+  "map50": 0.00506050605060506,
+  "map50_95": 0.0007535753575357535,
+  "per_class": {
+   "Vegetation": {
+    "n_gt": 38,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 38,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.019801980198019802,
+    "ap50_95": 0.0029702970297029703,
+    "mean_mask_iou": null
+   },
+   "abandoned-wire": {
+    "n_gt": 7,
+    "n_pred": 0,
+    "tp": 0,
+    "fp": 0,
+    "fn": 7,
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   },
+   "power-distribution-lines": {
+    "n_gt": 253,
+    "n_pred": 460,
+    "tp": 4,
+    "fp": 456,
+    "fn": 249,
+    "precision": 0.008695652173913044,
+    "recall": 0.015810276679841896,
+    "f1": 0.011220196353436185,
+    "ap50": 0.0004400440044004401,
+    "ap50_95": 4.4004400440044006e-05,
+    "mean_mask_iou": 0.5222456306219101
+   },
+   "telecom-cable": {
+    "n_gt": 361,
+    "n_pred": 473,
+    "tp": 0,
+    "fp": 473,
+    "fn": 361,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "ap50": 0.0,
+    "ap50_95": 0.0,
+    "mean_mask_iou": null
+   }
+  },
+  "tolerant_2px": {
+   "note": "supplementary: masks widened by 2 px (at 1024) before IoU; not Equation 5",
+   "map50": 0.010400251791484492,
+   "map50_95": 0.0019337062734946235,
+   "per_class": {
+    "Vegetation": {
+     "n_gt": 38,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 38,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.019801980198019802,
+     "ap50_95": 0.004207920792079208,
+     "mean_mask_iou": null
+    },
+    "abandoned-wire": {
+     "n_gt": 7,
+     "n_pred": 0,
+     "tp": 0,
+     "fp": 0,
+     "fn": 7,
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "ap50": 0.0,
+     "ap50_95": 0.0,
+     "mean_mask_iou": null
+    },
+    "power-distribution-lines": {
+     "n_gt": 253,
+     "n_pred": 460,
+     "tp": 27,
+     "fp": 433,
+     "fn": 226,
+     "precision": 0.058695652173913045,
+     "recall": 0.1067193675889328,
+     "f1": 0.07573632538569425,
+     "ap50": 0.01946522215886583,
+     "ap50_95": 0.0032670033118002762,
+     "mean_mask_iou": 0.5740409979113826
+    },
+    "telecom-cable": {
+     "n_gt": 361,
+     "n_pred": 473,
+     "tp": 4,
+     "fp": 469,
+     "fn": 357,
+     "precision": 0.008456659619450317,
+     "recall": 0.0110803324099723,
+     "f1": 0.009592326139088728,
+     "ap50": 0.002333804809052334,
+     "ap50_95": 0.0002599009900990099,
+     "mean_mask_iou": 0.5617512762546539
+    }
+   }
+  },
+  "fallback": {
+   "pass": 0,
+   "used": 0
+  },
+  "imgsz": 1024,
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "wirenet": "models/wirenet-r34.pt",
+  "instances": "skeleton",
+  "degraded": true,
+  "enhancement": "off"
+ },
+ "ultralytics v2.6 640 yolo | test": {
+  "split": "test",
+  "degraded": false,
+  "weights": "runs/wireframe/_keep/v26-640.pt",
+  "imgsz": 640,
+  "iou_nms": 0.45,
+  "retina_masks": true,
+  "box_map50": 0.10192658616585729,
+  "mask_map50": 0.0034330514613252713,
+  "mask_map50_95": 0.0006997511967750064,
+  "per_class": {
+   "Vegetation": {
+    "box_precision": 0.14415782676226688,
+    "box_recall": 0.02631578947368421,
+    "box_ap50": 0.02856774873692167,
+    "box_ap50_95": 0.008664788428605555,
+    "mask_precision": 0.35162707127362147,
+    "mask_recall": 0.02631578947368421,
+    "mask_ap50": 0.013724489795918369,
+    "mask_ap50_95": 0.002795918367346939
+   },
+   "abandoned-wire": {
+    "box_precision": 0.0,
+    "box_recall": 0.0,
+    "box_ap50": 0.0,
+    "box_ap50_95": 0.0,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   },
+   "power-distribution-lines": {
+    "box_precision": 0.2510444510780884,
+    "box_recall": 0.34782608695652173,
+    "box_ap50": 0.20232228952938058,
+    "box_ap50_95": 0.059909007311594334,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 7.71604938271605e-06,
+    "mask_ap50_95": 3.08641975308642e-06
+   },
+   "telecom-cable": {
+    "box_precision": 0.28418003844558426,
+    "box_recall": 0.26038781163434904,
+    "box_ap50": 0.17681630639712687,
+    "box_ap50_95": 0.05274038229289023,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   }
+  }
+ },
+ "ultralytics v2.6 640 yolo | test degraded": {
+  "split": "test",
+  "degraded": true,
+  "weights": "runs/wireframe/_keep/v26-640.pt",
+  "imgsz": 640,
+  "iou_nms": 0.45,
+  "retina_masks": true,
+  "box_map50": 0.07349331310087708,
+  "mask_map50": 0.0005681818181818182,
+  "mask_map50_95": 0.00011363636363636364,
+  "per_class": {
+   "Vegetation": {
+    "box_precision": 1.0,
+    "box_recall": 0.0,
+    "box_ap50": 0.017954545454545456,
+    "box_ap50_95": 0.011477272727272728,
+    "mask_precision": 0.004347826086956522,
+    "mask_recall": 0.02631578947368421,
+    "mask_ap50": 0.0022727272727272726,
+    "mask_ap50_95": 0.00045454545454545455
+   },
+   "abandoned-wire": {
+    "box_precision": 0.0,
+    "box_recall": 0.0,
+    "box_ap50": 0.0,
+    "box_ap50_95": 0.0,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   },
+   "power-distribution-lines": {
+    "box_precision": 0.19482060385657984,
+    "box_recall": 0.28063241106719367,
+    "box_ap50": 0.1336616693503812,
+    "box_ap50_95": 0.04080041963007584,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   },
+   "telecom-cable": {
+    "box_precision": 0.3903772600344945,
+    "box_recall": 0.12188365650969529,
+    "box_ap50": 0.14235703759858165,
+    "box_ap50_95": 0.03983963941014715,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   }
+  }
+ },
+ "ultralytics 1024 yolo | test": {
+  "split": "test",
+  "degraded": false,
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "imgsz": 1024,
+  "iou_nms": 0.45,
+  "retina_masks": true,
+  "box_map50": 0.08113883755650358,
+  "mask_map50": 0.013639703042940996,
+  "mask_map50_95": 0.0033530343854239336,
+  "per_class": {
+   "Vegetation": {
+    "box_precision": 0.0963567515226893,
+    "box_recall": 0.07894736842105263,
+    "box_ap50": 0.020265208647561588,
+    "box_ap50_95": 0.005807943690296631,
+    "mask_precision": 0.25736644468363074,
+    "mask_recall": 0.10526315789473684,
+    "mask_ap50": 0.054551282051282055,
+    "mask_ap50_95": 0.013411010558069383
+   },
+   "abandoned-wire": {
+    "box_precision": 1.0,
+    "box_recall": 0.0,
+    "box_ap50": 0.0,
+    "box_ap50_95": 0.0,
+    "mask_precision": 1.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   },
+   "power-distribution-lines": {
+    "box_precision": 0.3790419585706776,
+    "box_recall": 0.13438735177865613,
+    "box_ap50": 0.1317889738221968,
+    "box_ap50_95": 0.03677554632495739,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   },
+   "telecom-cable": {
+    "box_precision": 0.20209277543205756,
+    "box_recall": 0.3961218836565097,
+    "box_ap50": 0.17250116775625596,
+    "box_ap50_95": 0.04525508029438592,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 7.530120481927711e-06,
+    "mask_ap50_95": 1.126983626352831e-06
+   }
+  }
+ },
+ "ultralytics 1024 yolo | test degraded": {
+  "split": "test",
+  "degraded": true,
+  "weights": "models/wireframe-yolo11m-seg.pt",
+  "imgsz": 1024,
+  "iou_nms": 0.45,
+  "retina_masks": true,
+  "box_map50": 0.08948945623644317,
+  "mask_map50": 0.013168087928747395,
+  "mask_map50_95": 0.0020835465226454425,
+  "per_class": {
+   "Vegetation": {
+    "box_precision": 0.16254889541391482,
+    "box_recall": 0.02631578947368421,
+    "box_ap50": 0.011454954954954955,
+    "box_ap50_95": 0.0027263035763035763,
+    "mask_precision": 0.45954557532903995,
+    "mask_recall": 0.07894736842105263,
+    "mask_ap50": 0.05266666666666667,
+    "mask_ap50_95": 0.008333333333333335
+   },
+   "abandoned-wire": {
+    "box_precision": 1.0,
+    "box_recall": 0.0,
+    "box_ap50": 0.0,
+    "box_ap50_95": 0.0,
+    "mask_precision": 1.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   },
+   "power-distribution-lines": {
+    "box_precision": 0.33058914763601527,
+    "box_recall": 0.26937567833805814,
+    "box_ap50": 0.18253350352587577,
+    "box_ap50_95": 0.04784532157744644,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 0.0,
+    "mask_ap50_95": 0.0
+   },
+   "telecom-cable": {
+    "box_precision": 0.27942516769588394,
+    "box_recall": 0.24376731301939059,
+    "box_ap50": 0.16396936646494192,
+    "box_ap50_95": 0.04466909958897372,
+    "mask_precision": 0.0,
+    "mask_recall": 0.0,
+    "mask_ap50": 5.685048322910745e-06,
+    "mask_ap50_95": 8.527572484366118e-07
+   }
+  }
+ }
+}

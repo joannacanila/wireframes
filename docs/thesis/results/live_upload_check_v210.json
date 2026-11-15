@@ -1,0 +1,164 @@
+{
+ "base": "http://127.0.0.1:8000",
+ "all_ok": true,
+ "runs": [
+  {
+   "case": "1_clean_not_at_risk.jpg",
+   "bytes": 232675,
+   "upload_http": 202,
+   "analysis_id": "ef4b6e162380453fb49fcef6e23e9ae1",
+   "status": "complete",
+   "seconds": 4.35,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "NOT AT RISK",
+   "grade": "A",
+   "reason": null,
+   "analysed_size": [
+    1024,
+    1024
+   ],
+   "flags": []
+  },
+  {
+   "case": "2_at_risk_high.jpg",
+   "bytes": 248955,
+   "upload_http": 202,
+   "analysis_id": "eaf3c637286a408ebe11a491aa664295",
+   "status": "complete",
+   "seconds": 3.5,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "AT RISK - HIGH",
+   "grade": "B",
+   "reason": "The model is uncertain about some wire pixels (clutter or low contrast)",
+   "analysed_size": [
+    1024,
+    1024
+   ],
+   "flags": []
+  },
+  {
+   "case": "3_low_light.png",
+   "bytes": 2094907,
+   "upload_http": 202,
+   "analysis_id": "79e73aafbdb54ecebee007a9f6b2bd36",
+   "status": "complete",
+   "seconds": 3.22,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "NOT AT RISK",
+   "grade": "B",
+   "reason": "Low light: conductors have little contrast against the background",
+   "analysed_size": [
+    1024,
+    1024
+   ],
+   "flags": []
+  },
+  {
+   "case": "4_glare_degraded.png",
+   "bytes": 117782,
+   "upload_http": 202,
+   "analysis_id": "1c2beae3750d41d7856aae7d089ef51a",
+   "status": "complete",
+   "seconds": 2.31,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "INCONCLUSIVE - RETAKE PHOTO",
+   "grade": "Retake recommended",
+   "reason": "Severe sky glare washed out the overhead conductors",
+   "analysed_size": [
+    1024,
+    1024
+   ],
+   "flags": []
+  },
+  {
+   "case": "tiny_64x64.jpg",
+   "bytes": 1284,
+   "upload_http": 202,
+   "analysis_id": "cc5913bb85e24b0892c8dad77a2c2233",
+   "status": "no_wires_detected",
+   "seconds": 3.71,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "INCONCLUSIVE - RETAKE PHOTO",
+   "grade": "Retake recommended",
+   "reason": "Photo resolution too low (64 px on the short side; at least 320 px needed): retake closer or upload the full-resolution photo",
+   "analysed_size": [
+    64,
+    64
+   ],
+   "flags": [
+    "resolution_too_low"
+   ]
+  },
+  {
+   "case": "huge_4000x3000_rgba.png",
+   "bytes": 37732544,
+   "upload_http": 202,
+   "analysis_id": "6ddf7021975d4224bb50ec8589fb2062",
+   "status": "complete",
+   "seconds": 5.48,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "INCONCLUSIVE - RETAKE PHOTO",
+   "grade": "Retake recommended",
+   "reason": "The model is uncertain about some wire pixels (clutter or low contrast)",
+   "analysed_size": [
+    2048,
+    1536
+   ],
+   "flags": [
+    "downscaled"
+   ]
+  },
+  {
+   "case": "grayscale.png",
+   "bytes": 383100,
+   "upload_http": 202,
+   "analysis_id": "794f158782884f8aab6a58a9c2b33c22",
+   "status": "complete",
+   "seconds": 2.11,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "NOT AT RISK",
+   "grade": "B",
+   "reason": "The model is uncertain about some wire pixels (clutter or low contrast)",
+   "analysed_size": [
+    1000,
+    750
+   ],
+   "flags": []
+  },
+  {
+   "case": "blank.png",
+   "bytes": 4022,
+   "upload_http": 202,
+   "analysis_id": "33ae39c55a2b4f898d13beb84f6fe369",
+   "status": "no_wires_detected",
+   "seconds": 3.81,
+   "result_http": 200,
+   "pdf_http": 200,
+   "pdf_valid": true,
+   "verdict": "INCONCLUSIVE - RETAKE PHOTO",
+   "grade": "Retake recommended",
+   "reason": "The photo is blank or uniform: no visible content to analyse",
+   "analysed_size": [
+    1024,
+    768
+   ],
+   "flags": [
+    "blank_image"
+   ]
+  }
+ ]
+}

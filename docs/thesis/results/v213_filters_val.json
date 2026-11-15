@@ -1,0 +1,42 @@
+{
+ "spans": 828,
+ "true_positive_spans": 96,
+ "baseline_tolerant_map50": 0.039675286620609394,
+ "rules": {
+  "ground>=0.5": {
+   "removed": 0,
+   "removed_true_positive": 0,
+   "tolerant_map50": 0.039675286620609394
+  },
+  "ground>=0.8": {
+   "removed": 0,
+   "removed_true_positive": 0,
+   "tolerant_map50": 0.039675286620609394
+  },
+  "loop_holes>=1": {
+   "removed": 16,
+   "removed_true_positive": 0,
+   "tolerant_map50": 0.039787793962336296
+  },
+  "bulge_up>=3px&>=2%": {
+   "removed": 82,
+   "removed_true_positive": 2,
+   "tolerant_map50": 0.03875252947237223
+  },
+  "bulge_up>=5px&>=4%": {
+   "removed": 37,
+   "removed_true_positive": 1,
+   "tolerant_map50": 0.03929627121148134
+  },
+  "isolated>=40&below_net>=40": {
+   "removed": 2,
+   "removed_true_positive": 0,
+   "tolerant_map50": 0.039678117090102674
+  },
+  "isolated>=80&below_net>=80": {
+   "removed": 2,
+   "removed_true_positive": 0,
+   "tolerant_map50": 0.039678117090102674
+  }
+ }
+}

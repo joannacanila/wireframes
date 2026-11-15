@@ -1,0 +1,126 @@
+# Dataset register (Section 3.4.1, Table 3.4) plus the team's merged pre-labelled set.
+#
+#   export ROBOFLOW_API_KEY=...            # never put the key in this file
+#   python -m ml.curate --download         # fetch -> audit -> dedupe -> split 70:15:15
+#
+# Workspace and project slugs come from the Universe URLs the team supplied (2026-11-12).
+# Licences and version numbers could not be read automatically (Roboflow refuses automated
+# page fetches, HTTP 403), so they are left null: copy them from each page. A source is
+# downloaded and used only when workspace, project, version and an allowed licence are all set
+# (Section 3.4.2 step 1). "Local catalog entry" sources have no public URL yet.
+api_key_env: ROBOFLOW_API_KEY
+export_format: yolov11            # polygons for segmentation projects, boxes for detection projects
+allowed_licenses: ["CC BY 4.0", "CC BY-SA 4.0", "CC0 1.0", "Public Domain", "MIT"]
+background_fraction_max: 0.10     # Section 3.4.2 step 6: background images kept "in a limited number"
+near_duplicate_hamming: 6         # 64-bit pHash distance at or below which images are near-duplicates
+fragment_extent_max: 0.25         # label-quality audit: a wire polygon spanning less than this share of
+                                  # the image's longer side is counted as a fragment (Section 3.4.3 asks
+                                  # for one polygon per visible span)
+split: {train: 0.70, val: 0.15, test: 0.15, seed: 42}
+# Every source without `primary: true` defaults to `split: train_only`: its images, and any image
+# in the same near-duplicate group, go to train only, so no external image reaches val or test.
+
+sources:
+  # ------------------------------------------------------------------ team dataset (in use)
+  - name: Wireframes-Prelabelled-Datasets
+    primary: true                  # the only source allowed in val and test (split: any)
+    task: segment
+    images: 145
+    use: Team polygon set relabelled at span level (classes Vegetation, abandoned-wire,
+      power-distribution-lines, telecom-cable; telecom-cable includes fiber optic drops).
+      Export of 2026-11-14 12:02 GMT, "No pre-processing" (each photo at its own size);
+      a superset of the 99-image export of 03:12 GMT (all 99 present, 46 new).
+    workspace: ravens-workspace-g6fye
+    project: wireframes-prelabelled-datasets
+    version: null                  # the export's data.yaml gives no version number; local copy is used
+    license: CC BY 4.0             # from the export's README.roboflow.txt / data.yaml
+    url: https://universe.roboflow.com/ravens-workspace-g6fye/wireframes-prelabelled-datasets
+
+  # ------------------------------------------------------------------ Table 3.4 public sources
+  - name: Power Lines
+    task: detect
+    images: 281
+    use: Power line detection
+    workspace: demo-ger4a
+    project: power-lines-nd9vw
+    version: null                  # Table 4.6 checkpoints record "Power-Lines-1": likely 1, verify
+    license: null
+    url: https://universe.roboflow.com/demo-ger4a/power-lines-nd9vw
+  - {name: poles detect,       task: detect,  images: 118,  use: Pole identification,               workspace: null, project: poles-detetct, version: 1, license: null, url: null}  # local catalog entry; Table 4.6 "poles-detetct-1"
+  - {name: Electrical Line,    task: detect,  images: 264,  use: Distribution line layout,          workspace: null, project: electrical-line, version: 1, license: null, url: null}  # local catalog entry; Table 4.6 "Electrical-Line-1"
+  - {name: reference-images-1, task: detect,  images: 871,  use: Urban background scenes,           workspace: null, project: null, version: null, license: null, url: null}  # local catalog entry
+  - name: reference-images-2
+    task: detect
+    images: 114
+    use: Background and clutter scenes
+    workspace: kulothungan-s-97vmf
+    project: reference-images-2
+    version: null
+    license: null
+    url: https://universe.roboflow.com/kulothungan-s-97vmf/reference-images-2
+  - name: power_lines_6_10
+    task: detect
+    images: 190
+    use: Cable cluster examples
+    workspace: costa-d2mey
+    project: power_lines_6_10-cwlsd
+    version: null                  # Table 4.6 "power_lines_6_10-1": likely 1, verify
+    license: null
+    url: https://universe.roboflow.com/costa-d2mey/power_lines_6_10-cwlsd
+  - name: Anomaly Detection
+    task: segment
+    images: 4475
+    use: Thin object and wire segmentation
+    workspace: electric-power-line
+    project: anomaly-detection-6bd55
+    version: null                  # Table 4.6 "Anomaly-Detection-2": likely 2, verify
+    license: null
+    url: https://universe.roboflow.com/electric-power-line/anomaly-detection-6bd55
+  - name: YOLOv8 test
+    task: detect
+    images: 1844
+    use: Structural boundary examples
+    workspace: electric-power-line
+    project: yolov8-test-gwiri
+    version: null
+    license: null
+    url: https://universe.roboflow.com/electric-power-line/yolov8-test-gwiri
+  - {name: wire,               task: detect,  images: 1088, use: Wire and cable features,           workspace: null, project: wire, version: 1, license: null, url: null}  # local catalog entry; Table 4.6 "wire-1"
+  - name: Cable Detection
+    task: detect
+    images: 1086
+    use: Dense cable bundles
+    workspace: cable-detection-tnhlp
+    project: cable-detection-jm0jn
+    version: null                  # Table 4.6 "Cable-Detection-1": likely 1, verify
+    license: null
+    url: https://universe.roboflow.com/cable-detection-tnhlp/cable-detection-jm0jn
+
+# ------------------------------------------------------------------ screened and rejected (2026-11-14)
+# Searched: Kaggle, Roboflow Universe, GitHub, Zenodo, Mendeley Data, IEEE DataPort. Gate: polygon
+# instance masks, ground-level viewpoint (Section 3.4.2 step 2), span-level (not fragment) labels,
+# allowed licence, mappable to the four classes. Not downloaded unless noted.
+rejected:
+  - {name: Rural distribution power line vegetation management dataset, platform: Zenodo,
+     url: https://zenodo.org/records/18392898, license: CC BY 4.0, images: 2404,
+     reason: "files restricted (access request to the authors required); polygons for vegetation, power line, pole - re-screen if access is granted"}
+  - {name: Wire (SEwire), platform: Roboflow Universe, url: https://universe.roboflow.com/sewire/wire-w5gmp,
+     license: CC BY 4.0, reason: "not inspected: ROBOFLOW_API_KEY not set; classes Tangled-wires / Electrical-wires-across-trees need manual mapping to power vs telecom"}
+  - {name: TTPLA, platform: GitHub, url: https://github.com/R3ab/ttpla_dataset,
+     reason: "aerial UAV viewpoint of transmission towers (excluded by Section 3.4.2 step 2; not distribution lines)"}
+  - {name: VEPL, platform: Zenodo, url: https://zenodo.org/records/7800234, license: CC BY 4.0,
+     reason: "top-down drone orthomosaic tiles (256 x 256); viewpoint excluded"}
+  - {name: WireSegHR, platform: Adobe Research (CVPR 2023), url: https://arxiv.org/abs/2304.00221,
+     reason: "re-screened 2026-11-15 (v2.11): only 420 of 500 test images released (github.com/adobe-research/auto-wire-removal, Google Drive);
+       no licence stated anywhere (repo has no LICENSE, paper says only 'copyright-free'); one generic binary wire class
+       (no power / telecom split); no night or pole-specific scenes stated"}
+  - {name: Merged Public Power Cable Dataset (MPCD), platform: Drones 9(7) 505 (2025), url: https://doi.org/10.3390/drones9070505,
+     reason: "UAV / aerial viewpoint of transmission cables, not ground-level distribution poles (v2.11 search)"}
+  - {name: Railway OCS conductor instance segmentation, platform: Sensors 25(15) 4714 (2025), url: https://www.mdpi.com/1424-8220/25/15/4714,
+     reason: "railway overhead contact system from train video, not urban distribution poles (v2.11 search)"}
+  - {name: Electric Wires Dataset, platform: Kaggle, url: https://www.kaggle.com/datasets/zanellar/electric-wires-image-segmentation,
+     reason: "synthetic chroma-key cable images, not street scenes"}
+  - {name: OHL-UK (Dickinson and Di Caterina, BMVC 2025), url: https://arxiv.org/abs/2608.04061,
+     reason: "labels poles and warning signs only; no wire classes"}
+  - {name: lonlonago power-scene LabelMe sets, platform: GitHub, url: https://github.com/lonlonago,
+     reason: "commercial dataset listings (README and previews only); no licence"}

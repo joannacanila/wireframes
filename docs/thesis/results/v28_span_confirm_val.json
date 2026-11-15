@@ -1,0 +1,180 @@
+{
+ "v2.7 span constants": {
+  "strict": {
+   "map50": 0.006369688413393716,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.023762376237623763,
+     "f1": 0.08823529411764705,
+     "precision": 0.2727272727272727,
+     "recall": 0.05263157894736842,
+     "tp": 3,
+     "n_pred": 11,
+     "n_gt": 57
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": 0.0,
+     "precision": 0.0,
+     "recall": 0.0,
+     "tp": 0,
+     "n_pred": 1,
+     "n_gt": 6
+    },
+    "power-distribution-lines": {
+     "ap50": 0.0011586265009479672,
+     "f1": 0.011389521640091115,
+     "precision": 0.008865248226950355,
+     "recall": 0.01592356687898089,
+     "tp": 5,
+     "n_pred": 564,
+     "n_gt": 314
+    },
+    "telecom-cable": {
+     "ap50": 0.000557750915003135,
+     "f1": 0.007897334649555776,
+     "precision": 0.005865102639296188,
+     "recall": 0.012084592145015106,
+     "tp": 4,
+     "n_pred": 682,
+     "n_gt": 331
+    }
+   }
+  },
+  "tolerant": {
+   "map50": 0.029551599791680375,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.029042904290429047,
+     "f1": 0.08823529411764705,
+     "precision": 0.2727272727272727,
+     "recall": 0.05263157894736842,
+     "tp": 3,
+     "n_pred": 11,
+     "n_gt": 57
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": 0.0,
+     "precision": 0.0,
+     "recall": 0.0,
+     "tp": 0,
+     "n_pred": 1,
+     "n_gt": 6
+    },
+    "power-distribution-lines": {
+     "ap50": 0.06796417228622613,
+     "f1": 0.12528473804100226,
+     "precision": 0.0975177304964539,
+     "recall": 0.1751592356687898,
+     "tp": 55,
+     "n_pred": 564,
+     "n_gt": 314
+    },
+    "telecom-cable": {
+     "ap50": 0.02119932259006632,
+     "f1": 0.04343534057255676,
+     "precision": 0.03225806451612903,
+     "recall": 0.06646525679758308,
+     "tp": 22,
+     "n_pred": 682,
+     "n_gt": 331
+    }
+   }
+  },
+  "spans_all_scores": {
+   "abandoned-wire": 1,
+   "power-distribution-lines": 564,
+   "telecom-cable": 682
+  }
+ },
+ "v2.8 span constants": {
+  "strict": {
+   "map50": 0.006807441275859851,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.023762376237623763,
+     "f1": 0.08823529411764705,
+     "precision": 0.2727272727272727,
+     "recall": 0.05263157894736842,
+     "tp": 3,
+     "n_pred": 11,
+     "n_gt": 57
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": null,
+     "precision": null,
+     "recall": 0.0,
+     "tp": 0,
+     "n_pred": 0,
+     "n_gt": 6
+    },
+    "power-distribution-lines": {
+     "ap50": 0.0025397285322147113,
+     "f1": 0.022727272727272728,
+     "precision": 0.020512820512820513,
+     "recall": 0.025477707006369428,
+     "tp": 8,
+     "n_pred": 390,
+     "n_gt": 314
+    },
+    "telecom-cable": {
+     "ap50": 0.0009276603336009277,
+     "f1": 0.010403120936280884,
+     "precision": 0.0091324200913242,
+     "recall": 0.012084592145015106,
+     "tp": 4,
+     "n_pred": 438,
+     "n_gt": 331
+    }
+   }
+  },
+  "tolerant": {
+   "map50": 0.039675286620609394,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.029042904290429047,
+     "f1": 0.08823529411764705,
+     "precision": 0.2727272727272727,
+     "recall": 0.05263157894736842,
+     "tp": 3,
+     "n_pred": 11,
+     "n_gt": 57
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": null,
+     "precision": null,
+     "recall": 0.0,
+     "tp": 0,
+     "n_pred": 0,
+     "n_gt": 6
+    },
+    "power-distribution-lines": {
+     "ap50": 0.10784618154911181,
+     "f1": 0.1903409090909091,
+     "precision": 0.1717948717948718,
+     "recall": 0.21337579617834396,
+     "tp": 67,
+     "n_pred": 390,
+     "n_gt": 314
+    },
+    "telecom-cable": {
+     "ap50": 0.02181206064289674,
+     "f1": 0.0754226267880364,
+     "precision": 0.06621004566210045,
+     "recall": 0.08761329305135952,
+     "tp": 29,
+     "n_pred": 438,
+     "n_gt": 331
+    }
+   }
+  },
+  "spans_all_scores": {
+   "abandoned-wire": 0,
+   "power-distribution-lines": 390,
+   "telecom-cable": 438
+  }
+ }
+}

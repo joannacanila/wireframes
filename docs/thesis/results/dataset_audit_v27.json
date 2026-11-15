@@ -1,0 +1,160 @@
+{
+  "steps": [
+    {
+      "step": "1_licence",
+      "images": 145,
+      "excluded_sources": [
+        {
+          "source": "Power Lines",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "poles detect",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "Electrical Line",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "reference-images-1",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "reference-images-2",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "power_lines_6_10",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "Anomaly Detection",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "YOLOv8 test",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "wire",
+          "reason": "not downloaded"
+        },
+        {
+          "source": "Cable Detection",
+          "reason": "not downloaded"
+        }
+      ]
+    },
+    {
+      "step": "2_viewpoint",
+      "images": 145,
+      "excluded": 0
+    },
+    {
+      "step": "3_duplicates",
+      "images": 145,
+      "exact_removed": 0,
+      "undecodable": 0,
+      "near_removed": 0
+    },
+    {
+      "step": "5_labels",
+      "images": 145,
+      "annotation_queue": 0,
+      "corrupt_label_lines": 0,
+      "unmapped_labels": {}
+    },
+    {
+      "step": "6_background",
+      "images": 145,
+      "background_kept": 0
+    },
+    {
+      "step": "4_privacy",
+      "images": 145,
+      "detector": "manual_only",
+      "listed_for_manual_review": 145
+    }
+  ],
+  "label_quality": {
+    "fragment_extent_max": 0.25,
+    "per_class": {
+      "Vegetation": {
+        "instances": 220
+      },
+      "abandoned-wire": {
+        "instances": 27,
+        "median_extent": 0.167,
+        "fragment_share": 0.704
+      },
+      "power-distribution-lines": {
+        "instances": 1801,
+        "median_extent": 0.517,
+        "fragment_share": 0.115
+      },
+      "telecom-cable": {
+        "instances": 2441,
+        "median_extent": 0.473,
+        "fragment_share": 0.106
+      }
+    },
+    "images_mostly_fragments": 1,
+    "instances_per_image_median": 30.0,
+    "classes_without_examples": []
+  },
+  "image_geometry": {
+    "images": 145,
+    "distinct_sizes": 145,
+    "most_common_size": [
+      1625,
+      601
+    ],
+    "most_common_share": 0.007,
+    "letterboxed": 0,
+    "aspect_ratios": {
+      "min": 0.755,
+      "max": 3.871
+    }
+  },
+  "split_isolation": {
+    "train_only_images": 0,
+    "train_only_in_val_or_test": 0
+  },
+  "enhancement": {
+    "mode": "auto",
+    "working_long_side": 1024,
+    "steps_applied": {
+      "none": 134,
+      "clahe": 8,
+      "denoise": 3,
+      "unsharp": 2
+    }
+  },
+  "density_tertiles": [
+    26.0,
+    34.0
+  ],
+  "split_counts": {
+    "train": 102,
+    "val": 22,
+    "test": 21
+  },
+  "strata_by_split": {
+    "train": {
+      "High": 31,
+      "Low": 37,
+      "Moderate": 34
+    },
+    "val": {
+      "High": 7,
+      "Low": 8,
+      "Moderate": 7
+    },
+    "test": {
+      "High": 6,
+      "Low": 8,
+      "Moderate": 7
+    }
+  }
+}

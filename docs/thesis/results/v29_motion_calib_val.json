@@ -1,0 +1,1476 @@
+{
+ "routed_of_soft": {
+  "0.1": {
+   "clean": [
+    1,
+    3
+   ],
+   "lowlight": [
+    0,
+    0
+   ],
+   "glare": [
+    0,
+    16
+   ],
+   "motion": [
+    22,
+    22
+   ],
+   "defocus": [
+    3,
+    22
+   ],
+   "jpeg": [
+    1,
+    2
+   ],
+   "lowres": [
+    9,
+    17
+   ],
+   "rainhaze": [
+    6,
+    9
+   ]
+  },
+  "0.12": {
+   "clean": [
+    1,
+    3
+   ],
+   "lowlight": [
+    0,
+    0
+   ],
+   "glare": [
+    0,
+    16
+   ],
+   "motion": [
+    22,
+    22
+   ],
+   "defocus": [
+    1,
+    22
+   ],
+   "jpeg": [
+    1,
+    2
+   ],
+   "lowres": [
+    8,
+    17
+   ],
+   "rainhaze": [
+    2,
+    9
+   ]
+  },
+  "0.14": {
+   "clean": [
+    1,
+    3
+   ],
+   "lowlight": [
+    0,
+    0
+   ],
+   "glare": [
+    0,
+    16
+   ],
+   "motion": [
+    22,
+    22
+   ],
+   "defocus": [
+    0,
+    22
+   ],
+   "jpeg": [
+    1,
+    2
+   ],
+   "lowres": [
+    7,
+    17
+   ],
+   "rainhaze": [
+    1,
+    9
+   ]
+  },
+  "0.16": {
+   "clean": [
+    0,
+    3
+   ],
+   "lowlight": [
+    0,
+    0
+   ],
+   "glare": [
+    0,
+    16
+   ],
+   "motion": [
+    22,
+    22
+   ],
+   "defocus": [
+    0,
+    22
+   ],
+   "jpeg": [
+    1,
+    2
+   ],
+   "lowres": [
+    4,
+    17
+   ],
+   "rainhaze": [
+    1,
+    9
+   ]
+  },
+  "0.18": {
+   "clean": [
+    0,
+    3
+   ],
+   "lowlight": [
+    0,
+    0
+   ],
+   "glare": [
+    0,
+    16
+   ],
+   "motion": [
+    20,
+    22
+   ],
+   "defocus": [
+    0,
+    22
+   ],
+   "jpeg": [
+    0,
+    2
+   ],
+   "lowres": [
+    4,
+    17
+   ],
+   "rainhaze": [
+    1,
+    9
+   ]
+  },
+  "0.2": {
+   "clean": [
+    0,
+    3
+   ],
+   "lowlight": [
+    0,
+    0
+   ],
+   "glare": [
+    0,
+    16
+   ],
+   "motion": [
+    18,
+    22
+   ],
+   "defocus": [
+    0,
+    22
+   ],
+   "jpeg": [
+    0,
+    2
+   ],
+   "lowres": [
+    3,
+    17
+   ],
+   "rainhaze": [
+    1,
+    9
+   ]
+  },
+  "0.25": {
+   "clean": [
+    0,
+    3
+   ],
+   "lowlight": [
+    0,
+    0
+   ],
+   "glare": [
+    0,
+    16
+   ],
+   "motion": [
+    16,
+    22
+   ],
+   "defocus": [
+    0,
+    22
+   ],
+   "jpeg": [
+    0,
+    2
+   ],
+   "lowres": [
+    1,
+    17
+   ],
+   "rainhaze": [
+    1,
+    9
+   ]
+  }
+ },
+ "rows": [
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 1090.6457662580347,
+   "motion_coherence": 0.2106133034831432,
+   "clipped_high": 0.005637168884277344
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 457.15950393178707,
+   "motion_coherence": 0.1696944170700407,
+   "clipped_high": 0.021559715270996094
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 343.86749744159795,
+   "motion_coherence": 0.08312604595589111,
+   "clipped_high": 3.147125244140625e-05
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 153.45390794904142,
+   "motion_coherence": 0.0610768591245831,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 324.207800850504,
+   "motion_coherence": 0.037858841625135406,
+   "clipped_high": 0.000537872314453125
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 191.2900924608948,
+   "motion_coherence": 0.09216263082930827,
+   "clipped_high": 6.67572021484375e-06
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 162.4833783601125,
+   "motion_coherence": 0.09111181031358813,
+   "clipped_high": 0.004918098449707031
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 138.90624316460796,
+   "motion_coherence": 0.20145141927929527,
+   "clipped_high": 0.00014495849609375
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 116.83024591841604,
+   "motion_coherence": 0.147888678954412,
+   "clipped_high": 0.10412788391113281
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 157.45550918561275,
+   "motion_coherence": 0.29528331661946816,
+   "clipped_high": 0.0004901885986328125
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 123.83560653374934,
+   "motion_coherence": 0.06963392361420004,
+   "clipped_high": 7.62939453125e-05
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 161.0287075040942,
+   "motion_coherence": 0.17948073620190477,
+   "clipped_high": 0.00051116943359375
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 108.61463351454586,
+   "motion_coherence": 0.2527187044815748,
+   "clipped_high": 0.00036525726318359375
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 263.62693461974317,
+   "motion_coherence": 0.3033547694860504,
+   "clipped_high": 0.001628875732421875
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 105.7915496723981,
+   "motion_coherence": 0.17792270580889077,
+   "clipped_high": 0.008809089660644531
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 42.71337985992339,
+   "motion_coherence": 0.023948954078887794,
+   "clipped_high": 0.0018796920776367188
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 31.774816508856016,
+   "motion_coherence": 0.049497159169748735,
+   "clipped_high": 0.03907203674316406
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 55.92077720494762,
+   "motion_coherence": 0.14569824014601937,
+   "clipped_high": 6.67572021484375e-05
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 116.62978839841432,
+   "motion_coherence": 0.11989071214035607,
+   "clipped_high": 0.13222980499267578
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 108.6168660785761,
+   "motion_coherence": 0.055594147792731134,
+   "clipped_high": 0.0742025375366211
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 144.92428394272793,
+   "motion_coherence": 0.24376244786213672,
+   "clipped_high": 0.02483081817626953
+  },
+  {
+   "condition": "clean",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 213.11021590450764,
+   "motion_coherence": 0.05672723392209207,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 1755.7342605417612,
+   "motion_coherence": 0.010728069609150096,
+   "clipped_high": 0.0020303726196289062
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 1046.982929076911,
+   "motion_coherence": 0.05246293516377303,
+   "clipped_high": 0.006567955017089844
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 581.7557592080692,
+   "motion_coherence": 0.15463136385667844,
+   "clipped_high": 9.5367431640625e-07
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 456.09111188328825,
+   "motion_coherence": 0.09570318327452731,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 675.1556787362049,
+   "motion_coherence": 0.24828004390681593,
+   "clipped_high": 9.5367431640625e-06
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 489.84977718383016,
+   "motion_coherence": 0.256534317592658,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 602.5696151728007,
+   "motion_coherence": 0.12781184408028162,
+   "clipped_high": 8.96453857421875e-05
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 529.2703266130666,
+   "motion_coherence": 0.08287334010465161,
+   "clipped_high": 9.5367431640625e-07
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 580.8105757802467,
+   "motion_coherence": 0.12372681671975534,
+   "clipped_high": 0.001979827880859375
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 552.5376576956904,
+   "motion_coherence": 0.14707693667637048,
+   "clipped_high": 4.57763671875e-05
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 451.62967678173663,
+   "motion_coherence": 0.12032139294343645,
+   "clipped_high": 1.9073486328125e-06
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 500.39010969496667,
+   "motion_coherence": 0.23038778258898124,
+   "clipped_high": 1.621246337890625e-05
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 473.4251813888104,
+   "motion_coherence": 0.025740185788921042,
+   "clipped_high": 1.52587890625e-05
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 603.6877441288052,
+   "motion_coherence": 0.2632745503580609,
+   "clipped_high": 4.76837158203125e-05
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 519.0231694531358,
+   "motion_coherence": 0.0638589307982822,
+   "clipped_high": 0.00016117095947265625
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 391.88865930513475,
+   "motion_coherence": 0.1002865967162984,
+   "clipped_high": 3.337860107421875e-05
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 376.16942780638055,
+   "motion_coherence": 0.2030880058841424,
+   "clipped_high": 0.00046825408935546875
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 393.18874740408137,
+   "motion_coherence": 0.18141538007379887,
+   "clipped_high": 2.574920654296875e-05
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 474.36594753757527,
+   "motion_coherence": 0.1300781093060476,
+   "clipped_high": 0.0017805099487304688
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 487.56666079194014,
+   "motion_coherence": 0.04728786465105577,
+   "clipped_high": 0.0012359619140625
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 504.05235093453666,
+   "motion_coherence": 0.02926217297274404,
+   "clipped_high": 0.00041866302490234375
+  },
+  {
+   "condition": "lowlight",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 507.0271685588523,
+   "motion_coherence": 0.15063011084943573,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 278.223576542964,
+   "motion_coherence": 0.04624760001884784,
+   "clipped_high": 0.14379501342773438
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 60.96618365614904,
+   "motion_coherence": 0.09891047941338552,
+   "clipped_high": 0.29150962829589844
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 134.48149103821197,
+   "motion_coherence": 0.03962412804547955,
+   "clipped_high": 0.7010383605957031
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 32.85299583276992,
+   "motion_coherence": 0.24714405755105184,
+   "clipped_high": 0.8249101638793945
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 75.57035732085113,
+   "motion_coherence": 0.13807419971354637,
+   "clipped_high": 0.6051931381225586
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 45.6603878756423,
+   "motion_coherence": 0.1300550571341134,
+   "clipped_high": 0.5982866287231445
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 14.869516372589715,
+   "motion_coherence": 0.056860498241279415,
+   "clipped_high": 0.7269811630249023
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 14.027538251448277,
+   "motion_coherence": 0.19753904920973897,
+   "clipped_high": 0.6857328414916992
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 3.8620328900569802,
+   "motion_coherence": 0.10907562969169744,
+   "clipped_high": 0.6841335296630859
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 12.403064727779565,
+   "motion_coherence": 0.20469617705792523,
+   "clipped_high": 0.5868511199951172
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 28.49546045873649,
+   "motion_coherence": 0.09298233798899158,
+   "clipped_high": 0.7577600479125977
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 14.21255675822249,
+   "motion_coherence": 0.1377479827821351,
+   "clipped_high": 0.7683954238891602
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 16.50661277769541,
+   "motion_coherence": 0.07496780052103504,
+   "clipped_high": 0.6099987030029297
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 75.13013600785052,
+   "motion_coherence": 0.046920701658791926,
+   "clipped_high": 0.6794824600219727
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 9.128791806022491,
+   "motion_coherence": 0.07239109037276814,
+   "clipped_high": 0.8500137329101562
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 2.7751865377649665,
+   "motion_coherence": 0.013489820701663848,
+   "clipped_high": 0.853175163269043
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 2.154130929553503,
+   "motion_coherence": 0.035084079784322215,
+   "clipped_high": 0.6940326690673828
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 3.79929347484358,
+   "motion_coherence": 0.155476009436983,
+   "clipped_high": 0.34765052795410156
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 20.903068541661924,
+   "motion_coherence": 0.051985562061626356,
+   "clipped_high": 0.7481594085693359
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 19.719826698229554,
+   "motion_coherence": 0.0212260842971631,
+   "clipped_high": 0.705592155456543
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 43.18230048022451,
+   "motion_coherence": 0.11062277973660939,
+   "clipped_high": 0.46497058868408203
+  },
+  {
+   "condition": "glare",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 74.5420582136494,
+   "motion_coherence": 0.035553291037701176,
+   "clipped_high": 0.7876148223876953
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 37.34030149782484,
+   "motion_coherence": 0.3889220130739244,
+   "clipped_high": 0.0001163482666015625
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 10.63877487037098,
+   "motion_coherence": 0.2553507017565838,
+   "clipped_high": 0.00383758544921875
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 23.790688513027817,
+   "motion_coherence": 0.4477258468454416,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 11.174577601599594,
+   "motion_coherence": 0.33850271235812374,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 25.87774658185299,
+   "motion_coherence": 0.2953070777834849,
+   "clipped_high": 9.5367431640625e-07
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 14.832887603901327,
+   "motion_coherence": 0.39674115854861897,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 9.11836528711774,
+   "motion_coherence": 0.3222349690465061,
+   "clipped_high": 0.0018682479858398438
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 15.00479125932543,
+   "motion_coherence": 0.4889230403866686,
+   "clipped_high": 2.86102294921875e-06
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 4.87298870086579,
+   "motion_coherence": 0.3447605855271997,
+   "clipped_high": 0.0768117904663086
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 7.783697127364576,
+   "motion_coherence": 0.17670297663647883,
+   "clipped_high": 7.534027099609375e-05
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 15.254194259279757,
+   "motion_coherence": 0.3403481390613352,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 6.980559346505288,
+   "motion_coherence": 0.19081341634424684,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 37.25599098100429,
+   "motion_coherence": 0.46138096185815636,
+   "clipped_high": 1.811981201171875e-05
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 11.220315933227539,
+   "motion_coherence": 0.17295176634348494,
+   "clipped_high": 0.0004940032958984375
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 7.239958759039837,
+   "motion_coherence": 0.33177775344043287,
+   "clipped_high": 0.0026998519897460938
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 4.160063551978055,
+   "motion_coherence": 0.18154373023822026,
+   "clipped_high": 0.00066375732421875
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 2.1682872769270034,
+   "motion_coherence": 0.21525017422403087,
+   "clipped_high": 0.033110618591308594
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 4.514997480375314,
+   "motion_coherence": 0.2812826861806147,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 8.773541446417767,
+   "motion_coherence": 0.25504173813148595,
+   "clipped_high": 0.09585285186767578
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 6.935770034611778,
+   "motion_coherence": 0.21680430259109398,
+   "clipped_high": 0.051540374755859375
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 13.036299705497186,
+   "motion_coherence": 0.4957189700617806,
+   "clipped_high": 0.015262603759765625
+  },
+  {
+   "condition": "motion",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 15.26402264297576,
+   "motion_coherence": 0.3042117411595176,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 6.481554977842279,
+   "motion_coherence": 0.08398291265514134,
+   "clipped_high": 5.340576171875e-05
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 4.987163543522911,
+   "motion_coherence": 0.07415416705412121,
+   "clipped_high": 0.004359245300292969
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 4.870051383767532,
+   "motion_coherence": 0.09318937514497189,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 3.673312187150259,
+   "motion_coherence": 0.0414352329052334,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 3.739565849099563,
+   "motion_coherence": 0.055604663785659134,
+   "clipped_high": 1.621246337890625e-05
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 3.0082359150655975,
+   "motion_coherence": 0.09831338641146996,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 2.9942541121699833,
+   "motion_coherence": 0.032484054670330206,
+   "clipped_high": 0.0022726058959960938
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 2.484202384795026,
+   "motion_coherence": 0.026669611600772494,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 2.2706937783286776,
+   "motion_coherence": 0.10312366257649153,
+   "clipped_high": 0.08121204376220703
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 2.5162258143791405,
+   "motion_coherence": 0.13072494664642584,
+   "clipped_high": 0.0001316070556640625
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 3.7704696648143,
+   "motion_coherence": 0.05198005408665955,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 2.093686101637104,
+   "motion_coherence": 0.11423648986946286,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 2.520400047257681,
+   "motion_coherence": 0.056845743680826955,
+   "clipped_high": 9.5367431640625e-07
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 2.9953460662763973,
+   "motion_coherence": 0.07091269794732184,
+   "clipped_high": 0.00055694580078125
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 2.6808547956024995,
+   "motion_coherence": 0.06440411935792645,
+   "clipped_high": 0.0033473968505859375
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 2.5661992708692196,
+   "motion_coherence": 0.030162564080602083,
+   "clipped_high": 0.0007543563842773438
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 1.5913963316088484,
+   "motion_coherence": 0.08104248714776376,
+   "clipped_high": 0.033448219299316406
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 0.8887748644592648,
+   "motion_coherence": 0.07049433947323308,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 3.828320500483642,
+   "motion_coherence": 0.06163002778794967,
+   "clipped_high": 0.09012126922607422
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 3.2496881483884863,
+   "motion_coherence": 0.01087972351871404,
+   "clipped_high": 0.05107879638671875
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 3.1589117046887623,
+   "motion_coherence": 0.07105655287450373,
+   "clipped_high": 0.013441085815429688
+  },
+  {
+   "condition": "defocus",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 5.130360865441617,
+   "motion_coherence": 0.012170251815149434,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 939.1336145204468,
+   "motion_coherence": 0.221407205476997,
+   "clipped_high": 0.0073451995849609375
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 465.6045999410843,
+   "motion_coherence": 0.159855014866779,
+   "clipped_high": 0.02310466766357422
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 368.77773189457264,
+   "motion_coherence": 0.11789780506920505,
+   "clipped_high": 0.0001354217529296875
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 178.60337633351082,
+   "motion_coherence": 0.10115002813321129,
+   "clipped_high": 1.811981201171875e-05
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 323.10213184172505,
+   "motion_coherence": 0.013300442693483565,
+   "clipped_high": 0.001678466796875
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 194.18190284101635,
+   "motion_coherence": 0.09241256710466418,
+   "clipped_high": 8.58306884765625e-05
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 177.2192315687853,
+   "motion_coherence": 0.0761501363119647,
+   "clipped_high": 0.009626388549804688
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 139.5945729531513,
+   "motion_coherence": 0.10149997970680337,
+   "clipped_high": 0.000560760498046875
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 128.48428237506505,
+   "motion_coherence": 0.2211776307249573,
+   "clipped_high": 0.12210750579833984
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 153.32390975939052,
+   "motion_coherence": 0.24041821712411804,
+   "clipped_high": 0.0007200241088867188
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 161.94532955975956,
+   "motion_coherence": 0.12299789865906796,
+   "clipped_high": 0.00034046173095703125
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 145.06912038264272,
+   "motion_coherence": 0.10113316070768548,
+   "clipped_high": 0.0004949569702148438
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 119.67658421931264,
+   "motion_coherence": 0.167477534996461,
+   "clipped_high": 0.0010118484497070312
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 228.7537692997493,
+   "motion_coherence": 0.24795314487687586,
+   "clipped_high": 0.0030517578125
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 121.58896349819315,
+   "motion_coherence": 0.13739558826774048,
+   "clipped_high": 0.0139923095703125
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 60.80988380542476,
+   "motion_coherence": 0.09134121778137176,
+   "clipped_high": 0.0026397705078125
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 43.25253486632937,
+   "motion_coherence": 0.01598117471505641,
+   "clipped_high": 0.0442047119140625
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 52.40742579246488,
+   "motion_coherence": 0.17889634203986637,
+   "clipped_high": 7.05718994140625e-05
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 148.4817075690944,
+   "motion_coherence": 0.13219707583487236,
+   "clipped_high": 0.15989398956298828
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 142.52735996093452,
+   "motion_coherence": 0.03576320114548173,
+   "clipped_high": 0.09227848052978516
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 171.73410593798326,
+   "motion_coherence": 0.2663063744607058,
+   "clipped_high": 0.031646728515625
+  },
+  {
+   "condition": "jpeg",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 249.4099169676619,
+   "motion_coherence": 0.09946049124262563,
+   "clipped_high": 2.6702880859375e-05
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 144.0080650167574,
+   "motion_coherence": 0.1234942552719176,
+   "clipped_high": 0.00328826904296875
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 98.5012645681818,
+   "motion_coherence": 0.09541798895473119,
+   "clipped_high": 0.01736736297607422
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 98.7366609564624,
+   "motion_coherence": 0.07520738742238342,
+   "clipped_high": 2.574920654296875e-05
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 53.60995006408393,
+   "motion_coherence": 0.05179119572713753,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 78.30834102626159,
+   "motion_coherence": 0.035318563115513346,
+   "clipped_high": 0.0006837844848632812
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 45.81128787337275,
+   "motion_coherence": 0.09217479895188119,
+   "clipped_high": 4.76837158203125e-06
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 44.63449857290834,
+   "motion_coherence": 0.08799672629212452,
+   "clipped_high": 0.005253791809082031
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 35.33808993506591,
+   "motion_coherence": 0.1316314127667448,
+   "clipped_high": 0.00017070770263671875
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 28.6331385334488,
+   "motion_coherence": 0.1139294523911522,
+   "clipped_high": 0.10586357116699219
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 36.913023937056096,
+   "motion_coherence": 0.2607897080018127,
+   "clipped_high": 0.00048351287841796875
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 42.60412975842701,
+   "motion_coherence": 0.06162914173556724,
+   "clipped_high": 0.0001392364501953125
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 27.48043534898079,
+   "motion_coherence": 0.1444412393250651,
+   "clipped_high": 0.0006341934204101562
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 31.397575370036066,
+   "motion_coherence": 0.1949554021385334,
+   "clipped_high": 0.0003757476806640625
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 42.30160423705729,
+   "motion_coherence": 0.22874734888691975,
+   "clipped_high": 0.0017042160034179688
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 28.22654437232177,
+   "motion_coherence": 0.14121388641421007,
+   "clipped_high": 0.008841514587402344
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 14.528125124252256,
+   "motion_coherence": 0.011285891656622776,
+   "clipped_high": 0.0018281936645507812
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 7.96550750680035,
+   "motion_coherence": 0.060771149699048815,
+   "clipped_high": 0.03919219970703125
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 10.028167621931061,
+   "motion_coherence": 0.14618036741829846,
+   "clipped_high": 2.288818359375e-05
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 41.86941242213561,
+   "motion_coherence": 0.09568308097081649,
+   "clipped_high": 0.13390731811523438
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 36.10912510167327,
+   "motion_coherence": 0.06757964219542167,
+   "clipped_high": 0.07555007934570312
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 43.377249614422,
+   "motion_coherence": 0.22662849086267733,
+   "clipped_high": 0.02464008331298828
+  },
+  {
+   "condition": "lowres",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 78.42446479468708,
+   "motion_coherence": 0.02135301541277663,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "sharpness": 465.4113874434323,
+   "motion_coherence": 0.021545751284764384,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "sharpness": 196.99761485835091,
+   "motion_coherence": 0.09195862720430176,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "sharpness": 150.18003256505108,
+   "motion_coherence": 0.056326491142148,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "sharpness": 68.57205009250902,
+   "motion_coherence": 0.08886998859357961,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "sharpness": 140.89254088147482,
+   "motion_coherence": 0.19218540639086956,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "sharpness": 85.13094711198573,
+   "motion_coherence": 0.1037261380484221,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "sharpness": 71.53124427242074,
+   "motion_coherence": 0.06101569778410987,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "sharpness": 61.91490357444491,
+   "motion_coherence": 0.012122248653694849,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "sharpness": 51.84750841581172,
+   "motion_coherence": 0.12473987329086318,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "sharpness": 69.95290946784371,
+   "motion_coherence": 0.1678107236313097,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "sharpness": 56.44538592171648,
+   "motion_coherence": 0.043808374231959546,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "sharpness": 71.06361484461286,
+   "motion_coherence": 0.16085160214749833,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "sharpness": 49.439269037363374,
+   "motion_coherence": 0.10159958300672678,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "sharpness": 115.26057035951817,
+   "motion_coherence": 0.24553593094801418,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "sharpness": 47.161062237541046,
+   "motion_coherence": 0.10148465100513678,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "sharpness": 21.22264480587546,
+   "motion_coherence": 0.11561819976926245,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "sharpness": 16.183934207888342,
+   "motion_coherence": 0.10129320753452732,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "sharpness": 27.307477902937535,
+   "motion_coherence": 0.2763794741182983,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "sharpness": 52.93868255613779,
+   "motion_coherence": 0.06968748958678525,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "sharpness": 49.32219218971204,
+   "motion_coherence": 0.015749854099256447,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "sharpness": 65.33394715985105,
+   "motion_coherence": 0.052031319341525994,
+   "clipped_high": 0.0
+  },
+  {
+   "condition": "rainhaze",
+   "image": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "sharpness": 94.6105821623787,
+   "motion_coherence": 0.12744078736746248,
+   "clipped_high": 0.0
+  }
+ ]
+}

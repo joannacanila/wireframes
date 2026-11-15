@@ -1,0 +1,40 @@
+# Source label -> WIREFRAME class (Section 3.4.2 step 5; revised taxonomy 2026-11-14).
+# Keys are normalised (lower case, spaces/hyphens -> underscore). `null` drops the label.
+# Targets are the exact class names: Vegetation, abandoned-wire, power-distribution-lines,
+# telecom-cable (telecom-cable covers standard telecom lines and fiber optic drops).
+#
+# Generic "wire"/"cable" labels cannot be assigned to one class from the label alone
+# (Table 3.5 separates them by position, bundling and attachment), so they map to
+# `review`: the image goes to the annotation queue for a researcher to assign classes.
+# Wireframes-Prelabelled-Datasets (team set): its own names
+vegetation: Vegetation
+abandoned_wire: abandoned-wire
+power_distribution_lines: power-distribution-lines
+telecom_cable: telecom-cable
+# earlier and public-source names
+power_distribution_line: power-distribution-lines
+fiber_optic_drop: telecom-cable
+fiber: telecom-cable
+dead_wire: abandoned-wire
+dangling_wire: abandoned-wire
+tree: Vegetation
+power_line: review
+powerline: review
+transmission_line: review
+conductor: review
+wire: review
+cable: review
+# not wires
+pole: null
+utility_pole: null
+power_pole: null
+polo: null
+crossarm: null
+crossarm_vert: null
+insulator: null
+insulator_brown: null
+insulator_gray: null
+unsulator_brown: null
+unsulator_gray: null
+streetlight: null
+transformer: null

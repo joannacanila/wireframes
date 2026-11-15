@@ -1,0 +1,69 @@
+{
+ "max_inclination_deg": 35.0,
+ "scored_spans": 657,
+ "by_inclination": [
+  {
+   "band_deg": [
+    0,
+    10
+   ],
+   "spans": 196,
+   "high_share": 0.12755102040816327,
+   "medium_share": 0.1326530612244898,
+   "median_chord_px": 242.48918563771497
+  },
+  {
+   "band_deg": [
+    10,
+    20
+   ],
+   "spans": 147,
+   "high_share": 0.14285714285714285,
+   "medium_share": 0.07482993197278912,
+   "median_chord_px": 216.83389380640338
+  },
+  {
+   "band_deg": [
+    20,
+    35
+   ],
+   "spans": 145,
+   "high_share": 0.06896551724137931,
+   "medium_share": 0.10344827586206896,
+   "median_chord_px": 241.39449124473904
+  },
+  {
+   "band_deg": [
+    35,
+    50
+   ],
+   "spans": 91,
+   "high_share": 0.02197802197802198,
+   "medium_share": 0.054945054945054944,
+   "median_chord_px": 335.01778402226785
+  },
+  {
+   "band_deg": [
+    50,
+    90
+   ],
+   "spans": 78,
+   "high_share": 0.01282051282051282,
+   "medium_share": 0.05128205128205128,
+   "median_chord_px": 320.7240093783834
+  }
+ ],
+ "steep_share_of_scored": 0.2572298325722983,
+ "retest_pairs_primary": 356,
+ "p0_high": 0.05758426966292135,
+ "p0_medium": 0.0997191011235955,
+ "high_rate_primary": 0.11475409836065574,
+ "medium_up_rate_primary": 0.22131147540983606,
+ "crs10_measurements": 33,
+ "crs10_reproduced_high": 13,
+ "primary_spans_per_photo": {
+  "median": 22.5,
+  "min": 2,
+  "max": 49
+ }
+}

@@ -1,0 +1,27 @@
+[
+  {
+    "epoch": 1,
+    "loss": 1.2646452465088538,
+    "iou": {
+      "Vegetation": 0.15123255260145801,
+      "abandoned-wire": 0.020786578860233253,
+      "power-distribution-lines": 0.267817486824205,
+      "telecom-cable": 0.22841359939382785
+    },
+    "tolerant_iou": {
+      "Vegetation": 0.15307061232395341,
+      "abandoned-wire": 0.026295856973404027,
+      "power-distribution-lines": 0.5240299723019111,
+      "telecom-cable": 0.41479192839524315
+    },
+    "wire_miou": 0.17233922169275537,
+    "abandoned_coverage": {
+      "hit_rate": 0.6666666666666666,
+      "precision": 0.039614828119542984,
+      "f": 0.07478572101346896,
+      "pred_px": 100215
+    },
+    "guard": true,
+    "seconds": 551.8
+  }
+]

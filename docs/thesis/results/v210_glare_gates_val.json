@@ -1,0 +1,63 @@
+{
+ "M1 exposure": {
+  "tau": null,
+  "balanced_acc": 0.5,
+  "recall": 1.0,
+  "specificity": 0.0,
+  "loo_accuracy": 0.386,
+  "silent_not_left": 0,
+  "brightsky_fired": 22,
+  "brightsky_not_made_inconclusive": 14
+ },
+ "M2 line contrast": {
+  "tau": 15.3535,
+  "balanced_acc": 0.889,
+  "recall": 1.0,
+  "specificity": 0.778,
+  "loo_accuracy": 0.864,
+  "silent_not_left": 0,
+  "brightsky_fired": 3,
+  "brightsky_not_made_inconclusive": 3
+ },
+ "M3 wire density": {
+  "tau": 0.016,
+  "balanced_acc": 0.882,
+  "recall": 0.765,
+  "specificity": 1.0,
+  "loo_accuracy": 0.795,
+  "silent_not_left": 2,
+  "brightsky_fired": 0,
+  "brightsky_not_made_inconclusive": 0
+ },
+ "M2 or M3": {
+  "tau": [
+   15.3535,
+   0.016
+  ],
+  "balanced_acc": 0.889,
+  "recall": 1.0,
+  "specificity": 0.778,
+  "loo_accuracy": 0.864,
+  "silent_not_left": 0,
+  "brightsky_fired": 3,
+  "brightsky_not_made_inconclusive": 3
+ },
+ "M2 and M3": {
+  "tau": [
+   15.3535,
+   0.016
+  ],
+  "balanced_acc": 0.882,
+  "recall": 0.765,
+  "specificity": 1.0,
+  "loo_accuracy": 0.795,
+  "silent_not_left": 2,
+  "brightsky_fired": 0,
+  "brightsky_not_made_inconclusive": 0
+ },
+ "counts": {
+  "positives": 17,
+  "negatives": 27,
+  "silent_not_without_gate": 5
+ }
+}

@@ -1,0 +1,133 @@
+{
+ "all_pass": true,
+ "results": [
+  {
+   "photo": "1_clean_not_at_risk.jpg",
+   "url": "http://127.0.0.1:8000/workspace/result/75955f7dccc046b8a4918a3e7abf5c94",
+   "verdict": "NOT AT RISK",
+   "verdict_text": "No sag above the low band is corroborated across 34 measurable spans.",
+   "kpis": [
+    "WORST CRS 6.0 /10 span 23",
+    "DETECTED SPANS 38 34 measured",
+    "SCENE CLUTTER High VNI 0.58"
+   ],
+   "retake_banner": false,
+   "hazards": [],
+   "table_rows": 38,
+   "unmeasured_without_reason": 0,
+   "toggles": {
+    "spans": "ok",
+    "wiremask": "ok",
+    "vegetation": "disabled",
+    "photo": "ok"
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "canvas_click_wire": {
+    "expected": 1,
+    "selected": 1
+   },
+   "pdf_ok": true,
+   "errors": [],
+   "pass": true
+  },
+  {
+   "photo": "2_at_risk_high.jpg",
+   "url": "http://127.0.0.1:8000/workspace/result/92e7eaee6fec4e98b80542cf32f2a7b5",
+   "verdict": "AT RISK \u2013 HIGH",
+   "verdict_text": "Span 11 has the worst sag (5.1%, CRS 10.0/10); 8 of 49 measurable spans exceed the high sag band.",
+   "kpis": [
+    "WORST CRS 10.0 /10 span 11",
+    "DETECTED SPANS 56 49 measured",
+    "SCENE CLUTTER High VNI 0.53"
+   ],
+   "retake_banner": true,
+   "hazards": [
+    "Critical sag on spans 11, 14, 26, 31, 39, 47, 52, 56; worst is span 11 at 5.1% (CRS 10.0/10)."
+   ],
+   "table_rows": 56,
+   "unmeasured_without_reason": 0,
+   "toggles": {
+    "spans": "ok",
+    "wiremask": "ok",
+    "vegetation": "disabled",
+    "photo": "ok"
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "canvas_click_wire": {
+    "expected": 2,
+    "selected": 2
+   },
+   "pdf_ok": true,
+   "errors": [],
+   "pass": true
+  },
+  {
+   "photo": "3_low_light.png",
+   "url": "http://127.0.0.1:8000/workspace/result/f7bcbd0462f64b13ba246afcd183cb48",
+   "verdict": "NOT AT RISK",
+   "verdict_text": "No sag above the low band is corroborated across 21 measurable spans. Closest vegetation: 39 px from span 30.",
+   "kpis": [
+    "WORST CRS 10.0 /10 span 33",
+    "DETECTED SPANS 34 21 measured",
+    "SCENE CLUTTER Moderate VNI 0.34"
+   ],
+   "retake_banner": true,
+   "hazards": [],
+   "table_rows": 34,
+   "unmeasured_without_reason": 0,
+   "toggles": {
+    "spans": "ok",
+    "wiremask": "ok",
+    "vegetation": "ok",
+    "photo": "ok"
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "canvas_click_wire": {
+    "expected": 1,
+    "selected": 2
+   },
+   "pdf_ok": true,
+   "errors": [],
+   "pass": true
+  },
+  {
+   "photo": "4_glare_degraded.png",
+   "url": "http://127.0.0.1:8000/workspace/result/104259eb306b4da691802eda16f2e045",
+   "verdict": "INCONCLUSIVE \u2013 RETAKE PHOTO",
+   "verdict_text": "Severe sky glare washed out the overhead conductors. 5 spans were measured, but a safe result cannot be confirmed from this photo.",
+   "kpis": [
+    "WORST CRS 5.5 /10 span 3",
+    "DETECTED SPANS 6 5 measured",
+    "SCENE CLUTTER Low VNI 0.15"
+   ],
+   "retake_banner": true,
+   "hazards": [],
+   "table_rows": 6,
+   "unmeasured_without_reason": 0,
+   "toggles": {
+    "spans": "ok",
+    "wiremask": "ok",
+    "vegetation": "disabled",
+    "photo": "ok"
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "canvas_click_wire": {
+    "expected": 1,
+    "selected": 1
+   },
+   "pdf_ok": true,
+   "errors": [],
+   "pass": true
+  },
+  {
+   "photo": "phone-width (390 px)",
+   "horizontal_overflow": false,
+   "errors": [],
+   "pass": true
+  }
+ ]
+}

@@ -1,0 +1,956 @@
+{
+ "v2.8 | test": {
+  "photos": [
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145516_jpg.rf.JGfY7XLoxvojQMS6vwTa",
+    "status": "complete",
+    "worst_level": "low",
+    "worst_crs": 2.198,
+    "worst_chord_px": 645.5,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 2,
+    "scored": 2,
+    "too_short": 0,
+    "service_drops": 0,
+    "levels": {
+     "low": 2
+    },
+    "reasons": [
+     "AT RISK - MODERATE: vegetation in contact with telecom span 1",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 2",
+     "NOTE: photo reliability low (The model is uncertain about some wire pixels (clutter or low contrast)); retake to confirm"
+    ],
+    "grade": "Retake recommended"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145557_jpg.rf.9XtKFuVBkh5oVadxLJ6v",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 127.0,
+    "verdict": "AT RISK - HIGH",
+    "spans": 33,
+    "scored": 24,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 17,
+     "high": 6,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 7, 8, 12, 17, 19, 22"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145603_jpg.rf.5TFSvbTELW7IgIc4tQey",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 388.1,
+    "verdict": "AT RISK - HIGH",
+    "spans": 38,
+    "scored": 25,
+    "too_short": 6,
+    "service_drops": 0,
+    "levels": {
+     "low": 20,
+     "medium": 1,
+     "high": 4
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 14, 24, 28, 35"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145634_jpg.rf.ueGmpdTZlPCN815SP7Hj",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 191.3,
+    "verdict": "AT RISK - HIGH",
+    "spans": 78,
+    "scored": 54,
+    "too_short": 12,
+    "service_drops": 0,
+    "levels": {
+     "low": 43,
+     "medium": 5,
+     "high": 6
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 15, 32, 35, 49, 53, 64"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192446_jpg.rf.6LaWCIgKqw9S9WoJFMnZ",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 402.0,
+    "verdict": "AT RISK - HIGH",
+    "spans": 36,
+    "scored": 34,
+    "too_short": 1,
+    "service_drops": 0,
+    "levels": {
+     "low": 30,
+     "high": 4
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 13, 16, 20, 23",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 16",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 17",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 19",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 22",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 26",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 27",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 28"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192558_jpg.rf.uf0sljAjhBXhf6OBPvzh",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 513.0,
+    "verdict": "AT RISK - HIGH",
+    "spans": 21,
+    "scored": 20,
+    "too_short": 0,
+    "service_drops": 0,
+    "levels": {
+     "low": 14,
+     "medium": 5,
+     "high": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on span 21"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192913_jpg.rf.JIzJFaiw3LvMCDNUmbph",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 126.5,
+    "verdict": "AT RISK - HIGH",
+    "spans": 56,
+    "scored": 49,
+    "too_short": 4,
+    "service_drops": 0,
+    "levels": {
+     "low": 37,
+     "high": 8,
+     "medium": 4
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 11, 14, 26, 31, 39, 47, 52, 56"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 212921_jpg.rf.1gtnzMJiQz4EWQDrxjfA",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 7.027,
+    "worst_chord_px": 188.9,
+    "verdict": "AT RISK - HIGH",
+    "spans": 48,
+    "scored": 42,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 39,
+     "high": 2,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 2, 25"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213039_jpg.rf.3OaFBNYEa1KQlvg4D2nk",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 382.3,
+    "verdict": "AT RISK - HIGH",
+    "spans": 52,
+    "scored": 39,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 30,
+     "high": 6,
+     "medium": 3
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 16, 24, 27, 30, 33, 34"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213101_jpg.rf.uxtvRcwbZ2WKs4cli8DZ",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 313.5,
+    "verdict": "AT RISK - HIGH",
+    "spans": 58,
+    "scored": 48,
+    "too_short": 4,
+    "service_drops": 0,
+    "levels": {
+     "low": 42,
+     "high": 4,
+     "medium": 2
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 28, 41, 54, 55"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213223_jpg.rf.INyydOI6nsZYVE2spcJ9",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 115.5,
+    "verdict": "AT RISK - HIGH",
+    "spans": 85,
+    "scored": 63,
+    "too_short": 12,
+    "service_drops": 0,
+    "levels": {
+     "low": 58,
+     "medium": 3,
+     "high": 2
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 63, 76"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213644_jpg.rf.dVvzMP0ho0VPuIVZYNkF",
+    "status": "complete",
+    "worst_level": "medium",
+    "worst_crs": 5.599,
+    "worst_chord_px": 415.3,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 31,
+    "scored": 20,
+    "too_short": 1,
+    "service_drops": 0,
+    "levels": {
+     "low": 18,
+     "medium": 2
+    },
+    "reasons": [
+     "AT RISK - MODERATE: sag in the medium CRS band on spans 8, 30"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213707_jpg.rf.qZbImPASdUTh3vi96Yly",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 215.2,
+    "verdict": "AT RISK - HIGH",
+    "spans": 43,
+    "scored": 35,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 27,
+     "high": 5,
+     "medium": 3
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 17, 21, 22, 25, 35"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213848_jpg.rf.nrkgoKALsfdUPzKesrh6",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 126.7,
+    "verdict": "AT RISK - HIGH",
+    "spans": 49,
+    "scored": 35,
+    "too_short": 6,
+    "service_drops": 0,
+    "levels": {
+     "low": 29,
+     "high": 5,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 6, 10, 12, 14, 28",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 39",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 43",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 46"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221135_jpg.rf.imJRd2fY2hF4adYZTecv",
+    "status": "complete",
+    "worst_level": "medium",
+    "worst_crs": 5.968,
+    "worst_chord_px": 380.0,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 38,
+    "scored": 34,
+    "too_short": 2,
+    "service_drops": 0,
+    "levels": {
+     "low": 30,
+     "medium": 4
+    },
+    "reasons": [
+     "AT RISK - MODERATE: sag in the medium CRS band on spans 8, 15, 23, 29"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224148_jpg.rf.9fnENO2kpD8sJ0uuYwJA",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 398.6,
+    "verdict": "AT RISK - HIGH",
+    "spans": 52,
+    "scored": 44,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 28,
+     "medium": 8,
+     "high": 8
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 9, 10, 13, 28, 37, 42, 45, 50"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224819_jpg.rf.8IG3DVJE9G4ljFq1SfSE",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 112.2,
+    "verdict": "AT RISK - HIGH",
+    "spans": 53,
+    "scored": 46,
+    "too_short": 4,
+    "service_drops": 0,
+    "levels": {
+     "low": 36,
+     "medium": 5,
+     "high": 5
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 15, 20, 29, 42, 49"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224912_jpg.rf.gwyaamqv8CLU0Aq95IjM",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 130.0,
+    "verdict": "AT RISK - HIGH",
+    "spans": 52,
+    "scored": 43,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 39,
+     "high": 3,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 25, 37, 48"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__dataset_171_jpg.rf.YysHv9NySZjc1AOeDoUg",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 122.2,
+    "verdict": "AT RISK - HIGH",
+    "spans": 34,
+    "scored": 29,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 24,
+     "high": 4,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on spans 18, 23, 25, 33",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 29"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__dataset_183_jpg.rf.jGZSaq0fFZsREJitxIqT",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 549.9,
+    "verdict": "AT RISK - HIGH",
+    "spans": 8,
+    "scored": 8,
+    "too_short": 0,
+    "service_drops": 0,
+    "levels": {
+     "low": 6,
+     "high": 1,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on span 7",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 8"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__dataset_383_jpg.rf.DZ2nc3kwF1rE09ISdDs1",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 376.3,
+    "verdict": "AT RISK - HIGH",
+    "spans": 15,
+    "scored": 11,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 8,
+     "medium": 2,
+     "high": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on span 9"
+    ],
+    "grade": "B"
+   }
+  ],
+  "worst_level": {
+   "low": 1,
+   "high": 18,
+   "medium": 2
+  },
+  "verdict": {
+   "AT RISK - MODERATE": 3,
+   "AT RISK - HIGH": 18
+  },
+  "span_levels": {
+   "low": 577,
+   "high": 75,
+   "medium": 53
+  },
+  "grade": {
+   "Retake recommended": 1,
+   "A": 6,
+   "B": 14
+  }
+ },
+ "v2.9 | test": {
+  "photos": [
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145516_jpg.rf.JGfY7XLoxvojQMS6vwTa",
+    "status": "complete",
+    "worst_level": "low",
+    "worst_crs": 2.198,
+    "worst_chord_px": 645.5,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 2,
+    "scored": 2,
+    "too_short": 0,
+    "service_drops": 0,
+    "levels": {
+     "low": 2
+    },
+    "reasons": [
+     "AT RISK - MODERATE: vegetation in contact with telecom span 1",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 2",
+     "NOTE: photo reliability low (The model is uncertain about some wire pixels (clutter or low contrast)); retake to confirm"
+    ],
+    "grade": "Retake recommended"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145557_jpg.rf.9XtKFuVBkh5oVadxLJ6v",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 127.0,
+    "verdict": "AT RISK - HIGH",
+    "spans": 33,
+    "scored": 24,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 17,
+     "high": 6,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on 6 of 24 measurable spans (spans 7, 8, 12, 17, 19, 22; at least 4 needed to exceed measurement noise)"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145603_jpg.rf.5TFSvbTELW7IgIc4tQey",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 388.1,
+    "verdict": "AT RISK - HIGH",
+    "spans": 38,
+    "scored": 25,
+    "too_short": 6,
+    "service_drops": 0,
+    "levels": {
+     "low": 20,
+     "medium": 1,
+     "high": 4
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on 4 of 25 measurable spans (spans 14, 24, 28, 35; at least 4 needed to exceed measurement noise)"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145634_jpg.rf.ueGmpdTZlPCN815SP7Hj",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 191.3,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 78,
+    "scored": 54,
+    "too_short": 12,
+    "service_drops": 0,
+    "levels": {
+     "low": 43,
+     "medium": 5,
+     "high": 6
+    },
+    "reasons": [
+     "AT RISK - MODERATE: sag in the medium CRS band or above on 11 of 54 measurable spans (spans 9, 15, 22, 32, 35, 43, 48, 49, 50, 53, 64; at least 10 needed to exceed measurement noise)"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192446_jpg.rf.6LaWCIgKqw9S9WoJFMnZ",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 402.0,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 36,
+    "scored": 34,
+    "too_short": 1,
+    "service_drops": 0,
+    "levels": {
+     "low": 30,
+     "high": 4
+    },
+    "reasons": [
+     "AT RISK - MODERATE: vegetation in contact with telecom span 16",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 17",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 19",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 22",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 26",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 27",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 28",
+     "NOTE: spans 13, 16, 20, 23 in the high CRS band (4 of 34, 5 needed); not corroborated (4 of 34 at medium or above, 7 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192558_jpg.rf.uf0sljAjhBXhf6OBPvzh",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 513.0,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 21,
+    "scored": 20,
+    "too_short": 0,
+    "service_drops": 0,
+    "levels": {
+     "low": 14,
+     "medium": 5,
+     "high": 1
+    },
+    "reasons": [
+     "AT RISK - MODERATE: sag in the medium CRS band or above on 6 of 20 measurable spans (spans 8, 10, 12, 18, 20, 21; at least 5 needed to exceed measurement noise)"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192913_jpg.rf.JIzJFaiw3LvMCDNUmbph",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 126.5,
+    "verdict": "AT RISK - HIGH",
+    "spans": 56,
+    "scored": 49,
+    "too_short": 4,
+    "service_drops": 0,
+    "levels": {
+     "low": 37,
+     "high": 8,
+     "medium": 4
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on 8 of 49 measurable spans (spans 11, 14, 26, 31, 39, 47, 52, 56; at least 6 needed to exceed measurement noise)"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 212921_jpg.rf.1gtnzMJiQz4EWQDrxjfA",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 7.027,
+    "worst_chord_px": 188.9,
+    "verdict": "NOT AT RISK",
+    "spans": 48,
+    "scored": 42,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 39,
+     "high": 2,
+     "medium": 1
+    },
+    "reasons": [
+     "NOT AT RISK: 42 power and 6 telecom spans detected; 42 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires",
+     "NOTE: spans 2, 25 in the high CRS band (2 of 42, 6 needed) and span 12 in the medium band; not corroborated (3 of 42 at medium or above, 8 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213039_jpg.rf.3OaFBNYEa1KQlvg4D2nk",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 382.3,
+    "verdict": "AT RISK - HIGH",
+    "spans": 52,
+    "scored": 39,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 30,
+     "high": 6,
+     "medium": 3
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on 6 of 39 measurable spans (spans 16, 24, 27, 30, 33, 34; at least 5 needed to exceed measurement noise)"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213101_jpg.rf.uxtvRcwbZ2WKs4cli8DZ",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 313.5,
+    "verdict": "NOT AT RISK",
+    "spans": 58,
+    "scored": 48,
+    "too_short": 4,
+    "service_drops": 0,
+    "levels": {
+     "low": 42,
+     "high": 4,
+     "medium": 2
+    },
+    "reasons": [
+     "NOT AT RISK: 23 power and 35 telecom spans detected; 48 measurable for sag, none corroborated above the low CRS band; closest vegetation 31 px from a wire",
+     "NOTE: spans 28, 41, 54, 55 in the high CRS band (4 of 48, 6 needed) and spans 37, 52 in the medium band; not corroborated (6 of 48 at medium or above, 9 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213223_jpg.rf.INyydOI6nsZYVE2spcJ9",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 115.5,
+    "verdict": "NOT AT RISK",
+    "spans": 85,
+    "scored": 63,
+    "too_short": 12,
+    "service_drops": 0,
+    "levels": {
+     "low": 58,
+     "medium": 3,
+     "high": 2
+    },
+    "reasons": [
+     "NOT AT RISK: 25 power and 60 telecom spans detected; 63 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires",
+     "NOTE: spans 63, 76 in the high CRS band (2 of 63, 7 needed) and spans 46, 53, 84 in the medium band; not corroborated (5 of 63 at medium or above, 11 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213644_jpg.rf.dVvzMP0ho0VPuIVZYNkF",
+    "status": "complete",
+    "worst_level": "medium",
+    "worst_crs": 5.599,
+    "worst_chord_px": 415.3,
+    "verdict": "NOT AT RISK",
+    "spans": 31,
+    "scored": 20,
+    "too_short": 1,
+    "service_drops": 0,
+    "levels": {
+     "low": 18,
+     "medium": 2
+    },
+    "reasons": [
+     "NOT AT RISK: 19 power and 12 telecom spans detected; 20 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires",
+     "NOTE: spans 8, 30 in the medium band; not corroborated (2 of 20 at medium or above, 5 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213707_jpg.rf.qZbImPASdUTh3vi96Yly",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 215.2,
+    "verdict": "AT RISK - HIGH",
+    "spans": 43,
+    "scored": 35,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 27,
+     "high": 5,
+     "medium": 3
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on 5 of 35 measurable spans (spans 17, 21, 22, 25, 35; at least 5 needed to exceed measurement noise)"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213848_jpg.rf.nrkgoKALsfdUPzKesrh6",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 126.7,
+    "verdict": "AT RISK - HIGH",
+    "spans": 49,
+    "scored": 35,
+    "too_short": 6,
+    "service_drops": 0,
+    "levels": {
+     "low": 29,
+     "high": 5,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on 5 of 35 measurable spans (spans 6, 10, 12, 14, 28; at least 5 needed to exceed measurement noise)",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 39",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 43",
+     "AT RISK - MODERATE: vegetation in contact with telecom span 46"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221135_jpg.rf.imJRd2fY2hF4adYZTecv",
+    "status": "complete",
+    "worst_level": "medium",
+    "worst_crs": 5.968,
+    "worst_chord_px": 380.0,
+    "verdict": "NOT AT RISK",
+    "spans": 38,
+    "scored": 34,
+    "too_short": 2,
+    "service_drops": 0,
+    "levels": {
+     "low": 30,
+     "medium": 4
+    },
+    "reasons": [
+     "NOT AT RISK: 19 power and 19 telecom spans detected; 34 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires",
+     "NOTE: spans 8, 15, 23, 29 in the medium band; not corroborated (4 of 34 at medium or above, 7 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224148_jpg.rf.9fnENO2kpD8sJ0uuYwJA",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 398.6,
+    "verdict": "AT RISK - HIGH",
+    "spans": 52,
+    "scored": 44,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 28,
+     "medium": 8,
+     "high": 8
+    },
+    "reasons": [
+     "AT RISK - HIGH: sag above the high CRS band on 8 of 44 measurable spans (spans 9, 10, 13, 28, 37, 42, 45, 50; at least 6 needed to exceed measurement noise)"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224819_jpg.rf.8IG3DVJE9G4ljFq1SfSE",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 112.2,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 53,
+    "scored": 46,
+    "too_short": 4,
+    "service_drops": 0,
+    "levels": {
+     "low": 36,
+     "medium": 5,
+     "high": 5
+    },
+    "reasons": [
+     "AT RISK - MODERATE: sag in the medium CRS band or above on 10 of 46 measurable spans (spans 5, 15, 16, 20, 29, 36, 42, 43, 49, 53; at least 9 needed to exceed measurement noise)"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224912_jpg.rf.gwyaamqv8CLU0Aq95IjM",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 130.0,
+    "verdict": "NOT AT RISK",
+    "spans": 52,
+    "scored": 43,
+    "too_short": 5,
+    "service_drops": 0,
+    "levels": {
+     "low": 39,
+     "high": 3,
+     "medium": 1
+    },
+    "reasons": [
+     "NOT AT RISK: 30 power and 22 telecom spans detected; 43 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires",
+     "NOTE: spans 25, 37, 48 in the high CRS band (3 of 43, 6 needed) and span 38 in the medium band; not corroborated (4 of 43 at medium or above, 8 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__dataset_171_jpg.rf.YysHv9NySZjc1AOeDoUg",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 122.2,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 34,
+    "scored": 29,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 24,
+     "high": 4,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - MODERATE: vegetation in contact with telecom span 29",
+     "NOTE: spans 18, 23, 25, 33 in the high CRS band (4 of 29, 5 needed) and span 31 in the medium band; not corroborated (5 of 29 at medium or above, 6 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "A"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__dataset_183_jpg.rf.jGZSaq0fFZsREJitxIqT",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 549.9,
+    "verdict": "AT RISK - MODERATE",
+    "spans": 8,
+    "scored": 8,
+    "too_short": 0,
+    "service_drops": 0,
+    "levels": {
+     "low": 6,
+     "high": 1,
+     "medium": 1
+    },
+    "reasons": [
+     "AT RISK - MODERATE: vegetation in contact with telecom span 8",
+     "NOTE: span 7 in the high CRS band (1 of 8, 3 needed) and span 8 in the medium band; not corroborated (2 of 8 at medium or above, 3 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "B"
+   },
+   {
+    "image": "wireframes_prelabelled_datasets__dataset_383_jpg.rf.DZ2nc3kwF1rE09ISdDs1",
+    "status": "complete",
+    "worst_level": "high",
+    "worst_crs": 10.0,
+    "worst_chord_px": 376.3,
+    "verdict": "NOT AT RISK",
+    "spans": 15,
+    "scored": 11,
+    "too_short": 3,
+    "service_drops": 0,
+    "levels": {
+     "low": 8,
+     "medium": 2,
+     "high": 1
+    },
+    "reasons": [
+     "NOT AT RISK: 0 power and 15 telecom spans detected; 11 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires",
+     "NOTE: span 9 in the high CRS band (1 of 11, 3 needed) and spans 4, 8 in the medium band; not corroborated (3 of 11 at medium or above, 4 needed; consistent with measurement noise); verify visually"
+    ],
+    "grade": "B"
+   }
+  ],
+  "worst_level": {
+   "low": 1,
+   "high": 18,
+   "medium": 2
+  },
+  "verdict": {
+   "AT RISK - MODERATE": 7,
+   "AT RISK - HIGH": 7,
+   "NOT AT RISK": 7
+  },
+  "span_levels": {
+   "low": 577,
+   "high": 75,
+   "medium": 53
+  },
+  "grade": {
+   "Retake recommended": 1,
+   "A": 6,
+   "B": 14
+  }
+ }
+}

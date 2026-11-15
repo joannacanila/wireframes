@@ -1,0 +1,6 @@
+{"variant": "shipped", "strict_map50": 0.006807441275859851, "tolerant_map50": 0.039675286620609394, "spans": 828, "power_recall": 0.21337579617834396, "telecom_recall": 0.08761329305135952}
+{"variant": "blackhat_beta0.25", "beta": 0.25, "ms": 48.8693084102124, "strict_map50": 0.0067755831647237945, "tolerant_map50": 0.038736112781589296, "spans": 826, "power_recall": 0.19745222929936307, "telecom_recall": 0.09365558912386707}
+{"variant": "blackhat_beta0.5", "beta": 0.5, "ms": 48.8693084102124, "strict_map50": 0.006223892708883062, "tolerant_map50": 0.036707646997515, "spans": 836, "power_recall": 0.20382165605095542, "telecom_recall": 0.09063444108761329}
+{"variant": "blackhat_beta1.0", "beta": 1.0, "ms": 48.8693084102124, "strict_map50": 0.006217940060548459, "tolerant_map50": 0.027973068351538868, "spans": 853, "power_recall": 0.1592356687898089, "telecom_recall": 0.07854984894259819}
+{"variant": "blackhat_beta2.0", "beta": 2.0, "ms": 48.8693084102124, "strict_map50": 0.006410281746737549, "tolerant_map50": 0.03358430026024484, "spans": 888, "power_recall": 0.20063694267515925, "telecom_recall": 0.07250755287009064}
+{"variant": "clahe_L", "ms": 21.5746667701751, "strict_map50": 0.01171361988707485, "tolerant_map50": 0.0356037363889727, "spans": 841, "power_recall": 0.17834394904458598, "telecom_recall": 0.09063444108761329}

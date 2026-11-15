@@ -1,0 +1,115 @@
+# WIREFRAME
+
+**A Vision-Based Diagnostic Framework for Urban Overhead Wire Infrastructure Risk Assessment.**
+
+WIREFRAME screens a ground-level photograph of a utility pole. It segments the scene into four classes (Vegetation,
+abandoned-wire, power-distribution-lines, telecom-cable; telecom-cable includes fiber optic drops), flags wires that vegetation touches,
+fits a catenary to each wire's centerline, scores its sag against an allowable limit (CRS, 0–10), measures
+scene clutter with a 2D-FFT Visual Noise Index (VNI), and ranks poles for inspection by a Multi-Site Priority
+Index (MSPI). Every algorithm follows Chapter III of the thesis manuscript, and the equation numbers in the
+code refer to it.
+
+> Outputs are computational screening results. They need review by a qualified professional before any
+> regulatory or maintenance action (Section 3.14.6). Until calibration (Table 3.1, second part), the
+> parameters in `config/wireframe.yaml` are provisional, and every result carries flags that say so.
+
+## Quick start
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements-dev.txt          # runtime + tests
+python -m scripts.create_admin engr.yourname   # first admin account (password prompted; no default)
+uvicorn app.main:app --reload                 # / landing · /workspace field screener · /admin command centre · /docs API
+python -m scripts.seed_synthetic --n 8        # optional: SYNTHETIC demo poles (codes SYN-…)
+pytest                                        # 351 tests
+```
+
+The trained segmentation model is not in the repository. Without `models/wireframe-yolo11m-seg.pt`, the
+server runs in **reference-mask mode**. You upload a photo together with its YOLO-seg polygon labels, and the
+geometric and risk layers run on those masks. An upload without labels ends in the `error` state with the code
+`model_unavailable`. The pipeline never invents detections.
+
+## Pipeline (Figure 3.4)
+
+| Stage | Module | Thesis |
+|---|---|---|
+| EXIF reading, envelope check, GPS removal | `app/pipeline/acquisition.py` | §3.3.1, §3.14.4 |
+| Letterboxed RGB [0,1] + grayscale 640², 5×5 Gaussian | `app/pipeline/preprocess.py` | Alg. 1 |
+| Hann window → FFT → power → r > r_L share → q01/q99 → band | `app/pipeline/vni.py` | Alg. 2, Eq. 1–4, Tab. 3.7 |
+| YOLO11-seg, per-class NMS IoU 0.45, mask → original | `app/pipeline/segment.py` | Alg. 3, Eq. 5 |
+| Zhang-Suen, 8-graph, spur pruning (L_min 30), double BFS | `app/pipeline/skeleton.py` | Alg. 4 |
+| LM catenary fit, chord L, perpendicular δ, δ/L, truncation | `app/pipeline/catenary.py` | Eq. 6–8 |
+| Resultant load, change-of-state, δ_lim | `app/pipeline/sag_limits.py` | Eq. 9, Tab. 3.8 |
+| CRS and Low / Medium / High | `app/pipeline/crs.py` | Eq. 10, Tab. 1.2 |
+| MSPI ranking + weight-grid sensitivity | `app/pipeline/mspi.py` | Alg. 6, Eq. 11 |
+
+## API
+
+| Method | Path | |
+|---|---|---|
+| POST | `/api/analysis/upload` | multipart: `file`, optional `pole_code`, `barangay`, `span_m`, `temperature_c`, `wind_speed_mps`, `distance_m`, `elevation_deg`, `latitude`, `longitude`, `labels`. Returns **202** |
+| GET | `/api/analysis/{id}` | status: `processing` · `complete` · `no_wires_detected` · `fit_failed` · `error` |
+| GET | `/api/analysis/{id}/result` | masks (polygons), centerlines, catenary curves, fit parameters, VNI, CRS, flags, rank |
+| GET | `/api/analysis/{id}/image` | stored photo (GPS removed) |
+| DELETE | `/api/analysis/{id}` | cascades to detections and the report |
+| GET | `/api/dashboard/map` | RFC 7946 GeoJSON `FeatureCollection` of poles |
+| GET | `/api/dashboard/priority?alpha=&beta=&gamma=` | MSPI ranking |
+| GET | `/api/dashboard/sensitivity` | Spearman ρ over the 66-triple weight grid |
+| GET | `/api/reports/{id}/pdf` | printable screening report with the mandatory disclaimer and the mode badge |
+| POST | `/api/analysis/{id}/retry` | re-run a failed analysis (e.g. once the model is installed) |
+| GET | `/api/evaluation/metrics` | Table 3.10 targets and the latest `ml.evaluate` runs (Eq. 12–18) |
+| GET | `/`, `/workspace`, `/admin` | landing page, open field screener, authenticated command centre |
+| POST | `/api/auth/login` · `/api/auth/logout` | admin session (HttpOnly, SameSite=Strict cookie) |
+| GET | `/api/admin/*` | overview, queue, models, poles and history, reviews, spectrum, CSV/PDF exports (admin only) |
+
+Listing, retry, delete, `/api/dashboard/*` and `/api/admin/*` require an admin session. Upload, status, result, image and the per-analysis PDF are open to the field screener.
+
+## Dataset and training (Phase 1, on this Apple Silicon Mac)
+
+```bash
+pip install -r requirements-ml.txt
+# 1. fill workspace/project/version/licence for each source in ml/sources.yaml, download each into datasets/raw/<name>
+export ROBOFLOW_API_KEY=...                                             # never stored in the repo
+python -m ml.curate --download                                          # fetch -> audit -> dedupe -> 70:15:15
+# 2. draw polygons for the images in annotation_queue.csv (Section 3.4.3), re-run curate
+python -m ml.train --data datasets/wireframe_seg/data.yaml --epochs 30  # MPS: batch 4, no AMP; writes conf_min
+                                                                        # (add --model yolo11s-seg.pt if memory runs out)
+python -m ml.curate --raw datasets/raw --out datasets/wireframe_seg --imgsz 1024   # 1024 letterbox
+python -m ml.train --data datasets/wireframe_seg/data.yaml --batch 1 --epochs 60    # span detector (MPS)
+python -m ml.wirenet train --epochs 40           # full-resolution wire segmentation (models/wirenet-r34.pt)
+python -m scripts.batch_inspect path/to/folder_or_video --out runs/audit/day1   # batch street audit + LabelMe review queue
+python -m scripts.stress_test_all_conditions --split val --out runs/stress.jsonl  # 8-condition stress benchmark
+python -m scripts.server_check --repeat 3 --out runs/server_check.json   # end-to-end API + PDF check, real models
+python -m scripts.live_upload_check --base http://127.0.0.1:8000   # real-HTTP upload check of a RUNNING server
+python -m scripts.ui_check --base http://127.0.0.1:8000            # headless-Chrome check of /workspace (Playwright)
+ruff check .                                                            # project only (pyproject excludes .agents/, venvs, data)
+python -m ml.calibrate_vni path/to/local_calibration_images --write    # q01, q99
+python -m ml.evaluate segmentation --data datasets/wireframe_seg/data.yaml --split test   # once, final
+python -m ml.evaluate geometry --scenes 40                              # synthetic benchmark of the geometric layer
+```
+
+Segmentation is a hybrid: YOLO11-seg (1024 px) for Vegetation and WireNet, a full-resolution U-Net, for
+the 2 px wires that YOLO's 1/4-resolution masks cannot represent. Each result carries an explainable hazard verdict (AT RISK - HIGH / MODERATE / NOT AT RISK, with
+reasons) and a reliability grade (A / B / C / Retake recommended, with the cause in plain English) on top
+of Chapter III's CRS. Since v2.9 the pole verdict counts a sag band only when more spans are in it than the
+measured per-span test-retest false-alarm rate explains (a one-sided binomial test, `hazard.sag_rule`);
+uncorroborated spans are listed as notes. Results and limitations:
+[`docs/thesis/chapter4_v2.7_results.md`](docs/thesis/chapter4_v2.7_results.md),
+[`docs/thesis/chapter4_v2.8_autonomous_upgrades.md`](docs/thesis/chapter4_v2.8_autonomous_upgrades.md) and
+[`docs/thesis/chapter4_v2.9_refinements.md`](docs/thesis/chapter4_v2.9_refinements.md) and
+[`docs/thesis/chapter4_v2.10_hardening.md`](docs/thesis/chapter4_v2.10_hardening.md) (glare gate, latency,
+verdict stability) and [`docs/thesis/chapter4_v2.11_field_ui.md`](docs/thesis/chapter4_v2.11_field_ui.md)
+(night/dual-polarity detection, full-mask exposure, the field console) and
+[`docs/thesis/chapter4_v2.12_ensemble.md`](docs/thesis/chapter4_v2.12_ensemble.md) (MiT-B1 and ConvNeXt-Tiny
+backbones, probability fusion, Depth Anything V2); a defense reference is in
+[`docs/thesis/defense_summary_v2.9.md`](docs/thesis/defense_summary_v2.9.md). Everything is consolidated in
+[`docs/thesis/MASTER_CHAPTER4_MANUSCRIPT.md`](docs/thesis/MASTER_CHAPTER4_MANUSCRIPT.md)
+(`python -m scripts.build_master_manuscript`).
+
+All training, evaluation and latency figures were measured on one Apple Silicon M1 laptop with 8 GB of unified
+memory (MPS). The v2.12 three-model fusion is available as an opt-in, slower configuration:
+`segmentation.wirenet_weights: models/v212_ensemble.json` (needs `models/v212_mitb1.pt` and
+`models/v212_convnext_t.pt`, which are not committed; about 4.7 s per photo on the M1).
+
+See [`DISCLOSURE.md`](DISCLOSURE.md) for everything this version changed, what was verified, and what is
+still open.
