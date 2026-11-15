@@ -3,7 +3,7 @@
 Reliability R = 1 - (U + D) / 2, from WireNet's mean normalised entropy U over pixels predicted
 as wire and the plain-vs-mirrored disagreement D (U alone when test-time augmentation is off).
 Grades come from thresholds on R calibrated on the validation stress set against measured
-per-image accuracy (docs/thesis/chapter4_v2.8_autonomous_upgrades.md); a photo with almost no
+per-image accuracy (docs/thesis/WIREFRAME_THESIS_REFERENCE.md, Part 5.4); a photo with almost no
 predicted wire pixels, or one the enhancement step measured as unreadable (near-black or
 near-white), is "Retake recommended" regardless.
 

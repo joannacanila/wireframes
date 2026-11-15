@@ -3,7 +3,7 @@
 Why: at 1024 px the median power / telecom wire is 2.1 px wide. YOLO-seg predicts masks on a
 1/4-resolution prototype grid; even a perfect 1/4-resolution mask reaches a median IoU of 0.40
 against the full-resolution label, and only 17-21% of wire instances can ever pass IoU 0.5
-(ml/wirenet audit, DISCLOSURE v2.7). SAM 2.1 prompted with the *true* boxes and skeleton
+(ml/wirenet audit, docs/thesis/WIREFRAME_THESIS_REFERENCE.md, Part 3.3). SAM 2.1 prompted with the *true* boxes and skeleton
 points reaches a median IoU of 0.04-0.08 on wires. WireNet predicts every pixel at full input
 resolution instead.
 

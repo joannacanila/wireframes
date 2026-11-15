@@ -93,25 +93,17 @@ python -m ml.evaluate segmentation --data datasets/wireframe_seg/data.yaml --spl
 python -m ml.evaluate geometry --scenes 40                              # synthetic benchmark of the geometric layer
 ```
 
-Segmentation is a hybrid: YOLO11-seg (1024 px) for Vegetation and WireNet, a full-resolution U-Net, for
+Segmentation is a hybrid: YOLO11s-seg (1024 px; file `wireframe-yolo11m-seg.pt`) for Vegetation and WireNet, a full-resolution U-Net, for
 the 2 px wires that YOLO's 1/4-resolution masks cannot represent. Each result carries an explainable hazard verdict (AT RISK - HIGH / MODERATE / NOT AT RISK, with
 reasons) and a reliability grade (A / B / C / Retake recommended, with the cause in plain English) on top
 of Chapter III's CRS. Since v2.9 the pole verdict counts a sag band only when more spans are in it than the
 measured per-span test-retest false-alarm rate explains (a one-sided binomial test, `hazard.sag_rule`);
-uncorroborated spans are listed as notes. Results and limitations:
-[`docs/thesis/chapter4_v2.7_results.md`](docs/thesis/chapter4_v2.7_results.md),
-[`docs/thesis/chapter4_v2.8_autonomous_upgrades.md`](docs/thesis/chapter4_v2.8_autonomous_upgrades.md) and
-[`docs/thesis/chapter4_v2.9_refinements.md`](docs/thesis/chapter4_v2.9_refinements.md) and
-[`docs/thesis/chapter4_v2.10_hardening.md`](docs/thesis/chapter4_v2.10_hardening.md) (glare gate, latency,
-verdict stability) and [`docs/thesis/chapter4_v2.11_field_ui.md`](docs/thesis/chapter4_v2.11_field_ui.md)
-(night/dual-polarity detection, full-mask exposure, the field console) and
-[`docs/thesis/chapter4_v2.12_ensemble.md`](docs/thesis/chapter4_v2.12_ensemble.md) (MiT-B1 and ConvNeXt-Tiny
-backbones, probability fusion, Depth Anything V2) and
-[`docs/thesis/chapter4_v2.13_cv_ui.md`](docs/thesis/chapter4_v2.13_cv_ui.md) (ground-structure gate, retake
-guidance, the redesigned field screener); a defense reference is in
-[`docs/thesis/defense_summary_v2.9.md`](docs/thesis/defense_summary_v2.9.md). Everything is consolidated in
-[`docs/thesis/MASTER_CHAPTER4_MANUSCRIPT.md`](docs/thesis/MASTER_CHAPTER4_MANUSCRIPT.md)
-(`python -m scripts.build_master_manuscript`).
+uncorroborated spans are listed as notes.
+
+**Thesis documentation:** everything (system, data, models, method, every result table, version history, rejected
+ideas, test-split integrity, limitations, reproduction and the evidence files) is in one document,
+[`docs/thesis/WIREFRAME_THESIS_REFERENCE.md`](docs/thesis/WIREFRAME_THESIS_REFERENCE.md). Raw results are in
+`docs/thesis/results/` and figures in `docs/thesis/figures/`.
 
 All training, evaluation and latency figures were measured on one Apple Silicon M1 laptop with 8 GB of unified
 memory (MPS). The v2.12 three-model fusion is available as an opt-in, slower configuration:
@@ -124,5 +116,5 @@ Hub on first use) suppresses wire traces lying on the road or pavement (kerbs, m
 `action` and the result a photo-level `retake_guidance`. If the parser cannot load, every span is kept and the
 result is flagged `ground_gate_unavailable`.
 
-See [`DISCLOSURE.md`](DISCLOSURE.md) for everything this version changed, what was verified, and what is
-still open.
+What each version changed, what was verified and what is still open is in Parts 6, 8, 10 and 12 of the thesis
+reference.

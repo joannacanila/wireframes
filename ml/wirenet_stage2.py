@@ -2,7 +2,7 @@
 
     python -m ml.wirenet_stage2 --init runs/wirenet/wirenet-r34.pt --epochs 25
 
-Why abandoned-wire fails in Stage 1 (audit, DISCLOSURE v2.7): 14 training instances in 7 photos,
+Why abandoned-wire fails in Stage 1 (audit, docs/thesis/WIREFRAME_THESIS_REFERENCE.md, Part 3.3): 14 training instances in 7 photos,
 0.033% of pixels, and inconsistent polygons (some trace a door edge or a blurred pole, several
 wrap a whole hanging bundle or the sky around it instead of the wire).
 
