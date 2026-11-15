@@ -701,7 +701,21 @@ SQLite with foreign keys enforced, CHECK constraints, automatic add-missing-colu
 stored with every analysis and report. **No mock detector:** with no model and no reference polygons the upload is
 refused (503) before anything is stored.
 
-### 9.4 Outputs beyond the page
+### 9.4 Installation and model provisioning
+
+The repository is self-contained: `git clone`, `pip install -r requirements.txt`, `uvicorn app.main:app`. The trained
+weights are not in the code history; they are published on the repository's `model-weights` branch. On first start
+`app/core/weights.py` downloads any missing file (`wirenet-r34.pt`, 97,918,915 bytes, SHA-256 `ab2353c7…`;
+`wireframe-yolo11m-seg.pt`, 20,660,928 bytes, `1532d7ae…`) in a background thread, verifies size and SHA-256, installs
+it atomically, retries on network errors, and never overwrites an existing file. Until the files arrive the screener
+reports validation mode; the health check switches to screening as soon as they are in place (progress in
+`GET /api/health` → `model.downloads`). Verified on a fresh copy with an empty `models/`: both files downloaded,
+verified and loaded with no restart. `WIREFRAME_AUTO_DOWNLOAD=0` disables it (offline installs);
+`WIREFRAME_WEIGHTS_BASE_URL` points at another mirror. The scene parser is fetched from the Hugging Face Hub on first
+use. Licences: the vegetation weights derive from Ultralytics YOLO11 (AGPL-3.0); WireNet from ResNet-34 (BSD-3) and
+segmentation-models-pytorch (MIT); dataset CC BY 4.0.
+
+### 9.5 Outputs beyond the page
 
 - **PDF report:** disclaimer on page 1 and every footer; inspection name, place, pole code, file name; verdict and
   reasons; reliability and its reason; per-wire table; three-panel diagnostic figure (photo + grade badge;
@@ -716,7 +730,7 @@ refused (503) before anything is stored.
 
 | Check | Result |
 |---|---|
-| Unit and integration tests (`pytest`) | 520 passed |
+| Unit and integration tests (`pytest`) | 527 passed |
 | Lint (`ruff check app ml scripts tests`) | clean |
 | Mocked browser check (`scripts/ui_check.py --mock`): 4 verdict states × light/dark × 1440 and 1024 px | 16 / 16 pass; 0 console errors |
 | Real-photo browser check (P-B1D137, a handrail street photo, the night pole) | 3 / 3 pass: name/city/barangay saved and shown, PDF valid, every view and control, table ↔ photo selection |
