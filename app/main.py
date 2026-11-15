@@ -15,8 +15,9 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import admin, analysis, auth, dashboard, evaluation, reports
+from app.core import weights
 from app.core.config import get_analysis_config, get_settings
-from app.core.state import AppState, build_state, get_state
+from app.core.state import MODELS_DIR, AppState, build_state, get_state
 from app.pipeline.runner import Segmenter
 
 WEB_DIR = Path(__file__).parent / "web"
@@ -26,6 +27,9 @@ log = logging.getLogger("wireframe")
 def create_app(state: AppState | None = None, segmenter: Segmenter | None = None) -> FastAPI:
     @asynccontextmanager
     async def lifespan(app: FastAPI):
+        if state is None and segmenter is None:
+            # a fresh clone fetches its own weights (models/ is not in git); the health check picks them up
+            weights.ensure_in_background(MODELS_DIR)
         st = state or build_state(get_settings(), get_analysis_config(), segmenter)
         app.state.wf = st
         loader = getattr(st.segmenter, "load", None)
@@ -71,7 +75,8 @@ def create_app(state: AppState | None = None, segmenter: Segmenter | None = None
             # field: the model segments uploads; validation: reference polygons are required
             "mode": "field" if ready else "validation",
             "model": {"ready": ready, "error": getattr(seg, "error", None),
-                      "weights": st.config.segmentation.weights},
+                      "weights": st.config.segmentation.weights,
+                      "downloads": weights.status()},  # first start on a fresh clone: downloading / ready
             "config_fingerprint": st.config.fingerprint,
             "provisional": st.config.provisional_blocks(),
             "queue_depth": st.queue.depth,

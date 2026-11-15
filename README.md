@@ -16,13 +16,33 @@ code refer to it.
 ## Quick start
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt          # runtime + tests
-python -m scripts.create_admin engr.yourname   # first admin account (password prompted; no default)
-uvicorn app.main:app --reload                 # / landing · /workspace field screener · /admin command centre · /docs API
-python -m scripts.seed_synthetic --n 8        # optional: SYNTHETIC demo poles (codes SYN-…)
-pytest                                        # 528 tests (+4 that need requirements-ml.txt)
+git clone https://github.com/joannacanila/wireframes.git && cd wireframes
+python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt                       # everything the app needs, models included
+uvicorn app.main:app                                  # http://127.0.0.1:8000 : / landing · /workspace screener · /admin
+python -m scripts.create_admin engr.yourname          # optional: an admin account (password prompted; no default)
 ```
+
+**The models download themselves.** The trained weights are not in the code history. On first start the app
+fetches them (about 113 MB: `wirenet-r34.pt` and `wireframe-yolo11m-seg.pt`) from this repository's
+[`model-weights`](https://github.com/joannacanila/wireframes/tree/model-weights) branch into `models/`, verifies
+each file's size and SHA-256, and switches from validation mode to screening as soon as they are in place, without a
+restart (progress: `GET /api/health` → `model.downloads`). The ground filter's scene parser (about 240 MB) is
+downloaded from the Hugging Face Hub the first time a photo needs it. Existing files are never overwritten. Offline
+install: copy the two files into `models/` by hand and set `WIREFRAME_AUTO_DOWNLOAD=0`; another mirror:
+`WIREFRAME_WEIGHTS_BASE_URL`.
+
+Development (tests, lint, training, experiments):
+
+```bash
+pip install -r requirements-dev.txt -r requirements-ml.txt
+pytest                                                # 525 tests
+ruff check app ml scripts tests
+python -m scripts.seed_synthetic --n 8                # optional: SYNTHETIC demo poles (codes SYN-…)
+```
+
+**Licence of the weights:** the vegetation model is fine-tuned from Ultralytics YOLO11 (AGPL-3.0); WireNet builds on
+ResNet-34 (BSD-3) and segmentation-models-pytorch (MIT); the dataset is CC BY 4.0.
 
 The trained segmentation model is not in the repository. Without `models/wireframe-yolo11m-seg.pt`, the
 server runs in **reference-mask mode**. You upload a photo together with its YOLO-seg polygon labels, and the
