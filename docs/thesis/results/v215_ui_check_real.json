@@ -1,0 +1,167 @@
+{
+ "all_pass": true,
+ "mode": "real",
+ "browser": "chrome 157.0.8103.78",
+ "n_checks": 4,
+ "results": [
+  {
+   "url": "http://127.0.0.1:8000/workspace/result/59a94aff7bbd4a7785b678da0be64f52",
+   "pill": "HIGH RISK FOUND",
+   "title": "Some wires on this pole should be checked soon.",
+   "next_action": "Have wire sections 14, 26, 6, 25 and 22 checked by your electric utility or a qualified electrical professional, starting with section 14.",
+   "assessment": "HIGH RISK FOUND\nSome wires on this pole should be checked soon.\n\n5 wire sections hang noticeably low.\n\n18 of 27 wire sections could be assessed; 9 could not (see Photo limitations).",
+   "limitations": [
+    "small",
+    "overlap",
+    "edge",
+    "estimated",
+    "quality"
+   ],
+   "heading": "UI check · P-B1D137_dense_night",
+   "subline": "Test Barangay, Test City\nNov 16, 2026, 02:53 AM\nP-B1D137_dense_night.jpg",
+   "kpis": [
+    "High risk 5",
+    "Moderate risk 1",
+    "Low risk 12"
+   ],
+   "hazards": [],
+   "table_rows": 27,
+   "unmeasured_without_reason": 0,
+   "detail_shows_reason": true,
+   "actions_shown": 9,
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "opacity": "ok",
+   "layers": "ok",
+   "zoom": "ok",
+   "diag_text": "Model information\nModel\nWireNet-R34 full-res + span assembler\nSegmentation source\nmodel\nWireNet weights\nwirenet-r34.pt\nDetector weights\nwireframe-yolo11m-seg.pt\nPolarity\ninverted (night)\nEnhancement\ndenoise\nImage quality\nGrade\nB\nReliability R\n0.743\nReason\nLow light: conductors have little contrast against the background\nEntropy U\n0.329\nFlip disagreement D\n0.186\nMean L*\n23.3\nContrast\n25.9\nNear-white share\n2%\nThin-line contrast\n60.7\nSharpness\n6905\nNoise σ\n7.7\nMotion coherence\n0.00\nResolution\n640 × 480\nSegmentation metrics\nWire pixels (model)\n23,464\nInside wire sections\n82%\nFragments outside sections\n4,251 px\nInferred gap pixels\n1,299 px\nPower px\n171\nTelecom px\n23,286\nAbandoned px\n7\nVegetation px\n0\nGround structures ignored\n\nNone: no wire trace lay on the road or pavement.\n\nStatistical analysis\n\nHigh band: 5 of 18 measured spans; 4 needed above the 5.0% per-span noise floor (one-sided binomial, α = 0.05).\n\nMedium or above: 6; 5 needed (noise floor 9.0%).\n\nServer verdict: AT RISK - HIGH\n\nAT RISK - HIGH: sag above the high CRS band on 5 of 18 measurable spans (spans 6, 14, 22, 25, 26; at least 4 needed to exceed measurement noise)\nAT RISK - MODERATE: vegetation in contact with telecom span 1\nAT RISK - MODERATE: vegetation in contact with telecom span 2\nAT RISK - MODERATE: vegetation in contact with telecom span 4\nAT RISK - MODERATE: vegetation in contact with telecom span 7\nAT RISK - MODERATE: vegetation in contact with telecom span 10\nAT RISK - MODERATE: vegetation in contact with telecom span 12\nProcessing performance\nTotal\n7.54 s\nPreprocess\n599 ms\nSegmentation\n6783 ms\nGeometry and risk\n152 ms\nConfiguration and execution\nConfig fingerprint\n95da5698c7d2\nCurrent config\n95da5698c7d2\nChord gate\n100 px\nProvisional blocks\nacquisition, enhancement, vni, centerline, catenary, crs, engineering, mspi, vegetation\nPole code\nP-288442\nAnalysis id\n59a94aff7bbd4a7785b678da0be64f52\nSubmitted via\nfield\nFlags\nenhanced:denoise, polarity_inverted, unverified:daylight_hour, unverified:distance_m, unverified:elevation_deg, unverified:focal_length_35mm, vegetation_contact, vni_uncalibrated",
+   "diag": "ok",
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "horizontal_overflow": false,
+   "spans_overflow_px": 0,
+   "filter_hides_rows": true,
+   "name_saved": true,
+   "pdf_ok": true,
+   "photo": "P-B1D137_dense_night.jpg",
+   "errors": [],
+   "pass": true
+  },
+  {
+   "url": "http://127.0.0.1:8000/workspace/result/cbf9c22bb4cf4b7a81dc8e90f6a1234c",
+   "pill": "NO HIGH RISK FOUND",
+   "title": "No measured wire on this pole was flagged.",
+   "next_action": "Include wire section 3 in the next routine inspection.",
+   "assessment": "NO HIGH RISK FOUND\nNo measured wire on this pole was flagged.\n\n1 wire section reads as moderate risk on its own. One or two readings like this can come from the photo rather than the wire, so the pole as a whole was not flagged, but that section is worth a look.\n\nThis is a screening from one photo, not a safety inspection.\n\n9 of 18 wire sections could be assessed; 9 could not (see Photo limitations).",
+   "limitations": [
+    "small",
+    "overlap",
+    "edge",
+    "estimated",
+    "quality"
+   ],
+   "heading": "UI check · P-1DB077_handrail",
+   "subline": "Test Barangay, Test City\nNov 16, 2026, 02:54 AM\nP-1DB077_handrail.jpg",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 1",
+    "Low risk 8"
+   ],
+   "hazards": [],
+   "table_rows": 18,
+   "unmeasured_without_reason": 0,
+   "detail_shows_reason": true,
+   "actions_shown": 9,
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "opacity": "ok",
+   "layers": "ok",
+   "zoom": "ok",
+   "diag_text": "Model information\nModel\nWireNet-R34 full-res + span assembler\nSegmentation source\nmodel\nWireNet weights\nwirenet-r34.pt\nDetector weights\nwireframe-yolo11m-seg.pt\nPolarity\nas photographed\nEnhancement\ndenoise\nImage quality\nGrade\nB\nReliability R\n0.747\nReason\nThe model is uncertain about some wire pixels (clutter or low contrast)\nEntropy U\n0.332\nFlip disagreement D\n0.174\nMean L*\n50.4\nContrast\n30.1\nNear-white share\n5%\nThin-line contrast\n79.0\nSharpness\n8400\nNoise σ\n7.8\nMotion coherence\n0.00\nResolution\n452 × 678\nSegmentation metrics\nWire pixels (model)\n16,923\nInside wire sections\n58%\nFragments outside sections\n7,186 px\nInferred gap pixels\n385 px\nPower px\n1,885\nTelecom px\n15,038\nAbandoned px\n0\nVegetation px\n0\nGround structures ignored\nPower line · 100% on road / pavement · x 322–425, y 607–614\nPower line · 100% on road / pavement · x 311–427, y 612–625\n\nLies on the road or pavement: a kerb, manhole or pavement edge, not an overhead wire. These traces are never scored.\n\nStatistical analysis\n\nHigh band: 0 of 9 measured spans; 3 needed above the 5.0% per-span noise floor (one-sided binomial, α = 0.05).\n\nMedium or above: 1; 3 needed (noise floor 9.0%).\n\nServer verdict: NOT AT RISK\n\nNOT AT RISK: 0 power and 18 telecom spans detected; 9 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires\nNOTE: span 3 in the medium band; not corroborated (1 of 9 at medium or above, 3 needed; consistent with measurement noise); verify visually\nProcessing performance\nTotal\n2.77 s\nPreprocess\n510 ms\nSegmentation\n2182 ms\nGeometry and risk\n67 ms\nConfiguration and execution\nConfig fingerprint\n95da5698c7d2\nCurrent config\n95da5698c7d2\nChord gate\n100 px\nProvisional blocks\nacquisition, enhancement, vni, centerline, catenary, crs, engineering, mspi, vegetation\nPole code\nP-51E97D\nAnalysis id\ncbf9c22bb4cf4b7a81dc8e90f6a1234c\nSubmitted via\nfield\nFlags\nenhanced:denoise, ground_structures_suppressed, unverified:daylight_hour, unverified:distance_m, unverified:elevation_deg, unverified:focal_length_35mm, vni_uncalibrated",
+   "diag": "ok",
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "horizontal_overflow": false,
+   "spans_overflow_px": 0,
+   "filter_hides_rows": true,
+   "name_saved": true,
+   "pdf_ok": true,
+   "photo": "P-1DB077_handrail.jpg",
+   "errors": [],
+   "pass": true
+  },
+  {
+   "url": "http://127.0.0.1:8000/workspace/result/a4380de0a1024078928ddf98fd0a1be2",
+   "pill": "HIGH RISK FOUND",
+   "title": "Some wires on this pole should be checked soon.",
+   "next_action": "Have wire sections 14, 26, 6, 25 and 22 checked by your electric utility or a qualified electrical professional, starting with section 14.",
+   "assessment": "HIGH RISK FOUND\nSome wires on this pole should be checked soon.\n\n5 wire sections hang noticeably low.\n\n18 of 27 wire sections could be assessed; 9 could not (see Photo limitations).",
+   "limitations": [
+    "small",
+    "overlap",
+    "edge",
+    "estimated",
+    "quality"
+   ],
+   "heading": "UI check · P-E62AE0",
+   "subline": "Test Barangay, Test City\nNov 16, 2026, 02:54 AM\nP-E62AE0.jpg",
+   "kpis": [
+    "High risk 5",
+    "Moderate risk 1",
+    "Low risk 12"
+   ],
+   "hazards": [],
+   "table_rows": 27,
+   "unmeasured_without_reason": 0,
+   "detail_shows_reason": true,
+   "actions_shown": 9,
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "opacity": "ok",
+   "layers": "ok",
+   "zoom": "ok",
+   "diag_text": "Model information\nModel\nWireNet-R34 full-res + span assembler\nSegmentation source\nmodel\nWireNet weights\nwirenet-r34.pt\nDetector weights\nwireframe-yolo11m-seg.pt\nPolarity\ninverted (night)\nEnhancement\ndenoise\nImage quality\nGrade\nB\nReliability R\n0.743\nReason\nLow light: conductors have little contrast against the background\nEntropy U\n0.329\nFlip disagreement D\n0.186\nMean L*\n23.3\nContrast\n25.9\nNear-white share\n2%\nThin-line contrast\n60.7\nSharpness\n6905\nNoise σ\n7.7\nMotion coherence\n0.00\nResolution\n640 × 480\nSegmentation metrics\nWire pixels (model)\n23,464\nInside wire sections\n82%\nFragments outside sections\n4,251 px\nInferred gap pixels\n1,299 px\nPower px\n171\nTelecom px\n23,286\nAbandoned px\n7\nVegetation px\n0\nGround structures ignored\n\nNone: no wire trace lay on the road or pavement.\n\nStatistical analysis\n\nHigh band: 5 of 18 measured spans; 4 needed above the 5.0% per-span noise floor (one-sided binomial, α = 0.05).\n\nMedium or above: 6; 5 needed (noise floor 9.0%).\n\nServer verdict: AT RISK - HIGH\n\nAT RISK - HIGH: sag above the high CRS band on 5 of 18 measurable spans (spans 6, 14, 22, 25, 26; at least 4 needed to exceed measurement noise)\nAT RISK - MODERATE: vegetation in contact with telecom span 1\nAT RISK - MODERATE: vegetation in contact with telecom span 2\nAT RISK - MODERATE: vegetation in contact with telecom span 4\nAT RISK - MODERATE: vegetation in contact with telecom span 7\nAT RISK - MODERATE: vegetation in contact with telecom span 10\nAT RISK - MODERATE: vegetation in contact with telecom span 12\nProcessing performance\nTotal\n3.48 s\nPreprocess\n514 ms\nSegmentation\n2858 ms\nGeometry and risk\n100 ms\nConfiguration and execution\nConfig fingerprint\n95da5698c7d2\nCurrent config\n95da5698c7d2\nChord gate\n100 px\nProvisional blocks\nacquisition, enhancement, vni, centerline, catenary, crs, engineering, mspi, vegetation\nPole code\nP-98C024\nAnalysis id\na4380de0a1024078928ddf98fd0a1be2\nSubmitted via\nfield\nFlags\nenhanced:denoise, polarity_inverted, unverified:daylight_hour, unverified:distance_m, unverified:elevation_deg, unverified:focal_length_35mm, vegetation_contact, vni_uncalibrated",
+   "diag": "ok",
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "horizontal_overflow": false,
+   "spans_overflow_px": 0,
+   "filter_hides_rows": true,
+   "name_saved": true,
+   "pdf_ok": true,
+   "photo": "P-E62AE0.jpg",
+   "errors": [],
+   "pass": true
+  },
+  {
+   "photo": "narrow window (1024 px)",
+   "horizontal_overflow": false,
+   "errors": [],
+   "pass": true
+  }
+ ]
+}

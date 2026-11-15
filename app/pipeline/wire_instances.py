@@ -121,8 +121,10 @@ def _xjunction_pairs(members, tol_deg: float, min_cross_deg: float):
 def spans_from_class_mask(mask: np.ndarray, prob: np.ndarray, min_px: int = 30, min_len: int = 30,
                           max_turn_deg: float = 25.0, junction_radius: int = 3, cluster_radius: int = 10,
                           xjunction_tol_deg: float = 0.0, xjunction_min_cross_deg: float = 30.0,
-                          xjunction_far_tangent: bool = True) -> list[tuple[np.ndarray, float]]:
-    """Returns [(span mask, confidence)] for one wire class."""
+                          xjunction_far_tangent: bool = True, own_component: bool = False) -> list[tuple[np.ndarray, float]]:
+    """Returns [(span mask, confidence)] for one wire class. v2.14 ``own_component``: a mask pixel may only join a
+    skeleton piece in its own 8-connected mask component (otherwise a separate neighbouring wire whose own pieces
+    were dropped is painted into the nearest span)."""
     lab, n = ndi.label(mask, structure=_NEIGH)
     if n == 0:
         return []
@@ -201,6 +203,9 @@ def spans_from_class_mask(mask: np.ndarray, prob: np.ndarray, min_px: int = 30, 
     _, (iy, ix) = ndi.distance_transform_edt(seeds == 0, return_indices=True)
     owner = seeds[iy, ix]
     owner[~mask] = 0
+    if own_component:
+        clab, _ = ndi.label(mask, structure=_NEIGH)
+        owner[clab != clab[iy, ix]] = 0
     remap = np.zeros(npieces + 1, np.int32)
     for g, members in enumerate(groups.values(), start=1):
         remap[np.array(members) + 1] = g
@@ -285,11 +290,42 @@ def _stitch_candidates(ends, max_gap: float, cos_lim: float) -> list:
     return [(float(d[k]), int(owner[a[k]]), int(owner[b[k]]), pts[a[k]], pts[b[k]]) for k in sel]
 
 
+def bridge_support(prob: np.ndarray, ea: np.ndarray, eb: np.ndarray) -> float:
+    """Mean class probability along the straight gap between two span ends ((row, col) points), end
+    pixels excluded: how much evidence WireNet has for a wire in the gap it did not label."""
+    n = int(np.ceil(np.hypot(*(eb - ea))))
+    if n < 2:
+        return 1.0
+    t = np.linspace(0.0, 1.0, n + 1)[1:-1]
+    pts = np.rint(ea[None] + t[:, None] * (eb - ea)[None]).astype(int)
+    pts[:, 0] = pts[:, 0].clip(0, prob.shape[0] - 1)
+    pts[:, 1] = pts[:, 1].clip(0, prob.shape[1] - 1)
+    return float(prob[pts[:, 0], pts[:, 1]].mean())
+
+
+def lateral_offset(end_i, end_j, ea: np.ndarray, eb: np.ndarray) -> float:
+    """Largest sideways distance of each bridge end from the other end's tangent line (px)."""
+    def tangent(e, p):
+        return e[1] if np.allclose(e[0], p) else e[3]
+    d = eb - ea
+    ta, tb = tangent(end_i, ea), tangent(end_j, eb)
+    return float(max(abs(ta[0] * d[1] - ta[1] * d[0]), abs(tb[0] * d[1] - tb[1] * d[0])))
+
+
 def stitch_spans(spans: list[tuple[np.ndarray, float]], max_gap: float = 30.0, max_angle_deg: float = 15.0,
-                 draw_bridge: bool = True, bridge_width: int = 2) -> list[tuple[np.ndarray, float]]:
+                 draw_bridge: bool = True, bridge_width: int = 2, prob: np.ndarray | None = None,
+                 bridge_min_prob: float = 0.0, bridges_out: list | None = None,
+                 max_lateral_px: float = 0.0) -> list[tuple[np.ndarray, float]]:
     """Join spans whose facing endpoints are within ``max_gap`` px, whose outward tangents are
     anti-parallel within ``max_angle_deg`` and whose gap runs along both tangents (occlusions and
-    mask dropouts). Greedy nearest-first with union-find; confidence is the area-weighted mean."""
+    mask dropouts). Greedy nearest-first with union-find; confidence is the area-weighted mean.
+
+    v2.14: ``bridge_min_prob`` > 0 also requires WireNet evidence in the gap (mean class probability
+    along it, ``bridge_support``). ``bridges_out``, if given, receives one ((x0, y0), (x1, y1)) segment
+    per accepted bridge, so drawn bridge pixels can be shown as inferred, never as detections.
+    ``max_lateral_px`` > 0 rejects a bridge whose far end lies more than that many px to the side of either end's
+    tangent line: a dropout on one wire continues along it, a parallel neighbouring wire is offset sideways
+    (the angle test alone allows 70 px x tan 25 deg = 33 px of offset)."""
     if len(spans) < 2:
         return spans
     ends = [span_ends(m) for m, _ in spans]
@@ -309,9 +345,15 @@ def stitch_spans(spans: list[tuple[np.ndarray, float]], max_gap: float = 30.0, m
         ka, kb = (i, tuple(ea)), (j, tuple(eb))
         if ka in used_ends or kb in used_ends or find(i) == find(j):
             continue
+        if bridge_min_prob > 0 and prob is not None and bridge_support(prob, ea, eb) < bridge_min_prob:
+            continue
+        if max_lateral_px > 0 and lateral_offset(ends[i], ends[j], ea, eb) > max_lateral_px:
+            continue
         used_ends.update((ka, kb))
         parent[find(i)] = find(j)
         bridges.setdefault(j, []).append((ea, eb))
+        if bridges_out is not None:
+            bridges_out.append(((float(ea[1]), float(ea[0])), (float(eb[1]), float(eb[0]))))
     groups: dict[int, list[int]] = {}
     for i in range(len(spans)):
         groups.setdefault(find(i), []).append(i)
@@ -339,16 +381,20 @@ def extract_spans(class_mask: np.ndarray, prob: np.ndarray, *, min_px: int = 30,
                   max_turn_deg: float = 25.0, cluster_radius: int = 10, max_gap: float = 0.0,
                   gap_angle_deg: float = 15.0, draw_bridge: bool = True, min_span_len: int = 0,
                   xjunction_tol_deg: float = 0.0, xjunction_min_cross_deg: float = 30.0,
-                  xjunction_far_tangent: bool = True) -> list[tuple[np.ndarray, float]]:
+                  xjunction_far_tangent: bool = True, bridge_min_prob: float = 0.0,
+                  bridges_out: list | None = None, max_lateral_px: float = 0.0,
+                  own_component: bool = False) -> list[tuple[np.ndarray, float]]:
     """v2.8 span extraction: junction-split spans, optional collinear gap bridging, then a minimum
     *stitched* span length gate (skeleton pixels). v2.9: optional X-junction matching."""
     spans = spans_from_class_mask(class_mask, prob, min_px=min_px, min_len=min_len,
                                   max_turn_deg=max_turn_deg, cluster_radius=cluster_radius,
                                   xjunction_tol_deg=xjunction_tol_deg,
                                   xjunction_min_cross_deg=xjunction_min_cross_deg,
-                                  xjunction_far_tangent=xjunction_far_tangent)
+                                  xjunction_far_tangent=xjunction_far_tangent, own_component=own_component)
     if max_gap > 0:
-        spans = stitch_spans(spans, max_gap, gap_angle_deg, draw_bridge)
+        spans = stitch_spans(spans, max_gap, gap_angle_deg, draw_bridge, prob=prob,
+                             bridge_min_prob=bridge_min_prob, bridges_out=bridges_out,
+                             max_lateral_px=max_lateral_px)
     if min_span_len > 0:
         spans = [(m, c) for m, c in spans if skeleton_length(m) >= min_span_len]
     return spans

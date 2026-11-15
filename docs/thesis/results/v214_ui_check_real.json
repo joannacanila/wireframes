@@ -1,0 +1,146 @@
+{
+ "all_pass": true,
+ "mode": "real",
+ "browser": "chrome 157.0.8103.78",
+ "n_checks": 4,
+ "results": [
+  {
+   "url": "http://127.0.0.1:8000/workspace/result/6ac83b1c15844f77b82eca97cc9813b7",
+   "pill": "HAZARD DETECTED",
+   "title": "Hazard on this pole: schedule a site visit.",
+   "next_action": "Flag this pole for a site inspection. Download the PDF report for the crew.",
+   "kpis": [
+    "High 5",
+    "Moderate 1",
+    "Low 12",
+    "Not measured 9",
+    "Worst span CRS 10.0 span 14"
+   ],
+   "hazards": [
+    "Critical sag on spans 6, 14, 22, 25, 26; worst is span 14 (CRS 10.0).",
+    "Vegetation touching telecom spans 1, 2, 4, 7, 10, 12."
+   ],
+   "table_rows": 27,
+   "unmeasured_without_reason": 0,
+   "detail_shows_reason": true,
+   "actions_shown": 9,
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "opacity": "ok",
+   "layers": "ok",
+   "zoom": "ok",
+   "diag_text": "Sag corroboration\n\nHigh band: 5 of 18 measured spans; 4 needed above the 5.0% per-span noise floor (one-sided binomial, α = 0.05).\n\nModerate or above: 6; 5 needed (noise floor 9.0%).\n\nAT RISK - HIGH: sag above the high CRS band on 5 of 18 measurable spans (spans 6, 14, 22, 25, 26; at least 4 needed to exceed measurement noise)\nAT RISK - MODERATE: vegetation in contact with telecom span 1\nAT RISK - MODERATE: vegetation in contact with telecom span 2\nAT RISK - MODERATE: vegetation in contact with telecom span 4\nAT RISK - MODERATE: vegetation in contact with telecom span 7\nAT RISK - MODERATE: vegetation in contact with telecom span 10\nAT RISK - MODERATE: vegetation in contact with telecom span 12\nImage quality metrics\nGrade\nB\nReliability R\n0.743\nEntropy U\n0.329\nFlip disagreement D\n0.186\nMean L*\n23.3\nContrast\n25.9\nNear-white share\n2%\nThin-line contrast\n60.7\nSharpness\n6905\nNoise σ\n7.7\nMotion coherence\n0.00\nSegmentation\nWire pixels (model)\n23,464\nInside spans\n82%\nFragments outside spans\n4,251 px\nInferred gap pixels\n1,299 px\nPower px\n171\nTelecom px\n23,286\nAbandoned px\n7\nVegetation px\n0\nGround structures ignored\n\nNone: no wire trace lay on the road or pavement.\n\nModel and processing\nModel\nWireNet-R34 full-res + span assembler\nWireNet weights\nwirenet-r34.pt\nDetector weights\nwireframe-yolo11m-seg.pt\nTotal\n8.55 s\nPreprocess\n646 ms\nSegmentation\n7675 ms\nGeometry and risk\n214 ms\nResolution\n640 × 480\nEnhancement\ndenoise\nPolarity\ninverted (night)\nChord gate\n100 px\nConfig\n95da5698c7d2\nFlags\nenhanced:denoise, polarity_inverted, unverified:daylight_hour, unverified:distance_m, unverified:elevation_deg, unverified:focal_length_35mm, vegetation_contact, vni_uncalibrated",
+   "diag": "ok",
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "horizontal_overflow": false,
+   "spans_overflow_px": 20,
+   "filter_hides_rows": true,
+   "pdf_ok": true,
+   "photo": "P-B1D137_dense_night.jpg",
+   "errors": [],
+   "pass": true
+  },
+  {
+   "url": "http://127.0.0.1:8000/workspace/result/92e0870bd0494337bad8146846a89d10",
+   "pill": "NOT AT RISK",
+   "title": "No hazard found on this pole.",
+   "next_action": "9 of 18 spans could not be measured. Best next photo: upload the full-resolution photo (this one is 452 px on its short side), or move closer so the span looks longer.",
+   "kpis": [
+    "High 0",
+    "Moderate 1",
+    "Low 8",
+    "Not measured 9",
+    "Worst span CRS 4.1 span 3"
+   ],
+   "hazards": [],
+   "table_rows": 18,
+   "unmeasured_without_reason": 0,
+   "detail_shows_reason": true,
+   "actions_shown": 9,
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "opacity": "ok",
+   "layers": "ok",
+   "zoom": "ok",
+   "diag_text": "Sag corroboration\n\nHigh band: 0 of 9 measured spans; 3 needed above the 5.0% per-span noise floor (one-sided binomial, α = 0.05).\n\nModerate or above: 1; 3 needed (noise floor 9.0%).\n\nspan 3 in the medium band; not corroborated (1 of 9 at medium or above, 3 needed; consistent with measurement noise); verify visually\nNOT AT RISK: 0 power and 18 telecom spans detected; 9 measurable for sag, none corroborated above the low CRS band; no vegetation near the wires\nImage quality metrics\nGrade\nB\nReliability R\n0.747\nEntropy U\n0.332\nFlip disagreement D\n0.174\nMean L*\n50.4\nContrast\n30.1\nNear-white share\n5%\nThin-line contrast\n79.0\nSharpness\n8400\nNoise σ\n7.8\nMotion coherence\n0.00\nSegmentation\nWire pixels (model)\n16,923\nInside spans\n58%\nFragments outside spans\n7,186 px\nInferred gap pixels\n385 px\nPower px\n1,885\nTelecom px\n15,038\nAbandoned px\n0\nVegetation px\n0\nGround structures ignored\nPower line · 100% on road / pavement · x 322–425, y 607–614\nPower line · 100% on road / pavement · x 311–427, y 612–625\n\nLies on the road or pavement: a kerb, manhole or pavement edge, not an overhead wire. These traces are never scored.\n\nModel and processing\nModel\nWireNet-R34 full-res + span assembler\nWireNet weights\nwirenet-r34.pt\nDetector weights\nwireframe-yolo11m-seg.pt\nTotal\n4.57 s\nPreprocess\n685 ms\nSegmentation\n3778 ms\nGeometry and risk\n70 ms\nResolution\n452 × 678\nEnhancement\ndenoise\nPolarity\nas photographed\nChord gate\n100 px\nConfig\n95da5698c7d2\nFlags\nenhanced:denoise, ground_structures_suppressed, unverified:daylight_hour, unverified:distance_m, unverified:elevation_deg, unverified:focal_length_35mm, vni_uncalibrated",
+   "diag": "ok",
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "horizontal_overflow": false,
+   "spans_overflow_px": 0,
+   "filter_hides_rows": true,
+   "pdf_ok": true,
+   "photo": "P-1DB077_handrail.jpg",
+   "errors": [],
+   "pass": true
+  },
+  {
+   "url": "http://127.0.0.1:8000/workspace/result/353840a135ac4a35a0bae808b9f639a5",
+   "pill": "HAZARD DETECTED",
+   "title": "Hazard on this pole: schedule a site visit.",
+   "next_action": "Flag this pole for a site inspection. Download the PDF report for the crew.",
+   "kpis": [
+    "High 5",
+    "Moderate 1",
+    "Low 12",
+    "Not measured 9",
+    "Worst span CRS 10.0 span 14"
+   ],
+   "hazards": [
+    "Critical sag on spans 6, 14, 22, 25, 26; worst is span 14 (CRS 10.0).",
+    "Vegetation touching telecom spans 1, 2, 4, 7, 10, 12."
+   ],
+   "table_rows": 27,
+   "unmeasured_without_reason": 0,
+   "detail_shows_reason": true,
+   "actions_shown": 9,
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "opacity": "ok",
+   "layers": "ok",
+   "zoom": "ok",
+   "diag_text": "Sag corroboration\n\nHigh band: 5 of 18 measured spans; 4 needed above the 5.0% per-span noise floor (one-sided binomial, α = 0.05).\n\nModerate or above: 6; 5 needed (noise floor 9.0%).\n\nAT RISK - HIGH: sag above the high CRS band on 5 of 18 measurable spans (spans 6, 14, 22, 25, 26; at least 4 needed to exceed measurement noise)\nAT RISK - MODERATE: vegetation in contact with telecom span 1\nAT RISK - MODERATE: vegetation in contact with telecom span 2\nAT RISK - MODERATE: vegetation in contact with telecom span 4\nAT RISK - MODERATE: vegetation in contact with telecom span 7\nAT RISK - MODERATE: vegetation in contact with telecom span 10\nAT RISK - MODERATE: vegetation in contact with telecom span 12\nImage quality metrics\nGrade\nB\nReliability R\n0.743\nEntropy U\n0.329\nFlip disagreement D\n0.186\nMean L*\n23.3\nContrast\n25.9\nNear-white share\n2%\nThin-line contrast\n60.7\nSharpness\n6905\nNoise σ\n7.7\nMotion coherence\n0.00\nSegmentation\nWire pixels (model)\n23,464\nInside spans\n82%\nFragments outside spans\n4,251 px\nInferred gap pixels\n1,299 px\nPower px\n171\nTelecom px\n23,286\nAbandoned px\n7\nVegetation px\n0\nGround structures ignored\n\nNone: no wire trace lay on the road or pavement.\n\nModel and processing\nModel\nWireNet-R34 full-res + span assembler\nWireNet weights\nwirenet-r34.pt\nDetector weights\nwireframe-yolo11m-seg.pt\nTotal\n3.41 s\nPreprocess\n539 ms\nSegmentation\n2729 ms\nGeometry and risk\n110 ms\nResolution\n640 × 480\nEnhancement\ndenoise\nPolarity\ninverted (night)\nChord gate\n100 px\nConfig\n95da5698c7d2\nFlags\nenhanced:denoise, polarity_inverted, unverified:daylight_hour, unverified:distance_m, unverified:elevation_deg, unverified:focal_length_35mm, vegetation_contact, vni_uncalibrated",
+   "diag": "ok",
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "table_to_canvas": true,
+   "canvas_to_table": true,
+   "horizontal_overflow": false,
+   "spans_overflow_px": 20,
+   "filter_hides_rows": true,
+   "pdf_ok": true,
+   "photo": "P-E62AE0.jpg",
+   "errors": [],
+   "pass": true
+  },
+  {
+   "photo": "narrow window (1024 px)",
+   "horizontal_overflow": false,
+   "errors": [],
+   "pass": true
+  }
+ ]
+}

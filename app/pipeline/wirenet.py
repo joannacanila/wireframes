@@ -358,7 +358,7 @@ def span_params(cfg) -> dict:
     return {"min_px": cfg.span_min_px, "min_len": cfg.span_min_len, "max_turn_deg": cfg.span_max_turn_deg,
             "cluster_radius": cfg.span_cluster_radius, "max_gap": cfg.span_max_gap,
             "gap_angle_deg": cfg.span_gap_angle_deg, "draw_bridge": cfg.span_draw_bridge,
-            "min_span_len": cfg.span_min_stitched_len}
+            "min_span_len": cfg.span_min_stitched_len, "own_component": cfg.span_own_component}
 
 
 def make_segmenter(cfg, root: Path):

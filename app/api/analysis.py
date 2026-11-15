@@ -47,6 +47,8 @@ async def upload(
     st: State,
     file: Annotated[UploadFile, File(description="Pole photograph (JPEG, PNG, WebP, TIFF)")],
     pole_code: Annotated[str | None, Form(max_length=64)] = None,
+    inspection_name: Annotated[str | None, Form(max_length=120)] = None,
+    city: Annotated[str | None, Form(max_length=120)] = None,
     barangay: Annotated[str | None, Form(max_length=120)] = None,
     span_m: Annotated[float | None, Form(gt=0, le=500)] = None,
     temperature_c: Annotated[float | None, Form(ge=-10, le=70)] = None,
@@ -71,7 +73,7 @@ async def upload(
     try:
         aid = svc.ingest(
             st.db, st.settings, st.config, data=data, filename=file.filename or "upload",
-            pole_code=pole_code, barangay=barangay,
+            pole_code=pole_code, barangay=barangay, inspection_name=inspection_name, city=city,
             context={"span_m": span_m, "temperature_c": temperature_c, "wind_speed_mps": wind_speed_mps},
             distance_m=distance_m, elevation_deg=elevation_deg,
             latitude=latitude, longitude=longitude, labels=label_bytes,
@@ -95,6 +97,7 @@ def _summary(a: Analysis) -> dict:
     review = a.reviews[-1] if a.reviews else None
     return {
         "id": a.id, "status": a.status, "pole_code": a.pole.pole_code, "barangay": a.pole.barangay,
+        "inspection_name": a.inspection_name, "city": a.city,
         "created_at": a.created_at.isoformat(), "filename": a.original_filename,
         "segmentation_source": a.segmentation_source, "submitted_via": a.submitted_via,
         "error_code": a.error_code, "vni": a.vni, "vni_band": a.vni_band, "wire_count": len(a.detections),
@@ -161,7 +164,7 @@ def get_result(analysis_id: str, st: State) -> dict:
         if a.status == "processing":
             raise HTTPException(409, {"code": "processing", "message": "Analysis is still processing."})
         rank = sites.rank_of(s, st.config, a.pole.pole_code) if a.status != "error" else None
-        return svc.serialize_result(a, st.config, rank)
+        return svc.serialize_result(a, st.config, rank, st.settings)
 
 
 @router.get("/{analysis_id}/image")

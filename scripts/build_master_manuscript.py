@@ -23,7 +23,7 @@ OUT = T / "MASTER_CHAPTER4_MANUSCRIPT.md"
 REPORTS = [("v2.7", "chapter4_v2.7_results.md"), ("v2.8", "chapter4_v2.8_autonomous_upgrades.md"),
            ("v2.9", "chapter4_v2.9_refinements.md"), ("v2.10", "chapter4_v2.10_hardening.md"),
            ("v2.11", "chapter4_v2.11_field_ui.md"), ("v2.12", "chapter4_v2.12_ensemble.md"),
-           ("v2.13", "chapter4_v2.13_cv_ui.md")]
+           ("v2.13", "chapter4_v2.13_cv_ui.md"), ("v2.14", "chapter4_v2.14_cv_ui.md"), ("v2.15", "chapter4_v2.15_site.md")]
 FIGURES = {
     "stress_conditions.jpg": "The eight capture conditions of the stress benchmark (v2.8, ml/stress.py).",
     "high_crs_spans_val.jpg": "Visual audit of spans in the high CRS band, validation (v2.8 §4.8.2).",
@@ -41,7 +41,6 @@ FIGURES = {
     "v212_night_veg_guard.jpg": "Night pole P-D67F60: YOLO vegetation instance over the black sky (left) and Depth Anything V2 relative depth (right) (v2.12).",
     "v213_ui_hazard_dark_desktop.jpg": "Redesigned field screener, HAZARD DETECTED, dark theme, desktop (mocked result; v2.13 §4.15.9).",
     "v213_ui_not_at_risk_light_desktop.jpg": "NOT AT RISK with two suppressed ground traces, light theme, desktop (v2.13 §4.15.9).",
-    "v213_ui_retake_dark_phone.jpg": "RETAKE PHOTO at 390 px: retake guidance as the next action, span cards with reasons and actions (v2.13 §4.15.9).",
     "v213_ui_loader_dark_desktop.jpg": "Shimmer skeleton of the result layout while the analysis runs (v2.13 §4.15.9).",
 }
 

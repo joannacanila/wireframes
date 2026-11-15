@@ -13,13 +13,13 @@ SAMPLES = ROOT_DIR / "app" / "web" / "assets" / "samples"
 
 def test_landing_and_console_routes(client):
     landing = client.get("/")
-    assert landing.status_code == 200 and "Launch Field Screener" in landing.text
+    assert landing.status_code == 200 and "Open the Field Screener" in landing.text and 'href="/workspace"' in landing.text
     for path in ("/admin/sites", "/admin/evaluation", "/admin/analyses/" + "0" * 32):
         r = client.get(path)
         assert r.status_code == 200 and "WIREFRAME Admin" in r.text, path
     for old in ("/sites", "/evaluation", "/analysis/" + "0" * 32):  # the v2.1 console routes are retired
         assert client.get(old).status_code == 404, old
-    for asset in ("landing.js", "landing.css", "status.js", "evaluation.js", "spectral.js", "logo.svg",
+    for asset in ("landing.js", "landing.css", "status.js", "evaluation.js", "logo.svg",
                   "field.js", "field.css", "admin.js", "admin.css", "lib.js"):
         assert client.get(f"/assets/{asset}").status_code == 200, asset
 

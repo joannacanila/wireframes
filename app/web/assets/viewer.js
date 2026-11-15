@@ -48,7 +48,8 @@ export class OverlayViewer {
     wrap.append(this.tip);
     this.onHover = onHover;
     this.onSelect = onSelect;
-    this.layers = { masks: true, vegetation: true, catenary: true, skeleton: false, sag: true, wiremask: false, overlays: true };
+    this.layers = { masks: true, inferred: true, vegetation: true, catenary: true, skeleton: false, sag: true, ends: true, labels: true, wiremask: false, overlays: true };
+    this._off = document.createElement("canvas");
     this.wireMask = null;
     this.vegetation = [];
     this.mode = "risk";
@@ -88,7 +89,11 @@ export class OverlayViewer {
         pts.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y)));
         return p;
       };
-      return { ...w, _mask: mask, _curve: line(w.catenary_curve || []), _skel: line(w.centerline || []) };
+      const inf = polyPath(w.provenance?.inferred_polygons);
+      const gaps = new Path2D();
+      for (const [[x0, y0], [x1, y1]] of w.provenance?.inferred_segments || []) { gaps.moveTo(x0, y0); gaps.lineTo(x1, y1); }
+      return { ...w, _mask: mask, _inf: inf, _gaps: gaps, _hasInf: !!w.provenance?.inferred_px,
+        _curve: line(w.catenary_curve || []), _skel: line(w.centerline || []) };
     });
     this.draw();
   }
@@ -110,6 +115,7 @@ export class OverlayViewer {
   zoomIn() { this.zoomBy(1.4); }
   zoomOut() { this.zoomBy(1 / 1.4); }
   reset() { this._userMoved = false; this.fit(); }
+  get zoomPct() { return Math.round((this.view.s || 1) * 100); }
   setMode(mode) { this.mode = mode; this.draw(); }
   select(index) { this.selected = index; this.draw(); if (index != null) this.focus(index); }
 
@@ -245,27 +251,15 @@ export class OverlayViewer {
     const r = this.wrap.getBoundingClientRect();
     const crs = w.crs == null ? "—" : w.crs.toFixed(1);
     const ratio = w.sag_ratio == null ? "—" : `${(w.sag_ratio * 100).toFixed(2)}%`;
-    this.tip.innerHTML = `<b>#${w.index} ${CLASS_LABEL[w.class]}</b>
-      <div class="row"><span>CRS</span><span>${crs}${w.level ? " · " + w.level : ""}</span></div>
-      <div class="row"><span>sag/L</span><span>${ratio}</span></div>
-      <div class="row"><span>status</span><span>${w.status.replace(/_/g, " ")}</span></div>`;
+    this.tip.innerHTML = `<b>Wire ${w.index} · ${CLASS_LABEL[w.class]}</b>
+      <div class="row"><span>Condition</span><span>${{ high: "High risk", medium: "Moderate risk", low: "Low risk" }[w.level] || "Not assessed"}</span></div>
+      <div class="row"><span>Sag</span><span>${ratio}</span></div>
+      <div class="row"><span>Sag score</span><span>${crs}</span></div>`;
     const x = Math.min(e.clientX - r.left + 14, r.width - 200);
     const y = Math.min(e.clientY - r.top + 14, r.height - 90);
     this.tip.style.left = `${x}px`;
     this.tip.style.top = `${y}px`;
     this.tip.setAttribute("data-show", "");
-  }
-
-  _fillWire(w, focus, dim, px) {
-    const { ctx } = this;
-    const c = wireColor(w, this.mode);
-    ctx.globalAlpha = dim(w) ? 0.12 : focus === w.index ? 0.7 : 0.38;
-    ctx.fillStyle = c;
-    ctx.fill(w._mask, "evenodd");
-    ctx.globalAlpha = dim(w) ? 0.25 : 0.95;
-    ctx.strokeStyle = c;
-    ctx.lineWidth = (focus === w.index ? 2 : 1) * px;
-    ctx.stroke(w._mask);
   }
 
   /** v2.13: overlay opacity 0-1 (1 = overlays as drawn, 0 = the photo alone). */
@@ -284,21 +278,50 @@ export class OverlayViewer {
     ctx.restore();
   }
 
+  /** Span pixels as WireNet labelled them: fill + a 1-image-px stroke reproduces the pixel mask exactly (a 1-2 px
+   *  wide wire has a near-zero-area contour, so fill alone would vanish); inferred bridge pixels are cut out, so
+   *  only observed pixels are painted. Drawn opaque off-screen, then composited once at the layer alpha. */
+  _spanLayer(ws, alpha) {
+    if (!ws.length) return;
+    const { ctx, canvas, view, dpr = 1 } = this;
+    const off = this._off;
+    if (off.width !== canvas.width || off.height !== canvas.height) { off.width = canvas.width; off.height = canvas.height; }
+    const o = off.getContext("2d");
+    o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, off.width, off.height);
+    o.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * view.x, dpr * view.y);
+    o.lineJoin = "round"; o.lineWidth = 1;
+    for (const w of ws) {
+      const c = wireColor(w, this.mode);
+      o.fillStyle = c; o.strokeStyle = c;
+      o.fill(w._mask, "evenodd"); o.stroke(w._mask);
+    }
+    if (this.layers.inferred) {
+      o.globalCompositeOperation = "destination-out";
+      for (const w of ws) if (w._hasInf) { o.fill(w._inf, "evenodd"); o.stroke(w._inf); }
+      o.globalCompositeOperation = "source-over";
+    }
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = alpha; ctx.drawImage(off, 0, 0); ctx.restore();
+  }
+
   _paintLayers() {
     const { ctx, canvas, view, dpr = 1 } = this;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (!this.image) return;
-    ctx.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * view.x, dpr * view.y);
+    const T = () => ctx.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * view.x, dpr * view.y);
+    // line geometry is in pixel indices: +0.5 puts it on pixel centres, aligned with the mask at every zoom
+    const TL = () => ctx.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * (view.x + 0.5 * view.s), dpr * (view.y + 0.5 * view.s));
+    T();
     ctx.imageSmoothingEnabled = view.s < 2; // crisp pixels when zoomed in to inspect masks
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(this.image, 0, 0);
     if (!this.layers.overlays) return;
+    const L = this.layers;
 
-    if (this.layers.wiremask && this.wireMask) {
+    if (L.wiremask && this.wireMask) {
       ctx.save();
       ctx.imageSmoothingEnabled = false; // class pixels stay crisp
-      ctx.globalAlpha = 0.85;
+      ctx.globalAlpha = 0.9;
       ctx.drawImage(this.wireMask, 0, 0, this.image.width, this.image.height);
       ctx.restore();
     }
@@ -306,8 +329,9 @@ export class OverlayViewer {
     const px = 1 / view.s; // one CSS pixel in image units
     const focus = this.selected ?? this.hover;
     const dim = (w) => focus != null && w.index !== focus;
+    const fw = focus != null ? this.wires.find((x) => x.index === focus) : null;
 
-    if (this.layers.vegetation && this.vegetation.length) {
+    if (L.vegetation && this.vegetation.length) {
       const c = css("--cls-veg");
       ctx.fillStyle = c; ctx.strokeStyle = c; ctx.lineWidth = px;
       ctx.setLineDash([4 * px, 3 * px]);
@@ -319,87 +343,100 @@ export class OverlayViewer {
       ctx.globalAlpha = 1;
     }
 
-    if (this.layers.masks) {
-      for (const w of this.wires) {
-        if (focus === w.index) continue; // drawn last, on top, with a halo
-        this._fillWire(w, focus, dim, px);
-      }
-      const fw = focus != null && this.wires.find((x) => x.index === focus);
+    if (L.masks) {
+      this._spanLayer(this.wires.filter((w) => w !== fw), fw ? 0.32 : 0.62);
       if (fw) {
-        ctx.globalAlpha = 1; ctx.strokeStyle = "rgba(255,255,255,0.95)"; ctx.lineWidth = 3.5 * px; ctx.stroke(fw._mask);
-        this._fillWire(fw, focus, dim, px);
+        T(); ctx.globalAlpha = 1; ctx.strokeStyle = "rgba(255,255,255,0.95)"; ctx.lineWidth = 3 * px; ctx.stroke(fw._mask);
+        this._spanLayer([fw], 0.95);
       }
-      ctx.globalAlpha = 1;
     }
 
-    if (this.layers.skeleton) {
-      ctx.lineJoin = "round";
+    TL();
+    ctx.lineJoin = "round"; ctx.lineCap = "round";
+    if (L.skeleton) {
       for (const w of this.wires) {
         ctx.globalAlpha = dim(w) ? 0.25 : 1;
-        ctx.strokeStyle = "rgba(0,0,0,0.65)"; ctx.lineWidth = 3 * px; ctx.stroke(w._skel);
-        ctx.strokeStyle = "#7ee2ff"; ctx.lineWidth = 1.25 * px; ctx.stroke(w._skel);
+        ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 3 * px; ctx.stroke(w._skel);
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.25 * px; ctx.stroke(w._skel);
       }
-      ctx.globalAlpha = 1;
     }
 
-    if (this.layers.catenary || this.layers.sag) {
+    if (L.inferred) {
+      // gaps the span assembler bridged: geometry used by the fit, never detected by the model
       for (const w of this.wires) {
-        if (w.status !== "scored") continue;
-        const c = wireColor(w, this.mode);
-        ctx.globalAlpha = dim(w) ? 0.25 : 1;
-        if (this.layers.catenary) {
-          ctx.lineCap = "round";
-          ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.lineWidth = 4.5 * px; ctx.stroke(w._curve);
-          ctx.strokeStyle = c; ctx.lineWidth = 2.25 * px; ctx.stroke(w._curve);
-        }
-        const f = w.fit || {};
-        if (this.layers.sag && f.endpoints) {
-          const [[x0, y0], [x1, y1]] = f.endpoints;
-          ctx.setLineDash([6 * px, 5 * px]);
-          ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = 1.25 * px;
-          ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
-          ctx.setLineDash([]);
-          for (const [x, y] of f.endpoints) { ctx.beginPath(); ctx.arc(x, y, 3 * px, 0, Math.PI * 2); ctx.fillStyle = "#fff"; ctx.fill(); }
-          if (f.sag_point && f.chord_foot) {
-            ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5 * px;
-            ctx.beginPath(); ctx.moveTo(...f.sag_point); ctx.lineTo(...f.chord_foot); ctx.stroke();
-            ctx.beginPath(); ctx.arc(...f.sag_point, 3.5 * px, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
-            ctx.lineWidth = 1.5 * px; ctx.strokeStyle = "#fff"; ctx.stroke();
-          }
-        }
+        if (!w._hasInf) continue;
+        ctx.globalAlpha = dim(w) ? 0.3 : 1;
+        ctx.setLineDash([]);
+        ctx.strokeStyle = "rgba(0,0,0,0.75)"; ctx.lineWidth = 3.5 * px; ctx.stroke(w._gaps);
+        ctx.setLineDash([4 * px, 3 * px]);
+        ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.75 * px; ctx.stroke(w._gaps);
       }
-      ctx.globalAlpha = 1;
+      ctx.setLineDash([]);
     }
 
-    // screen-space annotations: wire badges and sag callouts stay legible at any zoom
-    if (!this.layers.masks && !this.layers.catenary) { ctx.globalAlpha = 1; return; }
+    for (const w of this.wires) {
+      const scored = w.status === "scored";
+      const c = wireColor(w, this.mode);
+      ctx.globalAlpha = dim(w) ? 0.25 : 1;
+      if (L.catenary && scored) {
+        ctx.strokeStyle = "rgba(0,0,0,0.6)"; ctx.lineWidth = 4 * px; ctx.stroke(w._curve);
+        ctx.strokeStyle = c; ctx.lineWidth = 2 * px; ctx.stroke(w._curve);
+      }
+      const f = w.fit || {};
+      if (L.sag && scored && f.endpoints && (focus == null || focus === w.index)) {
+        const [[x0, y0], [x1, y1]] = f.endpoints;
+        ctx.setLineDash([6 * px, 5 * px]);
+        ctx.strokeStyle = "rgba(255,255,255,0.85)"; ctx.lineWidth = 1.25 * px;
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.setLineDash([]);
+        if (f.sag_point && f.chord_foot) {
+          ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5 * px;
+          ctx.beginPath(); ctx.moveTo(...f.sag_point); ctx.lineTo(...f.chord_foot); ctx.stroke();
+          ctx.beginPath(); ctx.arc(...f.sag_point, 3.5 * px, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
+          ctx.lineWidth = 1.5 * px; ctx.strokeStyle = "#fff"; ctx.stroke();
+        }
+      }
+      if (L.ends) {
+        // span ends as traced (fit end points when measured): not pole attachment points, which are not detected
+        const ends = scored && f.endpoints ? f.endpoints : (w.centerline?.length ? [w.centerline[0], w.centerline.at(-1)] : []);
+        for (const [x, y] of ends) {
+          ctx.beginPath(); ctx.rect(x - 3 * px, y - 3 * px, 6 * px, 6 * px);
+          ctx.fillStyle = "#fff"; ctx.fill(); ctx.lineWidth = 1.25 * px; ctx.strokeStyle = "rgba(0,0,0,0.8)"; ctx.stroke();
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // screen-space annotations: span numbers and the sag callout stay legible at any zoom
+    if (!L.labels || !(L.masks || L.catenary)) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const toScreen = ([x, y]) => [x * view.s + view.x, y * view.s + view.y];
-    ctx.font = `500 11px ${css("--mono") || "monospace"}`;
+    const toScreen = ([x, y]) => [(x + 0.5) * view.s + view.x, (y + 0.5) * view.s + view.y];
+    ctx.font = `600 11px ${css("--mono") || "monospace"}`;
     ctx.textBaseline = "middle";
     for (const w of this.wires) {
+      if (focus != null && w.index !== focus && this.selected != null) continue; // selected: only its own label
       const c = wireColor(w, this.mode);
       const curve = w.catenary_curve?.length ? w.catenary_curve : w.centerline;
       const anchor = curve?.length ? curve[Math.floor(curve.length * 0.18)] : [(w.bbox[0] + w.bbox[2]) / 2, w.bbox[1]];
       const [bx, by] = toScreen(anchor);
-      ctx.globalAlpha = dim(w) ? 0.35 : 1;
-      ctx.beginPath(); ctx.arc(bx, by - 14, 9, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(12,13,15,0.88)"; ctx.fill();
-      ctx.lineWidth = 1.5; ctx.strokeStyle = c; ctx.stroke();
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.fillText(String(w.index), bx, by - 13.5);
+      const t = String(w.index), tw = Math.max(18, ctx.measureText(t).width + 8);
+      ctx.globalAlpha = dim(w) ? 0.4 : 1;
+      ctx.fillStyle = "rgba(20,21,23,0.9)";
+      ctx.beginPath(); ctx.roundRect(bx - tw / 2, by - 23, tw, 16, 3); ctx.fill();
+      ctx.fillStyle = c; ctx.fillRect(bx - tw / 2, by - 9, tw, 2);
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.fillText(t, bx, by - 15);
 
       const f = w.fit || {};
-      if (this.layers.sag && w.status === "scored" && f.sag_point && (focus == null || focus === w.index)) {
+      if (L.sag && w.status === "scored" && f.sag_point && focus === w.index) {
         const [sx, sy] = toScreen(f.sag_point);
-        const label = `sag/L ${(w.sag_ratio * 100).toFixed(2)}%  ·  CRS ${w.crs.toFixed(1)}`;
-        const tw = ctx.measureText(label).width + 16;
+        const label = `sag ${(w.sag_ratio * 100).toFixed(1)}% of length  ·  score ${w.crs.toFixed(1)}/10`;
+        const lw = ctx.measureText(label).width + 16;
         const cw = this.canvas.width / dpr, ch = this.canvas.height / dpr;
-        // keep the callout inside the canvas (it used to run off the right edge)
-        const lx = Math.max(4, Math.min(sx + 10, cw - tw - 4)), ly = Math.max(14, Math.min(sy + 16, ch - 14));
-        ctx.fillStyle = "rgba(12,13,15,0.9)";
-        ctx.beginPath(); ctx.roundRect(lx, ly - 10, tw, 20, 5); ctx.fill();
+        const lx = Math.max(4, Math.min(sx + 10, cw - lw - 4)), ly = Math.max(14, Math.min(sy + 16, ch - 14));
+        ctx.fillStyle = "rgba(20,21,23,0.92)";
+        ctx.beginPath(); ctx.roundRect(lx, ly - 10, lw, 20, 3); ctx.fill();
         ctx.fillStyle = c; ctx.fillRect(lx, ly - 10, 2.5, 20);
-        ctx.fillStyle = "#e9ebee"; ctx.textAlign = "left"; ctx.fillText(label, lx + 9, ly + 0.5);
+        ctx.fillStyle = "#f2f2f0"; ctx.textAlign = "left"; ctx.fillText(label, lx + 9, ly + 0.5);
       }
     }
     ctx.globalAlpha = 1;

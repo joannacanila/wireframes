@@ -6,14 +6,15 @@ Real photos (needs the detection models on the server):
 
 Mocked results (no model needed; the server only serves the page, assets and one sample analysis):
 
-    python -m scripts.ui_check --mock --base http://127.0.0.1:8000 --shots runs/ui_shots_v213 \
+    python -m scripts.ui_check --mock --base http://127.0.0.1:8000 --shots runs/ui_shots \
         --out docs/thesis/results/ui_check_v213.json
 
 --mock uploads the bundled synthetic sample with its reference polygons once, to get a genuine /result payload, and
 derives four field scenarios from it (HAZARD DETECTED, REVIEW REQUIRED, NOT AT RISK with suppressed ground traces,
 RETAKE PHOTO). Playwright intercepts /api/health, the upload, the status poll, /result, the wire-mask PNG and the PDF,
 so the browser sees each scenario exactly as the API would deliver it. Every scenario is checked in the dark and the
-light theme, at desktop (1440 x 900) and phone (390 x 844) width:
+light theme, at desktop (1440 x 900) and a narrow laptop window (1024 x 768); WIREFRAME is a desktop website and
+does not support phones (v2.14):
   * no console error and no uncaught page error,
   * the shimmer skeleton is shown (and animating) while the analysis is processing,
   * the hero verdict: status pill text, worst CRS, measured vs total spans, one next action,
@@ -42,7 +43,7 @@ from playwright.sync_api import sync_playwright
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLE = ROOT / "app" / "web" / "assets" / "samples"
 DESKTOP = {"width": 1440, "height": 900}
-PHONE = {"width": 390, "height": 844}
+NARROW = {"width": 1024, "height": 768}  # smallest supported browser window (v2.14: no phone support)
 MASK_URL = "/mock/wiremask.png"
 
 
@@ -61,37 +62,52 @@ def check_result(page, desktop: bool) -> dict:
     page.wait_for_function("window.wfViewer && window.wfViewer.image", timeout=30_000)
     row: dict = {"url": page.url}
     row["pill"] = page.inner_text("#verdict-pill").strip()
-    row["title"] = page.inner_text(".fx-hero h2")
-    row["next_action"] = page.inner_text("#next-action").strip()
-    row["kpis"] = [k.inner_text().replace("\n", " ") for k in page.query_selector_all(".fx-kpi")]
+    row["title"] = page.inner_text(".fx-outcome h2")
+    row["next_action"] = page.inner_text("#next-action li").strip()
+    row["assessment"] = page.inner_text(".fx-outcome")
+    row["limitations"] = [x.get_attribute("data-limit") for x in page.query_selector_all("#limits li[data-limit]")]
+    row["heading"] = page.inner_text(".fx-insp h1")
+    row["subline"] = page.inner_text(".fx-insp p")
+    row["kpis"] = [k.inner_text().replace("\n", " ") for k in page.query_selector_all(".fx-counts > div")]
     row["hazards"] = [x.inner_text() for x in page.query_selector_all(".fx-hazards li")]
     rows = page.query_selector_all("tr[data-wire]")
     row["table_rows"] = len(rows)
     row["unmeasured_without_reason"] = page.evaluate(
-        "[...document.querySelectorAll('tr[data-group=none][data-wire]')].filter(tr => !tr.querySelector('.fx-reason')).length")
-    row["actions_shown"] = len(page.query_selector_all("tr[data-wire] .fx-do"))
+        "[...document.querySelectorAll('tr[data-group=none][data-wire]')].filter(tr => !(tr.querySelector('td.find')?.textContent || '').trim()).length")
+    # v2.14: the full reason and next step live in the span detail panel; check it for the first unmeasured row
+    row["detail_shows_reason"] = None
+    none_row = page.query_selector("tr[data-group=none][data-wire]")
+    if none_row:
+        none_row.click()
+        row["detail_shows_reason"] = bool(page.query_selector("#span-detail .fx-finding"))
+    # the retake step of every unmeasured span, as the detail panel shows it when that span is selected
+    row["actions_shown"] = page.evaluate("""() => { let n = 0;
+        for (const tr of document.querySelectorAll('tr[data-group=none][data-wire]')) {
+          if (tr.getAttribute('aria-selected') !== 'true') tr.click();
+          n += document.querySelectorAll('#span-detail .fx-do').length; tr.click(); }
+        return n; }""")
 
-    # ---- view: Original | Detected spans | Full wire mask
+    # ---- view presets: Original | Spans | Mask | Overlay
     views = {}
-    for name in ("photo", "mask", "spans"):  # end on the default view
+    for name in ("photo", "mask", "overlay", "spans"):  # end on the default view
         b = page.query_selector(f'[data-view="{name}"]')
         if b.is_disabled():
             views[name] = "disabled"
             continue
         b.click()
-        page.wait_for_timeout(300)  # thumb transition (260 ms)
+        page.wait_for_timeout(150)
         st = page.evaluate("""() => { const v = window.wfViewer, L = v.layers;
             return { checked: document.querySelector('[data-view][aria-checked=true]').dataset.view,
                      overlays: L.overlays, masks: L.masks, wiremask: L.wiremask, maskLoaded: !!v.wireMask,
-                     opOff: document.querySelector('#opacity-wrap').hasAttribute('data-off'),
-                     thumb: document.querySelector('.fx-seg .thumb').getBoundingClientRect().width }; }""")
-        if name == "mask":
+                     inferred: L.inferred, opOff: document.querySelector('#opacity-wrap').hasAttribute('data-off') }; }""")
+        if name in ("mask", "overlay"):
             page.wait_for_function("!!window.wfViewer.wireMask", timeout=15_000)
             st["maskLoaded"] = True
-        ok = st["checked"] == name and st["thumb"] > 0 and {
+        ok = st["checked"] == name and {
             "photo": not st["overlays"] and st["opOff"],
-            "spans": st["overlays"] and st["masks"] and not st["wiremask"] and not st["opOff"],
+            "spans": st["overlays"] and st["masks"] and st["inferred"] and not st["wiremask"] and not st["opOff"],
             "mask": st["overlays"] and st["wiremask"] and not st["masks"] and st["maskLoaded"],
+            "overlay": st["overlays"] and st["wiremask"] and st["masks"] and st["maskLoaded"],
         }[name]
         views[name] = "ok" if ok else f"bad: {st}"
     row["views"] = views
@@ -101,6 +117,28 @@ def check_result(page, desktop: bool) -> dict:
     op = page.evaluate("({o: window.wfViewer.opacity, out: document.querySelector('#opacity-wrap output').textContent})")
     page.eval_on_selector("#opacity", "el => { el.value = 100; el.dispatchEvent(new Event('input', {bubbles: true})); }")
     row["opacity"] = "ok" if abs((op["o"] or 0) - 0.4) < 1e-9 and op["out"] == "40%" else f"bad: {op}"
+
+    # ---- layers menu: an independent layer switches in the viewer and un-checks the preset (v2.14)
+    page.click("#layers-btn")
+    page.click('#layers-menu [data-l="skeleton"]')
+    lay = page.evaluate("""() => ({ on: window.wfViewer.layers.skeleton,
+        preset: !!document.querySelector('[data-view][aria-checked=true]'),
+        box: document.querySelector('#layers-menu [data-l=skeleton]').checked })""")
+    page.keyboard.press("Escape")
+    page.mouse.click(5, 5)
+    row["layers"] = "ok" if lay["on"] and lay["box"] and not lay["preset"] else f"bad: {lay}"
+
+    # ---- zoom, fit, reset
+    z0 = page.evaluate("window.wfViewer.view.s")
+    page.click('[data-zoom="in"]')
+    z1 = page.evaluate("window.wfViewer.view.s")
+    pct = page.inner_text("#zoom-pct")
+    page.click('[data-zoom="reset"]')
+    page.wait_for_timeout(100)
+    rs = page.evaluate("""() => ({ s: window.wfViewer.view.s, sel: window.wfViewer.selected, skel: window.wfViewer.layers.skeleton,
+        view: (document.querySelector('[data-view][aria-checked=true]') || {}).dataset?.view })""")
+    row["zoom"] = "ok" if z1 > z0 * 1.3 and pct.endswith("%") and abs(rs["s"] - z0) < 1e-6 and rs["sel"] is None \
+        and not rs["skel"] and rs["view"] == "spans" else f"bad: {z0, z1, pct, rs}"
 
     # ---- diagnostics drawer
     def drawer():
@@ -124,8 +162,6 @@ def check_result(page, desktop: bool) -> dict:
             const s = getComputedStyle(el)[p].split(',').map(x => parseFloat(x) * (x.trim().endsWith('ms') ? 1 : 1000));
             return Math.max(...s); };
         return { drawer: ms(document.querySelector('.fx-drawer-body'), 'transitionDuration'),
-                 thumb: ms(document.querySelector('.fx-seg .thumb'), 'transitionDuration'),
-                 opacity_wrap: ms(document.querySelector('.fx-opacity'), 'transitionDuration'),
                  stage: ms(document.querySelector('#result'), 'animationDuration') }; }""")
 
     # ---- table <-> canvas (desktop: the canvas is large enough to hit a 1-px wire reliably)
@@ -155,7 +191,7 @@ def check_result(page, desktop: bool) -> dict:
     # the spans list must fit its panel: no sideways scrolling that would clip the reason / next step
     row["spans_overflow_px"] = page.evaluate(
         "(() => { const s = document.querySelector('#fx-scroll'); return s ? s.scrollWidth - s.clientWidth : 0; })()")
-    # filtering must still hide rows (the phone layout sets display on rows; [hidden] has to win)
+    # filtering must still hide rows ([hidden] has to win over any display rule on rows)
     if page.query_selector('[data-filter="none"]:not(:disabled)'):
         page.click('[data-filter="none"]')
         row["filter_hides_rows"] = page.evaluate("""() => [...document.querySelectorAll('tr[data-wire]')]
@@ -232,9 +268,9 @@ def scenarios(base: dict) -> dict[str, tuple[dict, str]]:
     r["hazard"]["verdict"] = "AT RISK - HIGH"
     _set_levels(r, {4: ("high", 7.91), 5: ("high", 8.62)})
     r["hazard"]["reasons"] = ["AT RISK - HIGH: sag in the high CRS band on 2 of 5 measurable spans (spans 4, 5)"]
-    out["hazard"] = (r, "HAZARD DETECTED")
+    out["hazard"] = (r, "HIGH RISK FOUND")
 
-    out["review"] = (copy.deepcopy(b), "REVIEW REQUIRED")  # the sample's own verdict: AT RISK - MODERATE
+    out["review"] = (copy.deepcopy(b), "MODERATE RISK FOUND")  # the sample's own verdict: AT RISK - MODERATE
 
     r = copy.deepcopy(b)
     r["hazard"]["verdict"] = "NOT AT RISK"
@@ -250,7 +286,7 @@ def scenarios(base: dict) -> dict[str, tuple[dict, str]]:
          "reason_code": "ground_structure",
          "reason": "Lies on the road or pavement: a kerb, manhole or pavement edge, not an overhead wire"}]
     r["flags"] = [*r["flags"], "ground_structures_suppressed"]
-    out["not_at_risk_suppressed"] = (r, "NOT AT RISK")
+    out["not_at_risk_suppressed"] = (r, "NO HIGH RISK FOUND")
 
     r = copy.deepcopy(b)
     r["hazard"]["verdict"] = "INCONCLUSIVE - RETAKE PHOTO"
@@ -269,7 +305,7 @@ def scenarios(base: dict) -> dict[str, tuple[dict, str]]:
                     "advice": "Retake the photo: frame the pole and both spans against the sky"}
     r["retake_guidance"] = (f"3 of 5 spans could not be measured. Best next photo: upload the full-resolution photo "
                             f"(this one is {min(w, h)} px on its short side), or move closer so the span looks longer.")
-    out["retake"] = (r, "RETAKE PHOTO")
+    out["retake"] = (r, "PHOTO NOT CLEAR ENOUGH")
     return out
 
 
@@ -308,10 +344,9 @@ def run_mock(browser, base: str, shots: Path) -> list[dict]:
     results = []
     for name, (payload, pill) in scenarios(real).items():
         for theme in ("dark", "light"):
-            for vp_name, vp in (("desktop", DESKTOP), ("phone", PHONE)):
-                desktop = vp_name == "desktop"
-                ctx = browser.new_context(viewport=vp, device_scale_factor=1 if desktop else 2, is_mobile=not desktop,
-                                          has_touch=not desktop)
+            for vp_name, vp in (("desktop", DESKTOP), ("narrow", NARROW)):
+                desktop = True  # both are desktop browser windows; there is no phone layout (v2.14)
+                ctx = browser.new_context(viewport=vp, device_scale_factor=1)
                 ctx.add_init_script(f"try {{ localStorage.setItem('wf-field-theme', '{theme}'); }} catch {{}}")
                 p = copy.deepcopy(payload)
                 p["id"] = f"{abs(hash((name, theme, vp_name))) % (1 << 64):016x}" * 2
@@ -320,9 +355,9 @@ def run_mock(browser, base: str, shots: Path) -> list[dict]:
                 page = ctx.new_page()
                 errors = _errors(page)
                 page.goto(f"{base}/workspace")
-                page.wait_for_function("document.querySelector('#mode-pill').dataset.mode === 'field'", timeout=15_000)
+                page.wait_for_function("document.documentElement.dataset.server === 'field'", timeout=15_000)
                 page.set_input_files('input[name="file"]', str(SAMPLE / "synthetic-pole.jpg"))
-                page.fill('input[name="pole_code"]', "SYN-SAMPLE")
+                page.fill('input[name="inspection_name"]', "Mock inspection")
                 page.click("#submit")
                 # shimmer skeleton while processing
                 page.wait_for_selector("#working:not([hidden])", timeout=10_000)
@@ -342,7 +377,11 @@ def run_mock(browser, base: str, shots: Path) -> list[dict]:
                     "shimmer": "fx-shimmer" in shimmer["names"] and shimmer["busy"] == "true" and shimmer["skeletons"] > 0,
                     "pill": row["pill"].upper() == pill,
                     "theme": html_theme == theme,
-                    "kpis": len(row["kpis"]) == 2 and "worst crs" in row["kpis"][0].lower() and "/" in row["kpis"][1],
+                    "risk_summary_three_levels": len(row["kpis"]) == 3 and "not assessed" not in " ".join(row["kpis"]).lower(),
+                    "no_model_status_shown": "model ready" not in page.inner_text("body").lower(),
+                    "layers": row["layers"] == "ok",
+                    "zoom_fit_reset": row["zoom"] == "ok",
+                    "detail_shows_reason": row["detail_shows_reason"] is not False,
                     "next_action": bool(row["next_action"]),
                     "views": all(v == "ok" for v in row["views"].values()),
                     "opacity": row["opacity"] == "ok",
@@ -358,12 +397,13 @@ def run_mock(browser, base: str, shots: Path) -> list[dict]:
                     checks["table_to_canvas"] = bool(row.get("table_to_canvas"))
                     checks["canvas_to_table"] = bool(row.get("canvas_to_table", True))
                 if name == "retake":
-                    checks["retake_guidance_is_next_action"] = row["next_action"] == p["retake_guidance"]
+                    checks["retake_is_first_step"] = row["next_action"].startswith("Retake the photo")
                     checks["span_actions_shown"] = row["actions_shown"] >= 3
                 if name == "not_at_risk_suppressed":
+                    checks["not_a_certification"] = "not a safety inspection" in row["assessment"]
                     checks["suppressed_listed"] = ("ground structures ignored" in row["diag_text"].lower()
                                                    and "94% on road / pavement" in row["diag_text"])
-                    checks["suppressed_kpi"] = "2 ground traces ignored" in row["kpis"][1]
+                    checks["suppressed_count"] = row["diag_text"].count("on road / pavement") == 2
                 rec = {"scenario": name, "theme": theme, "viewport": f"{vp['width']}x{vp['height']}",
                        "pill": row["pill"], "title": row["title"], "next_action": row["next_action"], "kpis": row["kpis"],
                        "views": row["views"], "durations_ms": row["durations_ms"], "shimmer": shimmer,
@@ -381,7 +421,7 @@ def run_mock(browser, base: str, shots: Path) -> list[dict]:
 
 # ---------------------------------------------------------------------------------------------- real photos
 
-def run_real(browser, base: str, shots: Path, photos: list[Path], pole_code: str | None) -> list[dict]:
+def run_real(browser, base: str, shots: Path, photos: list[Path], name: str | None) -> list[dict]:
     results = []
     ctx = browser.new_context(viewport=DESKTOP, device_scale_factor=1)
     for ph in photos:
@@ -389,31 +429,35 @@ def run_real(browser, base: str, shots: Path, photos: list[Path], pole_code: str
         errors = _errors(page)
         page.goto(f"{base}/workspace")
         page.set_input_files('input[name="file"]', str(ph))
-        if pole_code:
-            page.fill('input[name="pole_code"]', pole_code)
+        label = f"{name or 'UI check'} · {ph.stem}"
+        page.fill('input[name="inspection_name"]', label)
+        page.fill('input[name="city"]', "Test City")
+        page.fill('input[name="barangay"]', "Test Barangay")
         page.click("#submit")
         row = check_result(page, True)
+        row["name_saved"] = row["heading"] == label and ph.name in row["subline"] and "Test Barangay, Test City" in row["subline"]
         href = page.get_attribute("#pdf", "href")
         resp = page.request.get(base + href)
         row["pdf_ok"] = resp.status == 200 and resp.body()[:4] == b"%PDF"
         page.screenshot(path=str(shots / f"{ph.stem}.png"), full_page=True)
         row.update(photo=ph.name, errors=errors)
-        row["pass"] = bool(not errors and row["pdf_ok"] and row["unmeasured_without_reason"] == 0
+        row["pass"] = bool(not errors and row["pdf_ok"] and row["name_saved"] and row["unmeasured_without_reason"] == 0
                            and all(v in ("ok", "disabled") for v in row["views"].values())
-                           and row["opacity"] == "ok" and row["diag"] == "ok"
+                           and row["opacity"] == "ok" and row["diag"] == "ok" and row["layers"] == "ok" and row["zoom"] == "ok"
+                           and row["detail_shows_reason"] is not False
                            and (row["table_rows"] == 0 or (row.get("table_to_canvas") and row.get("canvas_to_table", True))))
         results.append(row)
         print(json.dumps({k: v for k, v in row.items() if k != "diag_text"}), flush=True)
         page.close()
-    if results:  # phone-width rendering of the last result
-        mob = browser.new_context(viewport=PHONE, device_scale_factor=2, is_mobile=True, has_touch=True)
+    if results:  # narrowest supported desktop window, last result
+        mob = browser.new_context(viewport=NARROW, device_scale_factor=1)
         mp = mob.new_page()
         merr = _errors(mp)
         mp.goto(results[-1]["url"])
         mp.wait_for_selector("#verdict-pill", timeout=60_000)
         overflow = mp.evaluate("document.documentElement.scrollWidth > window.innerWidth + 1")
-        mp.screenshot(path=str(shots / "phone.png"), full_page=True)
-        results.append({"photo": "phone-width (390 px)", "horizontal_overflow": overflow, "errors": merr,
+        mp.screenshot(path=str(shots / "narrow.png"), full_page=True)
+        results.append({"photo": "narrow window (1024 px)", "horizontal_overflow": overflow, "errors": merr,
                         "pass": not overflow and not merr})
     return results
 
@@ -423,7 +467,7 @@ def main() -> None:
     ap.add_argument("--base", default="http://127.0.0.1:8000")
     ap.add_argument("--shots", type=Path, default=ROOT / "runs" / "ui_shots")
     ap.add_argument("--out", type=Path)
-    ap.add_argument("--pole-code", default=None)
+    ap.add_argument("--name", default=None, help="inspection name prefix for real-photo runs")
     ap.add_argument("--mock", action="store_true", help="mocked field scenarios; no detection model needed")
     ap.add_argument("--channel", default="chrome", help="Playwright browser channel (chrome, msedge, chromium)")
     ap.add_argument("photos", nargs="*", type=Path)
@@ -435,7 +479,7 @@ def main() -> None:
             results = run_mock(browser, a.base.rstrip("/"), a.shots)
         else:
             photos = a.photos or sorted((ROOT / "runs" / "demo_samples").glob("*"))
-            results = run_real(browser, a.base.rstrip("/"), a.shots, photos, a.pole_code)
+            results = run_real(browser, a.base.rstrip("/"), a.shots, photos, a.name)
         version = browser.version
         browser.close()
     ok = bool(results) and all(r["pass"] for r in results)

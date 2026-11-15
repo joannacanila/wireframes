@@ -82,7 +82,16 @@ def create_app(state: AppState | None = None, segmenter: Segmenter | None = None
         st = get_state(request)
         return {"fingerprint": st.config.fingerprint, **st.config.model_dump(mode="json")}
 
-    app.mount("/assets", StaticFiles(directory=WEB_DIR / "assets"), name="assets")
+    class RevalidatedStatic(StaticFiles):
+        """Assets are revalidated on every load (cheap: ETag / 304), so a browser never pairs a new page with an old
+        stylesheet or script after an update (v2.15: the redesigned landing page rendered broken from cache)."""
+
+        async def get_response(self, path, scope):
+            resp = await super().get_response(path, scope)
+            resp.headers["Cache-Control"] = "no-cache"
+            return resp
+
+    app.mount("/assets", RevalidatedStatic(directory=WEB_DIR / "assets"), name="assets")
 
     @app.get("/", include_in_schema=False)
     def landing() -> FileResponse:

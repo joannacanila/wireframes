@@ -117,6 +117,9 @@ class Analysis(Base):
     id: Mapped[str] = mapped_column(String(32), primary_key=True, default=_uuid)
     pole_id: Mapped[int] = mapped_column(ForeignKey("poles.id", ondelete="CASCADE"), nullable=False)
     original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    # v2.15: set by the person who uploads; the original file name above is kept as file metadata
+    inspection_name: Mapped[str | None] = mapped_column(String(120))
+    city: Mapped[str | None] = mapped_column(String(120))
     stored_name: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
     label_name: Mapped[str | None] = mapped_column(String(64))  # reference annotation file, if any
     status: Mapped[str] = mapped_column(String(24), nullable=False, default="processing")

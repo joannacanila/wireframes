@@ -112,6 +112,10 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   span_gap_angle_deg: 25          # 25-35 deg within noise; the stricter value is kept
   span_draw_bridge: true
   span_min_stitched_len: 90       # 90-200 px within noise; the least restrictive value is kept
+  # v2.14: a mask pixel joins only a span in its own connected mask blob (before: the nearest span anywhere, which
+  # painted a separate neighbouring cable into the span). Validation tolerant mAP50 0.035557 -> 0.035554; 0 of 23
+  # verdicts changed (22 validation photos + P-B1D137); docs/thesis/results/v214_own_component_val.json
+  span_own_component: true
 
 centerline:                       # Section 3.6.4, Algorithm 4
   provisional: true

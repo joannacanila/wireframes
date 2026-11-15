@@ -232,7 +232,8 @@ card: id, conductor and CRS on one line, then status, reason and action at full 
 checks (`spans_table_fits`, `filter_hides_rows`) that would have caught it.
 
 Figures: `figures/v213_ui_hazard_dark_desktop.jpg`, `v213_ui_not_at_risk_light_desktop.jpg`,
-`v213_ui_retake_dark_phone.jpg`, `v213_ui_loader_dark_desktop.jpg`.
+`v213_ui_loader_dark_desktop.jpg`. (The 390 px phone figure was withdrawn in v2.14: WIREFRAME is a desktop website
+and phone layouts are no longer supported.)
 
 The mocked check verifies the interface, not the models. The real-photo mode of the same script
 (`python -m scripts.ui_check --base … photos…`) is to be re-run on the M1 with the models installed.

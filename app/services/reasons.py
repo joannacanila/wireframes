@@ -17,6 +17,23 @@ REASONS = {
     "degenerate": "Too straight or too short a baseline to estimate curvature",
     "service_drop": "Steep service drop or guy wire: not a pole-to-pole span, not scored for sag",
 }
+# v2.14: the table label for each code (field reading); the full sentence above stays in the API and the detail view
+REASONS_SHORT = {
+    "chord_below_precision_gate": "Insufficient visible length",
+    "too_short": "Insufficient visible length",
+    "empty_mask": "Nothing left to trace",
+    "residual_too_large": "Ambiguous wire path",
+    "non_positive_a": "Ambiguous wire path",
+    "no_convergence": "Curve fit failed",
+    "degenerate": "Baseline too short or straight",
+    "service_drop": "Service drop (not scored)",
+}
+
+
+def wire_reason_short(code: str | None) -> str | None:
+    return None if code is None else REASONS_SHORT.get(code, "Not measured")
+
+
 SCORED_NOTES = {
     "truncated": "Touches the photo edge: the span may continue out of frame",
     "vegetation_contact": "Vegetation touches this wire",

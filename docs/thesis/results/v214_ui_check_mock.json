@@ -1,0 +1,962 @@
+{
+ "all_pass": true,
+ "mode": "mock",
+ "browser": "chrome 157.0.8103.78",
+ "n_checks": 17,
+ "results": [
+  {
+   "scenario": "hazard",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "HAZARD DETECTED",
+   "title": "Hazard on this pole: schedule a site visit.",
+   "next_action": "Flag this pole for a site inspection. Download the PDF report for the crew.",
+   "kpis": [
+    "High 2",
+    "Moderate 1",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 8.6 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "hazard",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "HAZARD DETECTED",
+   "title": "Hazard on this pole: schedule a site visit.",
+   "next_action": "Flag this pole for a site inspection. Download the PDF report for the crew.",
+   "kpis": [
+    "High 2",
+    "Moderate 1",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 8.6 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "hazard",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "HAZARD DETECTED",
+   "title": "Hazard on this pole: schedule a site visit.",
+   "next_action": "Flag this pole for a site inspection. Download the PDF report for the crew.",
+   "kpis": [
+    "High 2",
+    "Moderate 1",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 8.6 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "hazard",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "HAZARD DETECTED",
+   "title": "Hazard on this pole: schedule a site visit.",
+   "next_action": "Flag this pole for a site inspection. Download the PDF report for the crew.",
+   "kpis": [
+    "High 2",
+    "Moderate 1",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 8.6 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "REVIEW REQUIRED",
+   "title": "Review this pole at the next inspection round.",
+   "next_action": "Add this pole to the next inspection round. Download the PDF report for the record.",
+   "kpis": [
+    "High 1",
+    "Moderate 2",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 7.5 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "REVIEW REQUIRED",
+   "title": "Review this pole at the next inspection round.",
+   "next_action": "Add this pole to the next inspection round. Download the PDF report for the record.",
+   "kpis": [
+    "High 1",
+    "Moderate 2",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 7.5 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "REVIEW REQUIRED",
+   "title": "Review this pole at the next inspection round.",
+   "next_action": "Add this pole to the next inspection round. Download the PDF report for the record.",
+   "kpis": [
+    "High 1",
+    "Moderate 2",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 7.5 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "REVIEW REQUIRED",
+   "title": "Review this pole at the next inspection round.",
+   "next_action": "Add this pole to the next inspection round. Download the PDF report for the record.",
+   "kpis": [
+    "High 1",
+    "Moderate 2",
+    "Low 2",
+    "Not measured 0",
+    "Worst span CRS 7.5 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "NOT AT RISK",
+   "title": "No hazard found on this pole.",
+   "next_action": "No action needed for this pole.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 5",
+    "Not measured 0",
+    "Worst span CRS 2.2 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "NOT AT RISK",
+   "title": "No hazard found on this pole.",
+   "next_action": "No action needed for this pole.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 5",
+    "Not measured 0",
+    "Worst span CRS 2.2 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "NOT AT RISK",
+   "title": "No hazard found on this pole.",
+   "next_action": "No action needed for this pole.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 5",
+    "Not measured 0",
+    "Worst span CRS 2.2 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "NOT AT RISK",
+   "title": "No hazard found on this pole.",
+   "next_action": "No action needed for this pole.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 5",
+    "Not measured 0",
+    "Worst span CRS 2.2 span 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "RETAKE PHOTO",
+   "title": "The photo can't confirm this pole is safe.",
+   "next_action": "3 of 5 spans could not be measured. Best next photo: upload the full-resolution photo (this one is 800 px on its short side), or move closer so the span looks longer.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 2",
+    "Not measured 3",
+    "Worst span CRS 2.1 span 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_guidance_is_next_action": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "RETAKE PHOTO",
+   "title": "The photo can't confirm this pole is safe.",
+   "next_action": "3 of 5 spans could not be measured. Best next photo: upload the full-resolution photo (this one is 800 px on its short side), or move closer so the span looks longer.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 2",
+    "Not measured 3",
+    "Worst span CRS 2.1 span 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(17, 18, 20)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_guidance_is_next_action": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "RETAKE PHOTO",
+   "title": "The photo can't confirm this pole is safe.",
+   "next_action": "3 of 5 spans could not be measured. Best next photo: upload the full-resolution photo (this one is 800 px on its short side), or move closer so the span looks longer.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 2",
+    "Not measured 3",
+    "Worst span CRS 2.1 span 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_guidance_is_next_action": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "RETAKE PHOTO",
+   "title": "The photo can't confirm this pole is safe.",
+   "next_action": "3 of 5 spans could not be measured. Best next photo: upload the full-resolution photo (this one is 800 px on its short side), or move closer so the span looks longer.",
+   "kpis": [
+    "High 0",
+    "Moderate 0",
+    "Low 2",
+    "Not measured 3",
+    "Worst span CRS 2.1 span 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "kpis": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_guidance_is_next_action": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "theme tokens",
+   "dark_bg": "rgb(17, 18, 20)",
+   "light_bg": "rgb(246, 245, 242)",
+   "pass": true
+  }
+ ]
+}

@@ -1,0 +1,63 @@
+{
+ "final": {
+  "max_gap": 70,
+  "gap_angle_deg": 25,
+  "draw_bridge": true,
+  "min_span_len": 90,
+  "max_turn_deg": 35,
+  "cluster_radius": 5,
+  "min_len": 15
+ },
+ "rows": [
+  {
+   "param": "max_lateral_px",
+   "value": 0.0,
+   "strict_map50": 0.006603001983980919,
+   "tolerant_map50": 0.03555748589386483,
+   "spans": 793,
+   "bridges": 507,
+   "power_recall": 0.1910828025477707,
+   "telecom_recall": 0.09063444108761329
+  },
+  {
+   "param": "max_lateral_px",
+   "value": 3.0,
+   "strict_map50": 0.0065254214898043785,
+   "tolerant_map50": 0.03251043192700044,
+   "spans": 826,
+   "bridges": 213,
+   "power_recall": 0.18152866242038215,
+   "telecom_recall": 0.09667673716012085
+  },
+  {
+   "param": "max_lateral_px",
+   "value": 5.0,
+   "strict_map50": 0.0065412756961970705,
+   "tolerant_map50": 0.03389821779003209,
+   "spans": 825,
+   "bridges": 306,
+   "power_recall": 0.1751592356687898,
+   "telecom_recall": 0.10574018126888217
+  },
+  {
+   "param": "max_lateral_px",
+   "value": 8.0,
+   "strict_map50": 0.006581627746029908,
+   "tolerant_map50": 0.0351258198050933,
+   "spans": 813,
+   "bridges": 382,
+   "power_recall": 0.19745222929936307,
+   "telecom_recall": 0.09969788519637462
+  },
+  {
+   "param": "max_lateral_px",
+   "value": 12.0,
+   "strict_map50": 0.006586432546461414,
+   "tolerant_map50": 0.034359069817599626,
+   "spans": 807,
+   "bridges": 432,
+   "power_recall": 0.1910828025477707,
+   "telecom_recall": 0.09667673716012085
+  }
+ ]
+}

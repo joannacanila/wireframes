@@ -29,7 +29,7 @@ def report_pdf(analysis_id: str, st: State) -> Response:
             raise HTTPException(404, {"code": "not_found", "message": "Analysis not found."})
         if a.status in ("processing", "error"):
             raise HTTPException(409, {"code": a.status, "message": f"No report for an analysis in state '{a.status}'."})
-        result = svc.serialize_result(a, st.config, sites.rank_of(s, st.config, a.pole.pole_code))
+        result = svc.serialize_result(a, st.config, sites.rank_of(s, st.config, a.pole.pole_code), st.settings)
         rgb = load_rgb((st.settings.upload_dir / a.stored_name).read_bytes())
         pdf = build_report(result, rgb)
         name = f"{a.id}.pdf"

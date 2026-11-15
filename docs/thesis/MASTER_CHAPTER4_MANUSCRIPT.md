@@ -2613,7 +2613,8 @@ card: id, conductor and CRS on one line, then status, reason and action at full 
 checks (`spans_table_fits`, `filter_hides_rows`) that would have caught it.
 
 Figures: `figures/v213_ui_hazard_dark_desktop.jpg`, `v213_ui_not_at_risk_light_desktop.jpg`,
-`v213_ui_retake_dark_phone.jpg`, `v213_ui_loader_dark_desktop.jpg`.
+`v213_ui_loader_dark_desktop.jpg`. (The 390 px phone figure was withdrawn in v2.14: WIREFRAME is a desktop website
+and phone layouts are no longer supported.)
 
 The mocked check verifies the interface, not the models. The real-photo mode of the same script
 (`python -m scripts.ui_check --base … photos…`) is to be re-run on the M1 with the models installed.
@@ -2710,6 +2711,288 @@ python -m scripts.stress_test_all_conditions --split test --conditions clean low
 
 ---
 
+## B.8 Report v2.14 (`docs/thesis/chapter4_v2.14_cv_ui.md`)
+
+### 4.16 v2.14: wire-geometry provenance, span ownership, inspection console redesign
+
+WireNet-R34 (`models/wirenet-r34.pt`, `ab2353c7`) is unchanged and no model was trained. The CRS formula, the
+corroborated hazard rule (p0 0.050 / 0.090, α = 0.05), the 100 px chord gate and the reliability grade are
+unchanged. All runs were on the 8 GB Apple Silicon M1.
+
+#### 4.16.1 What was wrong
+
+The field screener was reviewed on pole P-B1D137 (a dense night photo, 640 × 480, 27 spans, AT RISK – HIGH).
+The complaint was "fragmented, disconnected purple line segments floating around the image". The pipeline was
+traced end to end, and three separate causes were found.
+
+1. **The purple fragments are WireNet's raw output, drawn honestly.** The "Full wire mask" layer draws WireNet's
+   per-pixel class map, and telecom pixels are purple (156, 54, 181). On this photo the model's argmax really is
+   broken into pieces: 23,464 wire pixels, of which 18 % lie outside every span. Drawing them as continuous lines
+   would invent detections, so v2.14 keeps them as their own clearly labelled layer.
+2. **Span masks contained pixels the model never detected.** The span assembler (v2.8 `stitch_spans`, FINAL:
+   70 px gap, 25° tolerance) bridges a gap by drawing a straight 2-px line into the span mask. That line then
+   appeared in the overlay as if it were segmentation. On P-B1D137, 1,299 span pixels are such bridges. Four of
+   the five high-risk spans contain them (span 14: 20 % of its traced path; span 26: 17 %), and unmeasured spans
+   contain up to 35 %.
+3. **Pixels of a separate cable were assigned to the nearest span.** Step 5 of `spans_from_class_mask` hands every
+   mask pixel to its nearest skeleton piece, including pixels in a different, disconnected mask blob whose own
+   pieces were dropped. A neighbouring cable could therefore be painted into a span.
+
+A further rendering defect: centerlines, fitted curves and end points are pixel indices but were drawn at pixel
+corners, so they sat half a pixel up and to the left of the mask at every zoom.
+
+#### 4.16.2 What changed
+
+**Provenance (API, additive).** Every wire in `/api/analysis/{id}/result` now carries `provenance`, computed on
+read from the stored class mask (`app/services/provenance.py`), so analyses made before v2.14 get it too. It holds:
+`observed_px`, `inferred_px`, `inferred_segments` (the bridged gaps as line segments), `inferred_polygons` and
+`centerline_inferred_share`. The value is `null` for reference-polygon (validation-mode) analyses. Inferred pixels
+stay in the measurement, so CRS is unchanged, but they are never drawn as detections. Wires also gained
+`reason_short` (for example "Insufficient visible length", "Ambiguous wire path"); the full `reason` is unchanged.
+
+**Span ownership (`span_own_component: true`).** A mask pixel may now join only a span in its own 8-connected mask
+component. Results:
+
+| Measure | Before | After |
+|---|---|---|
+| Validation span tolerant mAP50 | 0.035557 | 0.035554 |
+| Validation power / telecom recall | — | identical |
+| Verdicts changed (22 validation photos + P-B1D137) | — | 0 of 23 |
+| Photos with changed per-span measurements | — | 10 of 23 |
+
+The changed measurements come from spans being split or merged differently where a detached blob had been pulling
+them together. On P-B1D137 every measurement is identical. The p0 noise floors were not re-derived, because no
+verdict changed (`docs/thesis/results/v214_own_component_val.json`).
+
+**Rendering.**
+- Span masks are drawn as fill plus a 1-image-px stroke, which reproduces the pixel mask exactly; a 1–2 px wire's
+  contour has almost no area, so fill alone vanished.
+- Inferred pixels are cut out of each span mask and drawn as a dashed line.
+- All line geometry is offset by +0.5 px onto pixel centres. Checked at 8× zoom on P-B1D137: centerlines and masks
+  coincide.
+
+#### 4.16.3 Corrections tested and rejected
+
+Both were measured on validation with the shipped extractor and the frozen R34. The cache used here gives a
+shipped tolerant mAP50 of 0.0356 rather than the 0.0397 recorded for v2.8 (a different `runs/cache/val`); every row
+uses the same cache, so the comparisons hold.
+
+| Gate on a bridge | Bridges | Tolerant mAP50 | Decision |
+|---|---|---|---|
+| None (shipped) | 507 | 0.0356 | kept |
+| WireNet probability along the gap ≥ 0.02 / 0.05 / 0.10 | 507 / 507 / 504 | 0.0356 | no effect |
+| Probability ≥ 0.15 / 0.20 | 479 / 456 | 0.0328 / 0.0322 | rejected |
+| Probability ≥ 0.30 | 374 | 0.0353 | rejected (no gain) |
+| Lateral offset ≤ 3 / 5 / 8 / 12 px | 213 / 306 / 382 / 432 | 0.0325 / 0.0339 / 0.0351 / 0.0344 | rejected |
+| Ownership + lateral ≤ 5 px | 308 | 0.0339 | rejected |
+
+Almost every bridge already crosses a gap where WireNet's probability is at least 0.10, just below its argmax
+threshold, so the bridges are weakly supported rather than invented. Requiring a straighter continuation (the
+lateral gate) removes bridges that the labels confirm. Files: `v214_bridge_evidence_val.json`,
+`v214_bridge_lateral_val.json`.
+
+**Limitation that remains.** On P-B1D137, span 14 (CRS 10.0) still includes a fragment of the cable about 20 px
+below it. In WireNet's mask the two cables are connected through the crossing tangle, so component ownership does
+not separate them, and the gates that would cut the connection lose accuracy on validation. Span 14's fit follows
+the upper cable; the lower fragment affects only its drawn mask. Separating crossing cables in a tangle this dense
+needs topology-aware segmentation or labelled crossings, which is not attempted without retraining.
+
+#### 4.16.4 Inspection console (`/workspace`)
+
+The interface was redesigned around the inspection workflow: warm-white light theme by default, charcoal type,
+grey hairlines, flat panels (no glass, gradients or glows), Geist with tabular numerals, and colour used only for
+status (red high, amber moderate, green low, grey not measured). It contains, in reading order:
+
+- **Inspection header**: pole code, "Analysis complete", date and time, file name, PDF report (secondary) and New
+  inspection (primary). The top bar's server state reads "Model ready" only when `/api/health` reports the model
+  loaded, and is re-checked every 20 s.
+- **Outcome strip**: the verdict, the physical hazards with links to their spans, and the next step. Counts per risk
+  level and the worst span's CRS are clickable to filter or select, and CRS has a definition on hover.
+- **Viewer**, the largest element:
+  - presets Original / Spans / Mask / Overlay, plus a Layers menu with independent toggles: segmentation pixels,
+    span masks, inferred gaps, centerlines, fitted catenary, chord and sag, span ends, span numbers;
+  - opacity, vegetation, zoom with a percentage readout, Fit, and Reset (fit, clear the selection, default layers).
+  - "Span ends" are the traced ends, labelled as not pole attachment points, which are not detected.
+- **Beside the viewer**:
+  - the selected span in full: CRS, sag ratio against its limit, sag, chord, fit residual, inclination, vegetation
+    clearance, model probability, and the inferred share, plus the full reason and next step;
+  - the span table: span, cable, CRS, sag, vegetation, status with the short reason. It has filters, keyboard
+    navigation, and selection kept in sync with the photo.
+- **Inspection quality**: photo grade, image reliability R (labelled as not a detection confidence), measurement
+  completeness, processing status, and the limitations that apply.
+- **Technical diagnostics** (collapsed): sag corroboration, image quality metrics, segmentation statistics
+  (including fragments outside spans and inferred pixels), ground structures ignored, model, weights, timings and
+  config.
+
+**Website only.** WIREFRAME is a desktop web application for windows at least 1024 px wide. The v2.13 phone layout,
+the phone-width UI checks and the phone screenshots and figure were removed. Below 700 px the page shows only a
+notice asking for a computer.
+
+#### 4.16.5 Verification
+
+| Check | Result |
+|---|---|
+| `pytest` | 524 passed (8 new in `tests/test_v214_cv_ui.py`; the console test rewritten for v2.14) |
+| `ruff check app ml scripts tests` | clean |
+| `scripts/ui_check.py --mock` | 16 of 16 pass: four verdict states × light / dark × 1440 × 900 and 1024 × 768 |
+| `scripts/ui_check.py`, real photos (P-B1D137, the v2.13 handrail photo, the night pole) | 3 of 3 pass |
+| Table and page overflow at 1920, 1440, 1366, 1280, 1100 and 1024 px | none |
+
+The mocked check covers every preset, the layers menu, opacity, zoom, Fit and Reset, the diagnostics drawer,
+filters, the span detail reason and retake steps, and table↔photo selection both ways. The real-photo check also
+covers the PDF download and the new-inspection upload, and found 0 console or page errors.
+
+Results: `docs/thesis/results/v214_ui_check_mock.json` and `v214_ui_check_real.json`. Screenshots:
+`runs/ui_shots_v214/`.
+
+
+---
+
+## B.9 Report v2.15 (`docs/thesis/chapter4_v2.15_site.md`)
+
+### 4.17 v2.15: landing page, upload page and results page redesigned for non-specialist users
+
+v2.15 changes nothing in any model, threshold, calculation or verdict rule:
+- WireNet-R34 (`ab2353c7`) and the YOLO11 vegetation model are unchanged.
+- CRS, the corroborated hazard rule, the 100 px chord gate, the reliability grade, and v2.14's span ownership and
+  provenance are unchanged.
+
+The audit separated the issues into three groups:
+- **Interface:** generic copy, a server-status label, a demo button, and scores shown without explanation.
+- **Data:** no way to name an inspection, and only a pole code to identify it.
+- **Computer vision:** fragmented wire masks, which v2.14 traced to its sources (§4.16). No new CV fault was found;
+  the fragment of a neighbouring cable merged into span 14 of P-B1D137 remains, as documented there.
+
+#### 4.17.1 Data: inspection name and city
+
+`analyses` gained `inspection_name` and `city` (nullable, at most 120 characters). The database's existing
+add-missing-columns migration creates them; no data is changed.
+
+- **Upload:** `POST /api/analysis/upload` accepts both as optional form fields. Input is trimmed, control characters
+  are removed, and blank becomes null.
+- **Result:** `/result` returns `inspection: {name, city, barangay}`, and the analysis listing includes both fields.
+- **File name:** the original file name is kept unchanged in `image.original_filename`.
+- **Pole code:** still generated internally. The admin portal, MSPI ranking and exports depend on it. It is no
+  longer asked for on the upload page; it appears in the diagnostics and on the PDF.
+- **PDF:** the title is the inspection name, falling back to the pole code. The line under it gives the
+  barangay and city, pole code and original file name.
+
+#### 4.17.2 Landing page (`/`)
+
+The previous page was a scrolling marketing page: a headline and screenshot side by side, invented-looking metric
+counters, feature cards and method demos. It is replaced by a single screen that does not scroll at desktop
+sizes, checked at 1024 × 768, 1280 × 720, 1366 × 640, 1440 × 900 and 1920 × 1080. It keeps the same identity:
+near-black ground, the logo's gold, Geist.
+
+- **Drawing:** a drafting sheet of two hairline supports and the wires between them, drawn in once on load.
+- **Measured wire:** one wire carries the measurement WIREFRAME makes, its chord L and mid-span sag δ, with a δ/L
+  readout computed from the drawn curve. Moving the pointer changes that wire's sag. Nothing else moves, and
+  `prefers-reduced-motion` turns the motion off.
+- **Wordmark:** set large at the foot of the sheet.
+- **Copy and action:** one factual sentence and one action, "Open the Field Screener", plus an admin sign-in link.
+- **Removed:** "Overhead wire screening · for LGU engineers", the metric counters, feature cards and method demos.
+  No statistics, claims or partnerships are shown.
+
+#### 4.17.3 Upload page (`/workspace`)
+
+A single centred card:
+- **Photo area:** drop or choose a photo. It shows a preview with the file name, pixel size and file size, and
+  offers Replace and Remove.
+- **Validation in the browser**, before any upload: type and the 64 MB limit; the server re-checks everything.
+- **Fields:** inspection name (optional), city (optional) and barangay (optional).
+- **Use my location:** the browser is asked only when the button is pressed. The coordinates are shown and can be
+  removed. A failure or refusal shows a plain message and never blocks the upload. No reverse geocoding is done,
+  so no place name is guessed and no location is sent to an outside service.
+- **Removed:** "New inspection", "One photo of the pole. A field verdict in seconds.", the framing/GPS paragraph,
+  "Load the sample", the pole code field, and the "Model ready" label. The server state is still polled, but only
+  to switch the form into validation mode when no model is installed.
+- **While processing:** the loading state lists real steps (uploading, location data removed, analysing). It shows
+  no invented percentage.
+
+#### 4.17.4 Results page
+
+Written for someone with no technical background, in this order:
+
+1. **Header:** the inspection name (or the file name), the place, the date and time, the original file name, the
+   PDF report and New inspection.
+2. **Overall assessment:** mirrors the server verdict in plain words and never presents a screening as a
+   clearance.
+
+   | Server verdict | Shown as |
+   |---|---|
+   | AT RISK – HIGH | "High risk found" |
+   | AT RISK – MODERATE | "Moderate risk found" |
+   | NOT AT RISK | "No high risk found", with "This is a screening from one photo, not a safety inspection." |
+   | INCONCLUSIVE | "Photo not clear enough" |
+
+   - When individual sections read high or moderate but the pole was not flagged (the corroboration rule needs
+     several), the page says so and names them instead of hiding them.
+   - A coverage line gives how many sections could be assessed and how many could not.
+3. **Risk summary:** only High, Moderate and Low counts. Sections that could not be assessed are never counted as
+   low, and are explained under Photo limitations.
+4. **Photo and wire sections:**
+   - The viewer from v2.14 with plain labels: Original / Wires / Mask / Both, plus layers, overlay strength,
+     vegetation, zoom, Fit and Reset.
+   - A list of wire sections: wire, type, condition, and a short plain finding such as "Hangs low (4.5%)",
+     "Too small or far to measure" or "Overlaps other wires".
+   - Selecting a section highlights it on the photo and opens a detail panel. The panel shows the full sentence,
+     its sag against the allowance, and a sag score (the CRS) explained in words. The measurement figures
+     (chord, δ, residual, probability, inferred share, status code) sit under "Measurement details".
+5. **What to do next:** built from this result.
+   - Who to call, and which sections to have checked first.
+   - Vegetation to report.
+   - What to include in routine inspection.
+   - What photo would help.
+   - Always: "Do not touch, climb toward or try to move any overhead wire. Treat every wire as live." No repair
+     instructions are given.
+6. **Photo limitations:** only those the result shows, each with the sections it affects and what would help:
+   - too small or far away to measure;
+   - overlapping wires;
+   - runs past the photo edge;
+   - parts estimated across hidden or faint gaps;
+   - the photo-quality cause (dark, glare, blur, out of focus, too small, few wires visible);
+   - drop wires not checked for sag.
+7. **Technical diagnostics** (collapsed, for administrators and researchers): model information, image quality,
+   segmentation metrics, statistical analysis (binomial corroboration, p0, α, server verdict and reasons),
+   processing performance, and configuration and execution (fingerprints, chord gate, pole code, analysis id,
+   flags). No value was removed.
+
+#### 4.17.5 Website only
+
+As in v2.14, WIREFRAME supports laptop and desktop browser windows of at least 1024 px. Below 700 px the screener
+shows a notice asking for a computer. The brief asked for mobile review, but the owner's standing instruction is
+that the system is a website and does not run on phones, so no phone layout was added.
+
+#### 4.17.6 Verification
+
+| Check | Result |
+|---|---|
+| `pytest` | 528 passed (new `tests/test_v215_inspection_fields.py`; console, landing and portal tests updated) |
+| `ruff check app ml scripts tests` | clean |
+| `scripts/ui_check.py --mock` | 16 of 16 pass |
+| `scripts/ui_check.py`, real photos (P-B1D137, the handrail photo, the night pole) | 3 of 3 pass |
+| Upload behaviours (headless Chrome) | all pass |
+
+The mocked check covers the four verdict states × light / dark × 1440 and 1024 px. It now also requires a
+three-level risk summary, no model-status text, the retake step first when the photo is unclear, and "not a safety
+inspection" on a no-risk result.
+
+The real-photo check enters the name, city and barangay through the form and verifies them on the result page,
+along with the original file name, the PDF, every view, layers, zoom, Fit and Reset, and table↔photo selection.
+It found 0 console errors.
+
+The upload behaviours checked were:
+- no geolocation request on page load;
+- a refused location shows a message and does not block the upload;
+- the wrong type and an oversized file are rejected with clear messages;
+- Remove and drag-and-drop work.
+
+Results: `docs/thesis/results/v215_ui_check_mock.json` and `v215_ui_check_real.json`. Screenshots:
+`runs/ui_shots_v215/`.
+
+
+---
+
 # Part C — Appendices
 
 
@@ -2722,6 +3005,67 @@ was verified and how, and what is still open. Development models were trained fr
 the test split as each version's report records (the evaluation results themselves are in `docs/thesis/`); none of
 the Table 3.10 targets is met. (Until v2.12 this paragraph still read as written for v2.1, that no evaluation result
 was claimed and no Table 3.10 target had been measured on test; it was out of date from v2.6 and is corrected here.)
+
+---
+
+#### v2.15: landing, upload and results pages redesigned for non-specialists; inspection name and city
+
+* **Frozen**: every model, threshold, calculation and verdict rule (`docs/thesis/chapter4_v2.15_site.md`).
+* **Data**:
+  * `analyses.inspection_name` and `analyses.city` (nullable; added by the existing column migration).
+  * Optional upload form fields, cleaned on input.
+  * `inspection {name, city, barangay}` in `/result`, and both fields in the listing; the PDF title uses the name.
+  * The original file name is unchanged. The pole code is still generated internally but no longer asked for.
+* **Landing**: one non-scrolling screen with the same identity. The old headline, metric counters and feature cards
+  are removed; no claims are made.
+* **Upload**:
+  * A centred card with preview, Replace, Remove, and client-side type and size checks.
+  * Location is requested only on click and never blocks the upload; no reverse geocoding.
+  * The intro copy, "Load the sample", the pole code field and the "Model ready" label are removed.
+* **Results**:
+  * A plain-language assessment that never reads as a clearance.
+  * A High / Moderate / Low summary, with unassessed sections never counted as low.
+  * Photo limitations taken only from the result; next steps that never ask anyone to handle a wire.
+  * Plain table findings, with technical detail under "Measurement details".
+  * Diagnostics grouped and collapsed, with nothing removed.
+* **Not done**:
+  * No phone layout: website only, as instructed.
+  * The fragment of a neighbouring cable on span 14 of P-B1D137 remains (§4.16.3).
+* **Verified**: 528 tests pass; ruff is clean. `ui_check --mock` passes 16 of 16 and the real-photo check 3 of 3,
+  including name, city and barangay persistence and the PDF. Upload behaviours pass in headless Chrome.
+
+---
+
+#### v2.14: wire-geometry provenance, span ownership, inspection console redesign, website only
+
+* **Frozen**: WireNet-R34 (`ab2353c7`), CRS, the hazard rule and its p0 values, the chord gate and the reliability
+  grade. No training was done.
+* **Diagnosis** of the "fragmented purple segments" on P-B1D137:
+  * The purple was WireNet's raw telecom-pixel mask, which is genuinely fragmented on this photo.
+  * The span assembler drew straight 2-px gap bridges into span masks: 1,299 px on this photo, in 4 of its 5
+    high-risk spans.
+  * Nearest-piece pixel assignment painted detached blobs into spans.
+  * Line geometry was drawn half a pixel off.
+* **Changed**:
+  * Per-wire `provenance` (observed vs inferred pixels and bridged segments) and `reason_short` in the result API.
+    Both are additive and computed on read, so older analyses get them too.
+  * `span_own_component: true`: validation tolerant mAP50 0.035557 → 0.035554; 0 of 23 verdicts changed; per-span
+    measurements changed on 10 of 23 photos (none on P-B1D137). p0 was not re-derived.
+  * Inferred gaps drawn dashed and cut out of the span masks; pixel-exact mask rendering; +0.5 px line alignment.
+* **Tested and rejected** (validation):
+  * Probability-gated bridging at τ 0.02–0.30: no gain, losses from τ 0.15.
+  * Lateral-offset gate at 3–12 px: losses of 0.0005–0.0031.
+  * This run's shipped baseline is 0.0356, not v2.8's 0.0397, because the `runs/cache/val` cache differs. Every
+    comparison uses the same cache.
+* **Open**: on P-B1D137, span 14 (CRS 10.0) still includes a fragment of a neighbouring cable. In WireNet's mask the
+  two are connected through the crossing tangle. The fit follows the upper cable; only the drawn mask is affected.
+* **UI**: `/workspace` redesigned as inspection software, as listed in `docs/thesis/chapter4_v2.14_cv_ui.md` §4.16.4.
+* **Website only**: the phone layout, the phone-width checks and the 10 phone screenshots and figure were removed.
+  Below 700 px the page shows a desktop-required notice. The supported window width is at least 1024 px.
+* **Verified**:
+  * 524 tests pass; ruff is clean.
+  * `ui_check --mock`: 16 of 16. `ui_check` on real photos: 3 of 3, including the PDF and the upload.
+  * No overflow at 1024–1920 px.
 
 ---
 
@@ -3769,6 +4113,10 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   span_gap_angle_deg: 25          # 25-35 deg within noise; the stricter value is kept
   span_draw_bridge: true
   span_min_stitched_len: 90       # 90-200 px within noise; the least restrictive value is kept
+  # v2.14: a mask pixel joins only a span in its own connected mask blob (before: the nearest span anywhere, which
+  # painted a separate neighbouring cable into the span). Validation tolerant mAP50 0.035557 -> 0.035554; 0 of 23
+  # verdicts changed (22 validation photos + P-B1D137); docs/thesis/results/v214_own_component_val.json
+  span_own_component: true
 
 centerline:                       # Section 3.6.4, Algorithm 4
   provisional: true
@@ -3937,6 +4285,13 @@ mspi:                             # Section 3.6.6, Equation 11, Algorithm 6
 | `results/v213_enhance_val.jsonl` | v213 | 1,349 B | 6 JSON lines |
 | `results/v213_filters_val.json` | v213 | 955 B | keys: spans, true_positive_spans, baseline_tolerant_map50, rules |
 | `results/v213_span_features_val.jsonl` | v213 | 361,355 B | 828 JSON lines |
+| `results/v214_bridge_evidence_val.json` | v214 | 1,744 B | keys: final, rows |
+| `results/v214_bridge_lateral_val.json` | v214 | 1,458 B | keys: final, rows |
+| `results/v214_own_component_val.json` | v214 | 715 B | keys: final, rows |
+| `results/v214_ui_check_mock.json` | v214 | 20,746 B | keys: all_pass, mode, browser, n_checks, results |
+| `results/v214_ui_check_real.json` | v214 | 8,855 B | keys: all_pass, mode, browser, n_checks, results |
+| `results/v215_ui_check_mock.json` | v215 | 21,710 B | keys: all_pass, mode, browser, n_checks, results |
+| `results/v215_ui_check_real.json` | v215 | 11,418 B | keys: all_pass, mode, browser, n_checks, results |
 | `results/v27_comparison.json` | v27 | 24,981 B | keys: v2.6 640 yolo | test, 1024 yolo | test, 1024 hybrid (WireNet spans) | test, v2.6 640 yolo | test degraded, 1024 yolo | test degraded, 1024 hybrid (WireNet spans) | test degraded |
 | `results/v27_val_span_modes.json` | v27 | 6,790 B | keys: yolo, skeleton |
 | `results/v28_failure_audit_val.json` | v28 | 11,260 B | keys: correlations_with_tolerant_iou, images |
@@ -3983,7 +4338,6 @@ mspi:                             # Section 3.6.6, Equation 11, Algorithm 6
 | `figures/v213_ui_hazard_dark_desktop.jpg` | Redesigned field screener, HAZARD DETECTED, dark theme, desktop (mocked result; v2.13 §4.15.9). |
 | `figures/v213_ui_loader_dark_desktop.jpg` | Shimmer skeleton of the result layout while the analysis runs (v2.13 §4.15.9). |
 | `figures/v213_ui_not_at_risk_light_desktop.jpg` | NOT AT RISK with two suppressed ground traces, light theme, desktop (v2.13 §4.15.9). |
-| `figures/v213_ui_retake_dark_phone.jpg` | RETAKE PHOTO at 390 px: retake guidance as the next action, span cards with reasons and actions (v2.13 §4.15.9). |
 | `figures/v29_diagnostic_example.jpg` | The v2 diagnostic figure: reliability badge, segmentation legend, spans, verdict reasons (v2.9 §4.11.5). |
 | `figures/v29_drop_audit_val.jpg` | Visual audit of 24 'service drops' by image inclination: pole-to-pole spans seen in perspective (v2.9 §4.11.2a). |
 | `figures/v29_inclination_val.png` | Share of high / medium CRS spans per chord-inclination band (v2.9 §4.11.2a). |
@@ -4378,6 +4732,8 @@ rejected:
 ## C.7 Git history
 
 ```
+a680c6d | 2026-11-16 | v2.13: full UI check screenshots (runs/ui_shots_v213)
+f971401 | 2026-11-16 | v2.13: Chapter 4 report, disclosure, README, master manuscript rebuild
 7707cd2 | 2026-11-16 | v2.13: browser verification of /workspace; fix clipped span actions at phone width
 d391428 | 2026-11-16 | v2.13: unit tests for ground gate, suppressed_spans, field guidance, viewer opacity
 4dbc6ca | 2026-11-16 | Initial commit: WIREFRAME overhead-wire risk screener (v2.13)

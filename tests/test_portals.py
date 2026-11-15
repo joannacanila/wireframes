@@ -52,8 +52,8 @@ def test_field_user_can_screen_without_signing_in(anon, scene):
 
 
 def test_pages_route_to_the_two_portals(anon):
-    assert "Launch Field Screener" in anon.get("/").text
-    assert "Admin portal" in anon.get("/").text
+    assert "Open the Field Screener" in anon.get("/").text
+    assert "Admin sign-in" in anon.get("/").text
     for p in ("/workspace", "/workspace/result/" + "0" * 32):
         assert "Field Screener" in anon.get(p).text
     for p in ("/admin", "/admin/login", "/admin/analyses/abc"):

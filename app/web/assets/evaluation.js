@@ -1,7 +1,7 @@
 // Evaluation view (Sections 3.10-3.11): Table 3.10 targets against the latest evaluation runs.
 // Values come only from /api/evaluation/metrics, which only reports what `ml.evaluate` computed.
 
-import { toast } from "./toast.js";
+import { toast } from "./toast.js?v=2.15";
 
 const NAMES = {
   map50: "Mask mAP@50", precision_per_class: "Precision · per class", recall_per_class: "Recall · per class",

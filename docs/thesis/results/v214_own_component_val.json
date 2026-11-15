@@ -1,0 +1,36 @@
+{
+ "final": {
+  "max_gap": 70,
+  "gap_angle_deg": 25,
+  "draw_bridge": true,
+  "min_span_len": 90,
+  "max_turn_deg": 35,
+  "cluster_radius": 5,
+  "min_len": 15
+ },
+ "rows": [
+  {
+   "params": {
+    "own_component": true
+   },
+   "strict_map50": 0.006603770575045894,
+   "tolerant_map50": 0.03555409883140434,
+   "spans": 796,
+   "bridges": 511,
+   "power_recall": 0.1910828025477707,
+   "telecom_recall": 0.09063444108761329
+  },
+  {
+   "params": {
+    "own_component": true,
+    "max_lateral_px": 5.0
+   },
+   "strict_map50": 0.006541064461555942,
+   "tolerant_map50": 0.03388055310592534,
+   "spans": 827,
+   "bridges": 308,
+   "power_recall": 0.1751592356687898,
+   "telecom_recall": 0.10574018126888217
+  }
+ ]
+}

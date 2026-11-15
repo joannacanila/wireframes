@@ -218,6 +218,7 @@ class SegmentationConfig(_Strict):
     span_gap_angle_deg: float = Field(15.0, gt=0, le=90)
     span_draw_bridge: bool = True
     span_min_stitched_len: int = Field(0, ge=0)        # minimum stitched span length (skeleton px)
+    span_own_component: bool = False                   # v2.14: pixels join only spans in their own mask component
 
 
 class CenterlineConfig(_Strict):

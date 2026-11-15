@@ -8,6 +8,67 @@ was claimed and no Table 3.10 target had been measured on test; it was out of da
 
 ---
 
+## v2.15: landing, upload and results pages redesigned for non-specialists; inspection name and city
+
+* **Frozen**: every model, threshold, calculation and verdict rule (`docs/thesis/chapter4_v2.15_site.md`).
+* **Data**:
+  * `analyses.inspection_name` and `analyses.city` (nullable; added by the existing column migration).
+  * Optional upload form fields, cleaned on input.
+  * `inspection {name, city, barangay}` in `/result`, and both fields in the listing; the PDF title uses the name.
+  * The original file name is unchanged. The pole code is still generated internally but no longer asked for.
+* **Landing**: one non-scrolling screen with the same identity. The old headline, metric counters and feature cards
+  are removed; no claims are made.
+* **Upload**:
+  * A centred card with preview, Replace, Remove, and client-side type and size checks.
+  * Location is requested only on click and never blocks the upload; no reverse geocoding.
+  * The intro copy, "Load the sample", the pole code field and the "Model ready" label are removed.
+* **Results**:
+  * A plain-language assessment that never reads as a clearance.
+  * A High / Moderate / Low summary, with unassessed sections never counted as low.
+  * Photo limitations taken only from the result; next steps that never ask anyone to handle a wire.
+  * Plain table findings, with technical detail under "Measurement details".
+  * Diagnostics grouped and collapsed, with nothing removed.
+* **Not done**:
+  * No phone layout: website only, as instructed.
+  * The fragment of a neighbouring cable on span 14 of P-B1D137 remains (§4.16.3).
+* **Verified**: 528 tests pass; ruff is clean. `ui_check --mock` passes 16 of 16 and the real-photo check 3 of 3,
+  including name, city and barangay persistence and the PDF. Upload behaviours pass in headless Chrome.
+
+---
+
+## v2.14: wire-geometry provenance, span ownership, inspection console redesign, website only
+
+* **Frozen**: WireNet-R34 (`ab2353c7`), CRS, the hazard rule and its p0 values, the chord gate and the reliability
+  grade. No training was done.
+* **Diagnosis** of the "fragmented purple segments" on P-B1D137:
+  * The purple was WireNet's raw telecom-pixel mask, which is genuinely fragmented on this photo.
+  * The span assembler drew straight 2-px gap bridges into span masks: 1,299 px on this photo, in 4 of its 5
+    high-risk spans.
+  * Nearest-piece pixel assignment painted detached blobs into spans.
+  * Line geometry was drawn half a pixel off.
+* **Changed**:
+  * Per-wire `provenance` (observed vs inferred pixels and bridged segments) and `reason_short` in the result API.
+    Both are additive and computed on read, so older analyses get them too.
+  * `span_own_component: true`: validation tolerant mAP50 0.035557 → 0.035554; 0 of 23 verdicts changed; per-span
+    measurements changed on 10 of 23 photos (none on P-B1D137). p0 was not re-derived.
+  * Inferred gaps drawn dashed and cut out of the span masks; pixel-exact mask rendering; +0.5 px line alignment.
+* **Tested and rejected** (validation):
+  * Probability-gated bridging at τ 0.02–0.30: no gain, losses from τ 0.15.
+  * Lateral-offset gate at 3–12 px: losses of 0.0005–0.0031.
+  * This run's shipped baseline is 0.0356, not v2.8's 0.0397, because the `runs/cache/val` cache differs. Every
+    comparison uses the same cache.
+* **Open**: on P-B1D137, span 14 (CRS 10.0) still includes a fragment of a neighbouring cable. In WireNet's mask the
+  two are connected through the crossing tangle. The fit follows the upper cable; only the drawn mask is affected.
+* **UI**: `/workspace` redesigned as inspection software, as listed in `docs/thesis/chapter4_v2.14_cv_ui.md` §4.16.4.
+* **Website only**: the phone layout, the phone-width checks and the 10 phone screenshots and figure were removed.
+  Below 700 px the page shows a desktop-required notice. The supported window width is at least 1024 px.
+* **Verified**:
+  * 524 tests pass; ruff is clean.
+  * `ui_check --mock`: 16 of 16. `ui_check` on real photos: 3 of 3, including the PDF and the upload.
+  * No overflow at 1024–1920 px.
+
+---
+
 ## v2.13: ground-structure gate, field guidance, field screener redesign (branch `main`)
 
 Full methods and tables: `docs/thesis/chapter4_v2.13_cv_ui.md`. The shipped WireNet-R34 (`ab2353c7`) is frozen and

@@ -1,0 +1,950 @@
+{
+ "all_pass": true,
+ "mode": "mock",
+ "browser": "chrome 157.0.8103.78",
+ "n_checks": 17,
+ "results": [
+  {
+   "scenario": "hazard",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "HIGH RISK FOUND",
+   "title": "Some wires on this pole should be checked soon.",
+   "next_action": "Have wire sections 5 and 4 checked by your electric utility or a qualified electrical professional, starting with section 5.",
+   "kpis": [
+    "High risk 2",
+    "Moderate risk 1",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "hazard",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "HIGH RISK FOUND",
+   "title": "Some wires on this pole should be checked soon.",
+   "next_action": "Have wire sections 5 and 4 checked by your electric utility or a qualified electrical professional, starting with section 5.",
+   "kpis": [
+    "High risk 2",
+    "Moderate risk 1",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "hazard",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "HIGH RISK FOUND",
+   "title": "Some wires on this pole should be checked soon.",
+   "next_action": "Have wire sections 5 and 4 checked by your electric utility or a qualified electrical professional, starting with section 5.",
+   "kpis": [
+    "High risk 2",
+    "Moderate risk 1",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "hazard",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "HIGH RISK FOUND",
+   "title": "Some wires on this pole should be checked soon.",
+   "next_action": "Have wire sections 5 and 4 checked by your electric utility or a qualified electrical professional, starting with section 5.",
+   "kpis": [
+    "High risk 2",
+    "Moderate risk 1",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "MODERATE RISK FOUND",
+   "title": "Some wires on this pole should be looked at.",
+   "next_action": "Have wire section 5 checked by your electric utility or a qualified electrical professional.",
+   "kpis": [
+    "High risk 1",
+    "Moderate risk 2",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "MODERATE RISK FOUND",
+   "title": "Some wires on this pole should be looked at.",
+   "next_action": "Have wire section 5 checked by your electric utility or a qualified electrical professional.",
+   "kpis": [
+    "High risk 1",
+    "Moderate risk 2",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "MODERATE RISK FOUND",
+   "title": "Some wires on this pole should be looked at.",
+   "next_action": "Have wire section 5 checked by your electric utility or a qualified electrical professional.",
+   "kpis": [
+    "High risk 1",
+    "Moderate risk 2",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "review",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "MODERATE RISK FOUND",
+   "title": "Some wires on this pole should be looked at.",
+   "next_action": "Have wire section 5 checked by your electric utility or a qualified electrical professional.",
+   "kpis": [
+    "High risk 1",
+    "Moderate risk 2",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "NO HIGH RISK FOUND",
+   "title": "No measured wire on this pole was flagged.",
+   "next_action": "Some sections could not be assessed. A clearer photo may help: step back or use a wider angle so each wire is visible from pole to pole.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "not_a_certification": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "NO HIGH RISK FOUND",
+   "title": "No measured wire on this pole was flagged.",
+   "next_action": "Some sections could not be assessed. A clearer photo may help: step back or use a wider angle so each wire is visible from pole to pole.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "not_a_certification": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "NO HIGH RISK FOUND",
+   "title": "No measured wire on this pole was flagged.",
+   "next_action": "Some sections could not be assessed. A clearer photo may help: step back or use a wider angle so each wire is visible from pole to pole.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "not_a_certification": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "not_at_risk_suppressed",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "NO HIGH RISK FOUND",
+   "title": "No measured wire on this pole was flagged.",
+   "next_action": "Some sections could not be assessed. A clearer photo may help: step back or use a wider angle so each wire is visible from pole to pole.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 5"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "not_a_certification": true,
+    "suppressed_listed": true,
+    "suppressed_count": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "dark",
+   "viewport": "1440x900",
+   "pill": "PHOTO NOT CLEAR ENOUGH",
+   "title": "This photo is not clear enough for a reliable screening.",
+   "next_action": "Retake the photo. Use the original, full-resolution photo (this one is 1280 × 800 pixels), or move closer.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_is_first_step": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "dark",
+   "viewport": "1024x768",
+   "pill": "PHOTO NOT CLEAR ENOUGH",
+   "title": "This photo is not clear enough for a reliable screening.",
+   "next_action": "Retake the photo. Use the original, full-resolution photo (this one is 1280 × 800 pixels), or move closer.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(12, 13, 15)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_is_first_step": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "light",
+   "viewport": "1440x900",
+   "pill": "PHOTO NOT CLEAR ENOUGH",
+   "title": "This photo is not clear enough for a reliable screening.",
+   "next_action": "Retake the photo. Use the original, full-resolution photo (this one is 1280 × 800 pixels), or move closer.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_is_first_step": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "retake",
+   "theme": "light",
+   "viewport": "1024x768",
+   "pill": "PHOTO NOT CLEAR ENOUGH",
+   "title": "This photo is not clear enough for a reliable screening.",
+   "next_action": "Retake the photo. Use the original, full-resolution photo (this one is 1280 × 800 pixels), or move closer.",
+   "kpis": [
+    "High risk 0",
+    "Moderate risk 0",
+    "Low risk 2"
+   ],
+   "views": {
+    "photo": "ok",
+    "mask": "ok",
+    "overlay": "ok",
+    "spans": "ok"
+   },
+   "durations_ms": {
+    "drawer": 240,
+    "stage": 200
+   },
+   "shimmer": {
+    "names": [
+     "fx-enter",
+     "fx-shimmer",
+     "fx-scan",
+     "fx-spin"
+    ],
+    "busy": "true",
+    "skeletons": 12
+   },
+   "body_background": "rgb(246, 245, 242)",
+   "errors": [],
+   "checks": {
+    "no_errors": true,
+    "shimmer": true,
+    "pill": true,
+    "theme": true,
+    "risk_summary_three_levels": true,
+    "no_model_status_shown": true,
+    "layers": true,
+    "zoom_fit_reset": true,
+    "detail_shows_reason": true,
+    "next_action": true,
+    "views": true,
+    "opacity": true,
+    "diag": true,
+    "reasons": true,
+    "motion_200_300ms": true,
+    "no_horizontal_scroll": true,
+    "spans_table_fits": true,
+    "filter_hides_rows": true,
+    "table_to_canvas": true,
+    "canvas_to_table": true,
+    "retake_is_first_step": true,
+    "span_actions_shown": true
+   },
+   "pass": true
+  },
+  {
+   "scenario": "theme tokens",
+   "dark_bg": "rgb(12, 13, 15)",
+   "light_bg": "rgb(246, 245, 242)",
+   "pass": true
+  }
+ ]
+}

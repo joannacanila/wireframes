@@ -12,6 +12,7 @@ from __future__ import annotations
 import io
 from datetime import UTC, datetime
 from typing import Any
+from xml.sax.saxutils import escape
 
 import cv2
 import numpy as np
@@ -132,13 +133,16 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     rank = result.get("ranking") or {}
     mode = {"annotation": "VALIDATION MODE · REFERENCE MASKS", "model": "FIELD MODE · YOLO11-SEG MODEL"}.get(
         result["segmentation_source"] or "", "")
+    insp = result.get("inspection") or {}
+    place = ", ".join(x for x in (insp.get("barangay"), insp.get("city")) if x)
     story: list[Any] = [
         Paragraph("WIREFRAME · OVERHEAD WIRE SCREENING REPORT" + (f" &#160;&#160;|&#160;&#160; {mode}" if mode else ""),
                   st["eyebrow"]),
         Spacer(1, 3),
-        Paragraph(f"Pole {result['pole']['code']}", st["title"]),
+        Paragraph(escape(insp.get("name") or f"Pole {result['pole']['code']}"), st["title"]),
         Paragraph(
-            f"{result['pole']['barangay'] or 'Barangay not specified'} · analysed "
+            f"{escape(place) or 'Location not specified'} · pole {escape(result['pole']['code'])} · "
+            f"file {escape(result['image'].get('original_filename') or '–')} · analysed "
             f"{result['completed_at'][:16].replace('T', ' ') if result['completed_at'] else '–'} UTC · "
             f"generated {when}", st["small"]),
         Spacer(1, 8),

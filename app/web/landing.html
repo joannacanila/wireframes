@@ -1,206 +1,42 @@
 <!doctype html>
-<html lang="en" data-theme="dark" data-type="software">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>WIREFRAME — Overhead wire risk screening for LGU engineers</title>
-  <meta name="description" content="One photograph per utility pole: three wire classes and vegetation segmented, a catenary fitted to every span, a 0–10 sag score per wire, and a ranked inspection list.">
-  <meta name="page-type" content="software">
-  <meta name="site-kind" content="software">
+  <title>WIREFRAME</title>
+  <meta name="description" content="Photograph a utility pole. WIREFRAME finds each overhead wire, measures how far it sags and shows which ones need a closer look.">
   <meta name="theme-color" content="#0c0d0f">
-  <meta property="og:title" content="WIREFRAME — Overhead wire risk screening">
-  <meta property="og:description" content="Catenary sag scores, a Fourier clutter index and a ranked pole map from ground-level photographs.">
-  <meta property="og:image" content="/assets/samples/synthetic-pole.jpg">
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/assets/styles.css">
-  <link rel="stylesheet" href="/assets/landing.css">
+  <link rel="stylesheet" href="/assets/styles.css?v=2.15">
+  <link rel="stylesheet" href="/assets/landing.css?v=2.15">
 </head>
-<body class="lp">
-  <a class="skip" href="#main">Skip to content</a>
-
-  <header class="lp-nav" id="nav">
-    <div class="wrap nav-row">
-      <a class="lp-brand" href="/" aria-label="WIREFRAME home">
-        <img src="/assets/logo.svg" alt="" width="30" height="30"><span>WIREFRAME</span>
-      </a>
-      <nav aria-label="Sections" class="nav-links">
-        <a href="#method">Method</a><a href="#compliance">Compliance</a><a href="#mapping">Mapping</a><a href="#evaluation">Evaluation</a>
-      </nav>
-      <a class="nav-admin" href="/admin/login">Admin portal login</a>
-      <a class="btn primary" href="/workspace">Launch Field Screener</a>
-    </div>
+<body class="lx">
+  <!-- One screen. The drawing is the product's own measurement: two supports, the wires between them, and on one
+       wire the chord L and the sag δ that WIREFRAME measures. The pointer changes that wire's sag and the readout
+       is computed from the drawn curve. -->
+  <header class="lx-top">
+    <a class="lx-brand" href="/" aria-label="WIREFRAME home"><img src="/assets/logo.svg" alt="" width="22" height="22"><span>WIREFRAME</span></a>
+    <a class="lx-admin" href="/admin/login">Admin sign-in</a>
   </header>
 
-  <main id="main">
-    <!-- 1 · hero: the product's own UI, rendered by the console viewer on real pipeline output -->
-    <section class="lp-hero" data-enter>
-      <div class="wrap hero-grid">
-        <div class="hero-copy">
-          <p class="eyebrow">Overhead wire screening · for LGU engineers</p>
-          <h1>Pole-by-pole wire risk screening from a single photograph.</h1>
-          <p class="lede">WIREFRAME segments every power line, telecom or fiber cable and abandoned wire on a pole, marks vegetation that touches them, fits each span to a catenary, and scores its sag from 0 to 10. Poles come back ranked for inspection.</p>
-          <div class="hero-actions">
-            <a class="btn primary lg" href="/workspace">Launch Field Screener
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-            <a class="btn lg ghost" href="#method">See the method</a>
-          </div>
-          <dl class="hero-metrics" id="hero-metrics" aria-live="polite">
-            <div><dt>VNI · 2D FFT</dt><dd><span data-count="vni" data-digits="2">0.00</span><small data-band></small></dd></div>
-            <div><dt>Max sag ratio</dt><dd><span data-count="sag" data-digits="2" data-suffix="%">0.00%</span></dd></div>
-            <div><dt>MSPI</dt><dd><span data-count="mspi" data-digits="3">0.000</span></dd></div>
-          </dl>
-        </div>
+  <svg class="lx-draw" id="draw" aria-hidden="true" preserveAspectRatio="none"></svg>
 
-        <figure class="app-frame" aria-label="WIREFRAME console showing a scored pole">
-          <div class="frame-bar">
-            <span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="frame-title mono">synthetic-pole.jpg · reference masks</span>
-            <span class="chip" id="hero-level">—</span>
-          </div>
-          <div class="frame-body">
-            <div class="canvas-wrap" id="hero-canvas"></div>
-            <ol class="frame-wires" id="hero-wires" aria-label="Scored wires"></ol>
-          </div>
-        </figure>
-      </div>
-    </section>
-
-    <!-- 2 · method: the dealt moment, both paths computed live in the browser -->
-    <section class="lp-section" id="method" style="--h: 1">
-      <div class="wrap">
-        <header class="sec-head">
-          <p class="eyebrow">Method · Chapter III</p>
-          <h2>Two paths from one photograph.</h2>
-          <p>The texture path measures how busy the scene is. The geometry path measures how far each wire hangs. Both run below on the same equations as the pipeline.</p>
-        </header>
-        <div class="dual">
-          <article class="glass panel" aria-labelledby="fft-title">
-            <header class="panel-head"><h3 id="fft-title">Texture · 2D FFT</h3><span class="mono muted">Eq. 1–4</span></header>
-            <div class="fft-views">
-              <canvas id="scene" width="256" height="256" aria-label="Generated street scene"></canvas>
-              <canvas id="spectrum" width="256" height="256" aria-label="Its centred power spectrum with the low-frequency radius"></canvas>
-            </div>
-            <label class="slider"><span>Scene clutter</span><input type="range" id="clutter" min="0" max="10" value="4" step="1"><output id="clutter-o">4</output></label>
-            <dl class="readout">
-              <div><dt>VNI<sub>raw</sub></dt><dd id="vni-raw">—</dd></div>
-              <div><dt>VNI</dt><dd id="vni-val">—</dd></div>
-              <div><dt>Band</dt><dd id="vni-band">—</dd></div>
-            </dl>
-            <p class="formula">VNI<sub>raw</sub> = Σ<sub><i>r</i> &gt; <i>r</i><sub>L</sub></sub> <i>P</i>(<i>u</i>,<i>v</i>) ÷ Σ<sub><i>r</i> &gt; 0</sub> <i>P</i>(<i>u</i>,<i>v</i>), &nbsp; <i>r</i><sub>L</sub> = 0.15 · min(<i>M</i>,<i>N</i>)/2</p>
-          </article>
-
-          <article class="glass panel" aria-labelledby="cat-title">
-            <header class="panel-head"><h3 id="cat-title">Geometry · catenary</h3><span class="mono muted">Eq. 6–10</span></header>
-            <svg id="span" viewBox="0 0 520 256" role="img" aria-label="A wire span with its chord and perpendicular sag"></svg>
-            <label class="slider"><span>Sag</span><input type="range" id="sag" min="0.3" max="7" value="2.6" step="0.05"><output id="sag-o">2.6%</output></label>
-            <label class="slider"><span>Support offset</span><input type="range" id="tilt" min="-60" max="60" value="22" step="1"><output id="tilt-o">22 px</output></label>
-            <dl class="readout">
-              <div><dt>δ/L</dt><dd id="c-ratio">—</dd></div>
-              <div><dt>δ<sub>lim</sub></dt><dd id="c-lim">—</dd></div>
-              <div><dt>CRS</dt><dd id="c-crs">—</dd></div>
-            </dl>
-            <p class="formula">CRS = min{10, 10 · (<i>δ</i>/<i>L</i> ÷ <i>δ</i><sub>lim</sub>) · <i>w</i><sub>class</sub>}</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- 3 · compliance -->
-    <section class="lp-section" id="compliance" style="--h: 1">
-      <div class="wrap">
-        <header class="sec-head">
-          <p class="eyebrow">Privacy, physics, accountability</p>
-          <h2>Built to the rules it screens for.</h2>
-        </header>
-        <div class="cards3">
-          <article class="glass card">
-            <div class="card-visual exif" aria-hidden="true">
-              <span>FocalLengthIn35mmFilm<b>kept</b></span><span>DateTimeOriginal<b>kept</b></span><span>Orientation<b>applied</b></span>
-              <span class="gone">GPSLatitude<b>removed</b></span><span class="gone">GPSLongitude<b>removed</b></span>
-            </div>
-            <h3>GPS leaves the photo</h3>
-            <p>Coordinates are read once and kept in an access-limited table keyed by pole code. Every stored copy is re-encoded without them, as RA 10173 requires.</p>
-          </article>
-          <article class="glass card">
-            <div class="card-visual"><svg id="cos" viewBox="0 0 300 120" role="img" aria-label="Allowable sag ratio against air temperature"></svg></div>
-            <h3>Limits that follow the weather</h3>
-            <p>Give span, temperature and wind, and the allowable sag follows the change-of-state equation. Heat lengthens the wire; wind adds load (Eq. 9).</p>
-          </article>
-          <article class="glass card">
-            <div class="card-visual report" aria-hidden="true">
-              <i class="mode">Validation mode · reference masks</i>
-              <b data-sample="pole">Pole SYN-SAMPLE</b><span data-sample="crs">Max CRS —</span>
-              <em>Computational screening result. Professional review required before any action.</em>
-            </div>
-            <h3>Every report says what it is</h3>
-            <p>Each PDF names its segmentation source and its provisional parameters, and states on every page that it needs a professional's review.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4 · mapping -->
-    <section class="lp-section" id="mapping" style="--h: 1">
-      <div class="wrap split">
-        <div class="split-copy">
-          <p class="eyebrow">Multi-site priority · GeoJSON</p>
-          <h2>A ranked map for the municipal engineer.</h2>
-          <p>Each pole's clutter, average wire and worst wire combine into one priority index. The order is checked against all 66 weight settings, so you can see which ranks hold and which depend on the weights.</p>
-          <p class="formula">MSPI = <i>α</i>·VNI + <i>β</i>·mean(CRS)/10 + <i>γ</i>·max(CRS)/10</p>
-          <a class="btn" href="/admin/sites">Site map · admin portal
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
-        </div>
-        <div class="glass geo">
-          <svg class="geo-map" viewBox="0 0 360 220" aria-hidden="true">
-            <path class="road" d="M-10 170 C 80 150 140 120 200 60 S 300 10 380 20"/>
-            <path class="road thin" d="M40 -10 C 70 60 90 120 120 240 M240 240 C 250 170 280 120 380 100"/>
-            <g class="pins"></g>
-          </svg>
-          <pre class="mono geo-json" id="geo-json"></pre>
-        </div>
-      </div>
-    </section>
-
-    <!-- 5 · evaluation, read live from /api/evaluation/metrics -->
-    <section class="lp-section" id="evaluation" style="--h: 1">
-      <div class="wrap">
-        <header class="sec-head">
-          <p class="eyebrow">Evaluation · Table 3.10</p>
-          <h2>Targets fixed before the first experiment.</h2>
-          <p>Each target is filled in only by an evaluation run. Until then it reads "not yet measured", which is what it should say.</p>
-        </header>
-        <div class="glass eval">
-          <table class="eval-table" id="eval-table">
-            <thead><tr><th>Metric</th><th>Target</th><th>Applies to</th><th>Result</th></tr></thead>
-            <tbody></tbody>
-          </table>
-          <div class="eval-geo" id="eval-geo"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="lp-close" style="--h: 1">
-      <div class="wrap close-inner">
-        <img src="/assets/logo.svg" alt="" width="64" height="64">
-        <h2>Start with one pole.</h2>
-        <p>No account needed in the field. Engineers review and rank results in the admin portal.</p>
-        <div class="close-actions"><a class="btn primary lg" href="/workspace">Launch Field Screener</a>
-          <a class="btn lg ghost" href="/admin/login">Admin portal login</a></div>
-      </div>
-    </section>
+  <main class="lx-main" id="main">
+    <h1 class="lx-word" aria-label="WIREFRAME">WIRE<span>FRAME</span></h1>
+    <div class="lx-act">
+      <p>Photograph a utility pole. WIREFRAME finds each overhead wire, measures how far it sags, and shows which ones need a closer look.</p>
+      <a class="lx-go" href="/workspace">Open the Field Screener
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+    </div>
   </main>
 
-  <footer class="lp-foot">
-    <div class="wrap foot-row">
-      <span><img src="/assets/logo.svg" alt="" width="18" height="18"> WIREFRAME · BS Computer Science, Intelligent Systems Track · Canila, Villamar, Tubianosa · Adviser: Dr. Rolando B. Barrameda · 2026</span>
-      <span class="muted">Screening results require professional review. Sample imagery is synthetic.</span>
-    </div>
+  <footer class="lx-foot">
+    <p class="lx-names" aria-label="Developed by Canila, Tubianosa and Villamar"><span>CANILA</span><span>TUBIANOSA</span><span>VILLAMAR</span></p>
+    <p>Screening results are estimates from a photograph and must be reviewed by a qualified professional.</p>
   </footer>
-
-  <ol class="toaster" id="toaster" aria-live="polite" aria-label="Notifications"></ol>
-  <script type="module" src="/assets/landing.js"></script>
+  <script type="module" src="/assets/landing.js?v=2.15"></script>
 </body>
 </html>

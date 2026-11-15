@@ -192,20 +192,31 @@ def test_shipped_config_enables_dual_polarity(cfg):
     assert s.dual_polarity and s.dual_polarity_max_mean_l == 40.0 and s.dual_polarity_ratio == 1.2
 
 
-def test_field_page_and_assets_are_the_v213_console(client):
-    # v2.13 redesign (supersedes the v2.11 console strings): dark-by-default landing tokens, Geist type,
-    # Original / Detected spans / Full wire mask view control, collapsed diagnostics drawer, shimmer loader.
+def test_field_page_and_assets_are_the_v215_screener(client):
+    # v2.15 (supersedes v2.14): dark landing identity with the gold accent, no server-status label, no sample button,
+    # centred upload card with inspection name / city / barangay, plain-language results with a three-level risk
+    # summary, photo limitations, next steps, and technical diagnostics collapsed.
     page = client.get("/workspace")
     assert page.status_code == 200
     html = page.text
-    assert 'class="fs-root"' in html and 'data-theme="dark"' in html and "detected by model" not in html
+    assert 'class="fs-root"' in html and 'data-theme="dark"' in html and "glass" not in html
     assert "family=Geist" in html and 'id="working"' in html and "sk-scan" in html
+    for gone in ("mode-pill", "Model ready", "Load the sample", 'name="pole_code"', "One photo of the pole",
+                 "A field verdict in seconds", "New inspection</p>"):
+        assert gone not in html, gone
+    for field in ('name="inspection_name"', 'name="city"', 'name="barangay"', 'id="locate"', 'id="clear-file"'):
+        assert field in html, field
     js = client.get("/assets/field.js").text
-    for needle in ('data-view="photo"', 'data-view="spans"', 'data-view="mask"', "Full wire mask",
-                   'id="opacity"', 'id="diag"', 'id="verdict-pill"', "Model and CV diagnostics",
-                   "Inspected spans", "Ground structures ignored", "retake_guidance", "reason"):
-        assert needle in js
-    for pill in ("Hazard detected", "Review required", "Not at risk", "Retake photo"):
+    for needle in ('data-view="photo"', 'data-view="spans"', 'data-view="mask"', 'data-view="overlay"',
+                   'id="opacity"', 'id="diag"', 'id="verdict-pill"', 'id="span-detail"', "Technical diagnostics",
+                   "Photo limitations", "What to do next", "not a safety inspection", "Estimated gaps",
+                   "Model mask", "Ground structures ignored", 'data-zoom="reset"', 'data-zoom="fit"',
+                   "Do not touch", "inspection_name"):
+        assert needle in js, needle
+    for gone in ("Model ready", "Inspection quality", "#sample"):
+        assert gone not in js, gone
+    for pill in ("High risk found", "Moderate risk found", "No high risk found", "Photo not clear enough"):
         assert pill in js
     css = client.get("/assets/field.css").text
-    assert "fx-shimmer" in css and ".fx-drawer[data-open]" in css and ".glass" in css
+    assert "fx-shimmer" in css and ".fx-drawer[data-open]" in css and "backdrop-filter" not in css
+    assert "gradient(" not in css.replace("linear-gradient(90deg, transparent", "")

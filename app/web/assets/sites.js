@@ -1,7 +1,7 @@
 // Multi-site priority workspace: GeoJSON map (RFC 7946, from /api/dashboard/map),
 // MSPI ranking with live weights (Equation 11), and the weight-sensitivity summary.
 
-import { toast } from "./toast.js";
+import { toast } from "./toast.js?v=2.15";
 
 const LEVEL_VAR = { low: "--risk-low", medium: "--risk-med", high: "--risk-high" };
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();

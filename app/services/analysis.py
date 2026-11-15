@@ -47,7 +47,7 @@ def ingest(
     pole_code: str | None, barangay: str | None, context: dict[str, float | None],
     distance_m: float | None, elevation_deg: float | None,
     latitude: float | None, longitude: float | None, labels: bytes | None,
-    model_ready: bool = True, trusted: bool = True,
+    model_ready: bool = True, trusted: bool = True, inspection_name: str | None = None, city: str | None = None,
 ) -> str:
     """Validate, strip GPS, store, and create the analysis row (status ``processing``).
 
@@ -82,7 +82,7 @@ def ingest(
         written[1].write_bytes(labels)
     try:
         return _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context,
-                       latitude, longitude, w, h, trusted)
+                       latitude, longitude, w, h, trusted, _clean(inspection_name), _clean(city))
     except Exception:
         for p in written:  # no orphan files when the transaction fails
             p.unlink(missing_ok=True)
@@ -96,14 +96,22 @@ def _validate_location(lat: float | None, lon: float | None) -> None:
         raise UploadError("invalid_location", "Latitude/longitude out of range.")
 
 
+def _clean(v: str | None) -> str | None:
+    """Trimmed free text with control characters removed; empty becomes None."""
+    if v is None:
+        return None
+    v = re.sub(r"[\x00-\x1f\x7f]", " ", v).strip()
+    return v[:120] or None
+
+
 def _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context, latitude, longitude, w, h,
-            trusted: bool = True) -> str:
+            trusted: bool = True, inspection_name: str | None = None, city: str | None = None) -> str:
     """``trusted`` (an admin upload) may change an existing pole's barangay and location; an
     anonymous field upload may only fill them in where nothing is recorded yet."""
     with db.session() as s:
         pole = s.scalar(select(Pole).where(Pole.pole_code == code))
         if pole is None:
-            pole = Pole(pole_code=code, barangay=(barangay or None))
+            pole = Pole(pole_code=code, barangay=(_clean(barangay) or None))
             s.add(pole)
             s.flush()
         elif barangay and (trusted or not pole.barangay):
@@ -112,6 +120,7 @@ def _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context,
             _update_location(s, pole, acq.gps, latitude, longitude)
         a = Analysis(
             pole_id=pole.id, original_filename=Path(filename or "upload").name[:255],
+            inspection_name=inspection_name, city=city,
             stored_name=stored, label_name=label_name, status="processing", width=w, height=h,
             metadata_json=_jsonable(acq.metadata), envelope_json=_jsonable([c.as_dict() for c in acq.envelope]),
             context_json={k: v for k, v in context.items() if v is not None},
@@ -274,11 +283,16 @@ def load_analysis(s: Session, analysis_id: str) -> Analysis | None:
     )
 
 
-def serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] | None = None) -> dict[str, Any]:
-    """The API result, passed through ``_jsonable`` so it is always strict JSON (v2.10)."""
+def serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] | None = None,
+                     settings: Settings | None = None) -> dict[str, Any]:
+    """The API result, passed through ``_jsonable`` so it is always strict JSON (v2.10). With ``settings``,
+    every wire also carries ``provenance``: observed vs inferred (gap-bridge) pixels (v2.14)."""
     from app.services.reasons import retake_summary
     r = _serialize_result(a, cfg, ranking)
     r["retake_guidance"] = retake_summary(r.get("wires") or [], a.width, a.height)  # v2.13
+    if settings is not None:
+        from app.services.provenance import attach
+        attach(r, wire_mask_path(settings, a.id))
     return _jsonable(r)
 
 
@@ -288,7 +302,7 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
     for d in a.detections:
         counts[d.wire_class] = counts.get(d.wire_class, 0) + 1
     worst = max((d for d in a.detections if d.crs is not None), key=lambda d: d.crs, default=None)
-    from app.services.reasons import wire_action, wire_notes, wire_reason
+    from app.services.reasons import wire_action, wire_notes, wire_reason, wire_reason_short
     md = a.metadata_json or {}
     clearance = md.get("clearance") or {}
     gate = cfg.crs.min_chord_px or 0.0
@@ -299,6 +313,7 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
         "error": {"code": a.error_code, "message": a.error_message} if a.status == "error" else None,
         "created_at": a.created_at.isoformat(),
         "completed_at": a.completed_at.isoformat() if a.completed_at else None,
+        "inspection": {"name": a.inspection_name, "city": a.city, "barangay": a.pole.barangay},
         "pole": {"code": a.pole.pole_code, "barangay": a.pole.barangay,
                  "has_location": a.pole.location is not None,
                  # the submitter's own pole only (capability URL); the multi-pole map is admin-only
@@ -348,6 +363,7 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                 "flags": d.flags_json,
                 "reason_code": wire_reason(d.status, d.fail_reason, d.flags_json, gate)[0],
                 "reason": wire_reason(d.status, d.fail_reason, d.flags_json, gate)[1],
+                "reason_short": wire_reason_short(wire_reason(d.status, d.fail_reason, d.flags_json, gate)[0]),
                 "notes": wire_notes(d.flags_json),
                 "action": wire_action(d.status, d.fail_reason, d.flags_json, d.bbox_json, a.width, a.height),
                 "veg_clearance": clearance.get(str(d.wire_index)),

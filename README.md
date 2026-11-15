@@ -9,6 +9,10 @@ scene clutter with a 2D-FFT Visual Noise Index (VNI), and ranks poles for inspec
 Index (MSPI). Every algorithm follows Chapter III of the thesis manuscript, and the equation numbers in the
 code refer to it.
 
+> **Website only.** WIREFRAME is a web application for laptop and desktop browsers (window at least 1024 px wide).
+> It does not run on phones: there is no mobile app and no phone layout, and below 700 px the page shows a notice
+> asking for a computer instead.
+
 > Outputs are computational screening results. They need review by a qualified professional before any
 > regulatory or maintenance action (Section 3.14.6). Until calibration (Table 3.1, second part), the
 > parameters in `config/wireframe.yaml` are provisional, and every result carries flags that say so.
@@ -21,7 +25,7 @@ pip install -r requirements-dev.txt          # runtime + tests
 python -m scripts.create_admin engr.yourname   # first admin account (password prompted; no default)
 uvicorn app.main:app --reload                 # / landing · /workspace field screener · /admin command centre · /docs API
 python -m scripts.seed_synthetic --n 8        # optional: SYNTHETIC demo poles (codes SYN-…)
-pytest                                        # 508 tests (+4 that need requirements-ml.txt)
+pytest                                        # 528 tests (+4 that need requirements-ml.txt)
 ```
 
 The trained segmentation model is not in the repository. Without `models/wireframe-yolo11m-seg.pt`, the

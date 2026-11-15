@@ -1,41 +1,39 @@
-﻿venv/
-fresh_venv/
-node_modules/
-outputs/
-runs/
-scratch/
+# Python
 __pycache__/
 *.pyc
+.venv/
+venv/
 .pytest_cache/
 .ruff_cache/
+
+# Local data, models and experiment outputs (large or private; not part of the repository)
+var/
+datasets/
+runs/
+models/*.pt
+!models/.gitkeep
 uploads/*
 !uploads/.gitkeep
 *.db
 *.db-wal
 *.db-shm
-.env
-*.pt
-_quarantine/
-out/
-/audit_*
-/scratch_*.txt
-datasets/
-archive/
 
+# Secrets
+.env
 passwords*.txt
 
-# v2
-.venv/
-var/
-models/*.pt
-!models/.gitkeep
-
+# Editor, OS and assistant tooling
 .DS_Store
 .agents/
 .claude/
 skills-lock.json
 
-.DS_Store
-.agents/
-.claude/
-skills-lock.json
+# Scratch
+node_modules/
+outputs/
+out/
+scratch/
+archive/
+_quarantine/
+/audit_*
+/scratch_*.txt
