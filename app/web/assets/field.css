@@ -253,6 +253,15 @@ html.fs-root { height: auto; min-height: 100%; }
   .fx-opacity input { width: 84px; }
   .fx-spans .opt { display: none; }
   .fx-actions .btn { flex: 1; }
+  /* v2.13: at phone width each span is a card (id, conductor, CRS on one line; status, reason and next step at full
+     width below) so the retake instruction is never clipped by a sideways-scrolling table */
+  .fx-spans, .fx-spans tbody, .fx-spans tr.grp, .fx-spans tr.grp td { display: block; }
+  .fx-spans thead { display: none; }
+  .fx-spans tr[data-wire] { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 10px; align-items: start;
+    padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .fx-spans tr[data-wire] td { padding: 0; border-bottom: 0; }
+  .fx-spans tr[data-wire] td:last-child { grid-column: 1 / -1; margin-top: 8px; }
+  .fx-spans tr[hidden] { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .fs-stage:not([hidden]), .fx-meter i { animation: none; }
