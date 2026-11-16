@@ -23,7 +23,7 @@ import numpy as np
 from app.core.config import CLASSES, VEGETATION
 from app.pipeline.preprocess import Letterbox
 from app.pipeline.segment import SegmenterUnavailable, WireDetection, YoloSegmenter, _bbox
-from app.pipeline.wire_instances import extract_spans
+from app.pipeline.wire_instances import extract_spans, strand_spans
 
 log = logging.getLogger("wireframe")
 N_CLASSES = len(CLASSES) + 1
@@ -170,7 +170,10 @@ def prob_to_original(prob: np.ndarray, lb: Letterbox) -> np.ndarray:
 
 
 def skeleton_instances(probs: np.ndarray, class_masks: dict[int, np.ndarray], lb: Letterbox, conf_min: float,
-                       span_params: dict | None = None) -> list[WireDetection]:
+                       span_params: dict | None = None, strands: bool = False,
+                       min_class_share: float = 0.0) -> list[WireDetection]:
+    if strands:
+        return strand_instances(probs, lb, conf_min, span_params or {}, min_class_share)
     out = []
     for name in CLASSES:
         if name == VEGETATION:
@@ -182,6 +185,25 @@ def skeleton_instances(probs: np.ndarray, class_masks: dict[int, np.ndarray], lb
         for span, conf in extract_spans(m, prob_to_original(probs[c], lb), **(span_params or {})):
             if conf >= conf_min:
                 out.append(WireDetection(name, conf, span, _bbox(span)))
+    return out
+
+
+def strand_instances(probs: np.ndarray, lb: Letterbox, conf_min: float, params: dict,
+                     min_class_share: float) -> list[WireDetection]:
+    """v2.16: one class per physical strand (``wire_instances.strand_spans``), in original image coordinates."""
+    wire_ids = [CLASSES.index(c) + 1 for c in CLASSES if c != VEGETATION]
+    orig = np.stack([prob_to_original(probs[c], lb) for c in range(N_CLASSES)])
+    # the wire mask is the argmax in original space, matching class_masks_to_original's resampling: area-weighted
+    # with a low threshold when the photo is smaller than the model input (keeps 1-2 px wires)
+    cls = probs.argmax(0)
+    union = np.isin(cls, wire_ids)[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w].astype(np.float32)
+    down = lb.orig_w < lb.new_w
+    union = cv2.resize(union, (lb.orig_w, lb.orig_h), interpolation=cv2.INTER_AREA if down else cv2.INTER_LINEAR) \
+        >= (0.25 if down else 0.5)
+    out = []
+    for s in strand_spans(orig, wire_ids, params, min_class_share=min_class_share, mask=union):
+        if s.confidence >= conf_min:
+            out.append(WireDetection(s.wire_class, s.confidence, s.mask, _bbox(s.mask), s.class_share, s.class_status))
     return out
 
 
@@ -216,6 +238,9 @@ class HybridSegmenter:
         self.last_class_masks: dict[int, np.ndarray] | None = None  # v2.11: full WireNet mask for the UI
         self.last_polarity: str | None = None  # v2.11: "normal" / "inverted" when dual polarity was checked
         self.last_suppressed: list[dict] = []  # v2.13: spans removed by the ground gate, with the reason
+        self.last_scene: dict | None = None  # v2.16: scene context (pole regions) from the ADE20K parser
+        self.last_poles: list[dict] | None = None  # v2.16: pole detector boxes in photo coordinates (None = off)
+        self._pole_det = None
         self._scene = None
         self._lock = threading.Lock()
         self.wirenet_error: str | None = None
@@ -290,46 +315,110 @@ class HybridSegmenter:
         self.last_class_masks = masks
         if self.instances == "skeleton":
             veg = [d for d in dets if d.wire_class == VEGETATION]
-            spans = skeleton_instances(probs, masks, lb, self.yolo.cfg.conf_min, span_params(self.yolo.cfg))
-            return veg + self._ground_gate(spans, x, lb)
+            sp = span_params(self.yolo.cfg)
+            self.last_poles = self._poles(x, lb)
+            if self.last_poles and getattr(cfg, "pole_occluder_gap", 0.0) > 0:
+                sp = {**sp, "occluders": [p["bbox"] for p in self.last_poles],
+                      "occluder_max_gap": cfg.pole_occluder_gap * max(lb.orig_w, lb.orig_h) / cfg.imgsz}
+            spans = skeleton_instances(probs, masks, lb, self.yolo.cfg.conf_min, sp,
+                                       strands=getattr(cfg, "span_strand_classes", False),
+                                       min_class_share=getattr(cfg, "span_class_min_share", 0.0))
+            veg, spans = self._scene_gate(spans, veg, x, lb)
+            return veg + spans
         dilate = max(2, int(round(self.dilate_frac * max(lb.orig_w, lb.orig_h))))
         return assemble_instances(masks, dets, dilate)
 
 
-    def _ground_gate(self, spans: list[WireDetection], x: np.ndarray, lb: Letterbox) -> list[WireDetection]:
-        """v2.13: drop spans lying mostly on ground classes (kerbs, manholes, pavement joints); record them."""
-        self.last_suppressed = []
+    def _poles(self, x: np.ndarray, lb: Letterbox) -> list[dict] | None:
+        """v2.16: pole boxes in photo coordinates from the optional YOLO pole detector (context only)."""
         cfg = self.yolo.cfg
-        if not getattr(cfg, "ground_gate", False) or not spans:
-            return spans
-        # the road and pavement lie below the wires in a pole photo: when no span reaches the lower half of the
-        # frame there is nothing to gate, so the scene parser is not run (saves 0.26 s; output identical)
+        w = getattr(cfg, "pole_weights", None)
+        if not w:
+            return None
+        if self._pole_det is None:
+            from app.core.config import ROOT_DIR
+            from app.pipeline.poles import PoleDetector
+            p = Path(w)
+            self._pole_det = PoleDetector(p if p.is_absolute() else ROOT_DIR / p, cfg.pole_conf, device=self._device)
+        content = np.ascontiguousarray(x[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w])
+        found = self._pole_det.detect(content)
+        if found is None:
+            return None
+        sx, sy = lb.orig_w / lb.new_w, lb.orig_h / lb.new_h
+        return [{**d, "bbox": [round(d["bbox"][0] * sx, 1), round(d["bbox"][1] * sy, 1), round(d["bbox"][2] * sx, 1),
+                               round(d["bbox"][3] * sy, 1)]} for d in found]
+
+    def _ground_gate(self, spans: list[WireDetection], x: np.ndarray, lb: Letterbox) -> list[WireDetection]:
+        """v2.13 ground gate alone (kept for callers of the v2.13 API); see ``_scene_gate``."""
+        return self._scene_gate(spans, [], x, lb)[1]
+
+    def _scene_gate(self, spans: list[WireDetection], veg: list[WireDetection], x: np.ndarray, lb: Letterbox
+                    ) -> tuple[list[WireDetection], list[WireDetection]]:
+        """Scene-context checks with the pretrained ADE20K parser; every removed region is recorded with its reason.
+
+        * v2.13 ground gate: a span lying mostly on road / pavement is a kerb or manhole edge
+        * v2.16 structure-edge gate: a span with different scene classes on its two sides along most of its length
+          is the outline of a structure (flyover deck, canopy, sign board) against the sky, not a wire; a real wire
+          is seen against one background (sky on both sides, or wall on both sides) except where it crosses an edge
+        * v2.16 vegetation gate: a YOLO vegetation region with too little of its area on ADE20K vegetation classes
+          (shadowed concrete under a flyover was detected as vegetation)
+        Returns (vegetation kept, spans kept)."""
+        self.last_suppressed = []
+        self.last_scene = None
+        cfg = self.yolo.cfg
+        ground_on = getattr(cfg, "ground_gate", False)
+        edge_on = getattr(cfg, "structure_gate", False)
+        veg_on = getattr(cfg, "vegetation_gate", False)
+        if not (ground_on or edge_on or veg_on) or not (spans or veg):
+            return veg, spans
+        # the road and pavement lie below the wires in a pole photo: with only the ground gate on and no span in the
+        # lower half of the frame there is nothing to gate, so the scene parser is not run (output identical)
         mid = lb.orig_h / 2
-        if not any(d.bbox[3] > mid for d in spans):
-            return spans
-        from app.pipeline.scene import SceneParser, ground_share
+        if not (edge_on or veg_on) and not any(d.bbox[3] > mid for d in spans):
+            return veg, spans
+        from app.pipeline.scene import SceneParser, ground_share, side_contrast, vegetation_share
         from app.pipeline.segment import mask_to_polygons
         if self._scene is None:
             self._scene = SceneParser(self._device)
         content = np.ascontiguousarray(x[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w])
         lab = self._scene.labels(content)
-        if lab is None:  # parser unavailable: keep every span (fail open, flagged by the runner)
+        if lab is None:  # parser unavailable: keep everything (fail open, flagged by the runner)
             self.last_suppressed = [{"unavailable": True}]
-            return spans
-        ground = cv2.resize(self._scene.ground_mask(lab).astype(np.uint8), (lb.orig_w, lb.orig_h),
-                            interpolation=cv2.INTER_NEAREST).astype(bool)
+            return veg, spans
+        lab = cv2.resize(lab, (lb.orig_w, lb.orig_h), interpolation=cv2.INTER_NEAREST)
+        self.last_scene = self._scene.context(lab)
+        ground = self._scene.ground_mask(lab)
+
+        def record(d, code, reason, **extra):
+            self.last_suppressed.append({
+                "wire_class": d.wire_class, "confidence": round(d.score, 4), "bbox": [round(v, 1) for v in d.bbox],
+                "polygons": mask_to_polygons(d.mask), "reason_code": code, "reason": reason, **extra})
+
         keep = []
         for d in spans:
-            share = ground_share(d.mask, ground)
-            if share >= cfg.ground_gate_share:
-                self.last_suppressed.append({
-                    "wire_class": d.wire_class, "confidence": round(d.score, 4),
-                    "bbox": [round(v, 1) for v in d.bbox], "polygons": mask_to_polygons(d.mask),
-                    "ground_share": round(share, 3), "reason_code": "ground_structure",
-                    "reason": "Lies on the road or pavement: a kerb, manhole or pavement edge, not an overhead wire"})
-            else:
-                keep.append(d)
-        return keep
+            share = ground_share(d.mask, ground) if ground_on else 0.0
+            if ground_on and share >= cfg.ground_gate_share:
+                record(d, "ground_structure",
+                       "Lies on the road or pavement: a kerb, manhole or pavement edge, not an overhead wire",
+                       ground_share=round(share, 3))
+                continue
+            sc = side_contrast(d.mask, lab) if edge_on else 0.0
+            if edge_on and sc >= cfg.structure_gate_contrast:
+                record(d, "structure_edge",
+                       "Runs along the outline of a structure (flyover, canopy or sign edge), not an overhead wire",
+                       ground_share=round(share, 3), side_contrast=round(sc, 3))
+                continue
+            keep.append(d)
+        veg_keep = []
+        for d in veg:
+            vs = vegetation_share(d.mask, lab, self._scene.vegetation_ids) if veg_on else 1.0
+            if veg_on and vs < cfg.vegetation_gate_min_share:
+                record(d, "not_vegetation",
+                       "Not vegetation: the scene parser sees a structure or shadow here (e.g. concrete under a flyover)",
+                       vegetation_share=round(vs, 3))
+                continue
+            veg_keep.append(d)
+        return veg_keep, keep
 
 
 def mean_l_star(rgb: np.ndarray) -> float:
@@ -358,7 +447,8 @@ def span_params(cfg) -> dict:
     return {"min_px": cfg.span_min_px, "min_len": cfg.span_min_len, "max_turn_deg": cfg.span_max_turn_deg,
             "cluster_radius": cfg.span_cluster_radius, "max_gap": cfg.span_max_gap,
             "gap_angle_deg": cfg.span_gap_angle_deg, "draw_bridge": cfg.span_draw_bridge,
-            "min_span_len": cfg.span_min_stitched_len, "own_component": cfg.span_own_component}
+            "min_span_len": cfg.span_min_stitched_len, "own_component": cfg.span_own_component,
+            "max_lateral_px": getattr(cfg, "span_max_lateral_px", 0.0)}
 
 
 def make_segmenter(cfg, root: Path):

@@ -2,7 +2,7 @@
 
 **A Vision-Based Diagnostic Framework for Urban Overhead Wire Infrastructure Risk Assessment**
 
-Authors: Canila, Tubianosa, Villamar. State described: v2.15 (the current code on `main`).
+Authors: Canila, Tubianosa, Villamar. State described: v2.16 (the current code on `main`).
 
 This one file replaces every earlier report: the per-version Chapter 4 reports (v2.7–v2.15), the master
 manuscript, the synthesis, the v2.9 defence summary and the disclosure log. It is organised by topic rather than
@@ -143,7 +143,22 @@ licence; classes that map to the four WIREFRAME classes. **None passed** (regist
 | Railway OCS conductor segmentation (2025) | Railway catenary |
 | Street-view power-line classification (arXiv 2105.03804) | Classification only; data not released |
 
-### 2.4 Privacy
+### 2.4 v2.16 research inventory: poles and street-level infrastructure (searched 2026-11-16)
+
+| Name | Source | Licence | Task / labels | Perspective | Decision |
+|---|---|---|---|---|---|
+| Annotated Google Street View dataset for pole and tree detection | Zenodo 20091961 | CC BY 4.0 as published; images are Google Street View captures | 3,103 images (640 × 640), YOLO boxes: `poste` 5,969 (utility, lamp and sign posts), `arvore` 3,047 | Street level, Curitiba (Brazil), concrete distribution poles similar to Philippine ones | **Used** (poles only), research use; neither images nor trained weights are redistributed by this repository |
+| Utility Poles (Zac) | Roboflow Universe `zac-ogogt/utility-poles-kcumt` | CC BY 4.0 | ~380 images, boxes | Street level | Evaluate further: needs `ROBOFLOW_API_KEY` (not set on the development machine) |
+| Utility Pole v7 (Yue-Hung) | Roboflow Universe `yue-hung/utility-pole-5j6dp` | CC0 (page metadata) | 511 images, boxes | Street level | Evaluate further: API key / possible subscription |
+| OHL-UK wooden pole and sign corpus | arXiv 2608.04061 | CC BY 4.0 (stated) | 4,570 images, boxes, masks, lean angle | Street View (UK wooden poles) | Not yet released ("upon acceptance") |
+| Mapillary Vistas | Mapillary research | Research licence agreement | 25,000 images, 66+ classes incl. `object--support--utility-pole` | Street level, worldwide | Evaluate further: licence terms and size (≈ 25 GB) |
+| TTPLA | github.com/r3ab/ttpla_dataset | Unconfirmed (Apache 2.0 per a third-party catalogue) | 1,100 aerial images, towers + lines | UAV / aerial | Rejected: transmission towers seen from the air |
+| ADE20K scene parser (UperNet-ConvNeXt-T) | Hugging Face `openmmlab/upernet-convnext-tiny` | MIT | 150 classes incl. pole, streetlight, bridge, tree | Street level | **Used** (already loaded for the ground gate): structure-edge and vegetation gates, pole regions |
+
+The 145-photo team set has no pole labels, so pole detection is evaluated on the held-out street sequences of the
+Zenodo set, not on WIREFRAME photos.
+
+### 2.5 Privacy
 
 GPS is stripped from every stored photo; coordinates live only in a separate table and only when the user adds
 them. Pole coordinates, rankings and the multi-pole map are admin-only (§3.14.4). The curation privacy screen
@@ -552,6 +567,187 @@ same cache.)
 On P-B1D137 (dense night, 27 spans), 1,299 span pixels were bridge pixels; 4 of 5 high-risk spans contain them
 (span 14: 20% of its path, span 26: 17%).
 
+### 5.10 Results of v2.16: one class per physical wire, scene checks, measurement validity
+
+v2.16 started from three field photos of one Manila flyover junction (2048 × 1536, iPhone 14; `street1` taken with
+the 0.5× ultra-wide lens at 14 mm equivalent, `street2` and `street3` at 26 mm). v2.15 reported 136–154 "wire
+sections" per photo, sags of 9.6–12.6%, CRS 10 on 17–19 spans, AT RISK – HIGH on all three, a vegetation contact on
+shadowed concrete, and single cables drawn in two colours. Each defect was traced to its stage before anything was
+changed (error inventory below); every adopted change was decided on the 22 validation photos.
+
+**Root causes found**
+
+| Visible defect | Stage | Cause | Kind |
+|---|---|---|---|
+| One cable drawn half power, half telecom | span assembly | spans were built separately per class from WireNet's per-pixel argmax, so a cable whose pixels flip class became two spans, each with a hole where the other class won | post-processing |
+| Spans along the flyover deck, canopy and sign edges (incl. three CRS 10) | segmentation + no context check | WireNet traces any long straight contrast edge; nothing checked what the trace lies on | model + post-processing |
+| "Vegetation" on the shadowed flyover underside, raising a vegetation contact | YOLO vegetation | no check that the region is vegetation (scene parser: 0% vegetation, 70% bridge) | model |
+| CRS 10 on short traces (chord 122–136 px) | chord precision gate | the gate L ≥ σ / (¼·δ_lim) assumes σ = 1 px, but masks are predicted at 1024 px and resampled to the photo, so on a 2048 px photo σ ≈ 2 px and the gate must be 200 px | measurement validity |
+| HIGH verdict on the ultra-wide photo | verdict | the capture envelope (24–50 mm) was checked and recorded as *fail*, but never reached the sag verdict; barrel distortion bends straight wires | measurement validity |
+| A strand zig-zagging onto a neighbouring cable | gap bridging | bridges were allowed up to 70 px × tan 25° ≈ 33 px sideways | post-processing |
+| Thick ribbons, merged neighbouring wires | inference scale | the photo is shrunk to 1024 px; adjacent 1–2 px wires merge and the mask is scaled back up 2× | inference |
+| Many wires in the dense bundle missed; ~3.7 pieces per labelled wire | model | WireNet's own probability map; no assembly setting changes it (sweep below) | model + data |
+
+**Strand-level classification (adopted).** Geometry is now built once on the union of the wire classes (argmax is
+any wire class), with the shipped junction, bridging, ownership and length rules, and each strand takes the class
+with the largest summed probability over its *observed* pixels (bridge pixels carry no appearance evidence). A
+strand whose top class holds less than 90% of that evidence is shown as **type uncertain** (grey; the class is kept
+internally because δ_lim is identical for every class, and the evidence shares are in the API as `class_evidence`).
+The 0.9 cut comes from validation: strands at ≥ 0.9 have the labelled class 97.9% of the time (669 strands), strands
+below it 62% (86 strands, barely better than a guess). Crossings are unaffected: the junction rule still splits at
+a crossing and joins only collinear pieces, so each wire of an X is classified from its own pixels (unit-tested).
+
+| Validation, cached probabilities (`v216_strands_val.json`) | v2.15 per class | v2.16 strand |
+|---|---|---|
+| Labelled wires drawn in ≥ 2 classes | 5.86% | **3.41%** |
+| Tolerant mAP50 | 0.0397 | 0.0432 |
+| Power F1 / telecom F1 (tolerant) | 0.193 / 0.078 | 0.208 / 0.090 |
+| Wire-pixel precision / recall (2 px) | 0.758 / 0.851 | 0.758 / 0.855 |
+| Strand-τ variants (P(wire) ≥ 0.30–0.45) | – | 0.0262–0.0324: **rejected** (recall up, spans worse) |
+
+**Joining re-tuned for strands** (`v216_join_sweep_val.jsonl`, 18 settings). Single changes moved fragments per
+labelled wire by at most ±0.3 and tolerant mAP50 by ±0.003 (noise on 22 photos): **fragmentation is not an
+assembly-parameter problem**, it is in WireNet's probability map. Two settings gave consistent small gains and act on
+the observed wrong-join mechanism: bridge angle 25° → 35° and a 15 px lateral-offset limit (a dropout continues
+along its wire; a parallel neighbour is offset sideways). Together: tolerant mAP50 0.0432 → **0.0471**, power F1
+0.208 → 0.217, telecom 0.090 → 0.101, fragments 3.74 → 3.69, wire-pixel precision 0.758 → 0.760. (v2.14 rejected the
+lateral limit with the per-class extractor on a different cache; the strand extractor changes the trade-off, and
+both comparisons use one cache each.) Longer gaps (100–140 px), with or without model evidence in the gap, were
+worse (0.0382–0.0428).
+
+**Scene checks with the ADE20K parser already used by the ground gate** (`v216_context_val.json`):
+
+* *Structure-edge gate (adopted).* A real wire is seen against one background (sky on both sides, or a wall on both
+  sides) except where it crosses an edge; a deck, canopy or sign outline has sky on one side and structure on the
+  other along its whole length. *Side contrast* = share of the span's skeleton where the scene class at ±d along the
+  normal differs (d = max(8 px, 1.2% of the long side), clearing the parser's 384 px resolution). At ≥ 0.6 it removes
+  2 of 658 label-supported strands (0.3%) and 3 of 140 unsupported ones on validation, and on `street1` 9–10 traces
+  along the canopy and flyover edges (including three CRS 10). Removed traces are listed with the reason in the
+  diagnostics, never dropped silently. A simpler "share on structure classes" rule could not be validated (validation
+  has no flyovers or signboards: 0.000 signboard, ≈ 0 bridge) and would remove real wires seen in front of a deck.
+* *Vegetation gate (adopted).* A YOLO vegetation region with < 40% of its area on ADE20K tree / grass / plant / palm
+  / flower / field is suppressed. All 3 label-supported validation regions have ≥ 0.75 and are kept (vegetation AP and
+  F1 unchanged); the `street1` region (0.00 vegetation, 0.70 bridge, 0.19 building) is removed, and with it the false
+  vegetation contact. The 8 "unsupported" validation regions lie 47–100% on ADE20K vegetation: mostly unlabelled real
+  vegetation (a label-completeness limit, Part 12).
+* *Trajectory residual gate (rejected).* Catenary RMS residual ÷ stroke width does not separate supported from
+  unsupported strands (median 0.16 vs 0.22; p95 1.48 vs 1.12).
+
+**Measurement validity (correctness fixes, no threshold changed).**
+
+* *Chord gate in model pixels.* `crs.min_chord_px` (100) is applied as 100 × max(1, long side ÷ 1024) on model
+  output, because one model pixel is that many photo pixels; reference polygons, drawn at photo resolution, keep
+  100 px. The CRS formula and every band are unchanged. On the 2048 px photos it sends 36–43 short spans per photo
+  to "too short to measure", including the 12.6%, 11.7%, 10.2% and 9.7% sags measured on chords of 122–136 px. The
+  largest remaining sag on `street1` (9.7%, chord 941 px) is a strand joined through a dense crossing onto a
+  neighbouring cable: a wrong association that no validated rule removes yet (Part 12).
+* *Capture envelope applied to sag.* When the EXIF 35 mm-equivalent focal length is below the envelope minimum
+  (§3.3.1: 24 mm), CRS is still computed and stored, every scored span is flagged `lens_outside_envelope`, and sag
+  does not raise the verdict; vegetation rules still apply. NOT AT RISK becomes INCONCLUSIVE with a retake instruction
+  ("retake with the main (1×) camera").
+
+**Field photos, v2.15 → v2.16** (`runs/v216/regression/summary.json`; no ground truth exists for these photos, so this
+is visual inspection, not a measurement):
+
+| | street1 (14 mm) | street2 (26 mm) | street3 (26 mm) |
+|---|---|---|---|
+| Wire sections | 136 → 108 | 154 → 146 | 151 → 147 |
+| Scored spans | 84 → 38 | 101 → 61 | 96 → 61 |
+| Largest sag | 12.6% → 9.7% | 11.7% → 7.6% | 11.2% → 7.2% |
+| Spans with CRS > 6 | 17 → 10 | 19 → 10 | 18 → 9 |
+| Structure edges / non-vegetation removed | 9 / 1 | 3 / 0 | 2 / 0 |
+| Vegetation contacts | 1 → 0 | 0 → 0 | 0 → 0 |
+| Type uncertain | – → 23 | – → 14 | – → 10 |
+| Verdict | HIGH → **INCONCLUSIVE** (lens) | HIGH → HIGH | HIGH → HIGH |
+
+The remaining high-sag spans on `street2` / `street3` were inspected: they are real sagging cables on the left of the
+frame. They score HIGH because δ_lim is the 0.040 development placeholder (Part 12, item 1), not because of a
+segmentation error; that limit is the consulting engineer's to set, and it was not changed.
+
+**Full pipeline on validation** (`v216_pipeline_val.json`; `run_analysis` with WireNet, YOLO vegetation, scene gates
+and scoring, scored as in `ml.evaluate`):
+
+| | v2.15 | v2.16 |
+|---|---|---|
+| Strict / tolerant mAP50 | 0.0068 / 0.0382 | 0.0067 / **0.0456** |
+| Power F1 / P / R (tolerant) | 0.193 / 0.175 / 0.217 | **0.217 / 0.201 / 0.236** |
+| Telecom F1 / P / R (tolerant) | 0.078 / 0.068 / 0.091 | **0.101 / 0.091 / 0.115** |
+| Vegetation F1 / P / R | 0.088 / 0.273 / 0.053 | 0.088 / 0.273 / 0.053 |
+| Labelled wires in ≥ 2 classes | 5.86% | **3.41%** |
+| Fragments per covered labelled wire | 3.76 | 3.69 |
+| Verdicts NOT / MODERATE / HIGH | 10 / 10 / 2 | 11 / 9 / 2 |
+
+**Full pipeline on the test split, run once after every setting was frozen** (`v216_pipeline_test.json`, 21 photos;
+same script and scoring as the validation table):
+
+| | v2.15 | v2.16 |
+|---|---|---|
+| Strict / tolerant mAP50 | 0.0204 / 0.0468 | 0.0203 / **0.0496** |
+| Power F1 / P / R (tolerant) | 0.198 / 0.176 / 0.225 | **0.207 / 0.191** / 0.225 |
+| Telecom F1 / P / R (tolerant) | 0.039 / 0.033 / 0.050 | **0.042 / 0.036** / 0.050 |
+| Vegetation F1 / P / R | 0.163 / 0.364 / 0.105 | 0.163 / 0.364 / 0.105 |
+| Labelled wires in ≥ 2 classes | 7.24% | **4.50%** |
+| Fragments per covered labelled wire | 3.98 | 3.89 |
+| Wires reported / scored / type uncertain | 877 / 705 / 0 | 804 / 651 / 105 |
+| Verdicts NOT / MODERATE / HIGH | 7 / 7 / 7 | 10 / 5 / 6 |
+
+The held-out result confirms the direction seen on validation: tolerant mAP50 +0.0028, the mixed-class rate falls by
+about 38%, and precision rises for both wire classes at unchanged recall. Strict mAP50 is flat, because strict
+matching is dominated by 1–2 px boundary offsets that span assembly does not change. Fragmentation is essentially
+unchanged (limitation 13). On 21 photos the differences are small, so they are evidence of no regression, not proof of
+a significant gain. Verdicts move towards NOT AT RISK because short traces now fall below the scaled chord gate and
+structure edges are removed before scoring; δ_lim and the CRS mapping are unchanged.
+
+**Span assembly under the eight capture conditions** (`v216_stress_spans_val.json`; same probability maps, only the
+extractor differs; v2.15 = per-class spans, 25°, no lateral limit):
+
+| Condition | Tolerant mAP50 v2.15 → v2.16 | Wires in ≥ 2 classes | Fragments per wire |
+|---|---|---|---|
+| clean | 0.0397 → **0.0471** | 5.9% → 3.4% | 3.76 → 3.69 |
+| lowlight | 0.0213 → **0.0258** | 6.0% → 3.0% | 3.45 → 3.41 |
+| glare | 0.0075 → 0.0079 | 6.4% → 3.9% | 2.08 → 1.98 |
+| motion | 0.0135 → **0.0211** | 8.1% → 5.2% | 2.98 → 2.93 |
+| defocus | 0.0045 → 0.0045 | 5.2% → 4.6% | 2.85 → 2.82 |
+| jpeg | 0.0320 → **0.0381** | 5.4% → 3.3% | 3.28 → 3.24 |
+| lowres | 0.0294 → **0.0380** | 6.8% → 3.9% | 3.60 → 3.59 |
+| rainhaze | 0.0341 → 0.0333 | 4.7% → 3.7% | 3.76 → 3.71 |
+| **mean** | **0.0227 → 0.0270** | lower in 8 / 8 | lower in 8 / 8 |
+
+Guard rules (Part 8): validation tolerant mAP50 ≥ 0.0397 holds (0.0456); WireNet, its input and its class masks are
+unchanged, so pixel IoU (0.525 / 0.418) and the eight-condition pixel mean (0.3872) are unchanged by construction.
+
+**Full-resolution tiled inference (experimental, not shipped)** (`ml/experiments/v216_tiled.py`). Overlapping 1024 px
+tiles at the photo's own resolution, linear blend, mirrored pass: 3.4–4.1 s per 2048 px photo. Visually, strokes are
+thinner and adjacent wires separate more often than with the 1024 px pass, but each finds wires the other misses
+(pixel agreement 0.36–0.53), and both miss much of the dense bundle's dark core. It cannot be measured here: 20 of the
+22 validation photos are smaller than 1024 px (they are enlarged into the letterbox), so there is no high-resolution
+ground truth. It stays off until high-resolution labelled photos exist.
+
+**Not attempted, with the reason**
+
+* *WireNet re-training with hard negatives.* The loss already includes clDice (Part 3). Hard-negative mining needs
+  pixels known to be *not* wire, but the validation labels omit many real wires (82% of the "unsupported" strands lie
+  on open sky), so mining "false positives" from these labels would teach the model to suppress real, unlabelled
+  wires. The flyover, canopy and signboard examples that motivate it exist only in the three unlabelled field photos.
+  Required first: human-verified labels on street-level photos with overpasses, signs and canopies, and re-traced
+  dense bundles (Part 12).
+**Pole detector** (`app/pipeline/poles.py`, `ml/poles/`). YOLO11n (COCO-pretrained, 2.6 M parameters, AGPL-3.0)
+fine-tuned on the Zenodo 20091961 street-level set (§2.4), poles only, split by street sequence (train 2,009 images /
+23 sequences, val 767 / 5, test 327 / 5), 640 px, batch 8, MPS, AMP off. The run was stopped by the operating system
+for low memory after 15 of 30 epochs (it was sharing the 8 GB with the stress caching and the app); best epoch 13:
+**validation box mAP50 0.635, mAP50-95 0.278, P 0.614, R 0.596** (`runs/detect/runs/poles/yolo11n/results.csv`,
+resumable from `last.pt`). The test sequences have not been evaluated. On the 22 WIREFRAME validation photos it finds
+14 pole-like structures in 11 photos (no pole labels exist there, so this is not an accuracy figure).
+
+*Bridging across a detected pole (rejected)* (`v216_pole_bridging_val.json`): allowing a gap of up to 100 / 140 /
+180 px when it crosses a pole box gives tolerant mAP50 0.0489 / 0.0472 / 0.0459 against 0.0471, fragments 3.687–3.692
+against 3.692: no measurable gain, so `pole_occluder_gap` stays 0. The detector is shipped as *context only*
+(`pole_weights: null` by default, because the training images are Google Street View captures and the weights are not
+redistributed): boxes in the result's `scene.poles_detected` and `fit.pole_ends` per span when enabled locally.
+
+* *Pole-anchored span endpoints for sag.* Reported (`fit.pole_ends`) but not used to gate CRS: there is no labelled
+  evidence about which spans end at poles.
+
 ---
 
 ## 6. Version history
@@ -575,6 +771,7 @@ On P-B1D137 (dense night, 27 spans), 1,299 span pixels were bridge pixels; 4 of 
 | v2.13 | Ground gate; per-span actions and retake guidance; screener redesign | Problem photo HIGH (false road trace) → NOT AT RISK |
 | v2.14 | Provenance of span pixels (observed vs inferred); span ownership within blob; console redesign; website only | 0 verdict changes; honest rendering of bridged gaps |
 | v2.15 | Single-screen landing page; centred upload card with inspection name and city; plain-language results page; diagnostics grouped and collapsed | 16/16 mocked and 3/3 real-photo browser checks |
+| v2.16 | One class per physical strand (union geometry, evidence-weighted class, "type uncertain"); structure-edge and vegetation scene gates; chord gate in model pixels; capture envelope applied to sag; bridge angle 35° + 15 px lateral limit; YOLO11n pole detector (context) | Validation tolerant mAP50 0.0382 → 0.0456; wires in two colours 5.9% → 3.4%; ultra-wide field photo HIGH → INCONCLUSIVE; false vegetation contact removed |
 
 ---
 
@@ -610,7 +807,13 @@ On P-B1D137 (dense night, 27 spans), 1,299 span pixels were bridge pixels; 4 of 
 | v2.13 | Closed-loop and isolated-below rules | Remove real wires on unlabelled street photos | Rejected |
 | v2.13 | Upward-bulge rules | Remove labelled wires | Rejected |
 | v2.14 | Bridge only with model evidence | No gain; losses from τ 0.15 | Rejected |
-| v2.14 | Lateral-offset bridge gate | −0.0005 to −0.0031 | Rejected |
+| v2.14 | Lateral-offset bridge gate | −0.0005 to −0.0031 | Rejected (re-tested and adopted with the v2.16 strand extractor) |
+| v2.16 | Wire mask from P(wire) ≥ τ (0.30–0.45) | Pixel recall 0.855 → 0.87–0.90, tolerant mAP50 0.0432 → 0.0262–0.0324 | Rejected |
+| v2.16 | Longer bridges 100–140 px, with or without model evidence | 0.0382–0.0428 | Rejected |
+| v2.16 | Catenary residual ÷ stroke width as a trajectory gate | Does not separate supported from unsupported strands | Rejected |
+| v2.16 | "Share on structure classes" wire gate | Not measurable on validation (no flyovers); removes wires in front of decks | Not adopted (side contrast used) |
+| v2.16 | Tiled full-resolution inference | Visually thinner, separated strokes; no high-resolution labels to measure it | Experimental, off |
+| v2.16 | Hard-negative WireNet re-training | Validation labels omit many real wires: mining would suppress them | Not attempted (annotation gap) |
 
 **A recurring finding.** Pixel accuracy and span accuracy disagreed four times (YOLO masks, the motion router,
 hysteresis, single v2.12 backbones). The screener needs continuous, separated spans, so span-level validation
@@ -634,6 +837,10 @@ decides, with pixel F1 as a guard. The three-model fusion is the only change tha
   called optimistic; fusion never run on test. The frozen v2.12 equals v2.11 and was run once on test.
 - **v2.13–v2.15:** all candidates decided on validation; benefits of the ground gate shown on unlabelled live photos
   (not part of any split). The v2.13+ test run on the frozen configuration has not been performed.
+- **v2.16:** every setting (strand class, the 0.9 evidence share, 35° / 15 px joining, side contrast 0.6, vegetation
+  share 0.4, pole bridging off) decided on validation; the field photos only illustrate. The single test run
+  (`python -m ml.experiments.v216_pipeline_eval --split test`) was performed once, after freezing, on 16 Nov 2026
+  (`v216_pipeline_test.json`, §5.10); no setting was changed after it.
 - **Guard rules.** v2.8: tolerant pixel IoU must stay ≥ 97% of v2.7's. v2.9 onward: validation tolerant mAP50 ≥ 0.0397,
   pixel IoU ≥ 0.525 / 0.418, 8-condition mean ≥ 0.3872. Output-identical changes are proven with golden checks.
 
@@ -730,7 +937,7 @@ segmentation-models-pytorch (MIT); dataset CC BY 4.0.
 
 | Check | Result |
 |---|---|
-| Unit and integration tests (`pytest`) | 527 passed |
+| Unit and integration tests (`pytest`) | 551 passed (v2.16; `tests/test_v216_strands.py` covers the strand class, crossings, parallel wires, side contrast, the lens rule, the chord gate and pole bridging) |
 | Lint (`ruff check app ml scripts tests`) | clean |
 | Mocked browser check (`scripts/ui_check.py --mock`): 4 verdict states × light/dark × 1440 and 1024 px | 16 / 16 pass; 0 console errors |
 | Real-photo browser check (P-B1D137, a handrail street photo, the night pole) | 3 / 3 pass: name/city/barangay saved and shown, PDF valid, every view and control, table ↔ photo selection |
@@ -751,7 +958,9 @@ stylesheet with new markup (v2.15: assets now revalidated on every load).
 | Item | What the code does | Why / action for the manuscript |
 |---|---|---|
 | **Eq. 3 (VNI)** | The image mean is removed before the Hann window (`vni.remove_mean: true`) | As written, the window leaks the mean into low-frequency bins, so the same texture scored 0.47 dark and 0.036 bright. **State in Eq. 3 that the mean is removed** |
-| Sag measurement precision | CRS only when chord ≥ 100 px (σ/L ≤ ¼·δ_lim) | Add as a measurement-validity condition |
+| Sag measurement precision | CRS only when chord ≥ 100 px (σ/L ≤ ¼·δ_lim), with σ = 1 *model* pixel: on model output the gate is 100 × max(1, long side ÷ 1024) photo pixels (v2.16) | Add as a measurement-validity condition |
+| Capture envelope | Checked since v2.0; from v2.16 a focal length below 24 mm (35 mm eq.) also withholds sag from the verdict | State in §3.3.1 that out-of-envelope lenses invalidate image-space sag |
+| Wire classification | One class per strand from the summed class probability of its observed pixels; "type uncertain" below 90% of the evidence (v2.16) | Chapter III classifies per detection; add the strand rule and the uncertain category |
 | Pole verdict | Corroborated binomial rule (p0 measured by test–retest) | New interpretation layer; Eq. 1–11 unchanged |
 | Reliability grade, glare gate | New | Not in Chapter III |
 | Segmentation architecture | WireNet (U-Net R34) for wires, YOLO11s-seg for vegetation, scene parser for ground | Chapter III specifies YOLO11-seg; its 1/4-resolution masks cannot represent 2 px wires (Part 5.2) |
@@ -790,10 +999,22 @@ stylesheet with new markup (v2.15: assets now revalidated on every load).
 10. **Glare and motion blur** are turned into "retake", not results; the glare gate and motion threshold are calibrated
     on synthetic conditions.
 11. **Service drops** are scored as spans; separating them needs 3-D cues or a labelled class.
-12. **Compute.** The more accurate fusion is blocked only by latency on an 8 GB M1; the v2.13+ quiet latency run and
-    test run are outstanding.
+12. **Compute.** The more accurate fusion is blocked only by latency on an 8 GB M1; the v2.13+ quiet latency run is
+    outstanding (the v2.16 test run was performed).
 13. **Label completeness:** validation labels omit many wires in dense bundles and low isolated wires, so "no true
-    positive removed" is weak evidence for any suppression rule.
+    positive removed" is weak evidence for any suppression rule. In v2.16, 82% of the "unsupported" strands lie on open
+    sky and 8 of 11 "unsupported" vegetation regions lie on scene-parser vegetation: most are unlabelled real objects.
+14. **Fragmentation (v2.16).** About 3.7 predicted pieces cover each labelled wire, and no span-assembly setting moves
+    this by more than ±0.3: it is in WireNet's probability map. Needs better pixel recall on thin wires (more and
+    re-traced training data; high-resolution labelled photos to evaluate tiled inference).
+15. **Wrong association in dense crossings (v2.16).** A strand can still be joined through a crossing onto a
+    neighbouring cable (`street1`: a 941 px strand at 9.7% sag). The joins are collinear within 35°; a per-pixel
+    instance embedding or labelled crossings would be needed to resolve dense bundles.
+16. **Scene gates without street-level labels (v2.16).** The structure-edge and vegetation gates are checked on
+    validation for *not removing* labelled wires and vegetation, and shown to remove the false traces on the three
+    unlabelled field photos; their precision on overpass scenes has no labelled measurement.
+17. **Pole detector domain (v2.16).** Trained on Brazilian sidewalk Street View frames where the camera looks along
+    the street; WIREFRAME photos look up at the wires. Its "pole" class includes lamp and sign posts. Context only.
 
 **Recommended next steps:** engineer reference ratings and δ_lim calibration; several hundred tightly traced
 abandoned-wire instances and re-traced dense bundles; labelled street-level and night photos of the team's own poles;
@@ -821,6 +1042,17 @@ python -m ml.experiments.cache --split val
 python -m ml.experiments.sweep_spans --out docs/thesis/results/v28_span_sweep.jsonl
 python -m ml.experiments.ablation_final --out docs/thesis/results/v28_span_ablation_final.jsonl
 python -m ml.experiments.v214_bridge_evidence --out docs/thesis/results/v214_bridge_evidence_val.json
+
+# v2.16: strands, joining, scene gates, full pipeline, stress, field photos, poles
+python -m ml.experiments.cache --split val --tag=-v216                       # + --condition <c> for each stress condition
+python -m ml.experiments.v216_strands --out docs/thesis/results/v216_strands_val.json
+python -m ml.experiments.v216_join_sweep --out docs/thesis/results/v216_join_sweep_val.jsonl
+python -m ml.experiments.v216_context                                        # scene-parser study -> v216_context_val.json
+python -m ml.experiments.v216_stress_spans --out docs/thesis/results/v216_stress_spans_val.json
+python -m ml.experiments.v216_pipeline_eval --split val                      # v2.15 vs v2.16, full pipeline
+python -m ml.experiments.v216_regression                                     # field photos in runs/v216/regression/
+python -m ml.experiments.v216_tiled street1 street2                          # experimental tiled inference (visual)
+python -m ml.poles.prepare && python -m ml.poles.train                       # pole dataset (Zenodo 20091961) + YOLO11n
 
 # stress benchmark, verdicts, golden checks
 python -m scripts.stress_test_all_conditions --split test --configs v2.12 --conditions clean lowlight night \
@@ -863,6 +1095,8 @@ Every number above traces to one of these (`docs/thesis/results/` unless stated)
 | Ground gate, pre-processing, bridging | `v213_filters_val.json`, `v213_span_features_val.jsonl`, `v213_enhance_val.jsonl`, `v213_bridging_val.json`, `ui_check_v213.json` |
 | Provenance, ownership | `v214_bridge_evidence_val.json`, `v214_bridge_lateral_val.json`, `v214_own_component_val.json`, `v214_ui_check_mock.json`, `v214_ui_check_real.json` |
 | Website | `v215_ui_check_mock.json`, `v215_ui_check_real.json` |
+| v2.16 strands, joining, scene gates, pipeline | `v216_strands_val.json`, `v216_join_sweep_val.jsonl`, `v216_context_val.json`, `v216_stress_spans_val.json`, `v216_pipeline_val.json`, `v216_pipeline_test.json`; field photos (local only, contain people and plates): `runs/v216/regression/summary.json` |
+| v2.16 poles | `v216_poles_val.json`, `v216_poles_test.json`, `v216_pole_bridging_val.json`; dataset split `datasets/external/poles_yolo/split.json` (local) |
 
 **Figures** (`docs/thesis/figures/`): `stress_conditions.jpg` (the eight capture conditions); `high_crs_spans_val.jpg`
 (visual audit of high-CRS spans); `loose_end_candidates_val.jpg`; `failure_hard_*.jpg` / `failure_easy_*.jpg` (green

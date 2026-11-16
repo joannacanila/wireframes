@@ -102,6 +102,24 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   # spans (no ground in the crops); live problem photo: removes the 4 road traces, incl. a false CRS 8.6 span.
   ground_gate: true
   ground_gate_share: 0.5
+  # v2.16 structure-edge gate (docs/thesis/results/v216_context_val.json): a span with different ADE20K classes on its
+  # two sides along >= 60% of its length is a structure outline against the sky (flyover deck, canopy, sign edge).
+  # Validation: removes 2 of 658 label-supported strands, 3 of 140 unsupported; field photo street1: removes the
+  # canopy and flyover edges, incl. three false CRS 10 spans.
+  structure_gate: true
+  structure_gate_contrast: 0.6
+  # v2.16 vegetation gate: a YOLO vegetation region with < 40% of its area on ADE20K tree / grass / plant / palm is
+  # suppressed. Validation: all 3 label-supported regions have >= 0.75 and are kept; street1: removes the shadowed
+  # flyover underside (0.00 vegetation; 0.70 bridge) that raised a false vegetation contact.
+  vegetation_gate: true
+  vegetation_gate_min_share: 0.4
+  # v2.16 pole detector (app/pipeline/poles.py; YOLO11n fine-tuned by ml/poles/train.py on Zenodo 20091961). Context
+  # only: pole boxes are reported and wire ends at a pole are counted; a pole never creates or joins a wire unless
+  # pole_occluder_gap > 0. The weights are trained on Google Street View captures and are NOT redistributed, so a
+  # fresh clone runs without them (null); to enable locally: pole_weights: models/poles-yolo11n.pt
+  pole_weights: null
+  pole_conf: 0.35
+  pole_occluder_gap: 0
   # span extraction, chosen by coordinate-descent ablation on the validation split (Chapter 4 v2.8;
   # docs/thesis/results/v28_span_sweep.jsonl): validation tolerant mAP50 0.0296 -> 0.0397
   span_min_px: 30
@@ -109,13 +127,25 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   span_max_turn_deg: 35           # collinearity tolerance through a junction
   span_cluster_radius: 5          # junction points within 5 px = one crossing (2 px: 0.0262, a clear loss)
   span_max_gap: 70                # collinear gap bridging (100: 0.0330, 150: 0.0321)
-  span_gap_angle_deg: 25          # 25-35 deg within noise; the stricter value is kept
+  # v2.16 (strand extractor, docs/thesis/results/v216_join_sweep_val.jsonl): 35 deg + a 15 px lateral-offset limit on
+  # bridges (a dropout continues along its wire; a parallel neighbour is offset sideways). Validation tolerant mAP50
+  # 0.0432 -> 0.0471, power F1 0.208 -> 0.217, telecom 0.090 -> 0.101, fragments per labelled wire 3.74 -> 3.69.
+  span_gap_angle_deg: 35
+  span_max_lateral_px: 15
   span_draw_bridge: true
   span_min_stitched_len: 90       # 90-200 px within noise; the least restrictive value is kept
   # v2.14: a mask pixel joins only a span in its own connected mask blob (before: the nearest span anywhere, which
   # painted a separate neighbouring cable into the span). Validation tolerant mAP50 0.035557 -> 0.035554; 0 of 23
   # verdicts changed (22 validation photos + P-B1D137); docs/thesis/results/v214_own_component_val.json
   span_own_component: true
+  # v2.16 strand-level classification (docs/thesis/results/v216_strands_val.json): spans are built once on the union of
+  # the wire classes and each strand takes the class with the most summed probability over its observed pixels, so one
+  # cable can no longer be split into a power half and a telecom half. Validation: labelled wires shown in >= 2 classes
+  # 5.86% -> 3.41%, tolerant mAP50 0.0397 -> 0.0432, power F1 0.193 -> 0.208, telecom 0.078 -> 0.090.
+  span_strand_classes: true
+  # a strand whose top class holds < 90% of its class evidence is shown as "type uncertain": on validation those
+  # classes are right 62% of the time (86 strands) against 97.9% at >= 0.9 (669 strands)
+  span_class_min_share: 0.9
 
 centerline:                       # Section 3.6.4, Algorithm 4
   provisional: true

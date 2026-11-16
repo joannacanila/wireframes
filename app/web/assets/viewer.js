@@ -33,8 +33,17 @@ function polyPath(polys) {
   return p;
 }
 
+// v2.16: a strand whose class evidence is split is shown as "type uncertain" (neutral grey), never forced to a type
+export const isUncertain = (w) => w.class_status === "uncertain";
+const SHORT = { "power-distribution-lines": "power", "telecom-cable": "telecom", "abandoned-wire": "abandoned" };
+export function classLabel(w, short = false) {
+  if (isUncertain(w)) return short ? "Type uncertain" : `Type uncertain (more likely ${SHORT[w.class] || w.class})`;
+  return short ? ({ "power-distribution-lines": "Power line", "telecom-cable": "Telecom cable", "abandoned-wire": "Abandoned wire" }[w.class] || w.class)
+    : (CLASS_LABEL[w.class] || w.class);
+}
+
 export function wireColor(w, mode = "risk") {
-  if (mode === "class") return css(CLASS_VAR[w.class]);
+  if (mode === "class") return css(isUncertain(w) ? "--cls-unknown" : CLASS_VAR[w.class]);
   return css(LEVEL_VAR[w.level] || "--risk-none");
 }
 
@@ -251,7 +260,7 @@ export class OverlayViewer {
     const r = this.wrap.getBoundingClientRect();
     const crs = w.crs == null ? "—" : w.crs.toFixed(1);
     const ratio = w.sag_ratio == null ? "—" : `${(w.sag_ratio * 100).toFixed(2)}%`;
-    this.tip.innerHTML = `<b>Wire ${w.index} · ${CLASS_LABEL[w.class]}</b>
+    this.tip.innerHTML = `<b>Wire ${w.index} · ${classLabel(w)}</b>
       <div class="row"><span>Condition</span><span>${{ high: "High risk", medium: "Moderate risk", low: "Low risk" }[w.level] || "Not assessed"}</span></div>
       <div class="row"><span>Sag</span><span>${ratio}</span></div>
       <div class="row"><span>Sag score</span><span>${crs}</span></div>`;

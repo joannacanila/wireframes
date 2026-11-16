@@ -312,10 +312,19 @@ def lateral_offset(end_i, end_j, ea: np.ndarray, eb: np.ndarray) -> float:
     return float(max(abs(ta[0] * d[1] - ta[1] * d[0]), abs(tb[0] * d[1] - tb[1] * d[0])))
 
 
+def _gap_crosses(ea: np.ndarray, eb: np.ndarray, boxes) -> bool:
+    """Whether the straight gap between two (row, col) points passes through any (x0, y0, x1, y1) box."""
+    t = np.linspace(0.0, 1.0, 33)
+    pts = ea[None] + t[:, None] * (eb - ea)[None]
+    ys, xs = pts[:, 0], pts[:, 1]
+    return any(bool(((xs >= x0) & (xs <= x1) & (ys >= y0) & (ys <= y1)).any()) for x0, y0, x1, y1 in boxes)
+
+
 def stitch_spans(spans: list[tuple[np.ndarray, float]], max_gap: float = 30.0, max_angle_deg: float = 15.0,
                  draw_bridge: bool = True, bridge_width: int = 2, prob: np.ndarray | None = None,
                  bridge_min_prob: float = 0.0, bridges_out: list | None = None,
-                 max_lateral_px: float = 0.0) -> list[tuple[np.ndarray, float]]:
+                 max_lateral_px: float = 0.0, occluders: list | None = None,
+                 occluder_max_gap: float = 0.0) -> list[tuple[np.ndarray, float]]:
     """Join spans whose facing endpoints are within ``max_gap`` px, whose outward tangents are
     anti-parallel within ``max_angle_deg`` and whose gap runs along both tangents (occlusions and
     mask dropouts). Greedy nearest-first with union-find; confidence is the area-weighted mean.
@@ -330,7 +339,12 @@ def stitch_spans(spans: list[tuple[np.ndarray, float]], max_gap: float = 30.0, m
         return spans
     ends = [span_ends(m) for m, _ in spans]
     cos_lim = np.cos(np.deg2rad(max_angle_deg))
-    cands = _stitch_candidates(ends, max_gap, cos_lim)
+    # v2.16: a gap longer than max_gap may be bridged only if the straight gap crosses an occluder box (a detected pole
+    # standing in front of the wire), up to occluder_max_gap; every other test is unchanged
+    long_gap = occluder_max_gap if occluders and occluder_max_gap > max_gap else max_gap
+    cands = _stitch_candidates(ends, long_gap, cos_lim)
+    if long_gap > max_gap:
+        cands = [c for c in cands if c[0] <= max_gap or _gap_crosses(c[3], c[4], occluders)]
     parent = list(range(len(spans)))
 
     def find(x):
@@ -383,7 +397,8 @@ def extract_spans(class_mask: np.ndarray, prob: np.ndarray, *, min_px: int = 30,
                   xjunction_tol_deg: float = 0.0, xjunction_min_cross_deg: float = 30.0,
                   xjunction_far_tangent: bool = True, bridge_min_prob: float = 0.0,
                   bridges_out: list | None = None, max_lateral_px: float = 0.0,
-                  own_component: bool = False) -> list[tuple[np.ndarray, float]]:
+                  own_component: bool = False, occluders: list | None = None,
+                  occluder_max_gap: float = 0.0) -> list[tuple[np.ndarray, float]]:
     """v2.8 span extraction: junction-split spans, optional collinear gap bridging, then a minimum
     *stitched* span length gate (skeleton pixels). v2.9: optional X-junction matching."""
     spans = spans_from_class_mask(class_mask, prob, min_px=min_px, min_len=min_len,
@@ -391,10 +406,69 @@ def extract_spans(class_mask: np.ndarray, prob: np.ndarray, *, min_px: int = 30,
                                   xjunction_tol_deg=xjunction_tol_deg,
                                   xjunction_min_cross_deg=xjunction_min_cross_deg,
                                   xjunction_far_tangent=xjunction_far_tangent, own_component=own_component)
-    if max_gap > 0:
+    if max_gap > 0 or (occluders and occluder_max_gap > 0):
         spans = stitch_spans(spans, max_gap, gap_angle_deg, draw_bridge, prob=prob,
                              bridge_min_prob=bridge_min_prob, bridges_out=bridges_out,
-                             max_lateral_px=max_lateral_px)
+                             max_lateral_px=max_lateral_px, occluders=occluders, occluder_max_gap=occluder_max_gap)
     if min_span_len > 0:
         spans = [(m, c) for m, c in spans if skeleton_length(m) >= min_span_len]
     return spans
+
+
+# ----------------------------------------------------------------------------- v2.16: strand-level classification
+
+from dataclasses import dataclass, field  # noqa: E402
+
+
+@dataclass
+class Strand:
+    """One physical wire strand: geometry built once on the class-agnostic wire mask, one class for all of it."""
+
+    wire_class: str
+    mask: np.ndarray
+    confidence: float                       # mean P(wire) over the strand's pixels
+    class_share: dict[str, float] = field(default_factory=dict)  # summed class probability, normalised
+    class_status: str = "confident"         # "confident" | "uncertain" (top share below the minimum)
+
+
+def strand_spans(probs: np.ndarray, wire_ids: list[int], params: dict, *, tau: float | None = None,
+                 min_class_share: float = 0.0, bridges_out: list | None = None,
+                 class_names: tuple[str, ...] | None = None, mask: np.ndarray | None = None) -> list[Strand]:
+    """v2.16: spans from the union of the wire classes, then one class per span.
+
+    The v2.7-v2.15 extractor ran once per class on the per-pixel argmax, so a cable whose pixels flip between power
+    and telecom became two spans of different classes, each with a hole where the other class won. Here:
+
+    1. wire mask = argmax is a wire class (``tau`` None), or P(wire) = sum of wire-class probabilities >= ``tau``
+    2. spans by the shipped geometry (junction split, collinear joins, bridging, own-component, length gate) on
+       that mask, with P(wire) as the evidence map for bridging
+    3. class evidence = summed probability of each wire class over the span's *observed* pixels (bridge pixels
+       carry no appearance evidence); the span takes the top class; when its share of the evidence is below
+       ``min_class_share`` the strand is marked ``uncertain`` (the class is kept for the CRS limits, which are
+       identical for every class, but is not presented as established)
+
+    Crossing wires stay separate: the junction rule still splits at crossings and joins only collinear pieces,
+    so each wire of an X is its own strand and is classified from its own pixels."""
+    from app.core.config import CLASSES
+    names = class_names or CLASSES
+    p_wire = probs[wire_ids].sum(0)
+    if mask is not None:  # caller's wire mask (the app resamples the model-space argmax to the photo)
+        mask = mask.astype(bool)
+    elif tau is None:
+        mask = np.isin(probs.argmax(0), wire_ids)
+    else:
+        mask = p_wire >= tau
+    if not mask.any():
+        return []
+    spans = extract_spans(mask, p_wire, bridges_out=bridges_out, **params)
+    out = []
+    for m, conf in spans:
+        obs = m & mask
+        sel = obs if obs.any() else m
+        mass = probs[wire_ids][:, sel].sum(1).astype(np.float64)
+        tot = float(mass.sum()) or 1.0
+        share = {names[c - 1]: round(float(v) / tot, 4) for c, v in zip(wire_ids, mass, strict=True)}
+        k = int(np.argmax(mass))
+        status = "uncertain" if mass[k] / tot < min_class_share else "confident"
+        out.append(Strand(names[wire_ids[k] - 1], m, conf, share, status))
+    return out

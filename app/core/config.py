@@ -209,6 +209,13 @@ class SegmentationConfig(_Strict):
     # It is not scored; it is listed with the reason. Chapter 4 v2.13.
     ground_gate: bool = False
     ground_gate_share: float = Field(0.5, gt=0, le=1)
+    pole_weights: str | None = None                    # v2.16: YOLO pole detector (context only); null = off
+    pole_conf: float = Field(0.35, gt=0, lt=1)
+    pole_occluder_gap: float = Field(0.0, ge=0)        # v2.16: bridge gap allowed across a detected pole (0 = off)
+    structure_gate: bool = False                       # v2.16: drop spans running along a structure outline
+    structure_gate_contrast: float = Field(0.6, gt=0, le=1)
+    vegetation_gate: bool = False                      # v2.16: drop YOLO vegetation not on ADE20K vegetation
+    vegetation_gate_min_share: float = Field(0.4, ge=0, le=1)
     # span extraction (app/pipeline/wire_instances.py); defaults = v2.7 behaviour
     span_min_px: int = Field(30, ge=1)
     span_min_len: int = Field(30, ge=1)
@@ -219,6 +226,9 @@ class SegmentationConfig(_Strict):
     span_draw_bridge: bool = True
     span_min_stitched_len: int = Field(0, ge=0)        # minimum stitched span length (skeleton px)
     span_own_component: bool = False                   # v2.14: pixels join only spans in their own mask component
+    span_max_lateral_px: float = Field(0.0, ge=0)     # v2.14 option: reject a bridge offset sideways by more (0 = off)
+    span_strand_classes: bool = False                  # v2.16: geometry on the union wire mask, one class per strand
+    span_class_min_share: float = Field(0.0, ge=0, le=1)  # v2.16: below this class-evidence share: type uncertain
 
 
 class CenterlineConfig(_Strict):

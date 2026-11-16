@@ -20,7 +20,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from app.core.config import CLASSES
+from app.core.config import CLASSES, VEGETATION
 
 
 def _raster(polys: list, shape: tuple[int, int]) -> np.ndarray:
@@ -43,7 +43,10 @@ def _segment(ys: np.ndarray, xs: np.ndarray) -> list[list[float]]:
 
 def span_provenance(label: np.ndarray, wire_class: str, polygons: list, centerline: list) -> dict:
     span = _raster(polygons, label.shape)
-    inferred = span & (label != CLASSES.index(wire_class) + 1)
+    # v2.16: a strand is built on the union of the wire classes, so any wire-class pixel is an observed detection
+    # (a power strand may contain pixels WireNet labelled telecom); only bridge pixels with no wire label are inferred
+    wire_ids = [i + 1 for i, c in enumerate(CLASSES) if c != VEGETATION]
+    inferred = span & ~np.isin(label, wire_ids)
     n_inf = int(inferred.sum())
     out = {"observed_px": int(span.sum()) - n_inf, "inferred_px": n_inf, "inferred_segments": [],
            "inferred_polygons": [], "centerline_inferred_share": 0.0}

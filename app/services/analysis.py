@@ -156,6 +156,7 @@ def process(analysis_id: str, db: Database, settings: Settings, cfg: AnalysisCon
         if a.status != "processing":
             return a.status
         stored, label_name, ctx_raw = a.stored_name, a.label_name, dict(a.context_json)
+        envelope = list(a.envelope_json or [])
 
     try:
         rgb = load_rgb((settings.upload_dir / stored).read_bytes())
@@ -167,7 +168,7 @@ def process(analysis_id: str, db: Database, settings: Settings, cfg: AnalysisCon
         if label_name:
             text = (settings.upload_dir / label_name).read_text("utf-8")
             dets = parse_yolo_seg_labels(text, rgb.shape[1], rgb.shape[0])
-        outcome = run_analysis(rgb, cfg, segmenter, ctx, detections=dets)
+        outcome = run_analysis(rgb, cfg, segmenter, ctx, detections=dets, envelope=envelope)
     except SegmenterUnavailable as exc:
         _fail(db, analysis_id, "model_unavailable", str(exc))
         return "error"
@@ -226,7 +227,8 @@ def persist(db: Database, analysis_id: str, o: AnalysisOutcome) -> None:
             a.metadata_json = {**a.metadata_json, "wire_mask": _jsonable(o.mask_stats)}
         if o.clearance is not None:
             a.metadata_json = {**a.metadata_json, "clearance": _jsonable({str(k): v for k, v in o.clearance.items()})}
-        a.metadata_json = {**a.metadata_json, "suppressed_spans": _jsonable(o.suppressed)}  # always: re-analysis
+        a.metadata_json = {**a.metadata_json, "suppressed_spans": _jsonable(o.suppressed),  # always: re-analysis
+                           "scene": _jsonable(o.scene)}
         if o.input_quality is not None or o.enhancement:
             a.metadata_json = {**a.metadata_json, "segmentation_input": _jsonable({
                 "quality": o.input_quality, "enhancement": o.enhancement or []})}
@@ -361,9 +363,12 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                 "chord_px": d.chord_px, "sag_px": d.sag_px, "sag_ratio": d.sag_ratio,
                 "delta_lim": d.delta_lim, "delta_lim0": d.delta_lim0, "crs": d.crs, "level": d.level,
                 "flags": d.flags_json,
-                "reason_code": wire_reason(d.status, d.fail_reason, d.flags_json, gate)[0],
-                "reason": wire_reason(d.status, d.fail_reason, d.flags_json, gate)[1],
-                "reason_short": wire_reason_short(wire_reason(d.status, d.fail_reason, d.flags_json, gate)[0]),
+                # v2.16: one class per strand; "uncertain" when the class evidence is split (no forced type)
+                "class_status": "uncertain" if "class_uncertain" in (d.flags_json or []) else "confident",
+                "class_evidence": (d.fit_json or {}).get("class_evidence"),
+                "reason_code": wire_reason(d.status, d.fail_reason, d.flags_json, (d.fit_json or {}).get("chord_gate_px") or gate)[0],
+                "reason": wire_reason(d.status, d.fail_reason, d.flags_json, (d.fit_json or {}).get("chord_gate_px") or gate)[1],
+                "reason_short": wire_reason_short(wire_reason(d.status, d.fail_reason, d.flags_json, (d.fit_json or {}).get("chord_gate_px") or gate)[0]),
                 "notes": wire_notes(d.flags_json),
                 "action": wire_action(d.status, d.fail_reason, d.flags_json, d.bbox_json, a.width, a.height),
                 "veg_clearance": clearance.get(str(d.wire_index)),
@@ -381,6 +386,7 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                        "min_chord_px": cfg.crs.min_chord_px},
         "segmentation_input": (a.metadata_json or {}).get("segmentation_input"),
         "suppressed_spans": (a.metadata_json or {}).get("suppressed_spans") or [],
+        "scene": (a.metadata_json or {}).get("scene"),
     }
 
 

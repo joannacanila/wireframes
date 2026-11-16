@@ -25,6 +25,10 @@ class FakeScene:
     def __init__(self, ground_row: int | None, available: bool = True):
         self.ground_row, self.available, self.calls = ground_row, available, 0
         self.ground_ids = [ROAD]
+        self.vegetation_ids: list[int] = []
+
+    def context(self, labels):
+        return {"poles": []}
 
     def labels(self, rgb):
         self.calls += 1
@@ -40,7 +44,8 @@ class FakeScene:
 
 
 def _hybrid(cfg, gate=True, share=0.5):
-    seg_cfg = cfg.segmentation.model_copy(update={"ground_gate": gate, "ground_gate_share": share})
+    seg_cfg = cfg.segmentation.model_copy(update={"ground_gate": gate, "ground_gate_share": share,
+                                                     "structure_gate": False, "vegetation_gate": False})
 
     class Yolo:
         error, names, path = None, {}, Path("y.pt")

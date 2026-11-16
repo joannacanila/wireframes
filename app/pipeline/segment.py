@@ -37,6 +37,8 @@ class WireDetection:
     score: float
     mask: np.ndarray  # H x W bool, original image coordinates
     bbox: tuple[float, float, float, float]  # x1, y1, x2, y2
+    class_share: dict | None = None  # v2.16: normalised class evidence over the strand (None: per-class extractor)
+    class_status: str = "confident"  # v2.16: "uncertain" when the top class has too small a share of the evidence
 
 
 class SegmenterUnavailable(RuntimeError):

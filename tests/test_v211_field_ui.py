@@ -210,7 +210,7 @@ def test_field_page_and_assets_are_the_v215_screener(client):
     for needle in ('data-view="photo"', 'data-view="spans"', 'data-view="mask"', 'data-view="overlay"',
                    'id="opacity"', 'id="diag"', 'id="verdict-pill"', 'id="span-detail"', "Technical diagnostics",
                    "Photo limitations", "What to do next", "not a safety inspection", "Estimated gaps",
-                   "Model mask", "Ground structures ignored", 'data-zoom="reset"', 'data-zoom="fit"',
+                   "Model mask", "Ignored as not wires / not vegetation", 'data-zoom="reset"', 'data-zoom="fit"',
                    "Do not touch", "inspection_name"):
         assert needle in js, needle
     for gone in ("Model ready", "Inspection quality", "#sample"):

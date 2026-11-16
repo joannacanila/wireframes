@@ -7,10 +7,10 @@
 //   5. inspection quality for the field; technical diagnostics for engineers, collapsed
 // Screenings are remembered on this device only; the server never lists them publicly.
 
-import { api, esc, fmt, pct, ago, waitForAnalysis } from "./lib.js?v=2.15";
-import { OverlayViewer, wireColor, CLASS_LABEL } from "./viewer.js?v=2.15";
-import { onStatus, startStatus } from "./status.js?v=2.15";
-import { toast } from "./toast.js?v=2.15";
+import { api, esc, fmt, pct, ago, waitForAnalysis } from "./lib.js?v=2.16";
+import { OverlayViewer, wireColor, classLabel } from "./viewer.js?v=2.16";
+import { onStatus, startStatus } from "./status.js?v=2.16";
+import { toast } from "./toast.js?v=2.16";
 
 const $ = (s, r = document) => r.querySelector(s);
 const form = $("#form");
@@ -378,7 +378,7 @@ function spansTable(r) {
   const counts = Object.fromEntries(["high", "medium", "low", "none"].map((g) => [g, rows.filter((w) => group(w) === g).length]));
   const body = rows.map((w) => `<tr data-wire="${w.index}" data-group="${group(w)}" tabindex="0" aria-selected="false">
       <td class="id"><span class="fx-id" style="--wc:${wireColor(w)}">${w.index}</span></td>
-      <td class="cls">${esc(CLASS_SHORT[w.class] || w.class)}</td>
+      <td class="cls">${esc(classLabel(w, true))}</td>
       <td class="risk">${conditionCell(w)}</td>
       <td class="find" title="${esc(finding(w))}">${esc(finding(w, true))}</td></tr>`).join("");
   return { counts, html: rows.length ? `<table class="fx-spans"><thead><tr><th class="id">Wire</th><th>Type</th><th>Condition</th><th>Finding</th></tr></thead>
@@ -394,9 +394,10 @@ function spanDetail(r, w) {
   const kv = (pairs) => `<dl class="fx-dl">${pairs.filter(([, v]) => v != null && v !== "").map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
   const scored = w.status === "scored";
   return `<header><span class="fx-id" style="--wc:${wireColor(w)}">${w.index}</span>
-      <b>${esc(CLASS_LABEL[w.class] || w.class)}</b>${conditionCell(w)}</header>
+      <b>${esc(classLabel(w))}</b>${conditionCell(w)}</header>
     <p class="fx-finding">${esc(finding(w))}.</p>
     ${w.action && !scored ? `<p class="fx-do"><b>What would help:</b> ${esc(w.action)}.</p>` : ""}
+    ${w.class_status === "uncertain" ? `<p class="fx-note">The photo does not show clearly whether this is a power or a telecom line, so no type is claimed (grey on the photo).</p>` : ""}
     ${p && p.inferred_px ? `<p class="fx-note">About ${pc(p.centerline_inferred_share, 0)} of this wire's traced length was hidden or too faint and was filled by estimation (dashed on the photo).</p>` : ""}
     ${scored ? kv([
       ["Sag", `${pc(w.sag_ratio)} of its length`],
@@ -412,7 +413,9 @@ function spanDetail(r, w) {
       ["δ_lim", w.delta_lim == null ? null : pc(w.delta_lim, 2)],
       ["Fit residual", f.rms_residual_px == null ? null : `${fmt(f.rms_residual_px, 2)} px`],
       ["Inclination", f.inclination_deg == null ? null : `${fmt(f.inclination_deg, 1)}°`],
-      ["Mean class probability", fmt(w.confidence, 3)],
+      ["Mean wire probability", fmt(w.confidence, 3)],
+      ["Type evidence", w.class_evidence ? Object.entries(w.class_evidence).filter(([, v]) => v >= 0.005).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${esc(CLASS_SHORT[k] || k)} ${pc(v, 0)}`).join(" · ") : null],
+      ["Ends at a pole", f.pole_ends == null ? null : `${f.pole_ends} of 2`],
       ["Inferred share", p ? pc(p.centerline_inferred_share, 1) : "n/a (reference polygons)"],
       ["Status code", esc(w.reason_code ? `${w.status} · ${w.reason_code}` : w.status)],
       ["Reason (technical)", w.reason ? esc(w.reason) : null],
@@ -447,8 +450,9 @@ function diagnostics(r) {
       ["Inferred gap pixels", `${inf.toLocaleString()} px`],
       ["Power px", wm.pixels?.["power-distribution-lines"]?.toLocaleString()], ["Telecom px", wm.pixels?.["telecom-cable"]?.toLocaleString()],
       ["Abandoned px", wm.pixels?.["abandoned-wire"]?.toLocaleString()], ["Vegetation px", wm.pixels?.Vegetation?.toLocaleString()]]) : "<p>No model mask (reference polygons).</p>"}
-      <h4>Ground structures ignored</h4>${sup.length ? `<ul class="fx-suppressed">${sup.map((s) => `<li>${esc(CLASS_SHORT[s.wire_class] || s.wire_class)} · ${pct(s.ground_share, 0)} on road / pavement · x ${Math.round(s.bbox[0])}–${Math.round(s.bbox[2])}, y ${Math.round(s.bbox[1])}–${Math.round(s.bbox[3])}</li>`).join("")}</ul>
-      <p>${esc(sup[0].reason)}. These traces are never scored.</p>` : "<p>None: no wire trace lay on the road or pavement.</p>"}</section>
+      <h4>Ignored as not wires / not vegetation</h4>${sup.length ? `<ul class="fx-suppressed">${sup.map((s) => `<li>${esc(s.wire_class === "Vegetation" ? "Vegetation" : (CLASS_SHORT[s.wire_class] || s.wire_class))} · ${esc(s.reason_code === "structure_edge" ? "structure outline" : s.reason_code === "not_vegetation" ? "not vegetation" : `${pct(s.ground_share, 0)} on road / pavement`)} · x ${Math.round(s.bbox[0])}–${Math.round(s.bbox[2])}, y ${Math.round(s.bbox[1])}–${Math.round(s.bbox[3])}</li>`).join("")}</ul>
+      ${[...new Set(sup.map((s) => s.reason))].map((t) => `<p>${esc(t)}.</p>`).join("")}<p>These are never scored.</p>` : "<p>None: no trace lay on the road or along a structure outline, and every vegetation region was confirmed.</p>"}
+      ${r.scene?.poles_detected ? `<h4>Poles</h4><p>${r.scene.poles_detected.length} pole-like structure${r.scene.poles_detected.length === 1 ? "" : "s"} found (context only: a pole never creates or joins a wire).</p>` : ""}</section>
     <section><h3>Statistical analysis</h3>${rule.sag_rule === "corroborated" && sag.scored_spans != null ? `
       <p>High band: <b class="fx-num">${(sag.high || []).length}</b> of <b class="fx-num">${sag.scored_spans}</b> measured spans; <b class="fx-num">${sag.k_high}</b> needed above the ${(rule.p0_high * 100).toFixed(1)}% per-span noise floor (one-sided binomial, α = ${rule.alpha}).</p>
       <p>Medium or above: <b class="fx-num">${(sag.high || []).length + (sag.medium || []).length}</b>; <b class="fx-num">${sag.k_medium}</b> needed (noise floor ${(rule.p0_medium * 100).toFixed(1)}%).</p>`

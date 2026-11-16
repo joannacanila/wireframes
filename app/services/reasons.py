@@ -37,6 +37,8 @@ def wire_reason_short(code: str | None) -> str | None:
 SCORED_NOTES = {
     "truncated": "Touches the photo edge: the span may continue out of frame",
     "vegetation_contact": "Vegetation touches this wire",
+    "lens_outside_envelope": "Ultra-wide lens: the sag shown is distorted by the lens and is not used for the verdict",
+    "class_uncertain": "Wire type uncertain: the photo does not clearly show whether this is a power or a telecom line",
 }
 
 

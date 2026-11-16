@@ -1,0 +1,184 @@
+{
+ "v215": {
+  "images": 21,
+  "strict": {
+   "map50": 0.020418757472135694,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.0792079207920792,
+     "f1": 0.16326530612244897,
+     "precision": 0.36363636363636365,
+     "recall": 0.10526315789473684,
+     "n_pred": 11,
+     "n_gt": 38
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": null,
+     "precision": null,
+     "recall": 0.0,
+     "n_pred": 0,
+     "n_gt": 7
+    },
+    "power-distribution-lines": {
+     "ap50": 0.0023314790951072875,
+     "f1": 0.024263431542461005,
+     "precision": 0.021604938271604937,
+     "recall": 0.02766798418972332,
+     "n_pred": 324,
+     "n_gt": 253
+    },
+    "telecom-cable": {
+     "ap50": 0.0001356300013563,
+     "f1": 0.00437636761487965,
+     "precision": 0.003616636528028933,
+     "recall": 0.00554016620498615,
+     "n_pred": 553,
+     "n_gt": 361
+    }
+   }
+  },
+  "tolerant": {
+   "map50": 0.04677260335876619,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.0792079207920792,
+     "f1": 0.16326530612244897,
+     "precision": 0.36363636363636365,
+     "recall": 0.10526315789473684,
+     "n_pred": 11,
+     "n_gt": 38
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": null,
+     "precision": null,
+     "recall": 0.0,
+     "n_pred": 0,
+     "n_gt": 7
+    },
+    "power-distribution-lines": {
+     "ap50": 0.104065804718971,
+     "f1": 0.19757365684575387,
+     "precision": 0.17592592592592593,
+     "recall": 0.22529644268774704,
+     "n_pred": 324,
+     "n_gt": 253
+    },
+    "telecom-cable": {
+     "ap50": 0.0038166879240145637,
+     "f1": 0.03938730853391685,
+     "precision": 0.0325497287522604,
+     "recall": 0.04986149584487535,
+     "n_pred": 553,
+     "n_gt": 361
+    }
+   }
+  },
+  "mixed_rate": 0.0724,
+  "fragments": 3.979,
+  "labelled_wires": 621,
+  "covered": 580,
+  "wires": 877,
+  "scored": 705,
+  "class_uncertain": 0,
+  "vegetation_regions": 11,
+  "vegetation_contacts": 8,
+  "verdicts": {
+   "AT RISK - MODERATE": 7,
+   "AT RISK - HIGH": 7,
+   "NOT AT RISK": 7
+  }
+ },
+ "v216": {
+  "images": 21,
+  "strict": {
+   "map50": 0.020267218835129212,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.0792079207920792,
+     "f1": 0.16326530612244897,
+     "precision": 0.36363636363636365,
+     "recall": 0.10526315789473684,
+     "n_pred": 11,
+     "n_gt": 38
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": 0.0,
+     "precision": 0.0,
+     "recall": 0.0,
+     "n_pred": 1,
+     "n_gt": 7
+    },
+    "power-distribution-lines": {
+     "ap50": 0.0017458267565887025,
+     "f1": 0.018148820326678767,
+     "precision": 0.016778523489932886,
+     "recall": 0.019762845849802372,
+     "n_pred": 298,
+     "n_gt": 253
+    },
+    "telecom-cable": {
+     "ap50": 0.00011512779184895233,
+     "f1": 0.004618937644341801,
+     "precision": 0.0039603960396039604,
+     "recall": 0.00554016620498615,
+     "n_pred": 505,
+     "n_gt": 361
+    }
+   }
+  },
+  "tolerant": {
+   "map50": 0.049572876868728515,
+   "per_class": {
+    "Vegetation": {
+     "ap50": 0.0792079207920792,
+     "f1": 0.16326530612244897,
+     "precision": 0.36363636363636365,
+     "recall": 0.10526315789473684,
+     "n_pred": 11,
+     "n_gt": 38
+    },
+    "abandoned-wire": {
+     "ap50": 0.0,
+     "f1": 0.0,
+     "precision": 0.0,
+     "recall": 0.0,
+     "n_pred": 1,
+     "n_gt": 7
+    },
+    "power-distribution-lines": {
+     "ap50": 0.11451756619191056,
+     "f1": 0.20689655172413793,
+     "precision": 0.1912751677852349,
+     "recall": 0.22529644268774704,
+     "n_pred": 298,
+     "n_gt": 253
+    },
+    "telecom-cable": {
+     "ap50": 0.004566020490924316,
+     "f1": 0.04157043879907621,
+     "precision": 0.03564356435643564,
+     "recall": 0.04986149584487535,
+     "n_pred": 505,
+     "n_gt": 361
+    }
+   }
+  },
+  "mixed_rate": 0.045,
+  "fragments": 3.893,
+  "labelled_wires": 621,
+  "covered": 578,
+  "wires": 804,
+  "scored": 651,
+  "class_uncertain": 105,
+  "vegetation_regions": 11,
+  "vegetation_contacts": 8,
+  "verdicts": {
+   "AT RISK - MODERATE": 5,
+   "AT RISK - HIGH": 6,
+   "NOT AT RISK": 10
+  }
+ }
+}

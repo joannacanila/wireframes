@@ -1,0 +1,34 @@
+{
+ "poles_detected": 14,
+ "photos_with_poles": 11,
+ "runs": {
+  "0": {
+   "tol_map50": 0.047068333885336856,
+   "strict_map50": 0.006695605789785171,
+   "fragments": 3.692,
+   "mixed_rate": 0.034,
+   "merge_rate": 0.0025
+  },
+  "100": {
+   "tol_map50": 0.04887937867820648,
+   "strict_map50": 0.006699359016995631,
+   "fragments": 3.687,
+   "mixed_rate": 0.034,
+   "merge_rate": 0.0026
+  },
+  "140": {
+   "tol_map50": 0.04722069459898888,
+   "strict_map50": 0.006701139208839437,
+   "fragments": 3.692,
+   "mixed_rate": 0.0373,
+   "merge_rate": 0.0026
+  },
+  "180": {
+   "tol_map50": 0.04593573891639383,
+   "strict_map50": 0.006701479950878243,
+   "fragments": 3.69,
+   "mixed_rate": 0.0373,
+   "merge_rate": 0.0026
+  }
+ }
+}
