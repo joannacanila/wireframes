@@ -158,18 +158,20 @@ def test_require_reference_masks_switch(client, anon, scene):
 def test_reviews_are_recorded_beside_scores_and_reach_the_pdf(client, scene):
     aid = upload(client, scene.rgb, scene.labels, pole_code="R-1")
     wait_done(client, aid)
+    computed = client.get(f"/api/analysis/{aid}/result").json()["summary"]["level"]
+    override = "low" if computed != "low" else "high"  # always a level different from the computed one
     url = f"/api/admin/analyses/{aid}/reviews"
     assert client.post(url, json={"decision": "overridden"}).status_code == 422          # no level
     assert client.post(url, json={"decision": "overridden", "override_level": "low"}).status_code == 422  # no note
-    r = client.post(url, json={"decision": "overridden", "override_level": "medium", "note": "Wire 5 is a drip loop."})
+    r = client.post(url, json={"decision": "overridden", "override_level": override, "note": "Wire 5 is a drip loop."})
     assert r.status_code == 201 and r.json()[-1]["by"] == "Test Engineer"
     res = client.get(f"/api/analysis/{aid}/result").json()
-    assert res["summary"]["level"] == "high"  # the computed level is never changed
-    assert res["reviews"][-1]["override_level"] == "medium"
+    assert res["summary"]["level"] == computed  # the computed level is never changed by a review
+    assert res["reviews"][-1]["override_level"] == override
     text = pdf_text(client.get(f"/api/reports/{aid}/pdf").content)
-    assert "Changed the risk level to MEDIUM" in text and "drip loop" in text
+    assert f"Changed the risk level to {override.upper()}" in text and "drip loop" in text
     row = next(i for i in client.get("/api/admin/inspections").json()["items"] if i["id"] == aid)
-    assert row["review"] == "overridden" and row["override_level"] == "medium"
+    assert row["review"] == "overridden" and row["override_level"] == override
 
 
 def test_unreviewed_pdf_says_so(client, scene):

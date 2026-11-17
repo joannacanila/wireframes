@@ -79,7 +79,9 @@ def test_server_handles_extreme_aspect_ratios(client, scene, shape):
     aid = upload(client, img, scene.labels)
     assert wait_done(client, aid)["status"] in {"complete", "fit_failed", "no_wires_detected"}
     res = client.get(f"/api/analysis/{aid}/result").json()
-    assert res["hazard"]["verdict"] in {"AT RISK - HIGH", "AT RISK - MODERATE", "NOT AT RISK"}
+    # v2.21: INCONCLUSIVE is a valid outcome when too few spans of the resized photo can be assessed
+    assert res["hazard"]["verdict"] in {"AT RISK - HIGH", "AT RISK - MODERATE", "NOT AT RISK",
+                                        "INCONCLUSIVE - RETAKE PHOTO"}
     pdf = client.get(f"/api/reports/{aid}/pdf")
     assert pdf.status_code == 200 and pdf.content[:4] == b"%PDF"
 

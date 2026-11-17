@@ -25,7 +25,7 @@ const VERDICT_CLASS = { "AT RISK - HIGH": "high", "AT RISK - MODERATE": "medium"
 // Field labels for the screener's verdicts (display only; the API verdicts are unchanged). A retake is its own
 // state: an unreadable photo must never look like a clean pole.
 const PILL = { "AT RISK - HIGH": "High risk found", "AT RISK - MODERATE": "Moderate risk found", "NOT AT RISK": "No high risk found",
-  "INCONCLUSIVE - RETAKE PHOTO": "Photo not clear enough" };
+  "INCONCLUSIVE - RETAKE PHOTO": "Assessment incomplete" };  // v2.23: also low coverage or partial spans, not only clarity
 
 function show(name) {
   for (const [k, el] of Object.entries(stages)) el.hidden = k !== name;

@@ -115,7 +115,7 @@ Sag is how far a wire hangs below the straight line between its two ends. WIREFR
 ## Wires that were not assessed {#not-assessed}
 A wire section is "not assessed" when its shape could not be measured reliably, or when the measurement cannot support a severity. Reasons:
 - **Endpoint unavailable**: the wire runs past the edge of the photo, so at least one pole attachment is not visible and the full span cannot be measured.
-- **No reference for power lines**: power distribution lines are measured, but no engineering sag reference has been set for them yet, and the telecom limit is not applied to them.
+- **No sag reference for this wire type**: power distribution lines and abandoned wires are measured, but no engineering sag criteria have been set for them yet, and the telecom limit is not applied to them.
 - **Uncertain type**: the photo does not show clearly whether the wire is a power line or a telecom cable.
 - **Too small, overlapping or too faint**: the shape could not be traced or separated from other wires.
 A wire that was not assessed is never counted as low risk. When fewer than half of the measured spans could be assessed, or a partial span already shows sag, the pole's result is "assessment incomplete" rather than low risk.

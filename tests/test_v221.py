@@ -150,3 +150,39 @@ def test_superseded_endpoints_are_removed(client, path):
     """v2.23 release audit: endpoints with no consumer, superseded by /api/admin/dashboard, /inspections and the
     inspection context, were removed (the technical PDF still computes the weight sensitivity internally)."""
     assert client.get(path).status_code in (404, 405)
+
+
+def test_migration_backup_restores_to_an_identical_database(client, scene, tmp_path):
+    """v2.23 research follow-up: a backup is only evidence of recoverability once it has been restored. The
+    application's backup (SQLite online backup) is restored into a new file and must match the original exactly.
+    It covers the database only; uploaded photos, renders and reports are separate files (thesis reference §9.2)."""
+    import sqlite3
+
+    from app.core.database import backup_before_migration
+
+    wait_done(client, upload(client, scene.rgb, scene.labels, pole_code="BK-1"))
+    bk = backup_before_migration(client.state.db.engine)
+    restored = tmp_path / "restored.db"
+    with sqlite3.connect(bk) as a, sqlite3.connect(restored) as b:
+        a.backup(b)
+
+    def facts(p):
+        c = sqlite3.connect(p)
+        tables = [r[0] for r in c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+        out = (c.execute("PRAGMA integrity_check").fetchone()[0], c.execute("PRAGMA foreign_key_check").fetchall(),
+               {t: c.execute(f'SELECT * FROM "{t}" ORDER BY 1').fetchall() for t in tables})
+        c.close()
+        return out
+
+    original = facts(client.state.db.engine.url.database)
+    assert facts(restored) == original
+    assert original[0] == "ok" and original[1] == [] and len(original[2]["detections"]) > 0
+
+
+def test_abandoned_wires_are_not_held_to_the_telecom_operating_limit(cfg):
+    """v2.23 research follow-up: no engineering criteria exist for abandoned wires, so they are measured but not
+    assessed against the provisional telecom limit (reason no_reference_for_class, worded for both classes)."""
+    from app.services.reasons import REASONS_SHORT
+
+    assert cfg.crs.assessed_classes == ["telecom-cable"]
+    assert "power lines" not in REASONS_SHORT["no_reference_for_class"].lower()

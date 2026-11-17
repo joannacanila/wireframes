@@ -21,7 +21,7 @@ UNASSESSED = {
     "service_drop": "drop wires to buildings (not checked for sag)",
     "endpoint_unavailable": "endpoint off the photo (partial span)",
     "class_uncertain": "uncertain wire type",
-    "no_reference_for_class": "power lines (no configured sag reference)",
+    "no_reference_for_class": "no sag reference for the wire type (power or abandoned)",
 }
 
 

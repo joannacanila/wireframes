@@ -138,6 +138,8 @@ export class OverlayViewer {
     if (!this.image) return;
     const { width: W, height: H } = this.wrap.getBoundingClientRect();
     const pad = 24;
+    // not laid out yet (zero-size container): a negative scale would invert the drawing; the resize handler fits later
+    if (W <= pad * 2 || H <= pad * 2) return;
     const s = Math.min((W - pad * 2) / this.image.width, (H - pad * 2) / this.image.height);
     this.view = { s, x: (W - this.image.width * s) / 2, y: (H - this.image.height * s) / 2 };
     this._emitZoom();

@@ -22,7 +22,8 @@ REASONS = {
     "class_uncertain": ("Not assessed: uncertain infrastructure type. The photo does not show clearly whether "
                         "this is a power line or a telecom cable, so no sag reference applies"),
     "no_reference_for_class": ("Not assessed: no configured sag reference for this wire type. Power distribution "
-                               "lines need their own engineering reference; the telecom limit is not applied"),
+                               "lines and abandoned wires need their own engineering criteria; the telecom limit is "
+                               "not applied"),
 }
 # v2.14: the table label for each code (field reading); the full sentence above stays in the API and the detail view
 REASONS_SHORT = {
@@ -36,7 +37,7 @@ REASONS_SHORT = {
     "service_drop": "Service drop (not scored)",
     "endpoint_unavailable": "Endpoint unavailable",
     "class_uncertain": "Uncertain infrastructure type",
-    "no_reference_for_class": "No reference for power lines",
+    "no_reference_for_class": "No sag reference for this wire type",
 }
 
 

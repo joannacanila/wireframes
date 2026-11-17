@@ -43,7 +43,7 @@ from scipy import ndimage as ndi
 HIGH, MODERATE, NOT = "AT RISK - HIGH", "AT RISK - MODERATE", "NOT AT RISK"
 INCONCLUSIVE = "INCONCLUSIVE - RETAKE PHOTO"
 _NOT_ASSESSED = {"endpoint_unavailable": "run off the photo (endpoint not visible)",
-                 "class_uncertain": "of uncertain type", "no_reference_for_class": "power lines without a sag reference"}
+                 "class_uncertain": "of uncertain type", "no_reference_for_class": "power or abandoned wires without a sag reference"}
 _RANK = {NOT: 0, MODERATE: 1, HIGH: 2}
 
 

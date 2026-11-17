@@ -115,8 +115,10 @@ export function assessment(r) {
   const v = hz?.verdict || "";
   const sagBit = nHigh ? `${plural(nHigh, "wire section")} ${nHigh === 1 ? "hangs" : "hang"} noticeably low` : "";
   if (v.startsWith("INCONCLUSIVE") || (!hz && !scored.length)) {
-    return { cls: "none", pill: "Photo not clear enough", title: "This photo is not clear enough for a reliable screening.",
-      lines: [`${r.quality?.reason ? `${limitations(r).find((l) => l.key === "quality")?.text || ""} ` : ""}A clearer photo is needed before anything can be said about this pole.`.trim()], coverage };
+    // v2.23: INCONCLUSIVE also follows from low coverage or a sagging partial span; state the system's own reason
+    const why = (hz?.reasons || []).find((x) => x.startsWith("INCONCLUSIVE"));
+    return { cls: "none", pill: "Assessment incomplete", title: "The assessment of this pole is incomplete.",
+      lines: [`${r.quality?.reason ? `${limitations(r).find((l) => l.key === "quality")?.text || ""} ` : ""}${why ? why.replace(/^INCONCLUSIVE - RETAKE PHOTO:\s*/, "").replace(/^./, (c) => c.toUpperCase()) + ". " : ""}This is not a low-risk result; a new photo or a field check is needed.`.trim()], coverage };
   }
   if (v === "AT RISK - HIGH") {
     const bits = [sagBit, vegPower.length ? `vegetation is touching power line ${SECTION(vegPower)}` : ""].filter(Boolean);
