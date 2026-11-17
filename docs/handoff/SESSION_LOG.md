@@ -1,5 +1,23 @@
 # Session Log
 
+## S5 (18 Nov 2026), diagnostic restoration and documentation location
+- Starting commit: `5313c52` (local = remote; 754 passed; ruff clean; owner's untracked .docx and figures untouched;
+  port 8000 server running, PID 25699, started 03:33)
+- Ending commit: the commit "fix: restore diagnostic output for measured, unassessed wires (S5)" (local; push pending
+  owner confirmation); verify with `git log -1` and `git rev-parse HEAD origin/main`
+- Investigation: headless Chrome on isolated copies of `var/` (S4 code on 8011, pre-S4 code 0916fd2 in a temporary
+  worktree on 8012); same photo before and after; admin and assistant facts via the services. Root cause and repair:
+  `docs/thesis/IMPLEMENTATION_CHANGELOG.md` (S5), register D-22, D-23, evidence
+  `docs/thesis/results/s5_diagnostic_restoration.json`.
+- Validation: pytest 776 passed (754 + 20 new + 2 updated); ruff clean; E2E 24/24, 0 page errors (isolated copy).
+- Research: searches only (S16-S18). DSOAR s.1.7.12 lead not verified (TLS failure on the only copy; a second fetch
+  was not attempted).
+- Owner rule applied: `docs/thesis/` is the authoritative technical record; register and changelog moved there with
+  `git mv`; handoff keeps three continuity files.
+- Not done: production restart (port 8000 still serves the S4 API; page scripts are already live from disk); push;
+  Part V research beyond S16-S18; outstanding tasks 1-4.
+- Temporary servers (8011, 8012) stopped; temporary worktree removed.
+
 ## S4 (18 Nov 2026), threshold resolution (master continuation brief sections 3, 4, 6, 7)
 - Starting commit: `0916fd2` (local = remote; tests 719 passed, ruff clean; owner's untracked .docx and figures
   untouched; port 8000 server running, PID 21225)

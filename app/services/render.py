@@ -39,7 +39,8 @@ def render_overlay(rgb: np.ndarray, wires: list[dict], max_side: int = 1600) -> 
             cv2.polylines(out, [_pts(curve, s)], False, col, lw, cv2.LINE_AA, shift=4)
         fit = wire.get("fit") or {}
         ends, sp, foot = fit.get("endpoints"), fit.get("sag_point"), fit.get("chord_foot")
-        if ends and wire.get("status") == "scored":
+        # S5: chord and sag point for every measured wire (scored, or measured and not assessed)
+        if ends and wire.get("sag_ratio") is not None and wire.get("status") in ("scored", "not_assessed"):
             p0, p1 = (np.asarray(e) * s for e in ends)
             n = max(2, int(np.hypot(*(p1 - p0)) / (lw * 5)))
             for i in range(0, n, 2):  # dashed chord

@@ -345,3 +345,14 @@ html.fs-root { height: auto; min-height: 100%; }
 .rx-loc dt { color: var(--text-3); } .rx-loc dd { margin: 0; }
 .rx-loc .fx-map { margin-top: 0; height: 240px; }
 @media (max-width: 760px) { .rx-loc { grid-template-columns: 1fr; } }
+
+/* S5: "What the analysis found" (app/services/diagnostics.py) and the per-wire diagnosis */
+.rx-diag { margin-top: 16px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.rx-diag h2 { margin: 0 0 6px; font-size: 18px; }
+.rx-diag-stage { margin: 4px 0; color: var(--text-2); font-size: 14.5px; }
+.rx-diag-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 24px; margin-top: 12px; }
+.rx-diag-cols h3 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
+.rx-diag-cols ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--text-2); }
+.rx-diag-wire { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14px; color: var(--text-2); }
+.rx-diag-wire li[data-k="assessment"] { color: var(--text); }
+.rx-legend-note { flex-basis: 100%; color: var(--text-3); font-size: 12.5px; }

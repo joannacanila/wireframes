@@ -66,9 +66,17 @@ def main() -> int:
             check(counts.get("Critical") == n["high"] and counts.get("Minor sag") == n["medium"]
                   and counts.get("Within reference") == n["low"], f"page counts {counts} match API {n}")
         else:  # S4: no validated reference -> no severity anywhere, measurements only
-            measured = sum(1 for w in wires if w.get("sag_ratio") is not None)
-            check(counts.get("Sag ratio measured") == measured and counts.get("Not assessed") == len(wires)
-                  and not {"Critical", "Minor sag", "Within reference"} & set(counts), f"page counts {counts} (S4)")
+            dc = (api.get("diagnosis") or {}).get("counts") or {}
+            check(dc and counts.get("Measured") == dc["measured"] and counts.get("Visible part only") == dc["measured_partial"]
+                  and counts.get("Not measured") == dc["not_measured"] and counts.get("Assessed") == 0
+                  and not {"Critical", "Minor sag", "Within reference"} & set(counts), f"page counts {counts} match diagnosis (S5)")
+            # S5: the diagnostic view: measured wires drawn, one selected with its explanation
+            if dc.get("measured", 0) + dc.get("measured_partial", 0):
+                shown = pg.evaluate("() => window.wfViewer ? window.wfViewer._shown().length : -1")
+                check(shown == dc["measured"] + dc["measured_partial"], f"measured wires drawn on the photo ({shown})")
+                check(pg.locator("#span-detail .rx-diag-wire li").count() >= 3, "selected wire shows its diagnosis")
+                check(pg.locator(".rx-diag").count() == 1 and "What would complete" in pg.inner_text(".rx-diag"),
+                      "'What the analysis found' section present")
             check(api["hazard"]["verdict"] != "NOT AT RISK" and not api["hazard"]["verdict"].startswith("AT RISK"),
                   f"no unsupported pole verdict: {api['hazard']['verdict']}")
             check(all(w.get("reason_code") in ("no_validated_reference", "endpoint_unavailable", "class_uncertain")
@@ -88,6 +96,8 @@ def main() -> int:
                 check(f"{n['high']} Critical" in text and f"{n['medium']} Minor sag" in text, "PDF summary counts match the API")
             else:
                 check("none validated" in text and "Measured Spans (not assessed)" in text, "PDF shows measurements, no severity (S4)")
+                check("Figure 1. Measured wires (not assessed)" in text and "4.1 What the Analysis Found" in text,
+                      "PDF draws measured wires and explains the analysis (S5)")
             check("preliminary visual screening" in text.lower(), "PDF carries the decision-support notice")
         except ImportError:
             print("SKIP PDF text check (pypdfium2 not installed)")

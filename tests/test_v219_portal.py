@@ -125,7 +125,8 @@ def test_plain_status_never_turns_unassessed_into_low(client, scene):
         a.metadata_json = {**a.metadata_json, "hazard": {"verdict": "INCONCLUSIVE - RETAKE PHOTO", "reasons": []}}
     with client.state.db.session() as s:
         a = s.get(Analysis, aid)
-        assert records.risk(a) == "unassessed" and records.completeness(a) == "not_assessed"
+        # S5: the wires were measured (not assessed): "measured", never "complete" and never low
+        assert records.risk(a) == "unassessed" and records.completeness(a) == "measured"
         assert records.review_status(a) == "not_reviewed"
 
 

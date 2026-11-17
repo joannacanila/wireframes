@@ -1,4 +1,4 @@
-"""S4 threshold resolution (18 Nov 2026; docs/handoff/RESEARCH_AND_DECISION_REGISTER.md D-02..D-21).
+"""S4 threshold resolution (18 Nov 2026; docs/thesis/RESEARCH_AND_DECISION_REGISTER.md D-02..D-21).
 
 No sag reference, conductor data or pixel vegetation rule is supported by an applicable source, so the shipped
 configuration assesses no span: every span is measured (image-derived sag ratio with its resolution) and reported as

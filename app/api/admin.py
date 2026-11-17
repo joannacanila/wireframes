@@ -460,7 +460,7 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
         from app.services.basis import level_withdrawn
         for d in a.detections:
             # S4: a level from a withdrawn criterion is not a finding (app/services/basis.py)
-            withdrawn = level_withdrawn(d.level, d.wire_class, st.config)
+            withdrawn = level_withdrawn(d.level, d.wire_class, st.config, a.metadata_json or {})
             scored = d.status == "scored" and d.level and not withdrawn
             if d.status == "service_drop":
                 condition, finding = "Not checked", "Drop wire to a building; not checked for sag"
@@ -470,8 +470,12 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
             else:
                 code = "withdrawn_reference" if withdrawn else (d.fail_reason or d.status)
                 condition, finding = "Not assessed", wire_reason_short(code) or "Not measured"
-                if d.sag_ratio is not None:
-                    finding += f"; image-derived sag ratio {d.sag_ratio * 100:.1f}% (measurement only)"
+                ratio = d.sag_ratio if d.sag_ratio is not None else (d.fit_json or {}).get("sag_ratio")
+                res = (d.fit_json or {}).get("sag_ratio_resolution")
+                if ratio is not None and d.status in ("scored", "not_assessed"):
+                    finding += (f"; image-derived sag ratio {ratio * 100:.1f}%" + (f" +/- {res * 100:.1f}" if res else "")
+                                + (" of the visible part" if d.fail_reason == "endpoint_unavailable" else "")
+                                + " (measurement only)")
             if "vegetation_contact" in (d.flags_json or []):
                 finding += "; vegetation overlaps the wire in the photo (check on site)"
             out.append([d.wire_index, cls.get(d.wire_class, d.wire_class), condition, finding])

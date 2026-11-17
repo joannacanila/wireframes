@@ -27,9 +27,11 @@ export function skipReason(w) {
   return (w.flags || []).includes("truncated") ? "outside the photo" : "unclear in the photo";
 }
 // S4 (register D-02..D-05): reasons for which the sag ratio is a measurement only (no validated reference exists)
-export const MEASURED_ONLY = new Set(["no_validated_reference", "withdrawn_reference"]);
+export const MEASURED_ONLY = new Set(["no_validated_reference", "withdrawn_reference", "no_reference_for_class"]);
 /** The image-derived sag ratio with its 1 px resolution ("2.1% ±0.3"); a measurement, never a severity. */
-export const measuredText = (w) => `${pc(w.sag_ratio)}${w.sag_ratio_resolution ? ` ±${(w.sag_ratio_resolution * 100).toFixed(1)}` : ""}`;
+export const measuredText = (w) => `${pc(w.sag_ratio)}${w.sag_ratio_resolution ? ` ±${(w.sag_ratio_resolution * 100).toFixed(1)}` : ""}`
+  // S5: a ratio below its own 1 px resolution is "straight within resolution", not a small sag
+  + (w.sag_ratio_resolution && w.sag_ratio < w.sag_ratio_resolution ? " (within resolution)" : "");
 export const SCORE_HELP = "Sag score, 0 to 10: how far the wire hangs compared with the sag allowed for its type. "
   + "10 means it hangs as low as the allowance or lower. Low below 3, moderate 3 to 6, high above 6.";
 
@@ -55,7 +57,10 @@ export function finding(w, short = false) {
     return base + vegTxt + edge;
   }
   if (w.status === "service_drop") return "Runs steeply down, likely a drop wire to a building; drop wires are not checked for sag" + vegTxt;
-  if (w.status === "not_assessed" && w.sag_ratio != null && MEASURED_ONLY.has(w.reason_code)) {
+  if (w.status === "not_assessed" && w.sag_ratio != null && w.reason_code === "endpoint_unavailable") {
+    return `${short ? "Visible part" : "Not assessed (runs off the photo); visible part measured"}: image-derived sag ratio ${measuredText(w)}` + vegTxt;
+  }
+  if (w.status === "not_assessed" && w.sag_ratio != null && (MEASURED_ONLY.has(w.reason_code) || w.reason_code === "class_uncertain")) {
     return `${short ? "Measured" : "Measured, not assessed"}: image-derived sag ratio ${measuredText(w)}${short ? "" : "; no validated sag reference"}` + vegTxt + edge;
   }
   const why = {
@@ -76,7 +81,8 @@ export function limitations(r) {
   const ids = (pred) => ws.filter(pred).map((w) => w.index).sort((a, b) => a - b);
   const small = ids((w) => ["chord_below_precision_gate", "too_short"].includes(w.reason_code));
   const overlap = ids((w) => ["residual_too_large", "non_positive_a"].includes(w.reason_code));
-  const other = ids((w) => w.status !== "scored" && w.status !== "service_drop" && !["chord_below_precision_gate", "too_short", "residual_too_large", "non_positive_a"].includes(w.reason_code));
+  // S5: a wire measured but not assessed for lack of a reference is not a photo limitation
+  const other = ids((w) => w.status !== "scored" && w.status !== "service_drop" && !MEASURED_ONLY.has(w.reason_code) && !(w.reason_code === "class_uncertain" && w.sag_ratio != null) && !["chord_below_precision_gate", "too_short", "residual_too_large", "non_positive_a", "endpoint_unavailable"].includes(w.reason_code));
   const edge = ids((w) => (w.flags || []).includes("truncated"));
   const est = ids((w) => (w.provenance?.centerline_inferred_share ?? 0) >= 0.05);
   const drops = ids((w) => w.status === "service_drop");
@@ -125,6 +131,11 @@ export function assessment(r) {
   if (v.startsWith("INCONCLUSIVE") || (!hz && !scored.length)) {
     // v2.23: INCONCLUSIVE also follows from low coverage or a sagging partial span; state the system's own reason
     const why = (hz?.reasons || []).find((x) => x.startsWith("INCONCLUSIVE"));
+    const d = r.diagnosis;
+    if (d?.why && d.counts.measured + d.counts.measured_partial > 0) { // S5: what was measured, and why no verdict
+      return { cls: "none", pill: "Assessment incomplete", title: "The assessment of this pole is incomplete.",
+        lines: [`${why && /withdrawn/.test(why) ? why.replace(/^INCONCLUSIVE - RETAKE PHOTO:\s*/, "") + " " : ""}${d.why}`], coverage };
+    }
     return { cls: "none", pill: "Assessment incomplete", title: "The assessment of this pole is incomplete.",
       lines: [`${r.quality?.reason ? `${limitations(r).find((l) => l.key === "quality")?.text || ""} ` : ""}${why ? why.replace(/^INCONCLUSIVE - RETAKE PHOTO:\s*/, "").replace(/^./, (c) => c.toUpperCase()) + ". " : ""}This is not a low-risk result; a new photo or a field check is needed.`.trim()], coverage };
   }
@@ -161,7 +172,9 @@ export function recommendations(r, a, lims) {
   if (med.length) out.push(`Include wire ${SECTION(med)} in the next routine inspection.`);
   if (vegOther.length && !vegPower.length) out.push(`Vegetation is touching cable ${SECTION(vegOther)}. Let the cable operator or barangay know.`);
   const unassessed = lims.filter((l) => ["small", "overlap", "other", "edge", "quality"].includes(l.key));
-  if (a.cls === "none") out.unshift(`Retake the photo. ${unassessed.map((l) => l.help).filter(Boolean)[0] || "Frame the pole and the full wires on both sides, in good light."}`);
+  // S5: a retake is advised only when it can help (wires not measured or only partly measured), never for a missing reference
+  if (a.cls === "none" && r.diagnosis && !r.diagnosis.retake_helps) out.unshift("A new photo will not complete this assessment: no validated sag reference exists. Have a qualified person inspect the pole for any concern.");
+  else if (a.cls === "none") out.unshift(`Retake the photo. ${unassessed.map((l) => l.help).filter(Boolean)[0] || "Frame the pole and the full wires on both sides, in good light."}`);
   else if (unassessed.length) out.push(`Some sections could not be assessed. A clearer photo may help: ${unassessed.map((l) => l.help).filter(Boolean)[0]?.replace(/^./, (c) => c.toLowerCase()) || "frame the full wires in good light."}`);
   if (high.length || med.length || vegPower.length) out.push("Download the PDF report to share with the inspector.");
   out.push("Do not touch, climb toward or try to move any overhead wire. Treat every wire as live.");

@@ -6,20 +6,21 @@ You are continuing **WIREFRAME**, an existing, working thesis software project. 
 
 **Repository:** https://github.com/joannacanila/wireframes.git, branch `main`, local clone at
 `/Users/joannacanila/WIREFRAME` (macOS, Apple M1 8 GB; use `.venv/bin/python`, `.venv/bin/ruff`).
-Expected HEAD: the S4 commit "fix: remove unsupported sag, vegetation and conductor thresholds (S4)" (or a later
-handoff commit listed in `docs/handoff/SESSION_LOG.md`).
+Expected HEAD: the S5 commit "fix: restore diagnostic output for measured, unassessed wires (S5)" (or a later
+commit listed in `docs/handoff/SESSION_LOG.md`). S5 was committed locally; check whether it was pushed.
 
 ## Read first (in this order) and verify against the repository
 1. `docs/handoff/CURRENT_PROJECT_STATE.md`
-2. `docs/handoff/RESEARCH_AND_DECISION_REGISTER.md` (D-01..D-21 and the "S4 threshold resolution" section)
-3. `docs/handoff/IMPLEMENTATION_CHANGELOG.md`, `docs/handoff/SESSION_LOG.md`
-4. `docs/thesis/WIREFRAME_THESIS_REFERENCE.md` sections 7.4-7.8, 8, 13, 14.5, 16, 17, 18.3
+2. `docs/thesis/RESEARCH_AND_DECISION_REGISTER.md` (D-01..D-23, "S4 threshold resolution", "S5 research update")
+3. `docs/thesis/IMPLEMENTATION_CHANGELOG.md`, `docs/handoff/SESSION_LOG.md`
+4. `docs/thesis/WIREFRAME_THESIS_REFERENCE.md` sections 7.4-7.8, 8 (incl. 8.6 diagnostics), 10, 11, 13, 14.5, 15,
+   16, 17, 18.3
 
 ## Commands to run first
 ```bash
 cd /Users/joannacanila/WIREFRAME
 git fetch origin && git status --short && git log -5 --oneline && git rev-parse HEAD origin/main
-.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 754 passed (pyproject adds -q; with
+.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 776 passed (pyproject adds -q; with
                                                                    # the default -q -q the count line is hidden)
 .venv/bin/ruff check app tests scripts ml                          # expect clean
 lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's server; check before stopping it
@@ -36,14 +37,20 @@ lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's ser
 - Git: never force-push, `reset --hard` or `clean`; never commit `var/`, `.env`, `models/*.pt`, `models/hf/`,
   `datasets/`, `runs/`, `docs/thesis/*.docx`, or the owner's untracked figures in `docs/thesis/figures/`.
   **No Co-Authored-By or Claude/AI attribution lines in commits or PRs.**
-- Documentation: the thesis reference file plus the five `docs/handoff/` files only. No em dashes in new text.
+- Documentation (owner's rule, S5): `docs/thesis/` is the authoritative, living technical record. Update the
+  reference, `RESEARCH_AND_DECISION_REGISTER.md`, `IMPLEMENTATION_CHANGELOG.md` and `results/` whenever
+  implementation, decisions, research, behaviour, validation or specifications change; update existing documents,
+  no duplicates. Never edit the owner's manuscript chapters (`*.docx`), figures or academic references. Internal
+  records are not published evidence. `docs/handoff/` is for session continuity only (CURRENT_PROJECT_STATE,
+  SESSION_LOG, NEXT_SESSION_PROMPT). No em dashes in new text.
 - Ask the owner only for things only they have.
 - E2E on an isolated copy: `sqlite3 "file:var/wireframe.db?mode=ro" ".backup '<scratch>/wireframe.db'"`, copy
   `var/uploads`, `var/renders`, `var/reports`; create an admin with `scripts.create_admin.upsert_admin` against
   `WIREFRAME_DATA_DIR=<scratch>` (the CLI prompts for a password); run
   `WIREFRAME_DATA_DIR=<scratch> .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8011`, then
   `WIREFRAME_E2E_USER=... WIREFRAME_E2E_PASSWORD=... .venv/bin/python -m scripts.e2e_check --base
-  http://127.0.0.1:8011 --photo <photo> --out <scratch>/e2e_out` (S4: 20 checks).
+  http://127.0.0.1:8011 --photo <photo> --out <scratch>/e2e_out` (S5: 24 checks). Playwright uses the system
+  Chrome (`channel="chrome"`); the admin login API needs the Origin header (CSRF), so use the script or a browser.
 
 ## What is already done (do not repeat)
 - S1-S3: release audit, transformers 5.17.0 (CERT/CC VU#456290), abandoned wires not assessed, ERB 95-21 3 % found
@@ -59,8 +66,16 @@ lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's ser
   (`app/services/basis.py`), owner's disclaimer on page and every PDF, admin label "Assessment incomplete"
   (key `unassessed`). Evaluation variant `s4`: segmentation metrics identical; verdicts all INCONCLUSIVE.
   Tests 754; E2E 20/20.
+- **S5 (diagnostic restoration, register D-22, D-23):** S4 had hidden every measurement (renderers drew and selected
+  only assessed wires: 0 wires drawn, PDF "No wire was flagged", retake banner on every analysis, withdrawn levels
+  still counted in admin/assistant). Fixed with `app/services/diagnostics.py` (per-wire and per-photo diagnosis, no
+  thresholds) used by page, viewer, admin, PDF and assistant; reference Section 8.6. Evidence
+  `docs/thesis/results/s5_diagnostic_restoration.json`. Tests 776; E2E 24/24. Docs moved: register and changelog
+  now in `docs/thesis/`. Research: DSOAR s.1.7.12 "Poles, Sag of Wires" lead (S16), text NOT read (TLS error).
 
 ## Outstanding tasks (priority order)
+0. **Confirm with the owner:** restart of the port 8000 server so it serves the S5 API (`diagnosis` field), and push
+   of the S5 commit. Then verify the live page at `http://127.0.0.1:8000/workspace` in a browser.
 1. **Backup and restore (register D-13).** Implement a backup command (e.g. `python -m scripts.backup create|verify|
    restore`): SQLite online backup of `var/wireframe.db` plus `var/uploads`, `var/renders`, `var/reports`, a
    SHA-256 manifest, atomic creation (write to a temp dir, fsync, rename), integrity validation, explicit failure on
@@ -87,6 +102,8 @@ lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's ser
 
 ## Owner-supplied items still needed
 - Current Philippine Electrical Code Part 2 sag provision (edition, article, exact text) (D-04).
+- Official DSOAR text (ERC Res. 01 s.2006 and amendments) to quote Section 1.7.12 "Poles, Sag of Wires" verbatim
+  (D-04, S16); until read, the thesis must not call the 3 % rule obsolete.
 - Optional: JMC No. 01 s.2021 / DILG MC 2021-135 PDF (official sites refused automated download).
 - For any future telecom assessment: cable model and the manufacturer's sag-tension table, span lengths, and field
   sag measurements for the physical validation protocol (reference 7.8).
@@ -98,7 +115,8 @@ camera pose, no field validation); telecom test centerline F1 0.710 (precision C
 mask mAP50 0.0199; abandoned wires not detected; SQLite single worker; backup covers the DB only (until task 1).
 
 ## Before ending your session
-Update all five `docs/handoff/` files, commit only intended files, push (no force), verify `git rev-parse HEAD
+Update `docs/thesis/` (reference, register, changelog, results) and the three `docs/handoff/` files, commit only
+intended files, push (no force), verify `git rev-parse HEAD
 origin/main` match, restart the port 8000 server if you stopped it, and print a complete continuation prompt if work
 remains. Start the handoff when about 25 % of context remains.
 

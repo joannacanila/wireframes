@@ -5,7 +5,7 @@
 // in System and in the collapsed technical diagnostics.
 
 import { api, json, esc, ago, waitForAnalysis } from "./lib.js?v=2.23";
-import { OverlayViewer, wireColor, classLabel } from "./viewer.js?v=2.23";
+import { OverlayViewer, wireColor, classLabel, isMeasured } from "./viewer.js?v=2.23";
 import { assessment, limitations, recommendations, finding, group, CONDITION, SECTION } from "./findings.js?v=2.23";
 import { onStatus, startStatus } from "./status.js?v=2.23";
 import { toast } from "./toast.js?v=2.23";
@@ -24,7 +24,7 @@ export const RISK = { high: "High risk", medium: "Moderate risk", low: "Low risk
   failed: "Processing failed", processing: "Processing" };
 export const REVIEW = { pending: "Needs review", not_reviewed: "Not reviewed", confirmed: "Confirmed",
   flagged: "Flagged for inspection", overridden: "Level changed", dismissed: "Dismissed" };
-export const COMPLETE = { complete: "Complete", partial: "Partial", not_assessed: "Not assessed" };
+export const COMPLETE = { complete: "Complete", partial: "Partial", measured: "Measured, not assessed", not_assessed: "Not assessed" };
 export const riskBadge = (r, big = false) => `<span class="risk risk-${esc(r)}${big ? " big" : ""}"><i aria-hidden="true"></i>${esc(RISK[r] || r)}</span>`;
 export const reviewText = (v, row) => `<span class="rev rev-${esc(v)}">${esc(REVIEW[v] || v)}${v === "overridden" && row?.override_level ? ` to ${esc(RISK[row.override_level].toLowerCase())}` : ""}</span>`;
 const day = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
@@ -735,7 +735,9 @@ function mountInspection(id) {
     const a = assessment(r), lims = limitations(r), recs = recommendations(r, a, lims);
     const counts = Object.fromEntries(["high", "medium", "low", "none"].map((g) => [g, r.wires.filter((w) => group(w) === g).length]));
     const rank = { high: 0, medium: 1, low: 2, none: 3 };
-    const wires = [...r.wires].sort((x, y) => rank[group(x)] - rank[group(y)] || (y.crs ?? -1) - (x.crs ?? -1) || x.index - y.index);
+    const wires = [...r.wires].sort((x, y) => rank[group(x)] - rank[group(y)] || (y.crs ?? -1) - (x.crs ?? -1)
+      || (isMeasured(y) - isMeasured(x)) || (y.sag_ratio ?? -1) - (x.sag_ratio ?? -1) || x.index - y.index);
+    const dg = r.diagnosis, dgOn = dg && !dg.counts.assessed && dg.counts.measured + dg.counts.measured_partial > 0;
     const hasWires = r.wires.length > 0, hasMask = !!r.wire_mask, hasVeg = (r.vegetation || []).length > 0;
     const loc = r.pole.location;
     const lastRev = r.reviews.at(-1);
@@ -779,9 +781,13 @@ function mountInspection(id) {
           <h2 id="fd-h">Findings</h2>
           <p class="fd-title">${esc(a.title)}</p>
           ${a.lines.map((l) => `<p class="fd-line">${l}</p>`).join("")}
-          ${hasWires ? `<dl class="fd-counts">${["high", "medium", "low", "none"].map((g) => [g, CONDITION[g]]).map(([g, t]) => `<div><dt><i class="l-${g}"></i>${t}</dt><dd class="num">${counts[g]}</dd></div>`).join("")}</dl>` : ""}
+          ${hasWires && dgOn ? `<dl class="fd-counts">${[["Measured", dg.counts.measured], ["Visible part only", dg.counts.measured_partial], ["Not measured", dg.counts.not_measured], ["Assessed", dg.counts.assessed]].map(([t, n]) => `<div><dt><i class="l-none"></i>${t}</dt><dd class="num">${n}</dd></div>`).join("")}</dl>`
+            : hasWires ? `<dl class="fd-counts">${["high", "medium", "low", "none"].map((g) => [g, CONDITION[g]]).map(([g, t]) => `<div><dt><i class="l-${g}"></i>${t}</dt><dd class="num">${counts[g]}</dd></div>`).join("")}</dl>` : ""}
           ${a.coverage ? `<p class="hint">${esc(a.coverage)}</p>` : ""}
           ${lims.length ? `<h3>Photo limitations</h3><ul class="fd-list">${lims.map((l) => `<li>${esc(l.text)}${l.ids.length ? ` <span class="muted">(${SECTION(l.ids)})</span>` : ""}${l.help ? `<span class="help">${esc(l.help)}</span>` : ""}</li>`).join("")}</ul>` : ""}
+          ${dg && hasWires ? `${dg.observations.length ? `<h3>Observed in the image</h3><ul class="fd-list">${dg.observations.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}
+            ${dg.unavailable.length ? `<h3>Not available from one photo</h3><ul class="fd-list">${dg.unavailable.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}
+            ${dg.needed.length ? `<h3>What would complete the assessment</h3><ul class="fd-list">${dg.needed.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}` : ""}
           <h3>Recommended next steps</h3>
           <ol class="fd-list">${recs.map((x) => `<li>${x}</li>`).join("")}</ol>
         </section>
@@ -841,10 +847,13 @@ function mountInspection(id) {
     viewer = new OverlayViewer($("#canvas"), { onSelect: (i) => mark(i, true) });
     $("#canvas").addEventListener("zoom", (e) => { $("#zoom-pct").textContent = `${Math.round(e.detail * 100)}%`; });
     const worst = r.wires.filter((w) => w.crs != null).sort((x, y) => y.crs - x.crs)[0];
+    // S5: with no assessed span, open on the measured wire with the largest image-derived sag ratio (a measurement)
+    const firstMeasured = worst ? null : r.wires.filter(isMeasured).sort((x, y) => y.sag_ratio - x.sag_ratio)[0];
     viewer.load(r.image.url, r.wires, r.vegetation || []).then(() => {
       if (hasMask) viewer.setWireMask(r.wire_mask.url);
       viewer.setPoles(r.scene?.poles_detected || []);
       if (worst && worst.level !== "low") { viewer.selected = worst.index; viewer.draw(); mark(worst.index, false); }
+      else if (firstMeasured) { viewer.setMode("class"); viewer.selected = firstMeasured.index; viewer.draw(); mark(firstMeasured.index, false); }
     }).catch(() => toast.error("The photo could not be displayed"));
     const table = el.querySelector(".tbl-wires");
     const mark = (i, scroll) => table?.querySelectorAll("tr[data-wire]").forEach((tr) => {

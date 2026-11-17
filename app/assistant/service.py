@@ -87,9 +87,11 @@ def inspection_facts(a) -> dict[str, Any]:
         "risk_level": records.RISK_LABEL[records.risk(a)],
         "assessment": records.COMPLETENESS_LABEL[records.completeness(a)],
         "wire_sections": {"high_risk": counts["high"], "moderate_risk": counts["medium"], "low_risk": counts["low"],
-                          "not_assessed": counts["unassessed"], "drop_wires_not_checked": drops},
+                          "not_assessed": counts["unassessed"], "drop_wires_not_checked": drops,
+                          # S5: wires with an image-derived sag ratio (a measurement, not a severity)
+                          "measured_in_image": counts["measured"]},
         "not_assessed_reasons": not_assessed,
-        "vegetation_touching_wire_sections": len(veg),
+        "vegetation_overlapping_wire_sections_in_image": len(veg),
         "retake_warning": bool(g.get("requires_retake")),
         "photo_quality_note": q.get("reason") if q.get("grade") not in (None, "A") else None,
         "review_status": records.REVIEW_LABEL[rv],
@@ -110,11 +112,15 @@ def facts_summary(f: dict[str, Any]) -> str:
                                                             if w["drop_wires_not_checked"] else "."))
     else:
         lines.append("No wire section was detected.")
+    if w.get("measured_in_image"):
+        lines.append(f"{w['measured_in_image']} wire section(s) were measured in the image (image-derived sag ratio, "
+                     "not physical sag); a measurement is not a severity.")
     if p["not_assessed_reasons"]:
         lines.append("Not assessed because: " + "; ".join(f"{k.lower()} ({v})" for k, v in
                                                           p["not_assessed_reasons"].items()) + ".")
-    if p["vegetation_touching_wire_sections"]:
-        lines.append(f"Vegetation touches {p['vegetation_touching_wire_sections']} wire section(s).")
+    if p["vegetation_overlapping_wire_sections_in_image"]:
+        lines.append(f"Vegetation overlaps or adjoins {p['vegetation_overlapping_wire_sections_in_image']} wire "
+                     "section(s) in the image (not a measured clearance; check on site).")
     if p["retake_warning"]:
         lines.append("A retake was recommended: the assessment may be inaccurate.")
     if p["photo_quality_note"]:

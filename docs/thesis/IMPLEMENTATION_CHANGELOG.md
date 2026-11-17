@@ -1,6 +1,37 @@
 # Implementation Changelog
 
-Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
+Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
+
+## 2026-11-18, session S5: diagnostic output restored (register D-22, D-23)
+- **Original behaviour (S4 build, 5313c52):** the pipeline measured every wire, but the result page, overlay viewer,
+  PDF figure and admin sheet showed, drew and selected only *assessed* wires. With no validated reference: 0 wires
+  drawn by default, no wire selected, no fitted curve, chord or sag point on any wire, every measurement in a
+  collapsed list labelled "These wires were not measured", a retake banner on every analysis, PDF Figure 1 "No wire
+  was flagged, so none is drawn", and a PDF that both said a retake would not help and recommended one. Admin list
+  counts and assistant facts still counted withdrawn pre-S4 levels ("10 high risk"). Reproduced in headless Chrome on
+  isolated copies of `var/`, compared with the pre-S4 code (0916fd2) on the same photo
+  (`docs/thesis/results/s5_diagnostic_restoration.json`).
+- **Why the checks missed it:** the S4 tests and E2E checks asserted only that severity was absent (754 passed, E2E
+  20/20 on the broken build).
+- **Change:** new `app/services/diagnostics.py` (per-wire and per-photo diagnosis from stored fields only; no new
+  threshold; Section 8.6 of the reference); attached to the staff and public result. Viewer and PDF overlay draw the
+  curve, chord and sag point of every measured wire; the result page opens on measured wires (coloured by type, the
+  largest ratio selected), lists Measured / Not measured, shows "What the analysis found", and advises a retake only
+  when wires were not measured or only partly measured; partial-span and uncertain-type wires show their measurement;
+  ratios below their 1 px resolution read "within resolution"; the admin sheet shows the diagnosis and opens on a
+  measured wire; PDF Figure 1 draws measured wires, section 4.0 adds per-wire observations, new section 4.1; findings
+  CSV gives ratio +/- resolution; admin completeness `measured` ("Measured, not assessed"); assistant facts report
+  measured wires and "overlaps in the image". `level_withdrawn` also withdraws any level of a record without the
+  current assessment basis; `wire_counts` never counts withdrawn levels.
+- **Files:** app/services/{diagnostics (new),analysis,basis,records,render,report_pdf}.py, app/api/admin.py,
+  app/assistant/service.py, app/web/assets/{field,findings,viewer,admin}.js, field.css, scripts/e2e_check.py,
+  tests/test_s5_diagnostics.py (new, 20 tests), tests/test_v219_portal.py (completeness `measured`).
+- **Not changed:** model weights, configuration values, pipeline outputs, stored inspections (no reprocessing).
+- **Tests / results:** pytest 776 passed; ruff clean; E2E 24/24, 0 page errors (isolated copy, port 8011).
+- **Documentation:** `docs/thesis/` made the authoritative technical record; this changelog and the register moved
+  there from `docs/handoff/` (git history kept). Research update S16-S18 (DSOAR s.1.7.12 lead, unverified).
+- **Risk:** the production server (port 8000) serves the new page scripts from disk at once, but the `diagnosis`
+  field only after a restart; until then the page falls back to its own measured-wire logic.
 
 ## 2026-11-18, session S4: unsupported thresholds removed (register D-02..D-21)
 - **Original behaviour:** telecom spans scored against a 4.0 % reference with a Minor band from 2.4 %; pole verdicts

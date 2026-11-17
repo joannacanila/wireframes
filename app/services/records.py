@@ -97,7 +97,8 @@ RISK_LABEL = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk",
               "failed": "Processing failed", "processing": "Processing"}
 REVIEW_LABEL = {"pending": "Needs review", "not_reviewed": "Not reviewed", "confirmed": "Confirmed",
                 "flagged": "Flagged for inspection", "overridden": "Level changed", "dismissed": "Dismissed"}
-COMPLETENESS_LABEL = {"complete": "Complete", "partial": "Partial", "not_assessed": "Not assessed"}
+COMPLETENESS_LABEL = {"complete": "Complete", "partial": "Partial", "measured": "Measured, not assessed",
+                      "not_assessed": "Not assessed"}
 
 
 def risk(a: Analysis) -> str:
@@ -117,14 +118,23 @@ def risk(a: Analysis) -> str:
     return max(scored, key=lambda d: d.crs).level
 
 
+def _measured(d) -> bool:
+    """S5: a wire whose curve was fitted and whose image-derived sag ratio is stored (assessed or not)."""
+    return d.status in ("scored", "not_assessed") and (
+        d.sag_ratio is not None or (d.fit_json or {}).get("sag_ratio") is not None)
+
+
 def completeness(a: Analysis) -> str:
-    """complete: every detected wire section was assessed; partial: some could not be; not_assessed: none."""
-    if a.status not in FINISHED or risk(a) == "unassessed":
+    """complete: every detected wire section was assessed; partial: some could not be; measured (S5): none was
+    assessed but wires were measured in the image (no validated reference); not_assessed: nothing was measured."""
+    if a.status not in FINISHED:
         return "not_assessed"
     ds = [d for d in a.detections if d.status != "service_drop"]
+    if risk(a) == "unassessed":
+        return "measured" if any(_measured(d) for d in ds) else "not_assessed"
     scored = [d for d in ds if d.status == "scored"]
     if not scored:
-        return "not_assessed"
+        return "measured" if any(_measured(d) for d in ds) else "not_assessed"
     return "complete" if len(scored) == len(ds) else "partial"
 
 
@@ -135,11 +145,17 @@ def review_status(a: Analysis) -> str:
 
 
 def wire_counts(a: Analysis) -> dict[str, int]:
-    out = {"high": 0, "medium": 0, "low": 0, "unassessed": 0}
+    """Wire sections by stored level. S5: a level from a record analysed before S4 (withdrawn placeholder criteria,
+    app/services/basis.py) is never counted as a severity; ``measured`` counts wires with an image-derived sag ratio
+    (assessed or not)."""
+    from app.services.basis import is_current
+    current = is_current(a.metadata_json)
+    out = {"high": 0, "medium": 0, "low": 0, "unassessed": 0, "measured": 0}
     for d in a.detections:
         if d.status == "service_drop":
             continue
-        out[d.level if d.status == "scored" and d.level else "unassessed"] += 1
+        out[d.level if d.status == "scored" and d.level and current else "unassessed"] += 1
+        out["measured"] += _measured(d)
     return out
 
 

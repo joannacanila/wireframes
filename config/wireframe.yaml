@@ -181,7 +181,7 @@ crs:                              # Section 3.6.5, Equation 10, Table 1.2
     power-distribution-lines: 1.0
     telecom-cable: 1.0
   # delta_lim,0: allowable sag ratio, ONLY for a class with a verified, applicable reference.
-  # S4 (18 Nov 2026, docs/handoff/RESEARCH_AND_DECISION_REGISTER.md D-02..D-04, D-09): no current standard,
+  # S4 (18 Nov 2026, docs/thesis/RESEARCH_AND_DECISION_REGISTER.md D-02..D-04, D-09): no current standard,
   # regulation or manufacturer document gives a universal allowable sag-to-span ratio for aerial telecom cable
   # (ITU-T L.102 (11/2025) cl. 7.2.2.1, 7.3.10, 8.2.6: sag follows from cable-specific tension ratings, span and
   # loading); the former 4.0 % was a development placeholder and 2.4 % was 60 % of it. The power-line 3 % of ERB

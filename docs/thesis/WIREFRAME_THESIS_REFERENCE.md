@@ -1,9 +1,16 @@
 # WIREFRAME Thesis Reference
 
-Technical reference for the WIREFRAME thesis manuscript. It describes the system as released (v2.23, 18 Nov 2026):
-what it computes, how, with which models and data, how well it performs, and what it cannot do. Every number is
-taken from a file in `docs/thesis/results/` or from the code and configuration in this repository; the source is
-named next to the number.
+Technical reference for the WIREFRAME thesis manuscript. It describes the system as it currently stands (v2.23 with
+the S4 assessment change and the S5 diagnostic restoration, 18 Nov 2026): what it computes, how, with which models
+and data, how well it performs, and what it cannot do. Every number is taken from a file in `docs/thesis/results/` or
+from the code and configuration in this repository; the source is named next to the number.
+
+`docs/thesis/` is the authoritative, continuously maintained technical record of WIREFRAME. It holds this reference,
+`RESEARCH_AND_DECISION_REGISTER.md` (every engineering decision with its sources, exact provisions, verification
+status and consequences), `IMPLEMENTATION_CHANGELOG.md` (what changed, why, and how it was verified) and the evidence
+files in `results/`. These are internal development records, not published academic evidence. `docs/handoff/` holds
+session-continuity notes only. The manuscript chapters (`*.docx`) and figures in this directory belong to the
+authors and are not edited by development work.
 
 Contents
 
@@ -471,6 +478,18 @@ and applicability are not established; power lines remain measured and not asses
 current PEC Part 2 provision on sag (edition, article, exact text), or another in-force ERC/PEC instrument stating a
 sag limit, plus a licensed engineer's confirmation that it applies to the photographed installations.
 
+**Open lead (S5, 18 Nov 2026; register D-04, source S16): DSOAR Section 1.7.12.** Search-engine summaries and
+secondary copies indicate that the DSOAR itself contains a Section 1.7.12 "Poles, Sag of Wires" that carries forward
+the wording of ERB Resolution 95-21 Section 19, including horizontal wires pulled up so that their sag stays within
+Philippine Electrical Code allowances, described in those summaries as three percent of the distance between poles.
+If confirmed, the 3 % provision would not be obsolete but in force through the DSOAR for distribution utilities. **The
+DSOAR text was not read:** the only located copy (competitive.org.ph) failed with a TLS certificate error, and the
+other copies are secondary or garbled extractions. The lead is therefore recorded as unverified and is not used.
+Even if verified it would not by itself allow an assessment: it binds distribution utilities, defers to PEC
+allowances, applies to sag relative to the horizontal distance between poles, and WIREFRAME's image-derived ratio is
+not that quantity (Section 7.8). Owner action: the official DSOAR (ERC Resolution No. 01, Series of 2006, and its
+amendments) to quote Section 1.7.12 verbatim.
+
 > **PENDING ENGINEERING VALIDATION:** The 3% provision identified in ERB Resolution No. 95-21 has not yet been
 > confirmed as directly applicable to the specific conductors and image-derived measurement method used by WIREFRAME.
 
@@ -557,6 +576,8 @@ The checks run in this order; the first that applies decides the status.
 
 The former precision gate (100 px) is off since S4 (Section 7.4). The photo status is `complete` when at least one
 span was measured (fitted), whether or not it could be assessed; `fit_failed` when no span could be measured.
+Every wire with status `scored` or `not_assessed` keeps its image-derived sag ratio, resolution, fitted curve, chord
+end points and sag point; rows 3 to 5 are measurements without a severity, not failures (Section 8.6).
 
 ### 8.2 Pole verdict (`app/pipeline/hazard.py`)
 
@@ -575,8 +596,10 @@ k*(n) scored spans at Critical or Minor-or-above, power vegetation contact (HIGH
 contact (MODERATE), INCONCLUSIVE below 50 % assessed.
 
 **Stored results from before S4 (register D-21).** Never reprocessed and never modified. On display (page, PDF, admin,
-CSV, assistant) a stored level whose class has no verified reference is shown as not assessed
-(`withdrawn_reference`, stored values under `historical`), a stored verdict other than INCONCLUSIVE is shown as
+CSV, assistant) a stored level is shown as not assessed (`withdrawn_reference`, stored values under `historical`)
+when its class has no verified reference **or** the record has no current `assessment_basis` (S5: a pre-S4 level was
+computed against the withdrawn placeholder, so it stays withdrawn even if a validated reference is configured later;
+it is also never counted in the admin list counts or by the assistant), a stored verdict other than INCONCLUSIVE is shown as
 INCONCLUSIVE with a notice (`historical_verdict` kept), and stored CRS values are not used for ranking
 (`app/services/basis.py`). New analyses carry `metadata_json.assessment_basis = "S4-2026-11-18"`.
 
@@ -600,6 +623,42 @@ user's choice is recorded (`POST /api/analysis/{id}/guardrail`) and printed in t
 A reviewer can confirm a result, flag it for further inspection (note required) or override its level (level and note
 required). The computed level is never changed: reviews are stored beside it (`reviews` table), shown on the
 inspection page and printed in the PDF, and every review is written to the audit log.
+
+### 8.6 Diagnostic explanation (`app/services/diagnostics.py`, S5)
+
+After S4 no span is assessed, but the computer-vision analysis is unchanged. Every result therefore carries a
+diagnosis that states what was observed and measured and why no severity or pole verdict is given. It is built only
+from stored fields (status, reason code, flags, fit geometry, centreline provenance, vegetation gap) and introduces no
+threshold; the only comparison is a measured ratio against its own 1 px resolution (Section 7.4). It is attached to
+the API result for staff and public users (`diagnosis` per wire and per photo; no model internals) and is the single
+source for the result page, the admin inspection page, the PDF (section 4.1) and the assistant facts.
+
+Four levels are kept apart in every statement: (1) image-derived geometric measurement; (2) physical measurement
+(never available from one uncalibrated photo, Section 7.8); (3) engineering interpretation (needs a validated
+reference, Section 7.5); (4) safety or compliance determination (never made).
+
+| Wire measurement state | Condition | What is reported |
+|---|---|---|
+| `measured` | Fitted between both visible ends | Sag ratio ± resolution, chord length, whether the curvature exceeds the 1 px resolution |
+| `measured_partial` | Fitted; trace reaches the photo edge (`endpoint_unavailable`) | Ratio of the visible part only, never the pole-to-pole span |
+| `not_measured` | Detected and traced, no curve fitted | The failure reason (overlap, too short, too faint, no convergence) and which photo would help |
+| `not_applicable` | Steep service drop or guy wire | Not a pole-to-pole span |
+
+Each wire also lists image observations (share of the centreline bridged across mask gaps; vegetation overlap or
+pixel gap, stated as an image distance and never as contact or clearance; photo-edge contact; lens distortion), the
+reason no severity was determined, and the evidence that would complete the assessment (register "What would reopen
+each decision"): for telecom cable the cable model with its manufacturer sag-tension data, the span length and a
+field-validated photo-to-sag method; for power lines an in-force criterion confirmed by a licensed electrical
+engineer, the span length and the same validation; for abandoned wires a field check.
+
+Per photo: a processing stage (`failed`, `processing`, `no_wires`, `detected_not_measured`, `measured_not_assessed`,
+`partially_assessed`, `assessed`), counts (detected, measured, visible part only, not measured, drop wires, assessed,
+straight within resolution), the reasons wires were not measured, observations, what one photo cannot provide (sag
+severity, physical sag, clearance, a pole-level verdict), what would complete the assessment, and `retake_helps`
+(true only when wires were not measured or only partly measured; a missing reference is never reported as a photo
+problem). A processing failure is never described as an assessment limitation, and "no wire detected" is never
+described as "no hazard". Admin completeness: `complete`, `partial`, `measured` ("Measured, not assessed", S5) and
+`not_assessed` (nothing measured).
 
 ---
 
@@ -676,11 +735,17 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 
 - Upload card: photo, inspection name, city, barangay (validated suggestions), optional coordinates and span data.
 - Processing state with the queue position.
-- Result page (`/workspace/result/{id}`): inspection summary with the counts of measured and not-assessed wires
-  (since S4 no severity counts: no validated reference); each measured wire's image-derived sag ratio with its
-  resolution; the photo with three views (Wires, Mask, Photo); circular wire badges centred on each
-  strand; the wire list with plain findings and the reason for every unassessed wire; what to do next; photo
-  limitations; a location block when coordinates exist; PDF download.
+- Result page (`/workspace/result/{id}`): inspection summary stating what was measured and why no verdict is given
+  (Section 8.6), with counts Measured / Visible part only / Not measured / Assessed (no severity counts while no
+  validated reference exists); a "What the analysis found" section (observations, what one photo cannot provide,
+  what would complete the assessment); the photo with four views (Measured wires, Original photo, All traced wires,
+  Mask). With no assessed span the default view draws every measured wire, coloured by wire type (never by severity),
+  with its fitted curve, the dashed chord between its visible ends and the point of largest sag; the measured wire
+  with the largest image-derived ratio is selected on opening and its card shows the ratio ± resolution and its
+  diagnosis. The wire list has Measured and Not measured tabs (sorted by ratio, stated to be a measurement, not a
+  severity); what to do next; photo limitations; a location block when coordinates exist; PDF download. The retake
+  banner appears only when more than half of the wires were not measured or only partly measured (S5; before S5 it
+  appeared on every analysis because every wire was "not assessed").
 - A retake prompt when the guardrail holds the result.
 
 ### 10.2 Admin portal (`/admin`, signed in)
@@ -689,7 +754,7 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 |---|---|
 | Dashboard | Counts by pole verdict over the latest operational inspection per pole; triage list; pending reviews; alerts |
 | Inspections | Filters (search, risk, review, barangay, date range, completeness, latest only), tabs (All, Needs review, Failed), bulk actions, CSV export, technical exports menu (administrators) |
-| Inspection page | Result viewer, findings table, review panel, pole history, findings CSV, technical diagnostics (collapsed) |
+| Inspection page | Result viewer (opens on the measured wire with the largest ratio when none is assessed), findings with the Section 8.6 diagnosis (observed in the image, not available from one photo, what would complete the assessment), findings table, review panel, pole history, findings CSV (measured ratio ± resolution, visible-part note), technical diagnostics (collapsed) |
 | Map & Dispatch | Leaflet map with clustered pole markers coloured by verdict; Light, Dark and Satellite base maps; drop-pin location editing (administrators); route builder with ordered stops, route PDF and a shareable map link |
 | Assistant | Answers questions about the documentation and live inspection data, with navigation actions |
 
@@ -702,7 +767,7 @@ administrators through the API.
 
 | Report | Endpoint | Contents |
 |---|---|---|
-| Inspection report (formal) | `GET /api/reports/{id}/pdf` | Two pages: header with pole, location and time; verdict and counts; annotated photo with centred wire badges; flagged spans schedule; field verification checklist; reviews; footer "Field verification required" |
+| Inspection report (formal) | `GET /api/reports/{id}/pdf` | Header with pole, location and time; verdict and counts; annotated photo (flagged spans, or, with no assessed span, every measured wire with its curve, chord and sag point; S5); flagged spans schedule, or "Measured Spans (not assessed)" with ratio ± resolution, status and per-wire image observations, followed by "4.1 What the Analysis Found" (S5); the incomplete-assessment warning counts only wires a retake can help; field verification checklist; reviews; footer "Field verification required" |
 | Inspection report (technical) | `?technical=true` (staff) | Adds per-wire measurements, fit residuals, flags, reliability and configuration fingerprint |
 | Site priority report | `GET /api/admin/exports/sites.pdf` | MSPI ranking; `technical=true` adds the weight sensitivity grid |
 | Dispatch route | `GET /api/admin/routes/pdf` | Ordered stops with pole labels, barangays, coordinates and verdicts |
@@ -969,7 +1034,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 ### 15.1 Automated tests
 
-`python -m pytest`: 719 tests, all passing (18 Nov 2026, with transformers 5.17.0). The suite uses synthetic scenes with known geometry
+`python -m pytest`: 776 tests, all passing (18 Nov 2026, S5, with transformers 5.17.0; S4 754, S2 719). The suite uses synthetic scenes with known geometry
 (`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
 | Area | Examples |
@@ -980,6 +1045,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 | API | Upload validation and limits, GPS stripping, refusal without a model, results, PDF content, reviews, exports, bulk actions, record kinds, barangay and coordinate validation |
 | Security | Anonymous access refused on portal routes, inspector and administrator roles, session expiry and revocation, CSRF origin check, login throttling, rate limits |
 | Frontend contracts | No automatic re-run of failed inspections; removed endpoints and the System page stay removed; list views do not decode geometry |
+| Diagnostics (S5) | `tests/test_s5_diagnostics.py`: every measured wire explained without severity words; ratio below its resolution reported as straight within resolution; partial spans keep the visible-part ratio; unmeasured wires state why and which photo helps; uncertain type claims no type; vegetation stated as an image observation; a missing reference never sets `retake_helps`; processing failure never an assessment limitation; diagnosis present for staff and public without model internals; completeness `measured`; pre-S4 levels never counted and withdrawn even under a configured reference; PDF figure and section 4.1; overlay chord drawn for measured, unassessed wires; page scripts draw and list measured wires |
 | Weights | Download, part joining, SHA-256 verification, no overwrite |
 | Database | Migration backup restored into a new file and compared table by table (integrity, foreign keys, every row) |
 
@@ -992,9 +1058,12 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 `scripts/e2e_check.py` drives headless Chrome (Playwright) against a running test server: Field Screener upload,
 processing, result summary, page counts against the API, no severity on unassessed wires, Mask view, PDF download with
 counts against the API and the verification footer, admin sign-in, no System menu entry, Failed tab, technical
-exports, inspection diagnostics, map with three base layers, `/admin/system` answering 404. The uploaded photo is then
-marked as a test record. Result on the release build (18 Nov 2026, transformers 5.17.0): 16 of 16 checks passed, 0
-page errors.
+exports, inspection diagnostics, map with three base layers, `/admin/system` answering 404. S5 adds positive checks:
+page counts match the API diagnosis, every measured wire is drawn on the photo, the selected wire shows its diagnosis,
+the "What the analysis found" section is present, and the PDF draws the measured wires and contains section 4.1. The
+uploaded photo is then marked as a test record. Result (18 Nov 2026, S5, isolated copy of `var/`): 24 of 24 checks
+passed, 0 page errors (S4: 20 of 20; those checks asserted only the absence of severity and passed while the
+measurements were hidden, `results/s5_diagnostic_restoration.json`).
 
 ### 15.4 Manual review (limited)
 
@@ -1060,7 +1129,9 @@ Rollback: transformers 4.57.6, huggingface-hub 0.36.2, tokenizers 0.22.2.
    image-derived ratio (Section 7.5), so no span is assessed and every analysis with measured wires is INCONCLUSIVE
    ("Assessment incomplete"). The system measures, displays and explains; it does not classify. Sag accuracy on real
    spans has no ground truth (no field-measured sag exists for the photos), and no result has been compared with an
-   engineer's rating.
+   engineer's rating. Since S5 every result explains, per wire and per photo, what was measured and what evidence
+   would complete the assessment (Section 8.6); the explanation is derived from the analysis and is not an
+   engineering judgement.
 2. **No class is assessed.** Telecom, power and abandoned wires are measured and shown only; restoring an assessment
    needs a cable- or conductor-specific verified reference, span data and the physical validation of Section 7.8.
 3. **Perspective.** Sag is measured in the image plane. A span receding in depth, or seen from a steep angle, does not
@@ -1349,4 +1420,5 @@ keeps them removed.
 | Pole detector | `v218_poles_*`, `v218_poles_analysis_*` |
 | Runtime | `benchmark_v223.json`, `v222_latency_before.json`, `v222_latency_after.json` |
 | Dataset audit | `dataset_audit_v27.json` |
+| Assessment change and diagnostic restoration | `s4_coverage_before_after.json`, `v217_eval_s4_val.json`, `v217_eval_s4_test.json` (S4); `s5_diagnostic_restoration.json` (S5: browser reproduction of the hidden measurements and the repair) |
 | Figures | `docs/thesis/figures/`: failure cases (`failure_*.jpg`), stress conditions (`stress_conditions.jpg`), high-CRS spans and loose-end candidates on validation, night vegetation guard, verdict distribution and diagnostics (`v29_*`) |

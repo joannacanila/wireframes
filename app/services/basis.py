@@ -43,6 +43,10 @@ def verdict_of(md: dict | None) -> str | None:
     return (hazard_view(md) or {}).get("verdict")
 
 
-def level_withdrawn(level: str | None, wire_class: str | None, cfg: Any) -> bool:
-    """A stored level is withdrawn when its class has no validated reference in the current configuration."""
-    return bool(level) and not cfg.crs.has_reference(wire_class or "")
+def level_withdrawn(level: str | None, wire_class: str | None, cfg: Any, md: dict | None = None) -> bool:
+    """A stored level is withdrawn when its class has no validated reference in the current configuration, or (with
+    ``md``, S5) when the record was analysed before S4: its level was computed against the withdrawn placeholder, so
+    it stays withdrawn even if a validated reference is configured later."""
+    if not level:
+        return False
+    return not cfg.crs.has_reference(wire_class or "") or (md is not None and not is_current(md))

@@ -1,0 +1,42 @@
+{
+  "description": "S5 (18 Nov 2026): browser reproduction of the post-S4 result-page regression and its repair. Headless Chrome (Playwright, system Chrome) against isolated copies of var/ (SQLite online backup); production data unchanged. Before = code 0916fd2 (pre-S4) and 5313c52 (S4); after = S5 working tree. Values are as read from the rendered page (DOM and window.wfViewer) and the API.",
+  "method": {
+    "servers": {"pre_s4_code_0916fd2": "port 8012, isolated copy", "s4_code_5313c52": "port 8011, isolated copy", "s5_code": "port 8011, isolated copy (restarted)"},
+    "production_server_port_8000": "not modified, not restarted",
+    "records": {
+      "e7170e06": "photo 2.jpg (2048x1536), analysed pre-S4 (stored verdict AT RISK - HIGH), 135 wires",
+      "ac0c8543": "same photo 2.jpg, analysed under S4 (assessment_basis S4-2026-11-18), 135 wires",
+      "03064557": "photo images (3).jpeg (452x678), analysed under S4, 10 wires"
+    }
+  },
+  "pre_s4_code_on_pre_s4_record_e7170e06": {
+    "headline": "Inspection summary: 10 wires need attention",
+    "wires_drawn_in_default_view": 14,
+    "selected_wire_on_open": 101,
+    "sag_geometry_drawn_for_selected": true,
+    "note": "severity bands from the withdrawn 4.0 % placeholder; shown only to document the former diagnostic layout"
+  },
+  "s4_code": {
+    "ac0c8543": {"wires_drawn_in_default_view": 0, "selected_wire_on_open": null, "sag_geometry_drawn_for_any_wire": false,
+                 "retake_banner": "More than half of the detected wires (135 of 135) could not be assessed ... retake the photo",
+                 "collapsed_list_text": "These wires were not measured, so nothing is known about their sag",
+                 "measured_wires_in_api": 94},
+    "03064557": {"wires_drawn_in_default_view": 0, "selected_wire_on_open": null, "sag_geometry_drawn_for_any_wire": false,
+                 "pdf_figure_caption": "Figure 1. Site photograph. No wire was flagged, so none is drawn.",
+                 "measured_wires_in_api": 10},
+    "admin_list_and_assistant_on_pre_s4_record_e7170e06": {"wire_counts": {"high": 10, "medium": 4, "low": 51, "unassessed": 70},
+                 "assistant_line": "Wire sections: 10 high risk, 4 moderate, 51 low, 70 not assessed."},
+    "project_e2e_check": "20 of 20 passed (checks only asserted the absence of severity)"
+  },
+  "s5_code": {
+    "ac0c8543": {"wires_drawn_in_default_view": 94, "selected_wire_on_open": 47, "counts": {"measured": 65, "visible_part_only": 29, "not_measured": 41, "assessed": 0},
+                 "retake_banner": "70 of 135 could not be measured completely (41 not measured + 29 partial)"},
+    "03064557": {"wires_drawn_in_default_view": 10, "selected_wire_on_open": 2, "counts": {"measured": 9, "visible_part_only": 1, "not_measured": 0, "assessed": 0},
+                 "retake_banner": null, "within_1px_resolution": 9},
+    "e7170e06": {"wires_drawn_in_default_view": 65, "historical_notice_shown": true, "withdrawn_levels_counted": false},
+    "page_errors": 0,
+    "project_e2e_check": "24 of 24 passed, 0 page errors (adds: counts match diagnosis, measured wires drawn, selected wire diagnosis, analysis section, PDF figure and section 4.1)",
+    "pytest": "776 passed",
+    "ruff": "no findings"
+  }
+}

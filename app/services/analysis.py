@@ -311,14 +311,19 @@ def serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] |
     if settings is not None:
         from app.services.provenance import attach
         attach(r, wire_mask_path(settings, a.id))
+    # S5: what was observed and measured, per wire and per photo (app/services/diagnostics.py)
+    from app.services.diagnostics import pole_diagnosis, wire_diagnosis
+    for w in r.get("wires") or []:
+        w["diagnosis"] = wire_diagnosis(w, cfg)
+    r["diagnosis"] = pole_diagnosis(r, cfg)
     return _jsonable(r)
 
 
-def _wire_view(d, cfg: AnalysisConfig) -> dict[str, Any]:
+def _wire_view(d, cfg: AnalysisConfig, md: dict | None = None) -> dict[str, Any]:
     """The stored wire as shown. S4 (app/services/basis.py): a stored level from a withdrawn criterion is shown as not
     assessed (reason withdrawn_reference); the stored values stay under ``historical``."""
     from app.services.basis import level_withdrawn
-    if level_withdrawn(d.level, d.wire_class, cfg):
+    if level_withdrawn(d.level, d.wire_class, cfg, md):
         return {"status": "not_assessed", "fail_reason": "withdrawn_reference", "level": None, "crs": None,
                 "delta_lim": None, "delta_lim0": None,
                 "historical": {"status": d.status, "level": d.level, "crs": d.crs, "delta_lim": d.delta_lim}}
@@ -327,7 +332,7 @@ def _wire_view(d, cfg: AnalysisConfig) -> dict[str, Any]:
 
 
 def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] | None = None) -> dict[str, Any]:
-    views = {id(d): _wire_view(d, cfg) for d in a.detections}
+    views = {id(d): _wire_view(d, cfg, a.metadata_json or {}) for d in a.detections}
     crs = [views[id(d)]["crs"] for d in a.detections if views[id(d)]["crs"] is not None]
     counts: dict[str, int] = {}
     for d in a.detections:
@@ -470,7 +475,7 @@ def public_error(code: str | None, message: str | None) -> str:
 _PUBLIC_WIRE = ("index", "class", "status", "bbox", "mask_polygons", "centerline", "catenary_curve", "sag_ratio",
                 "sag_ratio_resolution",
                 "delta_lim", "sag_bands", "level", "flags", "class_status", "reason_code", "reason_short", "notes", "action",
-                "veg_clearance", "provenance")
+                "veg_clearance", "provenance", "diagnosis")
 
 
 def public_view(r: dict[str, Any]) -> dict[str, Any]:
@@ -478,7 +483,7 @@ def public_view(r: dict[str, Any]) -> dict[str, Any]:
     hashes, timings, EXIF metadata and the priority ranking are removed server-side; signed-in staff get the full
     record. Drawing geometry and the measured sag / reference limit stay (the page shows them)."""
     out = {k: r.get(k) for k in ("id", "status", "created_at", "completed_at", "inspection", "pole", "submitted_via",
-                                 "image", "vegetation", "wire_mask", "guardrail", "flags")}
+                                 "image", "vegetation", "wire_mask", "guardrail", "flags", "diagnosis")}
     out["reviews"] = [{"decision": x["decision"], "by": x["by"], "at": x["at"]} for x in r.get("reviews") or []]
     if r.get("error"):
         out["error"] = {"code": r["error"]["code"], "message": public_error(r["error"]["code"], r["error"]["message"])}

@@ -42,6 +42,8 @@ export function classLabel(w, short = false) {
     : (CLASS_LABEL[w.class] || w.class);
 }
 
+/** S5: a wire with a fitted curve and an image-derived sag ratio (assessed or not). */
+export const isMeasured = (w) => w.sag_ratio != null && (w.status === "scored" || w.status === "not_assessed") && !!w.fit?.endpoints;
 export function wireColor(w, mode = "risk") {
   if (mode === "class") return css(isUncertain(w) ? "--cls-unknown" : CLASS_VAR[w.class]);
   return css(LEVEL_VAR[w.level] || "--risk-none");
@@ -271,7 +273,7 @@ export class OverlayViewer {
     this.tip.innerHTML = `<b>Wire ${w.index} · ${classLabel(w)}</b>
       <div class="row"><span>Condition</span><span>${(scored && { high: "Critical", medium: "Minor sag", low: "Within reference" }[w.level]) || "Not assessed"}</span></div>
       ${scored ? `<div class="row"><span>Sag</span><span>${(w.sag_ratio * 100).toFixed(1)}% of its length</span></div>`
-        : w.sag_ratio != null && w.status === "not_assessed" ? `<div class="row"><span>Sag ratio (image)</span><span>${(w.sag_ratio * 100).toFixed(1)}%, measured only</span></div>` : ""}`;
+        : isMeasured(w) ? `<div class="row"><span>Sag ratio (image${w.reason_code === "endpoint_unavailable" ? ", visible part" : ""})</span><span>${(w.sag_ratio * 100).toFixed(1)}%, measured only</span></div>` : ""}`;
     const x = Math.min(e.clientX - r.left + 14, r.width - 200);
     const y = Math.min(e.clientY - r.top + 14, r.height - 90);
     this.tip.style.left = `${x}px`;
@@ -401,7 +403,9 @@ export class OverlayViewer {
     }
 
     for (const w of this._shown()) {
-      const scored = w.status === "scored";
+      // S5: the fitted curve, chord and sag point are drawn for every MEASURED wire (scored, or measured and not
+      // assessed because no validated reference exists); the geometry is a measurement, never a severity
+      const scored = isMeasured(w);
       const c = wireColor(w, this.mode);
       ctx.globalAlpha = dim(w) ? 0.25 : 1;
       if (L.catenary && scored) {
@@ -458,9 +462,10 @@ export class OverlayViewer {
       ctx.textBaseline = "middle";
 
       const f = w.fit || {};
-      if (L.sag && w.status === "scored" && f.sag_point && focus === w.index) {
+      if (L.sag && isMeasured(w) && f.sag_point && focus === w.index) {
         const [sx, sy] = toScreen(f.sag_point);
-        const label = `sags ${(w.sag_ratio * 100).toFixed(1)}% of its length`; // v2.19: no raw score on the photo
+        const label = w.status === "scored" ? `sags ${(w.sag_ratio * 100).toFixed(1)}% of its length` // v2.19: no raw score
+          : `image sag ratio ${(w.sag_ratio * 100).toFixed(1)}%${w.sag_ratio_resolution ? ` ±${(w.sag_ratio_resolution * 100).toFixed(1)}` : ""}${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""} · measured, not assessed`;
         const lw = ctx.measureText(label).width + 16;
         const cw = this.canvas.width / dpr, ch = this.canvas.height / dpr;
         const lx = Math.max(4, Math.min(sx + 10, cw - lw - 4)), ly = Math.max(14, Math.min(sy + 16, ch - 14));

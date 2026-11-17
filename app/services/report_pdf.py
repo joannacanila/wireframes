@@ -515,6 +515,39 @@ def _kv_table(rows: list[tuple[str, str]], width: float, st, key: float = 0.28) 
     return t
 
 
+def _wire_observations(w: dict) -> str:
+    """S5: short image observations for one measured wire (app/services/diagnostics.py); never a severity."""
+    out = []
+    d = w.get("diagnosis") or {}
+    if w.get("reason_code") == "endpoint_unavailable":
+        out.append("visible part only (runs off the photo)")
+    if d.get("resolvable") is False:
+        out.append("straight within the 1 px resolution")
+    share = (w.get("provenance") or {}).get("centerline_inferred_share")
+    if share:
+        out.append(f"{share * 100:.0f}% of the trace bridged across mask gaps")
+    if (w.get("veg_clearance") or {}).get("gap_px") == 0:
+        out.append("vegetation overlaps it in the image")
+    if w.get("class_status") == "uncertain":
+        out.append("wire type uncertain")
+    return "; ".join(out) or "–"
+
+
+def _diagnosis_block(dg: dict, st) -> list:
+    """S5: what the analysis found, what one photo cannot provide, and what would complete the assessment."""
+    out: list = []
+    for title, items in (("Observed in the image", dg.get("observations") or []),
+                         ("Not available from one photo", dg.get("unavailable") or []),
+                         ("What would complete the assessment", dg.get("needed") or [])):
+        if items:
+            out.append(Paragraph(f"<b>{title}</b>", st["body"]))
+            out += [Paragraph(f"&#8226; &#160;{_esc(x)}.", st["body"]) for x in items]
+            out.append(Spacer(1, 2))
+    if out:
+        out.insert(0, Paragraph("4.1 What the Analysis Found", st["h"]))
+    return out
+
+
 def _evidence_image(rgb: np.ndarray, flagged: list[dict]) -> np.ndarray:
     """The original photo with only the flagged spans drawn (no full-image mask), numbered as in section 4.0."""
     from app.services.render import render_overlay
@@ -646,11 +679,16 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
                                 ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
         story += [Spacer(1, 5), bt]
     g = result.get("guardrail") or {}
-    if g.get("requires_retake") or (sm["total"] and c["not_assessed"] / sm["total"] > 0.5):
+    dg = result.get("diagnosis") or {}
+    # S5: the "incomplete" warning counts wires a retake can help (not measured, or only partly measured); a wire
+    # measured but not assessed for lack of a reference is not a photo problem
+    dcn = dg.get("counts") or {}
+    fixable = (dcn.get("not_measured", 0) + dcn.get("measured_partial", 0)) if dcn else c["not_assessed"]
+    if g.get("requires_retake") or (sm["total"] and fixable / sm["total"] > 0.5):
         choice = (g.get("choice") or {}).get("action")
         text = (("<b>Assessment may be inaccurate.</b> Some wires could not be identified reliably from this photo. "
                  if g.get("requires_retake") else "<b>Assessment may be incomplete.</b> ") + (
-            f"{c['not_assessed']} of {sm['total']} detected wires could not be assessed. " if c["not_assessed"] else "")
+            f"{fixable} of {sm['total']} detected wires could not be measured completely. " if fixable else "")
             + "A retake showing both poles and the full span is recommended"
             + {"proceed": "; the user chose to proceed with this photo.", "retake": "; the photo was retaken."}.get(choice, "."))
         w = Table([[Paragraph(text, st["body"])]], colWidths=[width])
@@ -660,7 +698,10 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
 
     # 2.0 evidence
     fig_block: list[Any] = [Paragraph("2.0 Annotated Photographic Evidence", st["h"])]
-    img = _evidence_image(rgb, sm["flagged"])
+    measured_fig = [] if sm["flagged"] else sorted(
+        (w for w in result.get("wires") or [] if w.get("sag_ratio") is not None and w.get("status") in ("scored", "not_assessed")),
+        key=lambda w: w["index"])
+    img = _evidence_image(rgb, sm["flagged"] or measured_fig)
     ok, jpg = cv2.imencode(".jpg", cv2.cvtColor(img, cv2.COLOR_RGB2BGR), [cv2.IMWRITE_JPEG_QUALITY, 88])
     if ok:
         oh, ow = img.shape[:2]
@@ -676,7 +717,10 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     fig_block.append(Paragraph(
         ("Figure 1. Flagged wires only. Red: Critical; amber: Minor sag. The number on each wire is its span ID in "
          "section 4.0 (wire 58 = SP-058). Wires within reference and wires not assessed are not drawn.") if sm["flagged"] else
-        "Figure 1. Site photograph. No wire was flagged, so none is drawn.", st["small"]))
+        ("Figure 1. Measured wires (not assessed): the fitted curve, the dashed chord between the visible ends and the "
+         "point of largest sag. The number on each wire is its span ID in section 4.0. Colours are not severities; no "
+         "wire was assessed.") if measured_fig else
+        "Figure 1. Site photograph. No wire was measured, so none is drawn.", st["small"]))
     story.append(KeepTogether(fig_block))
 
     # 3.0 actions
@@ -731,14 +775,15 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     elif measured:
         # S4: the measurements, never a severity (no validated reference)
         story[-1] = Paragraph("4.0 Measured Spans (not assessed)", st["h"])
-        rows = [[Paragraph(h, st["th"]) for h in ("Span ID", "Type", "Image-derived sag ratio", "Status")]]
+        rows = [[Paragraph(h, st["th"]) for h in ("Span ID", "Type", "Image-derived sag ratio", "Status", "Observations")]]
         for w in sorted(measured, key=lambda x: x["index"]):
             r = w.get("sag_ratio_resolution")
             rows.append([Paragraph(f"<b>{plain.span_id(w['index'])}</b>", st["cell"]),
                          Paragraph(_esc(plain.wire_type(w)), st["cell"]),
                          Paragraph(f"{w['sag_ratio'] * 100:.1f}%" + (f" &#177; {r * 100:.1f}" if r else ""), st["cell"]),
-                         Paragraph(_esc(w.get("reason_short") or "Not assessed"), st["cell"])])
-        t = Table(rows, colWidths=[width * x for x in (0.12, 0.20, 0.26, 0.42)], repeatRows=1)
+                         Paragraph(_esc(w.get("reason_short") or "Not assessed"), st["cell"]),
+                         Paragraph(_esc(_wire_observations(w)), st["cell"])])
+        t = Table(rows, colWidths=[width * x for x in (0.10, 0.16, 0.18, 0.24, 0.32)], repeatRows=1)
         t.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, 0), 0.8, F_INK), ("LINEBELOW", (0, 1), (-1, -1), 0.4, F_RULE),
                                ("BACKGROUND", (0, 0), (-1, 0), F_HEAD), ("TOPPADDING", (0, 0), (-1, -1), 2),
                                ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
@@ -747,7 +792,9 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
             "Image-derived sag ratio: the largest perpendicular distance from the fitted curve to the straight line "
             "between the traced ends, divided by that line's length, both in image pixels. It is not physical sag "
             "(no camera-pose correction, no field calibration) and is not compared with any limit. The +/- value is "
-            "the 1 pixel resolution over the chord.", st["small"]))
+            "the 1 pixel resolution over the chord; a ratio smaller than it is straight within the resolution (no sag "
+            "resolvable at this image scale).", st["small"]))
+        story += _diagnosis_block(result.get("diagnosis") or {}, st)
     else:
         story.append(Paragraph("No span was flagged in the assessed sections of this photograph.", st["body"]))
 

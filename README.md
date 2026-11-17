@@ -15,12 +15,15 @@ routes in an admin portal.
 **How sag is handled.** Sag ratio = sag / chord length of the fitted catenary, measured in the image (an
 image-derived measurement, not physical sag), shown with its 1 pixel resolution. Research completed on 18 Nov 2026
 found no applicable standard, regulation or manufacturer document that gives a universal sag limit this measurement
-could be compared with (ITU-T L.102 and manufacturer guidance compute sag per cable; the 3 % rule of ERB Resolution
-No. 95-21 was superseded in 2006). The former 4.0 % / 2.4 % telecom bands were development placeholders and were
+could be compared with (ITU-T L.102 and manufacturer guidance compute sag per cable; ERB Resolution No. 95-21, with
+its 3 % rule, was superseded by the DSOAR in 2006, and whether the DSOAR keeps that rule in its Section 1.7.12 has not
+been verified from the official text). The former 4.0 % / 2.4 % telecom bands were development placeholders and were
 removed, as were the pixel vegetation rules and the illustrative conductor data. Every measured span is therefore
 *Not assessed* (`no_validated_reference`), and a pole is INCONCLUSIVE ("Assessment incomplete") rather than at risk or
-not at risk. Decisions and sources: `docs/handoff/RESEARCH_AND_DECISION_REGISTER.md`; thesis reference Sections 7.5,
-7.7, 7.8 and 8.
+not at risk. The analysis is still reported in full: every result shows, per wire and per photo, what was detected
+and measured (fitted curve, chord, sag point, ratio with its resolution), what was observed in the image, what one
+photo cannot establish, and what evidence would complete the assessment. Decisions and sources:
+`docs/thesis/RESEARCH_AND_DECISION_REGISTER.md`; thesis reference Sections 7.5, 7.7, 7.8 and 8.
 
 ## Quick start: run WIREFRAME on a new computer (step by step)
 
@@ -121,10 +124,17 @@ by themselves).
 
 ## Documentation
 
-Everything about the system (architecture, data, models, equations, assessment rules, API, complexity, runtime,
-evaluation, testing, security, limitations, reproduction and references) is in one document:
-[`docs/thesis/WIREFRAME_THESIS_REFERENCE.md`](docs/thesis/WIREFRAME_THESIS_REFERENCE.md). Raw results are in
-`docs/thesis/results/`, figures in `docs/thesis/figures/`.
+`docs/thesis/` is the authoritative, continuously maintained technical record:
+
+- [`WIREFRAME_THESIS_REFERENCE.md`](docs/thesis/WIREFRAME_THESIS_REFERENCE.md): architecture, data, models,
+  equations, assessment rules and diagnostics, API, UI, reports, complexity, runtime, evaluation, testing, security,
+  limitations, reproduction and references.
+- [`RESEARCH_AND_DECISION_REGISTER.md`](docs/thesis/RESEARCH_AND_DECISION_REGISTER.md): every engineering decision
+  with its sources, exact provisions, verification status and consequences.
+- [`IMPLEMENTATION_CHANGELOG.md`](docs/thesis/IMPLEMENTATION_CHANGELOG.md): what changed, why, and how it was verified.
+- `docs/thesis/results/` (raw results and evidence) and `docs/thesis/figures/`.
+
+`docs/handoff/` holds session-continuity notes only (current state, session log, next-session instructions).
 
 **Models it uses** (all listed with size and SHA-256 in `app/core/weights.py`, downloaded into `models/`):
 
@@ -168,7 +178,7 @@ Copy `.env.example` to `.env` to change deployment settings. Never commit `.env`
 
 ```bash
 pip install -r requirements-dev.txt                # tests and lint
-python -m pytest                                   # 719 tests, no model weights needed
+python -m pytest                                   # 776 tests, no model weights needed
 ruff check app tests scripts ml
 ```
 
