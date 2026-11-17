@@ -167,6 +167,15 @@ def require_admin(request: Request, user=Depends(current_admin)):
     return user
 
 
+def require_system(request: Request, user=Depends(require_admin)):
+    """v2.19: the system area (models, queue, evaluation, calibration, test records, technical exports) is for
+    administrators only; inspectors get 403 even with a direct URL."""
+    if getattr(user, "role", "admin") != "admin":
+        raise HTTPException(status.HTTP_403_FORBIDDEN,
+                            {"code": "admin_only", "message": "This section is restricted to administrators."})
+    return user
+
+
 def cookie_kwargs(secure: bool) -> dict:
     return dict(key=COOKIE, httponly=True, samesite="strict", secure=secure, path="/",
                 max_age=SESSION_HOURS * 3600)

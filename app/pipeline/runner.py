@@ -181,6 +181,23 @@ def _score_wire(
         return WireOutcome(**{**base, "fit": fit_info}, status="too_short", fail_reason="chord_below_precision_gate",
                            flags=flags + ["chord_below_precision_gate"])
 
+    # v2.21 measurement validity: measured, but no severity, when the span or its class cannot support one
+    if cfg.crs.require_both_endpoints and fit.truncated:
+        # the visible part's sag is kept as an unverified review cue (never a finding): a partial span that already
+        # sags into the Minor or Critical band must not let the pole read as low risk
+        if not cfg.crs.assessed_classes or det.wire_class in cfg.crs.assessed_classes:
+            lim = allowable_sag(det.wire_class, ctx, cfg.crs, cfg.engineering)
+            fit_info["unverified_level"] = risk_level(
+                catenary_risk_score(fit.sag_ratio, lim.delta_lim, cfg.crs.class_weights[det.wire_class]), cfg.crs.levels)
+        return WireOutcome(**{**base, "fit": fit_info}, status="not_assessed", fail_reason="endpoint_unavailable",
+                           flags=flags + ["endpoint_unavailable"])
+    if getattr(det, "class_status", "confident") == "uncertain" and cfg.crs.assessed_classes:
+        return WireOutcome(**{**base, "fit": fit_info}, status="not_assessed", fail_reason="class_uncertain",
+                           flags=flags + ["class_uncertain"])
+    if cfg.crs.assessed_classes and det.wire_class not in cfg.crs.assessed_classes:
+        return WireOutcome(**{**base, "fit": fit_info}, status="not_assessed", fail_reason="no_reference_for_class",
+                           flags=flags + ["no_reference_for_class"])
+
     limit = allowable_sag(det.wire_class, ctx, cfg.crs, cfg.engineering)
     w_class = cfg.crs.class_weights[det.wire_class]
     crs = catenary_risk_score(fit.sag_ratio, limit.delta_lim, w_class)
@@ -424,7 +441,8 @@ def run_analysis(
                 if wo.status == "scored" and "lens_outside_envelope" not in wo.flags:
                     wo.flags.append("lens_outside_envelope")
         rows = [{"index": wo.index, "class": wo.wire_class, "mask": d.mask,
-                 "level": None if wide is not None else wo.level, "status": wo.status}
+                 "level": None if wide is not None else wo.level, "status": wo.status, "flags": list(wo.flags),
+                 "unverified_level": None if wide is not None else (wo.fit or {}).get("unverified_level")}
                 for wo, d in zip(wires, dets, strict=True)]
         cond = cfg.engineering.conductors.get("power-distribution-lines")
         content_rows = np.flatnonzero(~(np.abs(rgb.astype(np.int16) - cfg.preprocessing.letterbox_fill) <= 3)

@@ -33,7 +33,9 @@ class Credentials(BaseModel):
 
 
 def _user_view(u: AdminUser) -> dict:
-    return {"username": u.username, "display_name": u.display_name or u.username}
+    role = getattr(u, "role", None) or "admin"
+    return {"username": u.username, "display_name": u.display_name or u.username, "role": role,
+            "can_admin": role == "admin"}
 
 
 @router.post("/login")

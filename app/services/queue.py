@@ -66,10 +66,6 @@ class AnalysisQueue:
             except asyncio.CancelledError:
                 pass
 
-    async def drain(self) -> None:
-        """Wait until every submitted analysis has finished (used by tests and CLI)."""
-        await self._queue.join()
-
     async def _run(self) -> None:
         while True:
             aid = await self._queue.get()

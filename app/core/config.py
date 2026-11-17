@@ -50,6 +50,15 @@ class Settings(BaseSettings):
     cookie_secure: bool = False  # set True behind HTTPS (WIREFRAME_COOKIE_SECURE=1)
     log_level: str = "INFO"
     start_worker: bool = True
+    # v2.19 WIREFRAME Assistant (app/assistant). provider: "auto" uses Claude when the Anthropic SDK finds
+    # credentials (ANTHROPIC_API_KEY in the server's environment), else answers from the knowledge base only;
+    # "local" never calls an external service; "anthropic" requires the API.
+    assistant_provider: str = "auto"
+    assistant_model: str = "claude-opus-5-5"
+    # Send an anonymised summary of the open inspection (counts and statuses only: no photo, pole ID, name,
+    # place, coordinates or reviewer) with the question. Off: inspection facts are shown locally only.
+    assistant_share_context: bool = True
+    assistant_per_minute: int = 12  # questions per account per minute
 
     @property
     def upload_dir(self) -> Path:
@@ -248,14 +257,30 @@ class CatenaryConfig(_Strict):
 
 
 class Levels(_Strict):
+    """CRS cut-offs. Thesis Table 1.2 form: Low < low_below <= Medium <= high_above < High. v2.21: when
+    ``minor_from`` and ``critical_from`` are set they replace it with inclusive lower bounds:
+    Within reference if CRS < minor_from, Minor sag if minor_from <= CRS < critical_from, Critical if CRS >=
+    critical_from (CRS = 10 x sag / reference, so 6 and 10 are 2.4% and 4.0% of sag at a 4.0% reference)."""
     low_below: float = 3.0
     high_above: float = 6.0
+    minor_from: float | None = None
+    critical_from: float | None = None
 
     @model_validator(mode="after")
     def _order(self) -> Levels:
         if not 0 <= self.low_below <= self.high_above <= 10:
             raise ValueError("CRS level cut-offs must satisfy 0 <= low_below <= high_above <= 10")
+        if (self.minor_from is None) != (self.critical_from is None):
+            raise ValueError("set minor_from and critical_from together")
+        if self.minor_from is not None and not 0 <= self.minor_from <= self.critical_from <= 10:
+            raise ValueError("CRS level cut-offs must satisfy 0 <= minor_from <= critical_from <= 10")
         return self
+
+    def bounds(self) -> tuple[float, float, bool]:
+        """(minor cut-off, critical cut-off, critical cut-off inclusive?)."""
+        if self.minor_from is not None:
+            return self.minor_from, self.critical_from, True
+        return self.low_below, self.high_above, False
 
 
 def _all_classes(v: dict[str, float]) -> dict[str, float]:
@@ -277,6 +302,13 @@ class CRSConfig(_Strict):
     # v2.9: chords steeper than this (deg from the image horizontal) are service drops / guy
     # wires, not pole-to-pole spans: no sag score (see Chapter 4 v2.9). 0 disables the split.
     max_span_inclination_deg: float = Field(0.0, ge=0, le=90)
+    # v2.21 measurement validity. Only classes listed here are compared with a sag reference; a wire of another
+    # class (e.g. power lines, whose reference has not been established) or of uncertain type is measured but
+    # not assessed. Empty list = every class (pre-v2.21 behaviour).
+    assessed_classes: list[str] = Field(default_factory=list)
+    # v2.21: a span whose trace reaches the photo border (an attachment point may be outside the photo) is not
+    # assessed: its chord and sag are not those of the pole-to-pole span.
+    require_both_endpoints: bool = False
 
     _v = field_validator("class_weights", "delta_lim0")(_all_classes)
 
@@ -311,6 +343,9 @@ class HazardConfig(_Strict):
     """Explainable verdict layer (app/pipeline/hazard.py). Rules, not learned thresholds."""
     enabled: bool = False
     veg_moderate_px: int = Field(15, ge=0)
+    # v2.21: NOT AT RISK needs at least this share of the measured spans to have been assessed; below it the
+    # verdict is INCONCLUSIVE (spans that run off the photo or have no reference are unknown, not safe). 0 = off.
+    min_assessed_share: float = Field(0.0, ge=0, le=1)
     loose_ends: bool = False
     loose_end_tau: float = Field(0.5, ge=0, le=1)
     border_px: int = Field(12, ge=0)

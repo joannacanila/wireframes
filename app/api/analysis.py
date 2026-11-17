@@ -10,14 +10,12 @@ from __future__ import annotations
 import mimetypes
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile, status
 from fastapi.responses import FileResponse
-from sqlalchemy import func, or_, select
-from sqlalchemy.orm import selectinload
 
-from app.core.security import client_key, current_admin, require_admin
+from app.core.security import client_key, current_admin, require_admin, require_system
 from app.core.state import AppState, get_state
-from app.models.orm import Analysis, Detection, Pole
+from app.models.orm import Analysis, Pole
 from app.pipeline.acquisition import ImageRejected
 from app.services import analysis as svc
 from app.services import sites
@@ -25,6 +23,7 @@ from app.services import sites
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 State = Annotated[AppState, Depends(get_state)]
 Admin = Annotated[object, Depends(require_admin)]
+System = Annotated[object, Depends(require_system)]
 
 
 async def _read_limited(f: UploadFile, limit: int) -> bytes:
@@ -112,37 +111,6 @@ def _summary(a: Analysis) -> dict:
     }
 
 
-@router.get("")
-def list_analyses(
-    st: State, _: Admin,
-    limit: Annotated[int, Query(ge=1, le=500)] = 50, offset: Annotated[int, Query(ge=0)] = 0,
-    status_: Annotated[str | None, Query(alias="status")] = None,
-    level: Annotated[str | None, Query(pattern="^(low|medium|high)$")] = None,
-    q: Annotated[str | None, Query(max_length=64)] = None,
-    unreviewed: bool = False,
-) -> dict:
-    with st.db.session() as s:
-        stmt = select(Analysis).join(Pole)
-        if status_:
-            stmt = stmt.where(Analysis.status == status_)
-        if q:
-            like = f"%{q.strip()}%"
-            stmt = stmt.where(or_(Pole.pole_code.ilike(like), Pole.barangay.ilike(like),
-                                  Analysis.original_filename.ilike(like)))
-        if level:
-            stmt = stmt.where(Analysis.id.in_(select(Detection.analysis_id).where(Detection.level == level)))
-        rows = s.scalars(stmt.options(selectinload(Analysis.pole), selectinload(Analysis.detections),
-                                      selectinload(Analysis.reviews)).order_by(Analysis.created_at.desc())).all()
-        items = [_summary(a) for a in rows]
-        if level:  # the worst wire decides an analysis's level
-            items = [i for i in items if i["level"] == level]
-        if unreviewed:
-            items = [i for i in items if i["review"] is None and i["status"] in ("complete", "fit_failed")]
-        total = s.scalar(select(func.count()).select_from(Analysis))
-    return {"total": total, "matched": len(items), "items": items[offset: offset + limit],
-            "queue_depth": st.queue.depth}
-
-
 def _load(st: AppState, analysis_id: str) -> Analysis:
     with st.db.session() as s:
         a = s.get(Analysis, analysis_id)
@@ -153,21 +121,25 @@ def _load(st: AppState, analysis_id: str) -> Analysis:
 
 
 @router.get("/{analysis_id}")
-def get_status(analysis_id: str, st: State) -> dict:
+def get_status(analysis_id: str, st: State, request: Request) -> dict:
     a = _load(st, analysis_id)
-    return {"id": a.id, "status": a.status, "error_code": a.error_code, "error_message": a.error_message}
+    staff = current_admin(request) is not None
+    msg = svc.scrub_paths(a.error_message) if staff else (svc.public_error(a.error_code, a.error_message) if a.error_code else None)
+    return {"id": a.id, "status": a.status, "error_code": a.error_code, "error_message": msg}
 
 
 @router.get("/{analysis_id}/result")
-def get_result(analysis_id: str, st: State) -> dict:
+def get_result(analysis_id: str, st: State, request: Request) -> dict:
     with st.db.session() as s:
         a = svc.load_analysis(s, analysis_id)
         if a is None:
             raise HTTPException(404, {"code": "not_found", "message": "Analysis not found."})
         if a.status == "processing":
             raise HTTPException(409, {"code": "processing", "message": "Analysis is still processing."})
-        rank = sites.rank_of(s, st.config, a.pole.pole_code) if a.status != "error" else None
-        return svc.serialize_result(a, st.config, rank, st.settings)
+        staff = current_admin(request) is not None
+        rank = sites.rank_of(s, st.config, a.pole.pole_code) if a.status != "error" and staff else None
+        r = svc.serialize_result(a, st.config, rank, st.settings)
+        return r if staff else svc.public_view(r)  # v2.20: technical fields only for signed-in staff
 
 
 @router.post("/{analysis_id}/guardrail")
@@ -205,7 +177,7 @@ def get_wire_mask(analysis_id: str, st: State) -> FileResponse:
 
 
 @router.post("/{analysis_id}/retry", status_code=status.HTTP_202_ACCEPTED)
-def retry(analysis_id: str, st: State, _: Admin) -> dict:
+def retry(analysis_id: str, st: State, user: Admin) -> dict:
     """Re-run a failed analysis on its stored image, e.g. after the model has been installed."""
     with st.db.session() as s:
         a = s.get(Analysis, analysis_id)
@@ -217,13 +189,15 @@ def retry(analysis_id: str, st: State, _: Admin) -> dict:
             raise HTTPException(503, {"code": "model_unavailable",
                                       "message": "The segmentation model is still not available."})
         a.status, a.error_code, a.error_message, a.completed_at = "processing", None, None, None
+        from app.services import audit
+        audit.record(s, audit.actor_of(user), "inspection.retried", a.pole.pole_code, a.id)
     st.queue.submit(analysis_id)
     return {"id": analysis_id, "status": "processing"}
 
 
 @router.delete("/{analysis_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_analysis(analysis_id: str, st: State, _: Admin) -> None:
-    """Deletes the analysis; detections, reviews and report go with it through ON DELETE CASCADE."""
+def delete_analysis(analysis_id: str, st: State, user: System) -> None:
+    """Administrators only (v2.19). Deletes the analysis; detections, reviews and report go with it through ON DELETE CASCADE."""
     files = []
     with st.db.session() as s:
         a = s.get(Analysis, analysis_id)
@@ -238,6 +212,9 @@ def delete_analysis(analysis_id: str, st: State, _: Admin) -> None:
             files.append(st.settings.report_dir / a.report.file_name)
         files.append(svc.wire_mask_path(st.settings, a.id))  # v2.11
         pole_id = a.pole_id
+        from app.services import audit
+        audit.record(s, audit.actor_of(user), "inspection.deleted", a.pole.pole_code, a.id,
+                     file=a.original_filename, status=a.status)
         s.delete(a)
         s.flush()
         pole = s.get(Pole, pole_id)

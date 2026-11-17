@@ -5,6 +5,7 @@ description = "Vision-based diagnostic framework for urban overhead wire infrast
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
+markers = ["every_class_assessed: run with the pre-v2.21 assessment policy (measurement-mechanics tests on synthetic scenes)"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"

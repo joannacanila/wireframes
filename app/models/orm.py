@@ -35,7 +35,7 @@ from app.core.config import WIRE_CLASSES  # Vegetation is stored on the analysis
 from app.core.database import Base
 
 ANALYSIS_STATUSES = ("processing", "complete", "no_wires_detected", "fit_failed", "error")
-DETECTION_STATUSES = ("scored", "too_short", "fit_failed", "service_drop")
+DETECTION_STATUSES = ("scored", "too_short", "fit_failed", "service_drop", "not_assessed")  # v2.21: measured, no severity
 LEVELS = ("low", "medium", "high")
 VNI_BANDS = ("Low", "Moderate", "High", "Severe")
 
@@ -78,6 +78,8 @@ class Pole(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     pole_code: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     barangay: Mapped[str | None] = mapped_column(String(120))
+    # v2.21: the readable label (SAL-001), stored once so other poles' changes never renumber it
+    label: Mapped[str | None] = mapped_column(String(16))
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
 
     location: Mapped[PoleLocation | None] = relationship(
@@ -111,6 +113,9 @@ class PoleLocation(Base):
     )
 
 
+RECORD_KINDS = ("operational", "test")
+
+
 class Analysis(Base):
     __tablename__ = "analyses"
 
@@ -142,6 +147,11 @@ class Analysis(Base):
     vegetation_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
     config_fingerprint: Mapped[str] = mapped_column(String(16), nullable=False)
     submitted_via: Mapped[str] = mapped_column(String(8), nullable=False, default="admin")
+    # v2.19: "operational" (a real inspection) or "test" (QA run, synthetic sample, stock photo...). NULL only
+    # on rows written before v2.19 until the startup backfill classifies them (app/services/records.py).
+    # Test records are kept, never deleted; operational views leave them out.
+    record_kind: Mapped[str | None] = mapped_column(String(12))
+    record_kind_reason: Mapped[str | None] = mapped_column(String(160))
 
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
@@ -162,6 +172,7 @@ class Analysis(Base):
         CheckConstraint(_in("segmentation_source", ("model", "annotation"), nullable=True), name="ck_seg_src"),
         CheckConstraint("width > 0 AND height > 0", name="ck_analysis_dims"),
         CheckConstraint(_in("submitted_via", ("field", "admin")), name="ck_analysis_channel"),
+        CheckConstraint(_in("record_kind", RECORD_KINDS, nullable=True), name="ck_analysis_record_kind"),
         Index("ix_analyses_pole_created", "pole_id", "created_at"),
         Index("ix_analyses_status", "status"),
     )
@@ -231,7 +242,11 @@ class Report(Base):
 
 # ----------------------------------------------------------------------------- admin portal
 
-REVIEW_DECISIONS = ("confirmed", "overridden", "dismissed")
+# v2.19: "flagged" = the reviewer asks for a further (field) inspection; the model's finding is left as computed.
+REVIEW_DECISIONS = ("confirmed", "flagged", "overridden", "dismissed")
+# v2.19: "admin" may open the system area (models, queue, evaluation, settings, test records); "inspector" uses the
+# operational portal only (dashboard, inspections, map, reviews, reports). Accounts before v2.19 are admins.
+ROLES = ("admin", "inspector")
 
 
 class AdminUser(Base):
@@ -242,10 +257,12 @@ class AdminUser(Base):
     display_name: Mapped[str | None] = mapped_column(String(120))
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    role: Mapped[str] = mapped_column(String(12), default="admin", nullable=False)
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
     last_login_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
 
-    __table_args__ = (CheckConstraint("length(username) >= 3", name="ck_admin_username"),)
+    __table_args__ = (CheckConstraint("length(username) >= 3", name="ck_admin_username"),
+                      CheckConstraint(_in("role", ROLES), name="ck_admin_role"))
 
 
 class AdminSession(Base):
@@ -301,3 +318,20 @@ class AppSetting(Base):
     value: Mapped[Any] = mapped_column(JSON, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, onupdate=_now, nullable=False)
     updated_by: Mapped[str | None] = mapped_column(String(64))
+
+
+class AuditEvent(Base):
+    """v2.20: who did what in the admin portal, and when (reviews, location changes, record re-classification,
+    bulk operations, deletions, model and settings changes, failed processing). Append-only; never edited."""
+
+    __tablename__ = "audit_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
+    actor: Mapped[str] = mapped_column(String(120), nullable=False)  # display name, or "System"
+    action: Mapped[str] = mapped_column(String(40), nullable=False)
+    target: Mapped[str | None] = mapped_column(String(64))           # pole code or analysis id
+    analysis_id: Mapped[str | None] = mapped_column(String(32))      # no FK: the event outlives a deleted record
+    detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    __table_args__ = (Index("ix_audit_at", "at"),)

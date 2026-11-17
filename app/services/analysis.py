@@ -108,14 +108,18 @@ def _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context,
             trusted: bool = True, inspection_name: str | None = None, city: str | None = None) -> str:
     """``trusted`` (an admin upload) may change an existing pole's barangay and location; an
     anonymous field upload may only fill them in where nothing is recorded yet."""
+    from app.services.barangay import resolve as resolve_barangay
+    entered = _clean(barangay) or None
+    # v2.21: only an official barangay name is stored; other text is kept as typed in the metadata, unassigned
+    official = resolve_barangay(entered, city)
     with db.session() as s:
         pole = s.scalar(select(Pole).where(Pole.pole_code == code))
         if pole is None:
-            pole = Pole(pole_code=code, barangay=(_clean(barangay) or None))
+            pole = Pole(pole_code=code, barangay=official)
             s.add(pole)
             s.flush()
-        elif barangay and (trusted or not pole.barangay):
-            pole.barangay = barangay
+        elif official and (trusted or not pole.barangay):
+            pole.barangay = official
         if trusted or s.get(PoleLocation, pole.id) is None:
             _update_location(s, pole, acq.gps, latitude, longitude)
         a = Analysis(
@@ -127,6 +131,11 @@ def _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context,
             flags_json=list(acq.flags), config_fingerprint=cfg.fingerprint,
             submitted_via="admin" if trusted else "field",
         )
+        from app.services.records import classify
+        if entered and entered != official:
+            a.metadata_json = {**(a.metadata_json or {}), "barangay_entered": entered[:120]}
+        a.record_kind, a.record_kind_reason = classify(code, entered or pole.barangay, city, inspection_name,
+                                                       a.original_filename)
         s.add(a)
         s.flush()
         return a.id
@@ -139,6 +148,9 @@ def _update_location(s: Session, pole: Pole, gps: tuple[float, float] | None,
     elif gps is not None:
         coords, source = gps, "exif"
     else:
+        return
+    from app.services.geo import problem
+    if problem(*coords):  # v2.21: an unusable fix (0,0, outside the Philippines) is not stored as the location
         return
     loc = s.get(PoleLocation, pole.id)
     if loc is None:
@@ -204,6 +216,8 @@ def _fail(db: Database, analysis_id: str, code: str, message: str) -> None:
         a = s.get(Analysis, analysis_id)
         if a is not None:
             a.status, a.error_code, a.error_message = "error", code, message[:2000]
+            from app.services import audit
+            audit.record(s, "System", "inspection.failed", a.pole.pole_code if a.pole else None, a.id, code=code)
             a.completed_at = datetime.now(UTC)
 
 
@@ -312,7 +326,8 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
     return {
         "id": a.id,
         "status": a.status,
-        "error": {"code": a.error_code, "message": a.error_message} if a.status == "error" else None,
+        "error": {"code": a.error_code, "message": scrub_paths(a.error_message),
+                  "summary": public_error(a.error_code, a.error_message)} if a.status == "error" else None,
         "created_at": a.created_at.isoformat(),
         "completed_at": a.completed_at.isoformat() if a.completed_at else None,
         "inspection": {"name": a.inspection_name, "city": a.city, "barangay": a.pole.barangay},
@@ -362,6 +377,7 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                 "catenary_curve": d.curve_json, "fit": d.fit_json,
                 "chord_px": d.chord_px, "sag_px": d.sag_px, "sag_ratio": d.sag_ratio,
                 "delta_lim": d.delta_lim, "delta_lim0": d.delta_lim0, "crs": d.crs, "level": d.level,
+                "sag_bands": sag_bands(cfg, d.wire_class, d.delta_lim),
                 "flags": d.flags_json,
                 # v2.16: one class per strand; "uncertain" when the class evidence is split (no forced type)
                 "class_status": "uncertain" if "class_uncertain" in (d.flags_json or []) else "confident",
@@ -381,6 +397,10 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
         "timings_ms": a.timings_json,
         "parameters": {"fingerprint": a.config_fingerprint, "provisional": cfg.provisional_blocks(),
                        "current_fingerprint": cfg.fingerprint,
+                       # v2.20: the readable version is known only while the parameters are unchanged; older runs show
+                       # "Outdated configuration" with the exact hash, never a guessed version
+                       "config_version": cfg.version if a.config_fingerprint == cfg.fingerprint else None,
+                       "current_config_version": cfg.version,
                        "hazard_rule": {"sag_rule": cfg.hazard.sag_rule, "p0_high": cfg.hazard.p0_high,
                                        "p0_medium": cfg.hazard.p0_medium, "alpha": cfg.hazard.alpha},
                        "min_chord_px": cfg.crs.min_chord_px},
@@ -391,8 +411,66 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
     }
 
 
-def outcome_dict(o: AnalysisOutcome) -> dict[str, Any]:
-    return _jsonable(asdict(o))
+# --------------------------------------------------------------------------- v2.20 public view and safe errors
+ERROR_TEXT = {
+    "model_unavailable": "Model weights unavailable. Contact the system administrator.",
+    "undecodable": "The file could not be read as a photo.",
+    "too_small": "The photo is too small to screen.",
+}
+_PATH = re.compile(r"(?:[A-Za-z]:\\|/)(?:[^\s/\\:]+[/\\])+([^\s/\\:]+)")
+
+
+def scrub_paths(text: str | None) -> str | None:
+    """Replace absolute file-system paths with the bare file name (no user names, folders or drive letters)."""
+    return None if text is None else _PATH.sub(lambda m: m.group(1), text)
+
+
+def sag_bands(cfg, wire_class: str, delta_lim: float | None) -> dict[str, float] | None:
+    """The sag ratios where this wire's level changes, from the configured CRS cut-offs (Equation 10:
+    CRS = 10 x sag / delta_lim x w_class). v2.21: ``minor_from`` and ``critical_from`` are the lower bounds of Minor
+    sag and Critical (inclusive when the configuration says so). The level itself is the one stored with the wire;
+    these numbers only draw the meter and the PDF footnote, so no client re-implements the rule."""
+    if not delta_lim:
+        return None
+    w = cfg.crs.class_weights.get(wire_class, 1.0) or 1.0
+    minor, critical, inclusive = cfg.crs.levels.bounds()
+    return {"minor_from": round(minor / 10 * delta_lim / w, 6), "critical_from": round(critical / 10 * delta_lim / w, 6),
+            "critical_inclusive": inclusive}
+
+
+def public_error(code: str | None, message: str | None) -> str:
+    return ERROR_TEXT.get(code or "", "The photo could not be processed. Try again, or contact the administrator.")
+
+
+_PUBLIC_WIRE = ("index", "class", "status", "bbox", "mask_polygons", "centerline", "catenary_curve", "sag_ratio",
+                "delta_lim", "sag_bands", "level", "flags", "class_status", "reason_code", "reason_short", "notes", "action",
+                "veg_clearance", "provenance")
+
+
+def public_view(r: dict[str, Any]) -> dict[str, Any]:
+    """The result as the public result page needs it (v2.20). Scores, fit parameters, model names, configuration
+    hashes, timings, EXIF metadata and the priority ranking are removed server-side; signed-in staff get the full
+    record. Drawing geometry and the measured sag / reference limit stay (the page shows them)."""
+    out = {k: r.get(k) for k in ("id", "status", "created_at", "completed_at", "inspection", "pole", "submitted_via",
+                                 "image", "vegetation", "wire_mask", "guardrail", "flags")}
+    out["reviews"] = [{"decision": x["decision"], "by": x["by"], "at": x["at"]} for x in r.get("reviews") or []]
+    if r.get("error"):
+        out["error"] = {"code": r["error"]["code"], "message": public_error(r["error"]["code"], r["error"]["message"])}
+    hz = r.get("hazard") or {}
+    out["hazard"] = {"verdict": hz.get("verdict"), "factors": {"vegetation": (hz.get("factors") or {}).get("vegetation") or []},
+                     # v2.21: why a result is incomplete (plain words, no scores), so the page never implies safety
+                     "reasons": [x for x in hz.get("reasons") or [] if x.startswith("INCONCLUSIVE")]} if hz else None
+    q = r.get("quality") or {}
+    out["quality"] = {"grade": q.get("grade"), "reason": q.get("reason")} if q else None
+    out["scene"] = {"poles_detected": (r.get("scene") or {}).get("poles_detected") or []}
+    out["wires"] = []
+    for w in r.get("wires") or []:
+        x = {k: w.get(k) for k in _PUBLIC_WIRE}
+        f = w.get("fit") or {}
+        x["fit"] = {k: f[k] for k in ("endpoints", "sag_point", "chord_foot") if k in f}  # drawing only
+        out["wires"].append(x)
+    out["public"] = True
+    return out
 
 
 GUARDRAIL_ACTIONS = ("proceed", "retake")

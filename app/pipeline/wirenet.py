@@ -100,16 +100,57 @@ def load_wirenet(path: Path, device: str = "cpu"):
 
 def predict_probs(model, rgb_u8: np.ndarray, device: str) -> np.ndarray:
     """C x H x W class probabilities at the input resolution (padded to a multiple of 32)."""
-    import torch
 
     h, w = rgb_u8.shape[:2]
     H, W = math.ceil(h / 32) * 32, math.ceil(w / 32) * 32
     x = np.full((H, W, 3), 114, np.uint8)
     x[:h, :w] = rgb_u8
     x = ((x.astype(np.float32) / 255.0 - MEAN) / STD).transpose(2, 0, 1)[None]
+    return _probs_lowmem(model, np.ascontiguousarray(x), device)[0, :, :h, :w]
+
+
+def predict_probs_flip(model, rgb_u8: np.ndarray, device: str) -> tuple[np.ndarray, np.ndarray]:
+    """v2.20: the photo and its mirror image in ONE batched forward pass (one transfer back from the device instead
+    of two). Returns (p, p_mirror) with p_mirror flipped back to the photo's orientation; the same numbers as two
+    predict_probs calls, up to float rounding (tests/test_v220_speed.py)."""
+
+    h, w = rgb_u8.shape[:2]
+    H, W = math.ceil(h / 32) * 32, math.ceil(w / 32) * 32
+    x = np.full((2, H, W, 3), 114, np.uint8)
+    x[0, :h, :w] = rgb_u8
+    x[1, :h, :w] = rgb_u8[:, ::-1]
+    x = ((x.astype(np.float32) / 255.0 - MEAN) / STD).transpose(0, 3, 1, 2)
+    p = _probs_lowmem(model, np.ascontiguousarray(x), device)[:, :, :h, :w]
+    return p[0], np.ascontiguousarray(p[1][:, :, ::-1])
+
+
+def _probs_lowmem(model, x: np.ndarray, device: str) -> np.ndarray:
+    """v2.21: class probabilities for a batch, one image and one ensemble member at a time.
+
+    The fused forward pass ran three networks on a 1024 x 1024 photo and its mirror in one batch: about 4.8 GB of
+    GPU memory, which on an 8 GB Apple M1 pushed unified memory into swap and made one call take 3 to 35 s instead
+    of about 1 s. The ensemble output is the weighted sum of the members' softmax probabilities (FusedWireNet), so
+    summing them member by member gives the same numbers (tests/test_v221_speed.py) at about a sixth of the peak
+    memory."""
+    import torch
+
+    members = list(zip(model.nets, model.weights, strict=True)) if hasattr(model, "nets") else [(model, 1.0)]
+    rows = []
     with torch.no_grad():
-        p = model(torch.from_numpy(np.ascontiguousarray(x)).to(device)).softmax(1)[0, :, :h, :w]
-    return p.float().cpu().numpy()
+        for i in range(x.shape[0]):
+            xi = torch.from_numpy(x[i: i + 1]).to(device)
+            acc = None
+            for net, wgt in members:
+                p = net(xi).softmax(1) * wgt
+                acc = p if acc is None else acc + p
+                del p
+            if len(members) > 1:  # FusedWireNet returns log(p); its softmax renormalises: p / sum(p)
+                acc = acc / acc.sum(1, keepdim=True)
+            rows.append(acc.float().cpu().numpy()[0])
+            del xi, acc
+        if device == "mps":
+            torch.mps.empty_cache()
+    return np.stack(rows)
 
 
 def predict_probs_tta(model, rgb_u8: np.ndarray, device: str, mode: str = "none") -> np.ndarray:
@@ -257,8 +298,7 @@ class HybridSegmenter:
     def _infer(self, x: np.ndarray) -> tuple[np.ndarray, dict]:
         """WireNet probabilities (with the configured TTA) and their uncertainty summary."""
         if self.tta == "flip":
-            p1 = predict_probs(self._net, x, self._device)
-            p2 = predict_probs(self._net, np.ascontiguousarray(x[:, ::-1]), self._device)[:, :, ::-1]
+            p1, p2 = predict_probs_flip(self._net, x, self._device)  # v2.20: one batched pass
             return (p1 + p2) / 2, uncertainty(p1, p2)
         probs = predict_probs_tta(self._net, x, self._device, self.tta)
         return probs, uncertainty(probs)

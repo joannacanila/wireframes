@@ -82,12 +82,6 @@ class Enhanced:
         return [f"enhanced:{s}" for s in self.applied]
 
 
-def _work_copy(gray: np.ndarray, long_side: int = 1024) -> np.ndarray:
-    h, w = gray.shape
-    s = long_side / max(h, w)
-    return gray if s >= 1 else cv2.resize(gray, (round(w * s), round(h * s)), interpolation=cv2.INTER_AREA)
-
-
 def noise_sigma(gray: np.ndarray) -> float:
     """Immerkaer (1996): sigma = sqrt(pi/2) / (6 (W-2)(H-2)) * sum |I * N|."""
     g = gray.astype(np.float64)

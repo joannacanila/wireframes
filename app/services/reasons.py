@@ -16,6 +16,13 @@ REASONS = {
     "no_convergence": "Curve fit did not converge",
     "degenerate": "Too straight or too short a baseline to estimate curvature",
     "service_drop": "Steep service drop or guy wire: not a pole-to-pole span, not scored for sag",
+    # v2.21 measurement validity (the wire was traced and measured, but the measurement cannot support a severity)
+    "endpoint_unavailable": ("Not assessed: endpoint unavailable. The trace reaches the edge of the photo, so at "
+                             "least one pole attachment is not visible and the full span cannot be measured"),
+    "class_uncertain": ("Not assessed: uncertain infrastructure type. The photo does not show clearly whether "
+                        "this is a power line or a telecom cable, so no sag reference applies"),
+    "no_reference_for_class": ("Not assessed: no configured sag reference for this wire type. Power distribution "
+                               "lines need their own engineering reference; the telecom limit is not applied"),
 }
 # v2.14: the table label for each code (field reading); the full sentence above stays in the API and the detail view
 REASONS_SHORT = {
@@ -27,6 +34,9 @@ REASONS_SHORT = {
     "no_convergence": "Curve fit failed",
     "degenerate": "Baseline too short or straight",
     "service_drop": "Service drop (not scored)",
+    "endpoint_unavailable": "Endpoint unavailable",
+    "class_uncertain": "Uncertain infrastructure type",
+    "no_reference_for_class": "No reference for power lines",
 }
 
 
@@ -90,6 +100,8 @@ def wire_action(status: str, fail_reason: str | None, flags: list[str] | None, b
         return "Shoot from a few metres along the street, where this wire does not cross others"
     if fail_reason in ("no_convergence", "degenerate"):
         return "Shoot the span from the side, so its sag is visible against the sky"
+    if fail_reason == "endpoint_unavailable":
+        return "Step back so both poles of this span are in the frame"
     return None
 
 

@@ -40,9 +40,6 @@ class Letterbox:
         )
         return out
 
-    def point_to_original(self, x: float, y: float) -> tuple[float, float]:
-        return (x - self.pad_x) / self.scale, (y - self.pad_y) / self.scale
-
 
 @dataclass(frozen=True)
 class Preprocessed:

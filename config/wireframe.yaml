@@ -119,8 +119,8 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   # v2.16 pole detector (app/pipeline/poles.py; YOLO11n fine-tuned by ml/poles/train.py on Zenodo 20091961). Context
   # only: pole boxes are reported and wire ends at a pole are counted; a pole never creates or joins a wire unless
   # pole_occluder_gap > 0.
-  # v2.18, enabled at the project owner's request (17 Nov 2026) although the 75 % gate is not met (LVIS test
-  # medium+large P 0.620 / F1 0.564; no pole labels on WIREFRAME photos). Context only; joining stays off. Threshold
+  # v2.18, enabled at the project owner's request (17 Nov 2026). Held-out LVIS test, medium+large poles: P 0.620 /
+  # F1 0.564; no pole labels exist on WIREFRAME photos. Context only; joining stays off. Threshold
   # 0.25 chosen on LVIS val. The weights download from the model-weights branch (app/core/weights.py); if missing,
   # detection fails soft (no boxes).
   pole_weights: models/poles-yolo11n-v218.pt
@@ -188,9 +188,18 @@ crs:                              # Section 3.6.5, Equation 10, Table 1.2
     abandoned-wire: 0.040
     power-distribution-lines: 0.040
     telecom-cable: 0.040
-  levels:                         # Low < 3.0 <= Medium <= 6.0 < High
+  levels:                         # thesis Table 1.2: Low < 3.0 <= Medium <= 6.0 < High
     low_below: 3.0
     high_above: 6.0
+    # v2.21 (project decision, 2026-11-17): inclusive lower bounds. With the 4.0% telecom reference:
+    # sag < 2.4% Within reference, 2.4% <= sag < 4.0% Minor sag, sag >= 4.0% Critical.
+    minor_from: 6.0
+    critical_from: 10.0
+  # v2.21: only telecom and abandoned (detached telecom) wires have a configured reference. Power distribution
+  # lines need their own engineering reference before they can be assessed; they are measured, not assessed.
+  assessed_classes: [telecom-cable, abandoned-wire]
+  # v2.21: a trace that reaches the photo border is not a complete pole-to-pole span: not assessed
+  require_both_endpoints: true
   # v2.8 measurement-precision gate: CRS only when sigma / L <= f * delta_lim, with sigma = 1 px
   # skeleton noise, f = 0.25, delta_lim = 0.040 -> L >= 100 px. Shorter spans: status too_short.
   min_chord_px: 100.0
@@ -242,6 +251,9 @@ vegetation:                       # revised taxonomy (2026-11-14); not a Chapter
 hazard:                           # v2.8 explainable verdict on top of CRS (app/pipeline/hazard.py)
   enabled: true
   veg_moderate_px: 15             # power within 15 px of vegetation -> MODERATE; contact -> HIGH (team rule)
+  # v2.21: a pole is NOT AT RISK only if at least half of its measured spans could be assessed; otherwise
+  # INCONCLUSIVE (a span with no visible endpoint or no reference is unknown, not safe). A policy choice, not tuned.
+  min_assessed_share: 0.5
   loose_ends: false               # off: ~10 candidates per photo, mostly mask gaps and hardware terminations (Chapter 4 v2.8)
   loose_end_tau: 0.5
   border_px: 12

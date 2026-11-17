@@ -42,6 +42,8 @@ from scipy import ndimage as ndi
 
 HIGH, MODERATE, NOT = "AT RISK - HIGH", "AT RISK - MODERATE", "NOT AT RISK"
 INCONCLUSIVE = "INCONCLUSIVE - RETAKE PHOTO"
+_NOT_ASSESSED = {"endpoint_unavailable": "run off the photo (endpoint not visible)",
+                 "class_uncertain": "of uncertain type", "no_reference_for_class": "power lines without a sag reference"}
 _RANK = {NOT: 0, MODERATE: 1, HIGH: 2}
 
 
@@ -222,6 +224,29 @@ def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[in
         if drops:
             parts.insert(1, f"{len(drops)} steep service drop{'s' if len(drops) > 1 else ''} (not scored for sag)")
         reasons.append(NOT + ": " + "; ".join(parts))
+    # v2.21: spans measured but not assessed (no visible endpoint, uncertain type, no reference for the class)
+    unassessed = [w for w in wires if w["status"] == "not_assessed"]
+    if unassessed:
+        why: dict[str, int] = {}
+        for w in unassessed:
+            k = next((x for x in w.get("flags") or [] if x in _NOT_ASSESSED), "not_assessed")
+            why[k] = why.get(k, 0) + 1
+        f["not_assessed"] = why
+        share = len(scored) / max(1, len(scored) + len(unassessed))
+        detail = "; ".join(f"{n} {_NOT_ASSESSED.get(k, k)}" for k, n in sorted(why.items(), key=lambda x: -x[1]))
+        need = getattr(rule, "min_assessed_share", 0.0)
+        cue = sorted(w["index"] for w in unassessed if w.get("unverified_level") in ("medium", "high"))
+        if verdict == NOT and need and cue:
+            verdict = INCONCLUSIVE
+            reasons.insert(0, f"{INCONCLUSIVE}: {_spans(cue)} run off the photo and the visible part already sags at "
+                              "the Minor or Critical level; the full span could not be measured, so verify on site")
+        elif verdict == NOT and need and share < need:
+            verdict = INCONCLUSIVE
+            reasons.insert(0, f"{INCONCLUSIVE}: only {len(scored)} of {len(scored) + len(unassessed)} measured spans "
+                              f"could be assessed ({detail}); the rest are unknown, not low risk")
+        else:
+            notes.append(f"NOTE: {len(unassessed)} measured span{'s' if len(unassessed) > 1 else ''} not assessed "
+                         f"({detail})")
     reasons.extend(notes)
     hz = Hazard(verdict, reasons, f)
     # v2.11: every span's closest vegetation (the factors keep the 10 closest); not part of as_dict()

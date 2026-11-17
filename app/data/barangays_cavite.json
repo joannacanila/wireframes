@@ -1,0 +1,3323 @@
+{
+"source": "Philippine Standard Geographic Code (PSA), via https://psgc.gitlab.io/api/provinces/042100000/barangays/",
+"retrieved": "2026-11-17",
+"province": "Cavite",
+"barangays": [
+{
+"name": "A. Dalusag",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Acacia",
+"city": "Silang"
+},
+{
+"name": "Adlas",
+"city": "Silang"
+},
+{
+"name": "Aguado",
+"city": "City of Trece Martires"
+},
+{
+"name": "Agus-us",
+"city": "Indang"
+},
+{
+"name": "Alapan I-A",
+"city": "City of Imus"
+},
+{
+"name": "Alapan I-B",
+"city": "City of Imus"
+},
+{
+"name": "Alapan I-C",
+"city": "City of Imus"
+},
+{
+"name": "Alapan II-A",
+"city": "City of Imus"
+},
+{
+"name": "Alapan II-B",
+"city": "City of Imus"
+},
+{
+"name": "Aldiano Olaes",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Alima",
+"city": "City of Bacoor"
+},
+{
+"name": "Alingaro",
+"city": "City of General Trias"
+},
+{
+"name": "Alulod",
+"city": "Indang"
+},
+{
+"name": "Amaya I",
+"city": "Tanza"
+},
+{
+"name": "Amaya II",
+"city": "Tanza"
+},
+{
+"name": "Amaya III",
+"city": "Tanza"
+},
+{
+"name": "Amaya IV",
+"city": "Tanza"
+},
+{
+"name": "Amaya V",
+"city": "Tanza"
+},
+{
+"name": "Amaya VI",
+"city": "Tanza"
+},
+{
+"name": "Amaya VII",
+"city": "Tanza"
+},
+{
+"name": "Amuyong",
+"city": "Alfonso"
+},
+{
+"name": "Anabu I-A",
+"city": "City of Imus"
+},
+{
+"name": "Anabu I-B",
+"city": "City of Imus"
+},
+{
+"name": "Anabu I-C",
+"city": "City of Imus"
+},
+{
+"name": "Anabu I-D",
+"city": "City of Imus"
+},
+{
+"name": "Anabu I-E",
+"city": "City of Imus"
+},
+{
+"name": "Anabu I-F",
+"city": "City of Imus"
+},
+{
+"name": "Anabu I-G",
+"city": "City of Imus"
+},
+{
+"name": "Anabu II-A",
+"city": "City of Imus"
+},
+{
+"name": "Anabu II-B",
+"city": "City of Imus"
+},
+{
+"name": "Anabu II-C",
+"city": "City of Imus"
+},
+{
+"name": "Anabu II-D",
+"city": "City of Imus"
+},
+{
+"name": "Anabu II-E",
+"city": "City of Imus"
+},
+{
+"name": "Anabu II-F",
+"city": "City of Imus"
+},
+{
+"name": "Anahaw I",
+"city": "Silang"
+},
+{
+"name": "Anahaw II",
+"city": "Silang"
+},
+{
+"name": "Aniban I",
+"city": "City of Bacoor"
+},
+{
+"name": "Aniban II",
+"city": "City of Bacoor"
+},
+{
+"name": "Aniban III",
+"city": "City of Bacoor"
+},
+{
+"name": "Aniban IV",
+"city": "City of Bacoor"
+},
+{
+"name": "Aniban V",
+"city": "City of Bacoor"
+},
+{
+"name": "Anuling Cerca I",
+"city": "Mendez"
+},
+{
+"name": "Anuling Cerca II",
+"city": "Mendez"
+},
+{
+"name": "Anuling Lejos I",
+"city": "Mendez"
+},
+{
+"name": "Anuling Lejos II",
+"city": "Mendez"
+},
+{
+"name": "Arnaldo Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Asis I",
+"city": "Mendez"
+},
+{
+"name": "Asis II",
+"city": "Mendez"
+},
+{
+"name": "Asis III",
+"city": "Mendez"
+},
+{
+"name": "Asisan",
+"city": "City of Tagaytay"
+},
+{
+"name": "Bacao I",
+"city": "City of General Trias"
+},
+{
+"name": "Bacao II",
+"city": "City of General Trias"
+},
+{
+"name": "Bagbag I",
+"city": "Rosario"
+},
+{
+"name": "Bagbag II",
+"city": "Rosario"
+},
+{
+"name": "Bagong Karsada",
+"city": "Naic"
+},
+{
+"name": "Bagong Silang",
+"city": "City of Imus"
+},
+{
+"name": "Bagong Tubig",
+"city": "City of Tagaytay"
+},
+{
+"name": "Bagtas",
+"city": "Tanza"
+},
+{
+"name": "Bagumbayan Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Balite I",
+"city": "Silang"
+},
+{
+"name": "Balite II",
+"city": "Silang"
+},
+{
+"name": "Baliwag",
+"city": "Magallanes"
+},
+{
+"name": "Balsahan",
+"city": "Naic"
+},
+{
+"name": "Balsahan-Bisita",
+"city": "Kawit"
+},
+{
+"name": "Balubad",
+"city": "Silang"
+},
+{
+"name": "Banaba",
+"city": "Silang"
+},
+{
+"name": "Banaba Cerca",
+"city": "Indang"
+},
+{
+"name": "Banaba Lejos",
+"city": "Indang"
+},
+{
+"name": "Banalo",
+"city": "City of Bacoor"
+},
+{
+"name": "Banayad",
+"city": "Mendez"
+},
+{
+"name": "Banaybanay",
+"city": "Amadeo"
+},
+{
+"name": "Bancaan",
+"city": "Naic"
+},
+{
+"name": "Bancal",
+"city": "Carmona"
+},
+{
+"name": "Bancod",
+"city": "Indang"
+},
+{
+"name": "Barangay 1",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 1 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 1 (Pob.)",
+"city": "Indang"
+},
+{
+"name": "Barangay 1 (Pob.)",
+"city": "Magallanes"
+},
+{
+"name": "Barangay 1 Poblacion",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Barangay 10",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 10-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 10-B",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 11",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 12",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 13",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 14",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 15",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 16",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 17",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 18",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 19",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 2",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 2 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 2 (Pob.)",
+"city": "Indang"
+},
+{
+"name": "Barangay 2 (Pob.)",
+"city": "Magallanes"
+},
+{
+"name": "Barangay 2 Poblacion",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Barangay 20",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 21",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 22",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 22-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 23",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 24",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 25",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 26",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 27",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 28",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 29",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 29-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 3",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 3 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 3 (Pob.)",
+"city": "Indang"
+},
+{
+"name": "Barangay 3 (Pob.)",
+"city": "Magallanes"
+},
+{
+"name": "Barangay 3 Poblacion",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Barangay 30",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 31",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 32",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 33",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 34",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 35",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 36",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 36-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 37",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 37-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 38",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 38-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 39",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 4",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 4 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 4 (Pob.)",
+"city": "Indang"
+},
+{
+"name": "Barangay 4 (Pob.)",
+"city": "Magallanes"
+},
+{
+"name": "Barangay 4 Poblacion",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Barangay 40",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 41",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 42",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 42-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 42-B",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 42-C",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 43",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 44",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 45",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 45-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 46",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 47",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 47-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 47-B",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 48",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 48-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 49",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 49-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 5",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 5 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 5 (Pob.)",
+"city": "Magallanes"
+},
+{
+"name": "Barangay 5 Poblacion",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Barangay 50",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 51",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 52",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 53",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 53-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 53-B",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 54",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 54-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 55",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 56",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 57",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 58",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 58-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 59",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 6",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 6 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 60",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 61",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 61-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 62",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 62-A",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 62-B",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 7",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 7 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 8",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay 8 (Pob.)",
+"city": "Carmona"
+},
+{
+"name": "Barangay 9",
+"city": "City of Cavite"
+},
+{
+"name": "Barangay I (Pob.)",
+"city": "Alfonso"
+},
+{
+"name": "Barangay I (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay I (Pob.)",
+"city": "Silang"
+},
+{
+"name": "Barangay I (Pob.)",
+"city": "Tanza"
+},
+{
+"name": "Barangay II (Pob.)",
+"city": "Alfonso"
+},
+{
+"name": "Barangay II (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay II (Pob.)",
+"city": "Silang"
+},
+{
+"name": "Barangay II (Pob.)",
+"city": "Tanza"
+},
+{
+"name": "Barangay III (Pob.)",
+"city": "Alfonso"
+},
+{
+"name": "Barangay III (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay III (Pob.)",
+"city": "Silang"
+},
+{
+"name": "Barangay III (Pob.)",
+"city": "Tanza"
+},
+{
+"name": "Barangay IV (Pob.)",
+"city": "Alfonso"
+},
+{
+"name": "Barangay IV (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay IV (Pob.)",
+"city": "Silang"
+},
+{
+"name": "Barangay IV (Pob.)",
+"city": "Tanza"
+},
+{
+"name": "Barangay IX (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay V (Pob.)",
+"city": "Alfonso"
+},
+{
+"name": "Barangay V (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay V (Pob.)",
+"city": "Silang"
+},
+{
+"name": "Barangay VI (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay VII (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay VIII (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay X (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay XI (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Barangay XII (Pob.)",
+"city": "Amadeo"
+},
+{
+"name": "Batas",
+"city": "Silang"
+},
+{
+"name": "Batas Dao",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Batong Dalig",
+"city": "Kawit"
+},
+{
+"name": "Bayan Luma I",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma II",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma III",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma IV",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma IX",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma V",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma VI",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma VII",
+"city": "City of Imus"
+},
+{
+"name": "Bayan Luma VIII",
+"city": "City of Imus"
+},
+{
+"name": "Bayanan",
+"city": "City of Bacoor"
+},
+{
+"name": "Bendita I",
+"city": "Magallanes"
+},
+{
+"name": "Bendita II",
+"city": "Magallanes"
+},
+{
+"name": "Benjamin Tirona",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Bernardo Pulido",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Biclatan",
+"city": "City of General Trias"
+},
+{
+"name": "Biga",
+"city": "Tanza"
+},
+{
+"name": "Biga I",
+"city": "Silang"
+},
+{
+"name": "Biga II",
+"city": "Silang"
+},
+{
+"name": "Bilog",
+"city": "Alfonso"
+},
+{
+"name": "Biluso",
+"city": "Silang"
+},
+{
+"name": "Binakayan-Aplaya",
+"city": "Kawit"
+},
+{
+"name": "Binakayan-Kanluran",
+"city": "Kawit"
+},
+{
+"name": "Biwas",
+"city": "Tanza"
+},
+{
+"name": "Bucal",
+"city": "Amadeo"
+},
+{
+"name": "Bucal",
+"city": "Silang"
+},
+{
+"name": "Bucal",
+"city": "Tanza"
+},
+{
+"name": "Bucal I",
+"city": "Maragondon"
+},
+{
+"name": "Bucal II",
+"city": "Maragondon"
+},
+{
+"name": "Bucal III A",
+"city": "Maragondon"
+},
+{
+"name": "Bucal III B",
+"city": "Maragondon"
+},
+{
+"name": "Bucal IV A",
+"city": "Maragondon"
+},
+{
+"name": "Bucal IV B",
+"city": "Maragondon"
+},
+{
+"name": "Bucana",
+"city": "Ternate"
+},
+{
+"name": "Bucana Malaki",
+"city": "Naic"
+},
+{
+"name": "Bucana Sasahan",
+"city": "Naic"
+},
+{
+"name": "Bucandala I",
+"city": "City of Imus"
+},
+{
+"name": "Bucandala II",
+"city": "City of Imus"
+},
+{
+"name": "Bucandala III",
+"city": "City of Imus"
+},
+{
+"name": "Bucandala IV",
+"city": "City of Imus"
+},
+{
+"name": "Bucandala V",
+"city": "City of Imus"
+},
+{
+"name": "Buck Estate",
+"city": "Alfonso"
+},
+{
+"name": "Buenavista I",
+"city": "City of General Trias"
+},
+{
+"name": "Buenavista II",
+"city": "City of General Trias"
+},
+{
+"name": "Buenavista III",
+"city": "City of General Trias"
+},
+{
+"name": "Buhay na Tubig",
+"city": "City of Imus"
+},
+{
+"name": "Buho",
+"city": "Amadeo"
+},
+{
+"name": "Buho",
+"city": "Silang"
+},
+{
+"name": "Bukal",
+"city": "Mendez"
+},
+{
+"name": "Bulihan",
+"city": "Silang"
+},
+{
+"name": "Buna Cerca",
+"city": "Indang"
+},
+{
+"name": "Buna Lejos I",
+"city": "Indang"
+},
+{
+"name": "Buna Lejos II",
+"city": "Indang"
+},
+{
+"name": "Bunga",
+"city": "Tanza"
+},
+{
+"name": "Burol",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Burol I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Burol II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Burol III",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Cabangaan",
+"city": "Silang"
+},
+{
+"name": "Cabezas",
+"city": "City of Trece Martires"
+},
+{
+"name": "Cabilang Baybay",
+"city": "Carmona"
+},
+{
+"name": "Cabuco",
+"city": "City of Trece Martires"
+},
+{
+"name": "Caingin Pob.",
+"city": "Maragondon"
+},
+{
+"name": "Calabuso",
+"city": "City of Tagaytay"
+},
+{
+"name": "Calibuyo",
+"city": "Tanza"
+},
+{
+"name": "Caluangan",
+"city": "Magallanes"
+},
+{
+"name": "Calubcob",
+"city": "Naic"
+},
+{
+"name": "Calumpang Cerca",
+"city": "Indang"
+},
+{
+"name": "Calumpang Lejos I",
+"city": "Indang"
+},
+{
+"name": "Campo Santo",
+"city": "City of Bacoor"
+},
+{
+"name": "Capipisa",
+"city": "Tanza"
+},
+{
+"name": "Capt. C. Nazareno (Pob.)",
+"city": "Naic"
+},
+{
+"name": "Carasuchi",
+"city": "Indang"
+},
+{
+"name": "Carmen",
+"city": "Silang"
+},
+{
+"name": "Carsadang Bago I",
+"city": "City of Imus"
+},
+{
+"name": "Carsadang Bago II",
+"city": "City of Imus"
+},
+{
+"name": "Castaños Cerca",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Castaños Lejos",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Conchu",
+"city": "City of Trece Martires"
+},
+{
+"name": "Congbalay-Legaspi",
+"city": "Kawit"
+},
+{
+"name": "Corregidor Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Daang Amaya I",
+"city": "Tanza"
+},
+{
+"name": "Daang Amaya II",
+"city": "Tanza"
+},
+{
+"name": "Daang Amaya III",
+"city": "Tanza"
+},
+{
+"name": "Daang Bukid",
+"city": "City of Bacoor"
+},
+{
+"name": "Dagatan",
+"city": "Amadeo"
+},
+{
+"name": "Daine I",
+"city": "Indang"
+},
+{
+"name": "Daine II",
+"city": "Indang"
+},
+{
+"name": "Dapdap East",
+"city": "City of Tagaytay"
+},
+{
+"name": "Dapdap West",
+"city": "City of Tagaytay"
+},
+{
+"name": "Datu Esmael",
+"city": "City of Dasmariñas"
+},
+{
+"name": "De Ocampo",
+"city": "City of Trece Martires"
+},
+{
+"name": "Digman",
+"city": "City of Bacoor"
+},
+{
+"name": "Dulong Bayan",
+"city": "City of Bacoor"
+},
+{
+"name": "Dulong Bayan Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Emmanuel Bergado I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Emmanuel Bergado II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Epifanio Malia",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Esperanza Ibaba",
+"city": "Alfonso"
+},
+{
+"name": "Esperanza Ilaya",
+"city": "Alfonso"
+},
+{
+"name": "Fatima I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Fatima II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Fatima III",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Fiorello Calimag",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Francisco",
+"city": "City of Tagaytay"
+},
+{
+"name": "Francisco De Castro",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Francisco Reyes",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Gahak",
+"city": "Kawit"
+},
+{
+"name": "Galicia I",
+"city": "Mendez"
+},
+{
+"name": "Galicia II",
+"city": "Mendez"
+},
+{
+"name": "Galicia III",
+"city": "Mendez"
+},
+{
+"name": "Garita I A",
+"city": "Maragondon"
+},
+{
+"name": "Garita I B",
+"city": "Maragondon"
+},
+{
+"name": "Gavino Maderan",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Gomez-Zamora (Pob.)",
+"city": "Naic"
+},
+{
+"name": "Gov. Ferrer Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Gregoria De Jesus",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Gregorio",
+"city": "City of Trece Martires"
+},
+{
+"name": "Guinhawa North",
+"city": "City of Tagaytay"
+},
+{
+"name": "Guinhawa South",
+"city": "City of Tagaytay"
+},
+{
+"name": "Guyam Malaki",
+"city": "Indang"
+},
+{
+"name": "Guyam Munti",
+"city": "Indang"
+},
+{
+"name": "H-2",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Habay I",
+"city": "City of Bacoor"
+},
+{
+"name": "Habay II",
+"city": "City of Bacoor"
+},
+{
+"name": "Halang",
+"city": "Amadeo"
+},
+{
+"name": "Halang",
+"city": "Naic"
+},
+{
+"name": "Halayhay",
+"city": "Tanza"
+},
+{
+"name": "Harasan",
+"city": "Indang"
+},
+{
+"name": "Hoyo",
+"city": "Silang"
+},
+{
+"name": "Hukay",
+"city": "Silang"
+},
+{
+"name": "Humbac",
+"city": "Naic"
+},
+{
+"name": "Iba",
+"city": "Silang"
+},
+{
+"name": "Ibayo Estacion",
+"city": "Naic"
+},
+{
+"name": "Ibayo Silangan",
+"city": "Naic"
+},
+{
+"name": "Inchican",
+"city": "Silang"
+},
+{
+"name": "Inocencio",
+"city": "City of Trece Martires"
+},
+{
+"name": "Inocencio Salud",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Ipil I",
+"city": "Silang"
+},
+{
+"name": "Ipil II",
+"city": "Silang"
+},
+{
+"name": "Iruhin East",
+"city": "City of Tagaytay"
+},
+{
+"name": "Iruhin South",
+"city": "City of Tagaytay"
+},
+{
+"name": "Iruhin West",
+"city": "City of Tagaytay"
+},
+{
+"name": "Jacinto Lumbreras",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Javalera",
+"city": "City of General Trias"
+},
+{
+"name": "Julugan I",
+"city": "Tanza"
+},
+{
+"name": "Julugan II",
+"city": "Tanza"
+},
+{
+"name": "Julugan III",
+"city": "Tanza"
+},
+{
+"name": "Julugan IV",
+"city": "Tanza"
+},
+{
+"name": "Julugan V",
+"city": "Tanza"
+},
+{
+"name": "Julugan VI",
+"city": "Tanza"
+},
+{
+"name": "Julugan VII",
+"city": "Tanza"
+},
+{
+"name": "Julugan VIII",
+"city": "Tanza"
+},
+{
+"name": "Kabulusan",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Kabulusan",
+"city": "Magallanes"
+},
+{
+"name": "Kaingen",
+"city": "Kawit"
+},
+{
+"name": "Kaingin (Pob.)",
+"city": "City of Bacoor"
+},
+{
+"name": "Kalubkob",
+"city": "Silang"
+},
+{
+"name": "Kanluran",
+"city": "Naic"
+},
+{
+"name": "Kanluran",
+"city": "Rosario"
+},
+{
+"name": "Kaong",
+"city": "Silang"
+},
+{
+"name": "Kapitan Kua",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Kaybagal East",
+"city": "City of Tagaytay"
+},
+{
+"name": "Kaybagal North",
+"city": "City of Tagaytay"
+},
+{
+"name": "Kaybagal South (Pob.)",
+"city": "City of Tagaytay"
+},
+{
+"name": "Kaymisas",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Kaypaaba",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Kayquit I",
+"city": "Indang"
+},
+{
+"name": "Kayquit II",
+"city": "Indang"
+},
+{
+"name": "Kayquit III",
+"city": "Indang"
+},
+{
+"name": "Kaysuyo",
+"city": "Alfonso"
+},
+{
+"name": "Kaytambog",
+"city": "Indang"
+},
+{
+"name": "Kaytapos",
+"city": "Indang"
+},
+{
+"name": "Kaytitinga I",
+"city": "Alfonso"
+},
+{
+"name": "Kaytitinga II",
+"city": "Alfonso"
+},
+{
+"name": "Kaytitinga III",
+"city": "Alfonso"
+},
+{
+"name": "Koronel Jose P. Elises",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Labac",
+"city": "Naic"
+},
+{
+"name": "Lalaan I",
+"city": "Silang"
+},
+{
+"name": "Lalaan II",
+"city": "Silang"
+},
+{
+"name": "Lallana",
+"city": "City of Trece Martires"
+},
+{
+"name": "Lambingan",
+"city": "Tanza"
+},
+{
+"name": "Langkaan I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Langkaan II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Lantic",
+"city": "Carmona"
+},
+{
+"name": "Lapidario",
+"city": "City of Trece Martires"
+},
+{
+"name": "Latoria",
+"city": "Naic"
+},
+{
+"name": "Layong Mabilog",
+"city": "Maragondon"
+},
+{
+"name": "Ligas I",
+"city": "City of Bacoor"
+},
+{
+"name": "Ligas II",
+"city": "City of Bacoor"
+},
+{
+"name": "Ligas III",
+"city": "City of Bacoor"
+},
+{
+"name": "Ligtong I",
+"city": "Rosario"
+},
+{
+"name": "Ligtong II",
+"city": "Rosario"
+},
+{
+"name": "Ligtong III",
+"city": "Rosario"
+},
+{
+"name": "Ligtong IV",
+"city": "Rosario"
+},
+{
+"name": "Limbon",
+"city": "Indang"
+},
+{
+"name": "Litlit",
+"city": "Silang"
+},
+{
+"name": "Loma",
+"city": "Amadeo"
+},
+{
+"name": "Luciano",
+"city": "City of Trece Martires"
+},
+{
+"name": "Lucsuhin",
+"city": "Silang"
+},
+{
+"name": "Luksuhin",
+"city": "Alfonso"
+},
+{
+"name": "Luksuhin Ilaya",
+"city": "Alfonso"
+},
+{
+"name": "Lumampong Balagbag",
+"city": "Indang"
+},
+{
+"name": "Lumampong Halayhay",
+"city": "Indang"
+},
+{
+"name": "Lumil",
+"city": "Silang"
+},
+{
+"name": "Lumipa",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Luzviminda I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Luzviminda II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Mabato",
+"city": "Maragondon"
+},
+{
+"name": "Mabolo",
+"city": "Naic"
+},
+{
+"name": "Mabolo I",
+"city": "City of Bacoor"
+},
+{
+"name": "Mabolo II",
+"city": "City of Bacoor"
+},
+{
+"name": "Mabolo III",
+"city": "City of Bacoor"
+},
+{
+"name": "Mabuhay",
+"city": "Carmona"
+},
+{
+"name": "Macario Dacon",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Maduya",
+"city": "Carmona"
+},
+{
+"name": "Mag-Asawang Ilat",
+"city": "City of Tagaytay"
+},
+{
+"name": "Magdalo",
+"city": "City of Imus"
+},
+{
+"name": "Magdalo",
+"city": "Kawit"
+},
+{
+"name": "Magdiwang",
+"city": "Noveleta"
+},
+{
+"name": "Maguyam",
+"city": "Silang"
+},
+{
+"name": "Mahabangkahoy Cerca",
+"city": "Indang"
+},
+{
+"name": "Mahabangkahoy Lejos",
+"city": "Indang"
+},
+{
+"name": "Maharlika",
+"city": "City of Imus"
+},
+{
+"name": "Maharlika East",
+"city": "City of Tagaytay"
+},
+{
+"name": "Maharlika West",
+"city": "City of Tagaytay"
+},
+{
+"name": "Maitim 2nd Central",
+"city": "City of Tagaytay"
+},
+{
+"name": "Maitim 2nd East",
+"city": "City of Tagaytay"
+},
+{
+"name": "Maitim 2nd West",
+"city": "City of Tagaytay"
+},
+{
+"name": "Maitim I",
+"city": "Amadeo"
+},
+{
+"name": "Makina",
+"city": "Naic"
+},
+{
+"name": "Malabag",
+"city": "Silang"
+},
+{
+"name": "Malagasang I-A",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang I-B",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang I-C",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang I-D",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang I-E",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang I-F",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang I-G",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang II-A",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang II-B",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang II-C",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang II-D",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang II-E",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang II-F",
+"city": "City of Imus"
+},
+{
+"name": "Malagasang II-G",
+"city": "City of Imus"
+},
+{
+"name": "Malainen Bago",
+"city": "Naic"
+},
+{
+"name": "Malainen Luma",
+"city": "Naic"
+},
+{
+"name": "Malaking Tatyao",
+"city": "Silang"
+},
+{
+"name": "Maliksi I",
+"city": "City of Bacoor"
+},
+{
+"name": "Maliksi II",
+"city": "City of Bacoor"
+},
+{
+"name": "Maliksi III",
+"city": "City of Bacoor"
+},
+{
+"name": "Mambog I",
+"city": "City of Bacoor"
+},
+{
+"name": "Mambog II",
+"city": "City of Bacoor"
+},
+{
+"name": "Mambog III",
+"city": "City of Bacoor"
+},
+{
+"name": "Mambog IV",
+"city": "City of Bacoor"
+},
+{
+"name": "Mambog V",
+"city": "City of Bacoor"
+},
+{
+"name": "Mangas I",
+"city": "Alfonso"
+},
+{
+"name": "Mangas II",
+"city": "Alfonso"
+},
+{
+"name": "Manggahan",
+"city": "City of General Trias"
+},
+{
+"name": "Manggahan-Lawin",
+"city": "Kawit"
+},
+{
+"name": "Marahan I",
+"city": "Alfonso"
+},
+{
+"name": "Marahan II",
+"city": "Alfonso"
+},
+{
+"name": "Marcelino Memije",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Mariano Espeleta I",
+"city": "City of Imus"
+},
+{
+"name": "Mariano Espeleta II",
+"city": "City of Imus"
+},
+{
+"name": "Mariano Espeleta III",
+"city": "City of Imus"
+},
+{
+"name": "Marulas",
+"city": "Kawit"
+},
+{
+"name": "Mataas Na Burol",
+"city": "Silang"
+},
+{
+"name": "Mataas na Lupa",
+"city": "Indang"
+},
+{
+"name": "Matagbak I",
+"city": "Alfonso"
+},
+{
+"name": "Matagbak II",
+"city": "Alfonso"
+},
+{
+"name": "Maymangga",
+"city": "Amadeo"
+},
+{
+"name": "Medicion I-A",
+"city": "City of Imus"
+},
+{
+"name": "Medicion I-B",
+"city": "City of Imus"
+},
+{
+"name": "Medicion I-C",
+"city": "City of Imus"
+},
+{
+"name": "Medicion I-D",
+"city": "City of Imus"
+},
+{
+"name": "Medicion II-A",
+"city": "City of Imus"
+},
+{
+"name": "Medicion II-B",
+"city": "City of Imus"
+},
+{
+"name": "Medicion II-C",
+"city": "City of Imus"
+},
+{
+"name": "Medicion II-D",
+"city": "City of Imus"
+},
+{
+"name": "Medicion II-E",
+"city": "City of Imus"
+},
+{
+"name": "Medicion II-F",
+"city": "City of Imus"
+},
+{
+"name": "Medina",
+"city": "Magallanes"
+},
+{
+"name": "Mendez Crossing East",
+"city": "City of Tagaytay"
+},
+{
+"name": "Mendez Crossing West",
+"city": "City of Tagaytay"
+},
+{
+"name": "Miguel Mojica",
+"city": "Mendez"
+},
+{
+"name": "Milagrosa",
+"city": "Carmona"
+},
+{
+"name": "Minantok Kanluran",
+"city": "Amadeo"
+},
+{
+"name": "Minantok Silangan",
+"city": "Amadeo"
+},
+{
+"name": "Molino",
+"city": "Naic"
+},
+{
+"name": "Molino I",
+"city": "City of Bacoor"
+},
+{
+"name": "Molino II",
+"city": "City of Bacoor"
+},
+{
+"name": "Molino III",
+"city": "City of Bacoor"
+},
+{
+"name": "Molino IV",
+"city": "City of Bacoor"
+},
+{
+"name": "Molino V",
+"city": "City of Bacoor"
+},
+{
+"name": "Molino VI",
+"city": "City of Bacoor"
+},
+{
+"name": "Molino VII",
+"city": "City of Bacoor"
+},
+{
+"name": "Mulawin",
+"city": "Tanza"
+},
+{
+"name": "Munting Ilog",
+"city": "Silang"
+},
+{
+"name": "Munting Mapino",
+"city": "Naic"
+},
+{
+"name": "Muzon",
+"city": "Naic"
+},
+{
+"name": "Muzon I",
+"city": "Rosario"
+},
+{
+"name": "Muzon II",
+"city": "Rosario"
+},
+{
+"name": "Narra I",
+"city": "Silang"
+},
+{
+"name": "Narra II",
+"city": "Silang"
+},
+{
+"name": "Narra III",
+"city": "Silang"
+},
+{
+"name": "Narvaez",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Navarro",
+"city": "City of General Trias"
+},
+{
+"name": "Neogan",
+"city": "City of Tagaytay"
+},
+{
+"name": "Nicolasa Virata",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Ninety Sixth Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Niog I",
+"city": "City of Bacoor"
+},
+{
+"name": "Niog II",
+"city": "City of Bacoor"
+},
+{
+"name": "Niog III",
+"city": "City of Bacoor"
+},
+{
+"name": "Osorio",
+"city": "City of Trece Martires"
+},
+{
+"name": "P.F. Espiritu I",
+"city": "City of Bacoor"
+},
+{
+"name": "P.F. Espiritu II",
+"city": "City of Bacoor"
+},
+{
+"name": "P.F. Espiritu III",
+"city": "City of Bacoor"
+},
+{
+"name": "P.F. Espiritu IV",
+"city": "City of Bacoor"
+},
+{
+"name": "P.F. Espiritu V",
+"city": "City of Bacoor"
+},
+{
+"name": "P.F. Espiritu VI",
+"city": "City of Bacoor"
+},
+{
+"name": "P.F. Espiritu VII",
+"city": "City of Bacoor"
+},
+{
+"name": "P.F. Espiritu VIII",
+"city": "City of Bacoor"
+},
+{
+"name": "Pacheco",
+"city": "Magallanes"
+},
+{
+"name": "Pag-Asa I",
+"city": "City of Imus"
+},
+{
+"name": "Pag-Asa II",
+"city": "City of Imus"
+},
+{
+"name": "Pag-Asa III",
+"city": "City of Imus"
+},
+{
+"name": "Pajo",
+"city": "Alfonso"
+},
+{
+"name": "Palangue 1",
+"city": "Naic"
+},
+{
+"name": "Palangue 2 & 3",
+"city": "Naic"
+},
+{
+"name": "Palico I",
+"city": "City of Imus"
+},
+{
+"name": "Palico II",
+"city": "City of Imus"
+},
+{
+"name": "Palico III",
+"city": "City of Imus"
+},
+{
+"name": "Palico IV",
+"city": "City of Imus"
+},
+{
+"name": "Paligawan",
+"city": "Silang"
+},
+{
+"name": "Paliparan I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Paliparan II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Paliparan III",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Palocpoc I",
+"city": "Mendez"
+},
+{
+"name": "Palocpoc II",
+"city": "Mendez"
+},
+{
+"name": "Palumlum",
+"city": "Alfonso"
+},
+{
+"name": "Panamitan",
+"city": "Kawit"
+},
+{
+"name": "Pangil",
+"city": "Amadeo"
+},
+{
+"name": "Pantaleon Granados",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Pantihan I",
+"city": "Maragondon"
+},
+{
+"name": "Pantihan II",
+"city": "Maragondon"
+},
+{
+"name": "Pantihan III",
+"city": "Maragondon"
+},
+{
+"name": "Pantihan IV",
+"city": "Maragondon"
+},
+{
+"name": "Panungyan I",
+"city": "Mendez"
+},
+{
+"name": "Panungyan II",
+"city": "Mendez"
+},
+{
+"name": "Panungyanan",
+"city": "City of General Trias"
+},
+{
+"name": "Paradahan I",
+"city": "Tanza"
+},
+{
+"name": "Paradahan II",
+"city": "Tanza"
+},
+{
+"name": "Pasong Buaya I",
+"city": "City of Imus"
+},
+{
+"name": "Pasong Buaya II",
+"city": "City of Imus"
+},
+{
+"name": "Pasong Camachile I",
+"city": "City of General Trias"
+},
+{
+"name": "Pasong Camachile II",
+"city": "City of General Trias"
+},
+{
+"name": "Pasong Kawayan I",
+"city": "City of General Trias"
+},
+{
+"name": "Pasong Kawayan II",
+"city": "City of General Trias"
+},
+{
+"name": "Pasong Langka",
+"city": "Silang"
+},
+{
+"name": "Patungan",
+"city": "Maragondon"
+},
+{
+"name": "Patutong Malaki North",
+"city": "City of Tagaytay"
+},
+{
+"name": "Patutong Malaki South",
+"city": "City of Tagaytay"
+},
+{
+"name": "Perez",
+"city": "City of Trece Martires"
+},
+{
+"name": "Pinagbuklod",
+"city": "City of Imus"
+},
+{
+"name": "Pinagsanhan I A",
+"city": "Maragondon"
+},
+{
+"name": "Pinagsanhan I B",
+"city": "Maragondon"
+},
+{
+"name": "Pinagtipunan",
+"city": "City of General Trias"
+},
+{
+"name": "Poblacion",
+"city": "Kawit"
+},
+{
+"name": "Poblacion",
+"city": "Noveleta"
+},
+{
+"name": "Poblacion",
+"city": "Rosario"
+},
+{
+"name": "Poblacion I",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Poblacion I",
+"city": "Mendez"
+},
+{
+"name": "Poblacion I",
+"city": "Ternate"
+},
+{
+"name": "Poblacion I A",
+"city": "Maragondon"
+},
+{
+"name": "Poblacion I A",
+"city": "Ternate"
+},
+{
+"name": "Poblacion I B",
+"city": "Maragondon"
+},
+{
+"name": "Poblacion I-A (Pob.)",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion I-B",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion I-C",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion II",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Poblacion II",
+"city": "Mendez"
+},
+{
+"name": "Poblacion II",
+"city": "Ternate"
+},
+{
+"name": "Poblacion II A",
+"city": "Maragondon"
+},
+{
+"name": "Poblacion II B",
+"city": "Maragondon"
+},
+{
+"name": "Poblacion II-A (Pob.)",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion II-B",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion III",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Poblacion III",
+"city": "Mendez"
+},
+{
+"name": "Poblacion III",
+"city": "Ternate"
+},
+{
+"name": "Poblacion III-A (Pob.)",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion III-B",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion IV",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Poblacion IV",
+"city": "Mendez"
+},
+{
+"name": "Poblacion IV-A (Pob.)",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion IV-B",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion IV-C",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion IV-D",
+"city": "City of Imus"
+},
+{
+"name": "Poblacion V",
+"city": "Mendez"
+},
+{
+"name": "Poblacion VI",
+"city": "Mendez"
+},
+{
+"name": "Poblacion VII",
+"city": "Mendez"
+},
+{
+"name": "Pooc I",
+"city": "Silang"
+},
+{
+"name": "Pooc II",
+"city": "Silang"
+},
+{
+"name": "Prinza Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Pulo",
+"city": "Indang"
+},
+{
+"name": "Pulong Bunga",
+"city": "Silang"
+},
+{
+"name": "Pulong Saging",
+"city": "Silang"
+},
+{
+"name": "Pulvorista",
+"city": "Kawit"
+},
+{
+"name": "Punta I",
+"city": "Tanza"
+},
+{
+"name": "Punta II",
+"city": "Tanza"
+},
+{
+"name": "Puting Kahoy",
+"city": "Silang"
+},
+{
+"name": "Queens Row Central",
+"city": "City of Bacoor"
+},
+{
+"name": "Queens Row East",
+"city": "City of Bacoor"
+},
+{
+"name": "Queens Row West",
+"city": "City of Bacoor"
+},
+{
+"name": "Ramirez",
+"city": "Magallanes"
+},
+{
+"name": "Ramon Cruz",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Real I",
+"city": "City of Bacoor"
+},
+{
+"name": "Real II",
+"city": "City of Bacoor"
+},
+{
+"name": "Sabang",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Sabang",
+"city": "Naic"
+},
+{
+"name": "Sabutan",
+"city": "Silang"
+},
+{
+"name": "Sahud Ulan",
+"city": "Tanza"
+},
+{
+"name": "Saint Peter I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Saint Peter II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Salaban",
+"city": "Amadeo"
+},
+{
+"name": "Salawag",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Salcedo I",
+"city": "Noveleta"
+},
+{
+"name": "Salcedo II",
+"city": "Noveleta"
+},
+{
+"name": "Salinas I",
+"city": "City of Bacoor"
+},
+{
+"name": "Salinas II",
+"city": "City of Bacoor"
+},
+{
+"name": "Salinas III",
+"city": "City of Bacoor"
+},
+{
+"name": "Salinas IV",
+"city": "City of Bacoor"
+},
+{
+"name": "Salitran I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Salitran II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Salitran III",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Salitran IV",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Samala-Marquez",
+"city": "Kawit"
+},
+{
+"name": "Sambong",
+"city": "City of Tagaytay"
+},
+{
+"name": "Sampaloc I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Sampaloc II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Sampaloc III",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Sampaloc IV",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Sampaloc V",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Sampalucan Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "San Agustin",
+"city": "Magallanes"
+},
+{
+"name": "San Agustin (Pob.)",
+"city": "City of Trece Martires"
+},
+{
+"name": "San Agustin I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Agustin II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Agustin III",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Andres I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Andres II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Antonio De Padua I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Antonio De Padua II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Antonio I",
+"city": "Noveleta"
+},
+{
+"name": "San Antonio II",
+"city": "Noveleta"
+},
+{
+"name": "San Dionisio",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Esteban",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Francisco",
+"city": "City of General Trias"
+},
+{
+"name": "San Francisco I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Francisco II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Gabriel",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "San Gabriel Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "San Isidro Labrador I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Isidro Labrador II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Jose",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Jose",
+"city": "City of Tagaytay"
+},
+{
+"name": "San Jose",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "San Jose",
+"city": "Ternate"
+},
+{
+"name": "San Jose I",
+"city": "Noveleta"
+},
+{
+"name": "San Jose II",
+"city": "Noveleta"
+},
+{
+"name": "San Juan",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Juan I",
+"city": "City of General Trias"
+},
+{
+"name": "San Juan I",
+"city": "Noveleta"
+},
+{
+"name": "San Juan I",
+"city": "Ternate"
+},
+{
+"name": "San Juan II",
+"city": "City of General Trias"
+},
+{
+"name": "San Juan II",
+"city": "Noveleta"
+},
+{
+"name": "San Juan II",
+"city": "Ternate"
+},
+{
+"name": "San Lorenzo Ruiz I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Lorenzo Ruiz II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Luis I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Luis II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Manuel I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Manuel II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Mateo",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Miguel",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Miguel I",
+"city": "Silang"
+},
+{
+"name": "San Miguel I A",
+"city": "Maragondon"
+},
+{
+"name": "San Miguel I B",
+"city": "Maragondon"
+},
+{
+"name": "San Miguel II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Miguel II",
+"city": "Silang"
+},
+{
+"name": "San Nicolas I",
+"city": "City of Bacoor"
+},
+{
+"name": "San Nicolas I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Nicolas II",
+"city": "City of Bacoor"
+},
+{
+"name": "San Nicolas II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Nicolas III",
+"city": "City of Bacoor"
+},
+{
+"name": "San Rafael I",
+"city": "Noveleta"
+},
+{
+"name": "San Rafael II",
+"city": "Noveleta"
+},
+{
+"name": "San Rafael III",
+"city": "Noveleta"
+},
+{
+"name": "San Rafael IV",
+"city": "Noveleta"
+},
+{
+"name": "San Roque",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Roque",
+"city": "Naic"
+},
+{
+"name": "San Sebastian",
+"city": "Kawit"
+},
+{
+"name": "San Simon",
+"city": "City of Dasmariñas"
+},
+{
+"name": "San Vicente I",
+"city": "Silang"
+},
+{
+"name": "San Vicente II",
+"city": "Silang"
+},
+{
+"name": "Sanja Mayor",
+"city": "Tanza"
+},
+{
+"name": "Santa Clara",
+"city": "City of General Trias"
+},
+{
+"name": "Santa Cristina I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santa Cristina II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santa Cruz I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santa Cruz II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santa Fe",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santa Isabel",
+"city": "Kawit"
+},
+{
+"name": "Santa Lucia",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santa Maria",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santa Rosa I",
+"city": "Noveleta"
+},
+{
+"name": "Santa Rosa II",
+"city": "Noveleta"
+},
+{
+"name": "Santa Teresa",
+"city": "Alfonso"
+},
+{
+"name": "Santiago",
+"city": "City of General Trias"
+},
+{
+"name": "Santo Cristo",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santo Niño I",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santo Niño II",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Santol",
+"city": "Silang"
+},
+{
+"name": "Santol",
+"city": "Tanza"
+},
+{
+"name": "Santulan",
+"city": "Naic"
+},
+{
+"name": "Sapa",
+"city": "Naic"
+},
+{
+"name": "Sapa I",
+"city": "Rosario"
+},
+{
+"name": "Sapa II",
+"city": "Rosario"
+},
+{
+"name": "Sapa III",
+"city": "Rosario"
+},
+{
+"name": "Sapa IV",
+"city": "Rosario"
+},
+{
+"name": "Sapang I",
+"city": "Ternate"
+},
+{
+"name": "Sapang II",
+"city": "Ternate"
+},
+{
+"name": "Severino De Las Alas",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Sikat",
+"city": "Alfonso"
+},
+{
+"name": "Silang Junction North",
+"city": "City of Tagaytay"
+},
+{
+"name": "Silang Junction South",
+"city": "City of Tagaytay"
+},
+{
+"name": "Silangan I",
+"city": "Rosario"
+},
+{
+"name": "Silangan II",
+"city": "Rosario"
+},
+{
+"name": "Sinaliw Malaki",
+"city": "Alfonso"
+},
+{
+"name": "Sinaliw na Munti",
+"city": "Alfonso"
+},
+{
+"name": "Sineguelasan",
+"city": "City of Bacoor"
+},
+{
+"name": "Sulsugin",
+"city": "Alfonso"
+},
+{
+"name": "Sungay North",
+"city": "City of Tagaytay"
+},
+{
+"name": "Sungay South",
+"city": "City of Tagaytay"
+},
+{
+"name": "Tabing Dagat",
+"city": "City of Bacoor"
+},
+{
+"name": "Tabon I",
+"city": "Kawit"
+},
+{
+"name": "Tabon II",
+"city": "Kawit"
+},
+{
+"name": "Tabon III",
+"city": "Kawit"
+},
+{
+"name": "Tabora",
+"city": "General Emilio Aguinaldo"
+},
+{
+"name": "Talaba I",
+"city": "City of Bacoor"
+},
+{
+"name": "Talaba II",
+"city": "City of Bacoor"
+},
+{
+"name": "Talaba III",
+"city": "City of Bacoor"
+},
+{
+"name": "Talaba IV",
+"city": "City of Bacoor"
+},
+{
+"name": "Talaba V",
+"city": "City of Bacoor"
+},
+{
+"name": "Talaba VI",
+"city": "City of Bacoor"
+},
+{
+"name": "Talaba VII",
+"city": "City of Bacoor"
+},
+{
+"name": "Talipusngo",
+"city": "Maragondon"
+},
+{
+"name": "Talon",
+"city": "Amadeo"
+},
+{
+"name": "Tamacan",
+"city": "Amadeo"
+},
+{
+"name": "Tambo Balagbag",
+"city": "Indang"
+},
+{
+"name": "Tambo Ilaya",
+"city": "Indang"
+},
+{
+"name": "Tambo Kulit",
+"city": "Indang"
+},
+{
+"name": "Tambo Malaki",
+"city": "Indang"
+},
+{
+"name": "Tanauan",
+"city": "Tanza"
+},
+{
+"name": "Tanzang Luma I",
+"city": "City of Imus"
+},
+{
+"name": "Tanzang Luma II",
+"city": "City of Imus"
+},
+{
+"name": "Tanzang Luma III",
+"city": "City of Imus"
+},
+{
+"name": "Tanzang Luma IV",
+"city": "City of Imus"
+},
+{
+"name": "Tanzang Luma V",
+"city": "City of Imus"
+},
+{
+"name": "Tanzang Luma VI",
+"city": "City of Imus"
+},
+{
+"name": "Tapia",
+"city": "City of General Trias"
+},
+{
+"name": "Tartaria",
+"city": "Silang"
+},
+{
+"name": "Taywanak Ibaba",
+"city": "Alfonso"
+},
+{
+"name": "Taywanak Ilaya",
+"city": "Alfonso"
+},
+{
+"name": "Tejero",
+"city": "City of General Trias"
+},
+{
+"name": "Tejeros Convention",
+"city": "Rosario"
+},
+{
+"name": "Tibig",
+"city": "Silang"
+},
+{
+"name": "Timalan Balsahan",
+"city": "Naic"
+},
+{
+"name": "Timalan Concepcion",
+"city": "Naic"
+},
+{
+"name": "Tiniente Tiago",
+"city": "Gen. Mariano Alvarez"
+},
+{
+"name": "Toclong",
+"city": "Kawit"
+},
+{
+"name": "Toclong I-A",
+"city": "City of Imus"
+},
+{
+"name": "Toclong I-B",
+"city": "City of Imus"
+},
+{
+"name": "Toclong I-C",
+"city": "City of Imus"
+},
+{
+"name": "Toclong II-A",
+"city": "City of Imus"
+},
+{
+"name": "Toclong II-B",
+"city": "City of Imus"
+},
+{
+"name": "Toledo",
+"city": "Silang"
+},
+{
+"name": "Tolentino East",
+"city": "City of Tagaytay"
+},
+{
+"name": "Tolentino West",
+"city": "City of Tagaytay"
+},
+{
+"name": "Tramo-Bantayan",
+"city": "Kawit"
+},
+{
+"name": "Tres Cruses",
+"city": "Tanza"
+},
+{
+"name": "Tua",
+"city": "Magallanes"
+},
+{
+"name": "Tubuan I",
+"city": "Silang"
+},
+{
+"name": "Tubuan II",
+"city": "Silang"
+},
+{
+"name": "Tubuan III",
+"city": "Silang"
+},
+{
+"name": "Tulay Kanluran",
+"city": "Maragondon"
+},
+{
+"name": "Tulay Silangan",
+"city": "Maragondon"
+},
+{
+"name": "Ulat",
+"city": "Silang"
+},
+{
+"name": "Upli",
+"city": "Alfonso"
+},
+{
+"name": "Urdaneta",
+"city": "Magallanes"
+},
+{
+"name": "Vibora Pob.",
+"city": "City of General Trias"
+},
+{
+"name": "Victoria Reyes",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Wakas I",
+"city": "Kawit"
+},
+{
+"name": "Wakas II",
+"city": "Kawit"
+},
+{
+"name": "Wawa I",
+"city": "Rosario"
+},
+{
+"name": "Wawa II",
+"city": "Rosario"
+},
+{
+"name": "Wawa III",
+"city": "Rosario"
+},
+{
+"name": "Yakal",
+"city": "Silang"
+},
+{
+"name": "Zambal",
+"city": "City of Tagaytay"
+},
+{
+"name": "Zapote I",
+"city": "City of Bacoor"
+},
+{
+"name": "Zapote II",
+"city": "City of Bacoor"
+},
+{
+"name": "Zapote III",
+"city": "City of Bacoor"
+},
+{
+"name": "Zapote IV",
+"city": "City of Bacoor"
+},
+{
+"name": "Zapote V",
+"city": "City of Bacoor"
+},
+{
+"name": "Zone I (Pob.)",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Zone I-B",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Zone II (Pob.)",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Zone III (Pob.)",
+"city": "City of Dasmariñas"
+},
+{
+"name": "Zone IV (Pob.)",
+"city": "City of Dasmariñas"
+}
+]
+}

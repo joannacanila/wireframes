@@ -29,6 +29,7 @@ def render_overlay(rgb: np.ndarray, wires: list[dict], max_side: int = 1600) -> 
         if polys:
             cv2.fillPoly(fill, polys, col, cv2.LINE_AA, shift=4)
     out = cv2.addWeighted(fill, 0.45, base, 0.55, 0)
+    badges: list[tuple[int, int, str, tuple]] = []
 
     for wire in wires:
         col = LEVEL_RGB.get(wire.get("level"), LEVEL_RGB[None])
@@ -51,13 +52,29 @@ def render_overlay(rgb: np.ndarray, wires: list[dict], max_side: int = 1600) -> 
                 cv2.circle(out, tuple(a), lw + 2, col, -1, cv2.LINE_AA)
         anchor = (curve[len(curve) // 2] if curve else
                   ((wire["bbox"][0] + wire["bbox"][2]) / 2, (wire["bbox"][1] + wire["bbox"][3]) / 2))
-        cx, cy = int(anchor[0] * s), int(anchor[1] * s)
-        r = lw * 6
-        cv2.circle(out, (cx, cy - r - lw * 2), r, (20, 22, 26), -1, cv2.LINE_AA)
-        cv2.circle(out, (cx, cy - r - lw * 2), r, col, max(1, lw // 2 + 1), cv2.LINE_AA)
-        label = str(wire["index"])
-        fs = r / 14
-        (tw, th), _ = cv2.getTextSize(label, cv2.FONT_HERSHEY_DUPLEX, fs, 1)
-        cv2.putText(out, label, (cx - tw // 2, cy - r - lw * 2 + th // 2), cv2.FONT_HERSHEY_DUPLEX, fs,
-                    (255, 255, 255), max(1, lw // 2), cv2.LINE_AA)
-    return out
+        badges.append((int(anchor[0] * s), int(anchor[1] * s), str(wire["index"]), col))
+    return _draw_badges(out, badges, lw)
+
+
+def _draw_badges(out: np.ndarray, badges: list[tuple[int, int, str, tuple]], lw: int) -> np.ndarray:
+    """v2.21: wire numbers centred in their circles. Pillow draws the text with ``anchor="mm"`` (the middle of the
+    glyph box, horizontally and vertically) in tabular digits; every circle is sized for the longest number on the
+    photo, so 2- and 3-digit numbers sit inside the same uniform circle without touching the border."""
+    if not badges:
+        return out
+    from PIL import Image, ImageDraw, ImageFont
+    longest = max(len(b[2]) for b in badges)
+    fsize = max(10, lw * 6)
+    font = ImageFont.load_default(size=fsize)
+    probe = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+    x0, t, r_, b_ = probe.textbbox((0, 0), "8" * longest, font=font, anchor="mm")
+    radius = int(np.ceil(max(r_ - x0, b_ - t) / 2 + max(5, lw * 2.6)))
+    border = max(1, lw // 2 + 1)
+    img = Image.fromarray(out)
+    d = ImageDraw.Draw(img)
+    for cx, cy, text, col in badges:
+        cy = cy - radius - lw * 2  # above the wire, as before
+        d.ellipse((cx - radius, cy - radius, cx + radius, cy + radius), fill=(20, 22, 26), outline=tuple(int(c) for c in col),
+                  width=border)
+        d.text((cx, cy), text, fill=(255, 255, 255), font=font, anchor="mm")
+    return np.asarray(img).copy()

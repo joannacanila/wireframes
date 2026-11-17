@@ -14,7 +14,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import admin, analysis, auth, dashboard, evaluation, reports
+from app.api import admin, analysis, assistant, auth, dashboard, reports
 from app.core import weights
 from app.core.config import get_analysis_config, get_settings
 from app.core.state import MODELS_DIR, AppState, build_state, get_state
@@ -31,6 +31,11 @@ def create_app(state: AppState | None = None, segmenter: Segmenter | None = None
             # a fresh clone fetches its own weights (models/ is not in git); the health check picks them up
             weights.ensure_in_background(MODELS_DIR)
         st = state or build_state(get_settings(), get_analysis_config(), segmenter)
+        # WIREFRAME_LOG_LEVEL applies to the application's own loggers (uvicorn keeps its own configuration)
+        for name in ("wireframe", "app"):  # "app.*" = module loggers (logging.getLogger(__name__))
+            logging.getLogger(name).setLevel(st.settings.log_level.upper())
+        if not logging.getLogger().handlers:
+            logging.basicConfig(format="%(asctime)s %(levelname)s %(name)s: %(message)s")
         app.state.wf = st
         loader = getattr(st.segmenter, "load", None)
         if loader and not loader():
@@ -40,14 +45,15 @@ def create_app(state: AppState | None = None, segmenter: Segmenter | None = None
         yield
         await st.queue.stop()
 
-    app = FastAPI(title="WIREFRAME", version="2.0.0", lifespan=lifespan,
+    app = FastAPI(title="WIREFRAME", version="2.23", lifespan=lifespan,
                   description="Vision-based diagnostic framework for urban overhead wire risk screening.")
     app.include_router(analysis.router)
     app.include_router(dashboard.router)
     app.include_router(reports.router)
-    app.include_router(evaluation.router)
     app.include_router(auth.router)
     app.include_router(admin.router)
+    app.include_router(admin.system)
+    app.include_router(assistant.router)
 
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
@@ -112,7 +118,10 @@ def create_app(state: AppState | None = None, segmenter: Segmenter | None = None
     @app.get("/admin/{_path:path}", include_in_schema=False)
     def admin_portal(_path: str | None = None) -> FileResponse:
         """Side B: the admin command centre. The page shows its sign-in form until /api/auth/me
-        succeeds; every /api/admin and /api/dashboard route is guarded server-side."""
+        succeeds; every /api/admin and /api/dashboard route is guarded server-side. v2.23: the System page was
+        removed; its former addresses are not served (404), not redirected to a hidden copy."""
+        if _path and (_path == "system" or _path.startswith("system/")):
+            raise HTTPException(404, "Not found")
         return FileResponse(WEB_DIR / "admin.html", headers={"Cache-Control": "no-cache",
                                                              "X-Frame-Options": "DENY"})
 

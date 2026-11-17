@@ -6,25 +6,21 @@ import math
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from fastapi.responses import JSONResponse
-from sqlalchemy import func, select
 
 from app.core.security import require_admin
 from app.core.state import AppState, get_state
-from app.models.orm import Analysis, Detection
 from app.services import sites
 
 # Multi-pole views expose pole locations, which the thesis restricts to the research team
 # (Section 3.14.4): admin only.
 router = APIRouter(prefix="/api/dashboard", tags=["dashboard"], dependencies=[Depends(require_admin)])
 State = Annotated[AppState, Depends(get_state)]
+User = Annotated[object, Depends(require_admin)]
 Weight = Annotated[float | None, Query(ge=0, le=1)]
 
 
-@router.get("/map")
-def map_geojson(st: State) -> JSONResponse:
-    with st.db.session() as s:
-        return JSONResponse(sites.geojson(s, st.config), media_type="application/geo+json")
+def _admin(user) -> bool:
+    return getattr(user, "role", "admin") == "admin"
 
 
 def _weights(alpha: float | None, beta: float | None, gamma: float | None) -> tuple[float, float, float] | None:
@@ -39,26 +35,12 @@ def _weights(alpha: float | None, beta: float | None, gamma: float | None) -> tu
 
 
 @router.get("/priority")
-def priority(st: State, alpha: Weight = None, beta: Weight = None, gamma: Weight = None) -> dict:
+def priority(st: State, user: User, alpha: Weight = None, beta: Weight = None, gamma: Weight = None,
+             include_test: bool = False) -> dict:
+    """The inspection order with the configured weights. Trying other weights is a system-area tool (v2.19)."""
+    w = _weights(alpha, beta, gamma)
+    if w is not None and not _admin(user):
+        raise HTTPException(403, {"code": "admin_only", "message": "Prioritization settings are for administrators."})
     with st.db.session() as s:
-        return sites.ranking_payload(s, st.config, _weights(alpha, beta, gamma))
+        return sites.ranking_payload(s, st.config, w, include_test and _admin(user))
 
-
-@router.get("/sensitivity")
-def weight_sensitivity(st: State, k: Annotated[int, Query(ge=1, le=50)] = 5,
-                       alpha: Weight = None, beta: Weight = None, gamma: Weight = None) -> dict:
-    """Spearman rho of every grid ranking against the given weights (the live slider setting)."""
-    with st.db.session() as s:
-        return sites.sensitivity_payload(s, st.config, k, _weights(alpha, beta, gamma))
-
-
-@router.get("/summary")
-def summary(st: State) -> dict:
-    with st.db.session() as s:
-        by_status = dict(s.execute(select(Analysis.status, func.count()).group_by(Analysis.status)).all())
-        by_level = dict(s.execute(
-            select(Detection.level, func.count()).where(Detection.level.is_not(None)).group_by(Detection.level)
-        ).all())
-        by_class = dict(s.execute(select(Detection.wire_class, func.count()).group_by(Detection.wire_class)).all())
-    return {"analyses_by_status": by_status, "wires_by_level": by_level, "wires_by_class": by_class,
-            "queue_depth": st.queue.depth}
