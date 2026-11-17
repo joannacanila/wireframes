@@ -9,7 +9,7 @@ Location: `docs/thesis/` (authoritative technical record since S5; moved from `d
 Companions: `WIREFRAME_THESIS_REFERENCE.md`, `IMPLEMENTATION_CHANGELOG.md`, `results/`. Session notes:
 `docs/handoff/SESSION_LOG.md`. These are internal development records, not published academic evidence.
 
-Last updated: 18 Nov 2026, session S5. S4 resolved D-02, D-03, D-08, D-09, D-10, D-14, D-15 (section "S4 threshold
+Last updated: 18 Nov 2026, session S6 (D-13 resolved, D-24 added, sections "S6 research update" and "Engineering assumption register"). Previously: session S5. S4 resolved D-02, D-03, D-08, D-09, D-10, D-14, D-15 (section "S4 threshold
 resolution" below). S5 added D-22 and D-23 and an open lead on D-04 (section "S5 research update" below). D-04 stays
 Blocked.
 
@@ -27,7 +27,7 @@ Blocked.
 | D-10 | Corroboration p0 0.050 / 0.090 | Empirical, old bands | Only meaningful for severity bands | Not applicable | **Inactive**: no bands exist, nothing to corroborate; re-measurement not performed because there is no band to measure against | `hazard.py` (no scored spans) | n/a | Ch. III/IV | Must be re-measured if a validated reference is ever configured |
 | D-11 | Centerline P/R/F1 tol 3 px / 1024 | Shit et al. 2021; code | Thin-structure evaluation | Verified / Empirical | Keep (segmentation metrics are unaffected by S4) | `centerline_eval.py` | release eval | Ch. III/IV | not the planned instance metric |
 | D-12 | Transformers >= 5.17 | CERT/CC VU#456290 | | Verified | Done | `requirements.txt` | | Ch. IV | |
-| D-13 | Backup | SQLite Online Backup API | DB only | Verified + Empirical | **Open (S5):** full DB + files backup | `app/core/database.py` | restore test | Ch. IV | files not covered |
+| D-13 | Backup | SQLite Online Backup API | Full backup implemented S6 (DB + uploads, renders, reports; SHA-256 manifest; atomic; verify; restore to a new directory only) | Verified + Empirical | **Resolved (S6):** `python -m scripts.backup`; real run 241 files / 105 analyses verified, restored copy served every result and photo; no retention policy (keep all) | `scripts/backup.py` | `tests/test_s6_backup.py` | Ch. IV | Scheduling is left to the operator (no scheduler added) |
 | D-14 | Conductor values (weight, diameter, E, alpha, tension) | None ("ILLUSTRATIVE") | No data sheet for the photographed conductors | **Unsupported** | **Removed** from config. Change-of-state adjustment (Eq. 9) unreachable without a reference; the metre conversion of vegetation gaps (10.1 mm assumed diameter) removed: gaps in pixels only | `config: engineering.conductors: {}`; `hazard.py`; `sag_limits.py` | `tests/test_s4_thresholds.py` | Ch. III Eq. 9, Table 3.8 | none |
 | D-15 | Vegetation contact margin 1 % / share 2 %; power-near-vegetation 15 px; contact -> AT RISK | "development defaults"; clearance standards are physical distances (S4 section) | Pixel gaps in a single perspective image do not measure physical clearance; a 2-D overlap does not establish contact (depth unknown) | **Unsupported** | Vegetation proximity kept as an **image observation** (pixel gap, "overlaps in the image"); it no longer raises AT RISK. The 15 px rule is removed | `config: hazard.vegetation_verdict: false`; `hazard.py` | `tests/test_s4_thresholds.py` | Ch. III vegetation rules | A physical clearance needs calibrated range measurement |
 | D-16 | Reliability grades A/B/C, glare gate | Empirical (validation stress set) | | Empirical | Keep (photo quality only; never a hazard) | `quality.py` | | Ch. III/IV | synthetic conditions |
@@ -38,6 +38,7 @@ Blocked.
 | D-21 | Historical inspections (v2.23 and earlier) | Owner rule: no reprocessing | Stored levels/verdicts were produced with the withdrawn placeholder | Policy | Stored data unchanged; on display, a stored level carrying `development_limits` is shown as "withdrawn provisional value" and never as a severity; the record shows a notice | `app/services/plain.py`, `findings.js`, `report_pdf.py` | `tests/test_s4_thresholds.py` | Ch. IV | Re-analysis needs owner authorisation |
 | D-22 | Diagnostic output when no span can be assessed | Derived from D-01, D-09, D-15, D-18, D-19; browser reproduction (`results/s5_diagnostic_restoration.json`) | After S4 every renderer showed, drew and selected only assessed wires, so measured curves, chords, sag points and ratios were computed but hidden (0 wires drawn; PDF "No wire was flagged, so none is drawn"; retake banner on every analysis; text "these wires were not measured") | Derived / Empirical | **Restore** the measurement display without any threshold: every measured wire drawn and explained; a per-wire and per-photo diagnosis (observed, measured, not available from one photo, what would complete the assessment); four levels kept apart (image measurement, physical measurement, engineering interpretation, safety/compliance); the only comparison is a ratio against its own 1 px resolution; retake advised only when wires were not measured or only partly measured | `app/services/diagnostics.py`; `analysis.py`, `report_pdf.py`, `render.py`, `field.js`, `viewer.js`, `findings.js`, `admin.js`, `records.py`, `assistant/service.py` | `tests/test_s5_diagnostics.py`; E2E 24/24 | Ch. III output description; a result-page screenshot taken from the S4 build (commit 5313c52) shows the hidden state and should not be used | The explanation is derived from the analysis, not an engineering judgement; the 1 px resolution remains an assumption (D-09) |
 | D-23 | Withdrawn levels of pre-S4 records | D-21; code review | `level_withdrawn` checked only the current configuration, so a pre-S4 level (computed against 0.040) would have been shown as valid once any reference was configured; admin list counts and assistant facts still counted withdrawn levels ("10 high risk") | Derived | A stored level is withdrawn when its class has no verified reference **or** the record has no current `assessment_basis`; withdrawn levels are never counted | `app/services/basis.py`, `records.py: wire_counts`, `api/admin.py: findings_csv` | `tests/test_s5_diagnostics.py` | Ch. IV | none |
+| D-24 | Recovery baseline and result experience (S6) | Browser comparison on one photo: v2.18 `f74250e` vs S5 `a727bb9` (`results/s6_recovery.json`); the owner's thesis figures `v215_ui_results_light_desktop.png`, `v218_ui_results_dark_desktop.jpg` | The first functional regression was the v2.19-v2.23 page rewrite `7c5a716` (side-by-side table, Both view, opacity, Vegetation, Layers, zoom readout, Reset, measurement details, section-specific limitations and next steps and the technical drawer removed; their styles deleted); S4 then hid every measurement; S5 restored the measurements in a different layout | Empirical | **Baseline v2.18 (`f74250e`, branch `recovery/baseline-v218`) for the experience; current code for the engineering.** The v2.18 page is restored on top of S4/S5: severity only for spans assessed against a validated reference; otherwise measurement states and type colours; staff-only technical drawer (v2.20 public/staff split kept). Not rolled back: S4 threshold removal, S5 diagnosis, v2.19+ portal, map, assistant, notice, security fixes | `field.js`, `field.css`, `findings.js`, `admin.js`, `render.py`, `plain.py` | `tests/test_s6_recovery.py`; E2E 41/41 | Ch. IV UI figures: the v2.15/v2.18 layout is current again; severity bands in those figures are withdrawn values | none |
 
 ---
 
@@ -129,4 +130,60 @@ could be read in this session. Nothing below is used in decision logic.
 **Consequence for the thesis text.** Until S16 is read verbatim, Chapter II should say that ERB Resolution 95-21 was
 superseded by the DSOAR and that the DSOAR appears to retain a "Poles, Sag of Wires" provision whose text has not been
 verified, rather than that the 3 % rule is obsolete.
+
+---
+
+## S6 research update (18 Nov 2026): is a 3 % sag reference defensible?
+
+Searches only; the two manufacturer documents that would settle the cable-specific figures could not be read
+(Corning AEN014: HTTP 403; CommScope ADSS sag chart 999389: HTTP 404). Figures below marked **snippet** come from
+search-engine summaries of the named documents and are **not verified**; none is used in decision logic.
+
+| # | Source | Status | Finding (as read) | What the percentage means |
+|---|---|---|---|---|
+| S19 | Corning Application Engineering Note AEN014, https://www.corning.com/catalog/coc/documents/application-engineering-notes/AEN014.pdf | Not read (403) | Snippet: "Allowable sag is typically set at 1% of span length or based on a given installation tension" | 1 %: a manufacturer installation design choice for its cables, not a limit for an installed span |
+| S20 | Prysmian ezPlan / AeroLink datasheets; OFS and Baltic Networks ADSS datasheets (links in the S6 session log) | Snippets | Installation sag 1.5 % (Prysmian ezPlan 96/144 f); 0.7 % basis for a 400 m span (OFS); initial sag 0.7 % / 2.8 % / 3.5 % for light / medium / heavy loading with different maximum spans (Baltic Networks) | Per cable, per span, per NESC loading district: design inputs, not universal limits |
+| S21 | CommScope ADSS sag chart 999389, https://commscope.com/globalassets/digizuite/999389-sag-chart-adss.pdf | Not read (404) | Snippet: 1.5 % initial sag for 20-70 m spans, final sag about 3.0-4.3 % under NESC heavy loading | A correctly installed cable can reach 3-4.3 % final sag under design load: a 3 % limit would flag it |
+| S22 | ITU-T L.102 (11/2025) (S17); FOA guidance (S4) | L.102 read in S4; FOA read in S4 | L.102: sag is a design input agreed between customer and manufacturer; no sag ratio. FOA: sag "generally" < 2 %, no standard cited | No universal ratio |
+| S16 | DSOAR s.1.7.12 "Poles, Sag of Wires" (S5 lead) | Text still not read | Unchanged from S5 | Power distribution utilities; sag against the horizontal distance between poles |
+
+**Values asked about by the owner.**
+1 %: manufacturer installation target (S19, snippet). 2 %: FOA rule of thumb, no standard cited (S22). 3 %: ERB
+Resolution 95-21 s.19 for power-utility horizontal wires near public places (read in S3/S4; superseded by the DSOAR,
+whose s.1.7.12 may carry it, unverified); in manufacturer tables only as one loading-case value for one cable (S20,
+snippet). 4 % and 4.3 %: final sag under heavy loading for particular ADSS cables (S21, snippet); the former WIREFRAME
+4.0 % telecom limit was a development placeholder with no source (D-02, S4). 5 %: no source found.
+
+**Decision (Outcome C, unchanged).** No universal 3 % reference is supported. For telecom cables every figure found is
+cable-, span-, temperature- and loading-specific and is an installation or design value, not a limit for an installed
+span; the snippets indicate correctly installed cables can exceed 3 % under design load. For power lines the only 3 %
+provision (ERB 95-21) binds distribution utilities, is superseded, and its successor text is unverified. In every case
+the quantity is physical sag against the horizontal distance between poles, which a single uncalibrated photo does
+not measure (D-18). WIREFRAME therefore keeps measuring and reporting the image-derived ratio with its resolution and
+assigns no severity. What would change this (Outcome B): for a given cable, its model and manufacturer sag-tension
+table, the span length and loading case, and a field-validated photo-to-sag method; for power lines, the verified
+in-force text (DSOAR s.1.7.12 or PEC Part 2) and a licensed engineer's confirmation of applicability.
+
+## Engineering assumption register (S6)
+
+Every numeric parameter in `config/wireframe.yaml` that can affect a result, classified. Image-processing and ML
+parameters need experimental justification, not a regulatory citation.
+
+| Parameter | Value | Purpose | Basis | Class | Active in decisions | Decision |
+|---|---|---|---|---|---|---|
+| `crs.delta_lim0`, severity bands (4.0 % / 2.4 %) | removed | sag severity | none (D-02) | Development placeholder | No | Removed S4 |
+| Power 3 % | not implemented | sag severity | ERB 95-21 (superseded), D-04 | Regulatory, not applicable | No | Not implemented |
+| `crs.min_chord_px` (was 100 px, f = 0.25) | 0 (off) | precision gate | derived from the placeholder (D-09) | Unsupported assumption | No | Off; resolution reported |
+| `hazard.min_assessed_share` | 1.0 | NOT AT RISK only with full coverage | D-19 | Operational rule (conservative) | Yes | Keep |
+| `hazard.p0_high` / `p0_medium` / `alpha` | 0.050 / 0.090 / 0.05 | binomial corroboration | v2.9 validation geometry (D-10) | Empirical, tied to removed bands | No (no assessed spans) | Inactive |
+| Vegetation 15 px "close" | removed | vegetation severity | none (D-15) | Unsupported assumption | No | Removed S4; pixel gap reported as an image distance |
+| `engineering.conductors` | {} | change-of-state adjustment | illustrative values removed (D-14) | Placeholder | No | Removed S4; constants kept for a future data sheet |
+| `quality.grade_a/b/c`, `min_wire_pixels`, `min_mean_l`, `max_clipped`, glare gates | 0.78 / 0.66 / 0.64, 500, 8, 0.85, 0.6 / 15 | reliability grade | v2.10 validation (reference 8.3) | Empirically validated image parameter | Yes (grade, retake advice) | Keep |
+| `guardrail.*` | see config | retake prompt | v2.17 guardrail validation (8 capture conditions) | Empirically validated | Yes (retake prompt only) | Keep |
+| `geometry.n_min_points`, `max_rel_residual`, `l_min_px`, `border_margin_frac` | 20, 0.02, 30, 0.01 | fit validity, truncation | validation set (reference 6-7) | Image-processing parameter | Yes (measured / not measured) | Keep |
+| `spans.*` (gap, angle, lateral, stitch) | see config | strand assembly | sweeps in `results/` (v2.8, v2.16) | Empirically validated | Yes | Keep |
+| `segmentation.conf_min` | 0.2 | detector confidence | comment says "provisional"; `conf_provisional: false` | ML operating point; documentation inconsistent | Yes (detections) | Not changed (frozen models); comment to be reconciled with the evidence for the value |
+| `segmentation.iou_nms`, `mask_threshold`, `pole_conf` | 0.45, 0.5, 0.25 | detector post-processing | study setting; LVIS val (poles) | ML parameter | Yes | Keep |
+| VNI bands (Low ... Severe) | 0.25 / 0.50 / 0.75 / 1.00 | image clutter index labels | calibrated quantiles q01/q99 (v2.14) | Image descriptor, not an engineering rating | Display only | Keep; never a risk statement |
+| Retake banner 0.5 share | 0.5 | page banner | display rule (S5) | Operational setting | Display only | Keep |
 

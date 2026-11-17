@@ -136,6 +136,18 @@ by themselves).
 
 `docs/handoff/` holds session-continuity notes only (current state, session log, next-session instructions).
 
+## Backup and restore
+
+```bash
+python -m scripts.backup create --dest ../WIREFRAME-backups     # database + uploads, renders, reports; SHA-256 manifest
+python -m scripts.backup verify ../WIREFRAME-backups/wireframe-backup-<stamp>
+python -m scripts.backup restore ../WIREFRAME-backups/wireframe-backup-<stamp> --to <new empty directory>
+```
+
+`create` is safe while the server runs (SQLite online backup) and only renames the backup into place when every file and
+the database check out. `restore` never writes into a directory that is not empty. Every backup is kept; nothing is
+deleted automatically.
+
 **Models it uses** (all listed with size and SHA-256 in `app/core/weights.py`, downloaded into `models/`):
 
 | Model | File(s) | Used for |
@@ -178,7 +190,7 @@ Copy `.env.example` to `.env` to change deployment settings. Never commit `.env`
 
 ```bash
 pip install -r requirements-dev.txt                # tests and lint
-python -m pytest                                   # 776 tests, no model weights needed
+python -m pytest                                   # 788 tests, no model weights needed
 ruff check app tests scripts ml
 ```
 

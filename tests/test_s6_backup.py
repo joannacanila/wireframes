@@ -72,3 +72,15 @@ def test_destination_inside_the_data_directory_is_refused(stored):
     data = client.state.settings.data_dir
     with pytest.raises(backup.BackupError, match="outside"):
         backup.create(data, data / "backups")
+
+
+def test_a_manifest_path_outside_the_backup_is_refused(stored, tmp_path_factory):
+    client, _ = stored
+    out = backup.create(client.state.settings.data_dir, tmp_path_factory.mktemp("bk"))
+    m = json.loads((out / backup.MANIFEST).read_text())
+    m["entries"][-1]["path"] = "../../escaped.txt"
+    (out / backup.MANIFEST).write_text(json.dumps(m))
+    target = tmp_path_factory.mktemp("fresh") / "var"
+    with pytest.raises(backup.BackupError, match="unsafe path"):
+        backup.restore(out, target)
+    assert not (target.parent.parent / "escaped.txt").exists()

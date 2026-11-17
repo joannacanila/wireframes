@@ -1,0 +1,35 @@
+{
+  "description": "S6 (18 Nov 2026): recovery of the v2.18 result experience on top of the S4/S5 engineering corrections, and the first full backup. Headless Chrome (Playwright, system Chrome). Isolated data only: v2.18 on a fresh data directory (port 8012); recovery branch on an online-backup copy of var/ (port 8011); backup restored to a scratch directory (port 8013). Production server (port 8000) not modified or restarted.",
+  "photo": "runs/v213_inputs/P-B1D137_dense_night.jpg (640 x 480), the photo of the owner's thesis figures v215_ui_results_light_desktop.png and v218_ui_results_dark_desktop.jpg",
+  "baseline_v218_f74250e": {
+    "analysis": "723f2e96",
+    "summary": "No measured wire on this pole was flagged; counts high 2 / moderate 2 / low 14; 18 of 26 assessed",
+    "controls": ["Original", "Wires", "Mask", "Both", "Overlay opacity", "Vegetation", "Layers", "Zoom out", "Zoom %", "Zoom in", "Fit", "Reset",
+                 "filters All / High / Moderate / Low / Not assessed", "26-row wire table", "Measurement details", "What to do next", "Photo limitations (with section numbers)", "Technical diagnostics drawer"],
+    "selected_on_open": 24,
+    "pdf": "3 pages; figure with every wire coloured by level"
+  },
+  "s5_a727bb9_same_photo": {
+    "analysis": "19ac0678",
+    "controls": ["Measured wires", "Original photo", "All traced wires", "Mask", "View options", "Zoom out", "Zoom in", "Fit", "Measured / Not measured tabs"],
+    "missing_vs_v218": ["Both view", "visible opacity slider", "Vegetation button", "Layers menu", "zoom readout", "Reset", "wire table (5 cards visible)", "Measurement details",
+                        "section-specific photo limitations (3 generic sentences)", "specific next steps", "technical drawer", "file name in header"],
+    "defects": ["table finding 'Could not be measured' for measured wires (findings.js ordering)", "PDF summary 'a retake will not complete the assessment' while 3.2 asks for a new photo",
+                "PDF figure wires all white", "admin sheet: severity legend over type colours, 'Not assessed' for every wire, coverage blaming the photo"]
+  },
+  "s6_recovery_branch": {
+    "commits": ["91f74d8 result page", "b7378b4 admin sheet", "5238a30 backup"],
+    "same_photo": {"drawn": 26, "table_rows": 26, "selected_on_open": 24, "counts": {"Measured": 13, "Visible part only": 12, "Not measured": 1}, "page_errors": 0},
+    "historical_records": {"e7170e06 (pre-S4, stored severities withdrawn)": {"drawn": 135, "rows": 135}, "ac0c8543 (S4)": {"drawn": 135, "rows": 135}, "03064557 (452x678)": {"drawn": 10, "rows": 10}},
+    "e2e_check": "41 of 41 passed, 0 page errors",
+    "pytest": "788 passed",
+    "ruff": "no findings"
+  },
+  "backup": {
+    "command": "python -m scripts.backup create --data var --dest ../WIREFRAME-backups",
+    "backup": "wireframe-backup-20261118-051046",
+    "files": 241, "size": "154 MB",
+    "database": {"integrity": "ok", "foreign_key_violations": 0, "rows": {"analyses": 105, "detections": 4373, "poles": 81, "reports": 51, "reviews": 1, "pole_locations": 28, "audit_events": 7, "admin_users": 1, "admin_sessions": 2, "app_settings": 1}},
+    "restore": "restored to a scratch directory; every file matched the manifest; app on the restored copy served 105/105 results, 105/105 photos, 10/10 sampled PDFs"
+  }
+}

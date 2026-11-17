@@ -692,6 +692,18 @@ the same wires as the database, their photos, inspection pages and a regenerated
 backups in `var/` also pass both checks. `tests/test_v221.py::test_migration_backup_restores_to_an_identical_database`
 repeats the backup-restore-compare cycle on every test run.
 
+**Full backup (S6, register D-13).** `python -m scripts.backup create --dest <dir>` copies the database (online backup
+API, consistent while the server runs, stored as one self-contained file) and every file under `uploads/`, `renders/`
+and `reports/`, writes a SHA-256 manifest, fsyncs, checks integrity and foreign keys, and renames the temporary
+directory into place only when every step succeeded. `verify` re-hashes every file and re-checks the database;
+`restore --to <new dir>` refuses a non-empty target and verifies before and after copying. Earlier migration snapshots
+(`var/backups/`, `*.bak*`) are not included (they are backups themselves). No retention policy is applied (no
+operational basis given): every backup is kept. Run on 18 Nov 2026 against the live `var/` (read only): 241 files,
+154 MB, 105 analyses, 4,373 detections; integrity ok, 0 foreign-key violations. Restored into an isolated directory,
+the application started on the copy and served all 105 inspection results and photos and 10 of 10 sampled PDFs
+(`results/s6_recovery.json`). `tests/test_s6_backup.py` repeats the round trip (with the app on the restored copy),
+tamper detection and the no-overwrite rule on every run.
+
 | Table | Purpose |
 |---|---|
 | `poles` | One row per pole code; validated barangay; stored readable label (e.g. SAL-001) |
@@ -735,17 +747,23 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 
 - Upload card: photo, inspection name, city, barangay (validated suggestions), optional coordinates and span data.
 - Processing state with the queue position.
-- Result page (`/workspace/result/{id}`): inspection summary stating what was measured and why no verdict is given
-  (Section 8.6), with counts Measured / Visible part only / Not measured / Assessed (no severity counts while no
-  validated reference exists); a "What the analysis found" section (observations, what one photo cannot provide,
-  what would complete the assessment); the photo with four views (Measured wires, Original photo, All traced wires,
-  Mask). With no assessed span the default view draws every measured wire, coloured by wire type (never by severity),
-  with its fitted curve, the dashed chord between its visible ends and the point of largest sag; the measured wire
-  with the largest image-derived ratio is selected on opening and its card shows the ratio ± resolution and its
-  diagnosis. The wire list has Measured and Not measured tabs (sorted by ratio, stated to be a measurement, not a
-  severity); what to do next; photo limitations; a location block when coordinates exist; PDF download. The retake
-  banner appears only when more than half of the wires were not measured or only partly measured (S5; before S5 it
-  appeared on every analysis because every wire was "not assessed").
+- Result page (`/workspace/result/{id}`), restored in S6 to the v2.18 layout (register D-24; the v2.19-v2.23 rewrite
+  had removed it): header with inspection name, place, time and file name; summary with the outcome, the coverage line
+  and counts (Measured / Visible part only / Not measured while no span is assessed; severity counts only for spans
+  assessed against a validated reference); the photo beside the wire table. Viewer: Original / Wires / Mask / Both,
+  overlay opacity, Vegetation, Layers (model mask, wire sections, estimated gaps, centre lines, fitted curve, sag
+  measurement, section ends, numbers, poles), zoom with a percentage readout, Fit and Reset. The Wires view draws every
+  wire section; measured sections show the fitted curve, the dashed chord between the visible ends and the point of
+  largest sag. With no assessed span, wires are coloured by type and the legend says so (never a severity). Selected
+  section: plain finding, image sag ratio ± 1 px resolution, "Reference: none validated", vegetation as an image
+  observation, the Section 8.6 diagnosis, what would complete the assessment, and Measurement details (chord, sag in px,
+  δ/L, resolution, fit residual, inclination, type evidence, pole ends, inferred share, status code; internals only in
+  the staff record). Wire table: every section with Type, Condition (measurement state or assessed severity) and
+  Finding, filter chips, keyboard navigation; measured sections are listed by image-derived ratio with a note that it is
+  a measurement. Below: what to do next and photo limitations with the affected section numbers and specific advice;
+  "What the analysis found"; for signed-in staff the Technical diagnostics drawer (model, image quality, segmentation,
+  statistics, timings, configuration); the notice; the location block. The retake banner appears only when more than
+  half of the wires were not measured or only partly measured.
 - A retake prompt when the guardrail holds the result.
 
 ### 10.2 Admin portal (`/admin`, signed in)
@@ -1034,7 +1052,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 ### 15.1 Automated tests
 
-`python -m pytest`: 776 tests, all passing (18 Nov 2026, S5, with transformers 5.17.0; S4 754, S2 719). The suite uses synthetic scenes with known geometry
+`python -m pytest`: 788 tests, all passing (18 Nov 2026, S6, with transformers 5.17.0; S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
 (`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
 | Area | Examples |
@@ -1061,8 +1079,10 @@ counts against the API and the verification footer, admin sign-in, no System men
 exports, inspection diagnostics, map with three base layers, `/admin/system` answering 404. S5 adds positive checks:
 page counts match the API diagnosis, every measured wire is drawn on the photo, the selected wire shows its diagnosis,
 the "What the analysis found" section is present, and the PDF draws the measured wires and contains section 4.1. The
-uploaded photo is then marked as a test record. Result (18 Nov 2026, S5, isolated copy of `var/`): 24 of 24 checks
-passed, 0 page errors (S4: 20 of 20; those checks asserted only the absence of severity and passed while the
+uploaded photo is then marked as a test record. S6 adds the restored page: every wire drawn and listed, measured rows
+state their measurement, a wire selected with its diagnosis, Measurement details, row selection, Both and Original
+views, the Layers menu, opacity, zoom, Reset and every filter. Result (18 Nov 2026, S6, isolated copy of `var/`): 41
+of 41 checks passed, 0 page errors (S5: 24 of 24; S4: 20 of 20; those checks asserted only the absence of severity and passed while the
 measurements were hidden, `results/s5_diagnostic_restoration.json`).
 
 ### 15.4 Manual review (limited)
@@ -1420,5 +1440,5 @@ keeps them removed.
 | Pole detector | `v218_poles_*`, `v218_poles_analysis_*` |
 | Runtime | `benchmark_v223.json`, `v222_latency_before.json`, `v222_latency_after.json` |
 | Dataset audit | `dataset_audit_v27.json` |
-| Assessment change and diagnostic restoration | `s4_coverage_before_after.json`, `v217_eval_s4_val.json`, `v217_eval_s4_test.json` (S4); `s5_diagnostic_restoration.json` (S5: browser reproduction of the hidden measurements and the repair) |
+| Assessment change and diagnostic restoration | `s4_coverage_before_after.json`, `v217_eval_s4_val.json`, `v217_eval_s4_test.json` (S4); `s5_diagnostic_restoration.json` (S5: browser reproduction of the hidden measurements and the repair); `s6_recovery.json` (S6: v2.18 baseline comparison, restored controls, backup and restore) |
 | Figures | `docs/thesis/figures/`: failure cases (`failure_*.jpg`), stress conditions (`stress_conditions.jpg`), high-CRS spans and loose-end candidates on validation, night vegetation guard, verdict distribution and diagnostics (`v29_*`) |

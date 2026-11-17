@@ -1,5 +1,19 @@
 # Session Log
 
+## S6 (18 Nov 2026), recovery of the last known-good experience
+- Starting commit: `a727bb9` on `main` (local only, one commit ahead of origin); 776 passed.
+- Work branch: `recovery/s6-restore` in worktree `/Users/joannacanila/WIREFRAME-recovery` (models and `yolo11n.pt`
+  symlinked from the main checkout, untracked). `main` and the port 8000 server untouched. Bookmarks:
+  `recovery/baseline-v218` = `f74250e`, `recovery/pre-recovery-main` = `a727bb9`.
+- Baseline: v2.18 chosen from the owner's thesis figures and a side-by-side browser run (D-24); root-cause chain
+  `7c5a716` -> `5313c52` -> `a727bb9` in `docs/thesis/IMPLEMENTATION_CHANGELOG.md` (S6).
+- Done: v2.18 result page restored on S4/S5; four defects fixed (table finding, PDF wording, PDF colours, admin sheet);
+  full backup tool (D-13) with a verified real backup in `/Users/joannacanila/WIREFRAME-backups/` and a verified
+  restore; 3 % research update (S19-S22, Outcome C) and the engineering assumption register.
+- Validation: pytest 788 passed; ruff clean; E2E 41/41, 0 page errors.
+- Not done (reasons in the final report): runtime benchmark (needs the port 8000 server stopped), formal
+  accessibility and dependency audits (tools not installed), thesis chapter revisions, merge into `main`.
+
 ## S5 (18 Nov 2026), diagnostic restoration and documentation location
 - Starting commit: `5313c52` (local = remote; 754 passed; ruff clean; owner's untracked .docx and figures untouched;
   port 8000 server running, PID 25699, started 03:33)

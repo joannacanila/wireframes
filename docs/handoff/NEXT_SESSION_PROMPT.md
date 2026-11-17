@@ -20,7 +20,7 @@ commit listed in `docs/handoff/SESSION_LOG.md`). S5 was committed locally; check
 ```bash
 cd /Users/joannacanila/WIREFRAME
 git fetch origin && git status --short && git log -5 --oneline && git rev-parse HEAD origin/main
-.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 776 passed (pyproject adds -q; with
+.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 788 passed (pyproject adds -q; with
                                                                    # the default -q -q the count line is hidden)
 .venv/bin/ruff check app tests scripts ml                          # expect clean
 lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's server; check before stopping it
@@ -74,6 +74,10 @@ lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's ser
   now in `docs/thesis/`. Research: DSOAR s.1.7.12 "Poles, Sag of Wires" lead (S16), text NOT read (TLS error).
 
 ## Outstanding tasks (priority order)
+S6 status: the recovery is on branch `recovery/s6-restore` (worktree `/Users/joannacanila/WIREFRAME-recovery`),
+pushed to origin, NOT merged into `main`. First: ask the owner to review the restored page (port 8011 isolated or
+after merge), then merge `recovery/s6-restore` into `main` with a normal merge (no force), restart port 8000, and
+re-run the E2E against it. Expected: 788 passed, E2E 41 checks. Backup task 1 below is DONE (`scripts/backup.py`).
 0. **Confirm with the owner:** restart of the port 8000 server so it serves the S5 API (`diagnosis` field), and push
    of the S5 commit. Then verify the live page at `http://127.0.0.1:8000/workspace` in a browser.
 1. **Backup and restore (register D-13).** Implement a backup command (e.g. `python -m scripts.backup create|verify|

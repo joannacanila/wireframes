@@ -126,8 +126,19 @@ def create(data: Path, dest: Path) -> Path:
     return final
 
 
+def _safe(rel: str) -> str:
+    """A manifest path must stay inside the backup: no absolute paths, no '..' (a tampered manifest must never make
+    verify read, or restore write, outside its directory)."""
+    p = Path(rel)
+    if p.is_absolute() or ".." in p.parts or rel != p.as_posix() or not rel:
+        raise BackupError(f"unsafe path in manifest: {rel!r}")
+    return rel
+
+
 def verify(backup: Path) -> dict:
     m = json.loads((backup / MANIFEST).read_text())
+    for e in m["entries"]:
+        _safe(e["path"])
     bad = [e["path"] for e in m["entries"] if not (backup / e["path"]).is_file() or _sha256(backup / e["path"]) != e["sha256"]]
     listed = {e["path"] for e in m["entries"]} | {MANIFEST}
     extra = [p.relative_to(backup).as_posix() for p in backup.rglob("*") if p.is_file() and p.relative_to(backup).as_posix() not in listed]

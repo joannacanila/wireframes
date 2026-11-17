@@ -1,6 +1,6 @@
 # Current Project State
 
-Last updated: 18 Nov 2026, end of session S5. Continuity notes only. The authoritative technical record is
+Last updated: 18 Nov 2026, end of session S6 (recovery branch `recovery/s6-restore`; `main` unchanged since S5). Continuity notes only. The authoritative technical record is
 `docs/thesis/` (`WIREFRAME_THESIS_REFERENCE.md`, `RESEARCH_AND_DECISION_REGISTER.md`, `IMPLEMENTATION_CHANGELOG.md`,
 `results/`). Read with `SESSION_LOG.md` and `NEXT_SESSION_PROMPT.md`.
 
@@ -44,6 +44,9 @@ Release evaluation (S4): segmentation/strand metrics identical to v2.21; assessm
 **Done (S5):** diagnostic regression reproduced in a browser (isolated copies) and repaired; tests 776 passed; ruff
 clean; E2E 24/24, 0 page errors; `docs/thesis/` made authoritative (register and changelog moved there); research
 update S16-S18 (DSOAR s.1.7.12 lead, unverified). Production server on port 8000 NOT restarted (owner to confirm).
+
+**Done (S6):** v2.18 result experience restored on branch `recovery/s6-restore` (D-24); full backup and restore
+(D-13 resolved); 3 % research Outcome C; assumption register. 788 tests; E2E 41/41. Not merged into `main`.
 
 **Pending (priority order, details in NEXT_SESSION_PROMPT.md):**
 0. Owner confirmation: restart port 8000; push the S5 commit.

@@ -2,6 +2,31 @@
 
 Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
 
+## 2026-11-18, session S6: recovery of the v2.18 result experience, full backup (register D-13, D-24)
+- **Branch:** `recovery/s6-restore` (worktree `../WIREFRAME-recovery`), from `a727bb9`; `main` untouched. Bookmarks:
+  `recovery/baseline-v218` (`f74250e`), `recovery/pre-recovery-main` (`a727bb9`).
+- **Baseline:** v2.18 `f74250e`, run in an isolated worktree on a fresh data directory with the thesis photo
+  P-B1D137; it reproduced the owner's thesis figure (2 / 2 / 14 counts, 26 sections, wire 24 selected).
+- **Root cause chain:** (1) `7c5a716` (v2.19-v2.23 "plain result page"): the v2.18 result page and its styles were
+  removed (table, Both, opacity, Vegetation, Layers, zoom readout, Reset, measurement details, specific limitations
+  and next steps, technical drawer); (2) `5313c52` (S4): renderers showed only assessed wires, so every measurement
+  was hidden; (3) `a727bb9` (S5): measurements restored in a different layout, with two defects found now: the table's
+  short finding said "Could not be measured" for measured wires, and the PDF summary said a retake could not help
+  while section 3.2 asked for one. Tests missed (1) because the v2.20 test asserted the removed features were absent.
+- **Change:** v2.18 result page restored on top of S4/S5 (`field.js`, `field.css`); measurement states instead of
+  severities when nothing is assessed; type colours; staff-only drawer; `findings.js` ordering fix; PDF figure
+  coloured by type (`render.py`), caption updated; `plain.py` retake wording follows `diagnosis.retake_helps`;
+  admin sheet uses the same states, legend and coverage (`admin.js`, `admin.css`); `scripts/backup.py` (D-13).
+- **Tests / results:** pytest 788 passed; ruff clean; E2E 41/41, 0 page errors (isolated copy); backup of live data
+  verified (241 files) and restored copy served 105/105 results and photos (`results/s6_recovery.json`).
+- **Not changed:** model weights, configuration values, stored inspections, the engineering decisions of S4.
+- **Audits (limited, S6):** accessibility, automated basics on the restored page (every visible control has an
+  accessible name, no image without alt text, table headers present, arrow keys move through table rows and the view
+  radio group; no WCAG conformance is claimed, no screen-reader test was run); dependencies, `pip-audit`: no known
+  vulnerabilities; code review of the new backup tool found and fixed a path-traversal risk from a tampered manifest
+  (`_safe`, tested). Runtime benchmark not run: it requires stopping the owner's port 8000 server.
+- **Risk:** the production server on port 8000 runs `main`, not this branch, until the owner merges and restarts.
+
 ## 2026-11-18, session S5: diagnostic output restored (register D-22, D-23)
 - **Original behaviour (S4 build, 5313c52):** the pipeline measured every wire, but the result page, overlay viewer,
   PDF figure and admin sheet showed, drew and selected only *assessed* wires. With no validated reference: 0 wires
