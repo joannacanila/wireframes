@@ -2,7 +2,7 @@
 check before anything enters training or evaluation.
 
 The 145-photo set omits many real wires (thesis reference Part 12, item 13), has no pole boxes, and has no explicit
-negatives, so "not labelled" cannot be treated as "not a wire" and the 75 % targets cannot be verified with it.
+negatives, so "not labelled" cannot be treated as "not a wire" and precision measured on it is a lower bound.
 This pack makes the missing labels cheap to add without letting model output become ground truth:
 
     * every shipped prediction is written with attribute ``verified=false`` and the label it came from

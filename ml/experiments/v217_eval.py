@@ -30,6 +30,7 @@ VARIANTS: dict[str, dict] = {
     "v216": {"segmentation": {"wirenet_weights": "models/wirenet-r34.pt", "span_wire_tau": None, "strand_head": None,
                               "span_class_min_share": 0.9}},
     "v217": {},  # config/wireframe.yaml as shipped in v2.17
+    "v221": {},  # v2.21: same models; low-memory inference and the measurement-validity rules
 }
 
 

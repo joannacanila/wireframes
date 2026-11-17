@@ -1,11 +1,12 @@
 """v2.17: compare pole detectors on one labelled split with one definition (box IoU >= 0.5, one-to-one, greedy by score).
 
-Detectors: a YOLO checkpoint (``*.pt``) or ``grounding-dino:<hf id>``. Each image is run once at a low threshold;
+Detectors: a YOLO checkpoint (``*.pt``). (The v2.18 comparison also ran ``grounding-dino:<hf id>``; that backend was
+removed from app/pipeline/poles.py in v2.23, and its recorded results stay in docs/thesis/results.) Each image is run once at a low threshold;
 precision / recall / F1 are then computed at every threshold of a grid, AP50 (101-point) from the full ranked list.
 The operating threshold is chosen on **val** (max F1) and then applied unchanged to **test**:
 
     python -m ml.poles.eval_detectors --data datasets/external/poles_lvis/data.yaml --split val \\
-        --detector grounding-dino:IDEA-Research/grounding-dino-tiny --detector runs/detect/runs/poles/yolo11s-lvis/weights/best.pt
+        --detector runs/detect/runs/poles/yolo11s-lvis/weights/best.pt
     python -m ml.poles.eval_detectors --split test --threshold-from docs/thesis/results/v217_poles_select_val.json ...
 
 Reported per detector: AP50, the val-chosen threshold, P / R / F1 there with 95 % image-bootstrap intervals,

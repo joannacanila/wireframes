@@ -1,5 +1,5 @@
 """Evaluation runs (Sections 3.9 - 3.11). Each subcommand writes one section of
-var/evaluation/report.json, which GET /api/evaluation/metrics serves.
+var/evaluation/report.json (a local record of the latest evaluation runs; the thesis copies live in docs/thesis/results).
 
     # Segmentation on the held-out test set - run ONCE, for the final figures (Section 3.4.5)
     python -m ml.evaluate segmentation --data datasets/wireframe_seg/data.yaml --split test
@@ -76,6 +76,9 @@ def geometry_benchmark(n_scenes: int = 40, seed: int = 0) -> dict:
     from app.pipeline.segment import parse_yolo_seg_labels
 
     cfg = load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
+    # v2.21: the geometric layer only; the assessment policy (classes with a reference, both endpoints in frame)
+    # decides whether a measured span gets a severity, which this benchmark does not evaluate
+    cfg = cfg.model_copy(update={"crs": cfg.crs.model_copy(update={"assessed_classes": [], "require_both_endpoints": False})})
     rng = np.random.default_rng(seed)
     curve_err, ratio_err, a_err, failures, n = [], [], [], 0, 0
     for i in range(n_scenes):
