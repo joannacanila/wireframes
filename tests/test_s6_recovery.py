@@ -66,3 +66,13 @@ def test_restored_result_page_structure_and_styles():
     for sel in (".fx-toolbar", ".fx-seg", ".fx-opacity", ".fx-menu", ".fx-spans", ".fx-filters", ".fx-detail", ".fx-dl",
                 ".fx-more", ".fx-recs", ".fx-limits", ".fx-drawer", ".fx-counts", ".fx-risk.measured"):
         assert sel in css, sel
+
+
+def test_admin_sheet_uses_measurement_states_when_nothing_is_assessed():
+    """S6: the admin sheet showed a severity legend over type-coloured wires, 'Not assessed' for every wire and a
+    coverage line blaming the photo for a missing reference."""
+    from app.core.config import ROOT_DIR
+    js = (ROOT_DIR / "app/web/assets/admin.js").read_text()
+    assert 'const MST = { measured: "Measured", partial: "Visible part", unmeasured: "Not measured", drop: "Drop wire" };' in js
+    assert 'data-group="${mst(w)}"' in js and "Colour shows wire type, not severity" in js
+    assert "assessed for severity (no validated sag reference)." in js
