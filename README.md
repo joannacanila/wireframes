@@ -13,41 +13,105 @@ code refer to it.
 > regulatory or maintenance action (Section 3.14.6). Until calibration (Table 3.1, second part), the
 > parameters in `config/wireframe.yaml` are provisional, and every result carries flags that say so.
 
-## Quick start
+## Quick start: run WIREFRAME on a new computer (step by step)
+
+Everything the system needs comes from this repository: the code from `main`, and **all models** (about 650 MB)
+from its [`model-weights`](https://github.com/joannacanila/wireframes/tree/model-weights) branch, which the app
+downloads by itself on first start. Nothing is fetched from Hugging Face or any other site.
+
+**What you need:** macOS, Windows or Linux; Python **3.11–3.13** (`python3 --version`); Git; about **4 GB free
+disk** (Python packages ≈ 2.5 GB, models ≈ 650 MB); 8 GB RAM or more; an internet connection for the first start.
+Apple Silicon Macs use the GPU (MPS) automatically; other computers run on the CPU (slower, about 15–40 s per
+photo).
+
+**1. Get the code**
 
 ```bash
-git clone https://github.com/joannacanila/wireframes.git && cd wireframes
-python3 -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt                       # everything the app needs, models included
-uvicorn app.main:app                                  # http://127.0.0.1:8000 : / landing · /workspace screener · /admin
-python -m scripts.create_admin engr.yourname          # optional: an admin account (password prompted; no default)
+git clone https://github.com/joannacanila/wireframes.git
+cd wireframes
 ```
 
-**The models download themselves.** The trained weights are not in the code history. On first start the app
-fetches them (about 113 MB: `wirenet-r34.pt` and `wireframe-yolo11m-seg.pt`) from this repository's
-[`model-weights`](https://github.com/joannacanila/wireframes/tree/model-weights) branch into `models/`, verifies
-each file's size and SHA-256, and switches from validation mode to screening as soon as they are in place, without a
-restart (progress: `GET /api/health` → `model.downloads`). The ground filter's scene parser (about 240 MB) is
-downloaded from the Hugging Face Hub the first time a photo needs it. Existing files are never overwritten. Offline
-install: copy the two files into `models/` by hand and set `WIREFRAME_AUTO_DOWNLOAD=0`; another mirror:
-`WIREFRAME_WEIGHTS_BASE_URL`.
+**2. Create a Python environment and install the packages** (one time, 5–15 minutes)
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate          # Windows (PowerShell): .venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+**3. Start the system**
+
+```bash
+uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+**4. Wait for the models (first start only).** The terminal shows `downloading model weights …` and then
+`… verified and installed` for each file. To check progress, open <http://127.0.0.1:8000/api/health> and look at
+`model.downloads`: every file should say `ready` or `present`. This takes a few minutes, depending on the
+connection. The server keeps running while it downloads, and switches from validation mode to screening by itself
+when the files are in place (no restart). Each file's size and SHA-256 are checked, so a broken download is never
+used; if one fails, stop the server (`Ctrl+C`) and start it again: it fetches only what is missing.
+
+**5. Open the screener:** <http://127.0.0.1:8000/workspace> (landing page: <http://127.0.0.1:8000/>, admin:
+`/admin`). Upload a ground-level photo of a utility pole. The first analysis is slower because the models load into
+memory; later ones take about 5–6 s on an Apple M1.
+
+**6. Optional: an admin account** (password prompted; there is no default):
+
+```bash
+python -m scripts.create_admin engr.yourname
+```
+
+**Next time:** `cd wireframes`, `source .venv/bin/activate` (Windows: `.venv\Scripts\Activate.ps1`), then step 3.
+**Update to the latest version:** `git pull`, `pip install -r requirements.txt`, then step 3 (new models download
+by themselves).
+
+**Models it uses** (all listed with size and SHA-256 in `app/core/weights.py`, downloaded into `models/`):
+
+| Model | File(s) | Used for |
+|---|---|---|
+| Three WireNets (U-Net with ResNet-34, MiT-B1, ConvNeXt-T encoders), averaged | `wirenet-r34.pt`, `v212_mitb1.pt`, `v212_convnext_t.pt` + `models/v217_ensemble.json` | Wire pixels and wire type |
+| Strand type head (DINOv2 features + wire geometry) | `strand_head_v217.pt`, `strand_head_v217.json`, `hf/dinov2-small/` | One type (power / telecom) per wire |
+| YOLO11s-seg | `wireframe-yolo11m-seg.pt` | Vegetation |
+| UperNet-ConvNeXt-T (ADE20K) | `hf/upernet-convnext-tiny/` | Ground / structure / vegetation scene checks |
+| YOLO11n pole detector | `poles-yolo11n-v218.pt` | Pole boxes, information only (does not change wires or risk scores) |
+
+**Troubleshooting**
+
+* `uvicorn: command not found`: the environment is not active; run the `source .venv/bin/activate` line again.
+* Port already in use: start with `--port 8001` and open `http://127.0.0.1:8001/workspace`.
+* `CERTIFICATE_VERIFY_FAILED` while downloading (python.org Python on macOS): run
+  `/Applications/Python\ 3.13/Install\ Certificates.command` once, then restart.
+* No internet on the inspection computer: on a computer that has it, copy the whole `models/` folder after the
+  first start; on the offline one, put it in `wireframes/models/` and start with `WIREFRAME_AUTO_DOWNLOAD=0`.
+* A mirror instead of GitHub: `WIREFRAME_WEIGHTS_BASE_URL=<url with the same file names>`.
+* Pole detection off: set `pole_weights: null` in `config/wireframe.yaml` and restart.
 
 Development (tests, lint, training, experiments):
 
 ```bash
 pip install -r requirements-dev.txt -r requirements-ml.txt
-pytest                                                # 525 tests
+pytest
 ruff check app ml scripts tests
 python -m scripts.seed_synthetic --n 8                # optional: SYNTHETIC demo poles (codes SYN-…)
 ```
 
-**Licence of the weights:** the vegetation model is fine-tuned from Ultralytics YOLO11 (AGPL-3.0); WireNet builds on
-ResNet-34 (BSD-3) and segmentation-models-pytorch (MIT); the dataset is CC BY 4.0.
+**Licences of the models:** WireNets and the strand head are trained on the team's dataset (CC BY 4.0) with
+BSD-3 / MIT / Apache-2.0 components; the vegetation and pole detectors are fine-tuned from Ultralytics YOLO11
+(AGPL-3.0); DINOv2-small (Apache-2.0) and UperNet-ConvNeXt-T (MIT) are unmodified copies. The pole detector was
+trained on LVIS / COCO photos (several non-commercial Flickr licences) starting from a model trained on Google
+Street View captures (Zenodo 20091961): academic, non-commercial use only. Details: the `model-weights` branch
+README.
 
-The trained segmentation model is not in the repository. Without `models/wireframe-yolo11m-seg.pt`, the
-server runs in **reference-mask mode**. You upload a photo together with its YOLO-seg polygon labels, and the
-geometric and risk layers run on those masks. An upload without labels ends in the `error` state with the code
-`model_unavailable`. The pipeline never invents detections.
+**Accuracy (held-out test, details in `docs/thesis/WIREFRAME_THESIS_REFERENCE.md` §5.11–5.12):** wire F1 0.807,
+power 0.828, telecom 0.710, wire-type accuracy 0.936 on the team's 21 test photos. The pole detector reaches F1
+0.564 (precision 0.620) on public LVIS photos and has **not** been measured on the team's photos, which have no
+pole labels yet; treat pole boxes as hints.
+
+If the model files are missing and cannot be downloaded, the server runs in **reference-mask mode**: you upload a
+photo together with its YOLO-seg polygon labels, and the geometric and risk layers run on those masks. An upload
+without labels ends in the `error` state with the code `model_unavailable`. The pipeline never invents detections.
 
 ## Pipeline (Figure 3.4)
 

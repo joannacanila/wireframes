@@ -84,3 +84,43 @@ def test_shipped_checksums_match_the_local_weights():
             pytest.skip("weights not present on this machine")
         assert p.stat().st_size == w.size
         assert hashlib.sha256(p.read_bytes()).hexdigest() == w.sha256
+
+
+def test_multi_part_file_in_a_subfolder_is_joined_and_verified(tmp_path, mirror, monkeypatch):
+    """v2.18: files over GitHub's 100 MB limit are published as <name>.000, .001 ... and joined on download."""
+    url, _, src = mirror
+    data = bytes(range(256)) * 50
+    (src / "hf" / "m").mkdir(parents=True)
+    for i, k in enumerate(range(0, len(data), 5000)):
+        (src / "hf" / "m" / f"w.bin.{i:03d}").write_bytes(data[k:k + 5000])
+    w = weights.WeightFile("hf/m/w.bin", len(data), hashlib.sha256(data).hexdigest(), parts=3)
+    monkeypatch.setattr(weights, "REQUIRED", (w,))
+    assert weights.ensure(tmp_path / "models", url) == []
+    assert (tmp_path / "models" / "hf" / "m" / "w.bin").read_bytes() == data
+    assert not list((tmp_path / "models").rglob("*.part"))
+
+
+def test_multi_part_with_a_missing_part_installs_nothing(tmp_path, mirror, monkeypatch):
+    url, _, src = mirror
+    (src / "x.bin.000").write_bytes(b"abc")
+    w = weights.WeightFile("x.bin", 6, hashlib.sha256(b"abcdef").hexdigest(), parts=2)
+    monkeypatch.setattr(weights, "REQUIRED", (w,))
+    assert weights.ensure(tmp_path / "models", url) == ["x.bin"]
+    assert not (tmp_path / "models" / "x.bin").exists()
+
+
+def test_every_model_the_shipped_config_loads_is_provisioned():
+    """The repository alone runs the system: each model file the shipped configuration names is downloadable."""
+    import json
+
+    from app.core.config import ROOT_DIR, load_analysis_config
+    seg = load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml").segmentation
+    names = {w.name for w in weights.REQUIRED}
+    spec = json.loads((ROOT_DIR / seg.wirenet_weights).read_text())
+    wanted = {Path(m["weights"]).name for m in spec["members"]} | {Path(seg.weights).name}
+    for extra in (seg.strand_head, seg.pole_weights):
+        if extra:
+            wanted |= {Path(extra).name, Path(extra).with_suffix(".json").name} if extra == seg.strand_head \
+                else {Path(extra).name}
+    assert wanted <= names, wanted - names
+    assert {"hf/dinov2-small/model.safetensors", "hf/upernet-convnext-tiny/model.safetensors"} <= names

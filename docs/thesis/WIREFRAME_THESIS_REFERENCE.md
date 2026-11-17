@@ -1138,6 +1138,15 @@ verified and loaded with no restart. `WIREFRAME_AUTO_DOWNLOAD=0` disables it (of
 use. Licences: the vegetation weights derive from Ultralytics YOLO11 (AGPL-3.0); WireNet from ResNet-34 (BSD-3) and
 segmentation-models-pytorch (MIT); dataset CC BY 4.0.
 
+**v2.18: every model from the repository.** `REQUIRED` now lists every file the shipped configuration loads (12
+files, ≈ 650 MB): the three WireNets, the strand head and its statistics, the vegetation YOLO, the pole detector,
+and copies of DINOv2-small (Apache-2.0) and UperNet-ConvNeXt-T (MIT) under `models/hf/`, which the strand head and
+scene parser now load from (`weights.hf_source`; the hub id only when the local copy is incomplete). Files above
+GitHub's 100 MB limit (ConvNeXt-T WireNet, UperNet) are published as 90 MB parts and joined on download; the
+SHA-256 is checked on the joined file, and a missing part installs nothing (`tests/test_v215_weights.py`). The pole
+detector weights (LVIS/COCO photos; initialised from a Street View-trained model) are published by the project
+owner's decision for academic, non-commercial use, as stated on the `model-weights` branch README.
+
 ### 9.5 Outputs beyond the page
 
 - **PDF report:** disclaimer on page 1 and every footer; inspection name, place, pole code, file name; verdict and

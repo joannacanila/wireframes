@@ -118,10 +118,13 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   vegetation_gate_min_share: 0.4
   # v2.16 pole detector (app/pipeline/poles.py; YOLO11n fine-tuned by ml/poles/train.py on Zenodo 20091961). Context
   # only: pole boxes are reported and wire ends at a pole are counted; a pole never creates or joins a wire unless
-  # pole_occluder_gap > 0. The weights are trained on Google Street View captures and are NOT redistributed, so a
-  # fresh clone runs without them (null); to enable locally: pole_weights: models/poles-yolo11n.pt
-  pole_weights: null
-  pole_conf: 0.35
+  # pole_occluder_gap > 0.
+  # v2.18, enabled at the project owner's request (17 Nov 2026) although the 75 % gate is not met (LVIS test
+  # medium+large P 0.620 / F1 0.564; no pole labels on WIREFRAME photos). Context only; joining stays off. Threshold
+  # 0.25 chosen on LVIS val. The weights download from the model-weights branch (app/core/weights.py); if missing,
+  # detection fails soft (no boxes).
+  pole_weights: models/poles-yolo11n-v218.pt
+  pole_conf: 0.25
   pole_occluder_gap: 0
   # span extraction, chosen by coordinate-descent ablation on the validation split (Chapter 4 v2.8;
   # docs/thesis/results/v28_span_sweep.jsonl): validation tolerant mAP50 0.0296 -> 0.0397

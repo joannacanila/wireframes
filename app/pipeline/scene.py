@@ -42,8 +42,10 @@ class SceneParser:
             import torch
             from transformers import AutoImageProcessor, AutoModelForSemanticSegmentation
             dev = self.device if self.device != "auto" else ("mps" if torch.backends.mps.is_available() else "cpu")
-            self._proc = AutoImageProcessor.from_pretrained(MODEL_ID)
-            self._net = AutoModelForSemanticSegmentation.from_pretrained(MODEL_ID).to(dev).eval()
+            from app.core.weights import hf_source
+            src = hf_source("upernet-convnext-tiny", MODEL_ID)  # the repository's own copy (v2.18)
+            self._proc = AutoImageProcessor.from_pretrained(src)
+            self._net = AutoModelForSemanticSegmentation.from_pretrained(src).to(dev).eval()
             self._dev = dev
             names = {v: int(k) for k, v in self._net.config.id2label.items()}
             self.ground_ids = [names[n] for n in GROUND if n in names]

@@ -32,7 +32,8 @@ class Dino:
         import torch
         from transformers import AutoModel
         self.dev = device or ("mps" if torch.backends.mps.is_available() else "cpu")
-        self.model = AutoModel.from_pretrained(DINO_ID).to(self.dev).eval()
+        from app.core.weights import hf_source
+        self.model = AutoModel.from_pretrained(hf_source("dinov2-small", DINO_ID)).to(self.dev).eval()
 
     def grid(self, rgb: np.ndarray) -> np.ndarray:
         """(72, 72, 384) patch features of the photo resized to 1008 px (aspect ignored: the photos are square)."""
