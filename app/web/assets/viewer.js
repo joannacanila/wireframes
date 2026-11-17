@@ -65,6 +65,7 @@ export class OverlayViewer {
     this.mode = "risk";
     this.view = { s: 1, x: 0, y: 0 };
     this.wires = [];
+    this.visible = null;
     this.hover = null;
     this.selected = null;
     this.image = null;
@@ -109,6 +110,9 @@ export class OverlayViewer {
   }
 
   set(layer, on) { this.layers[layer] = on; this.draw(); }
+  /** v2.20: draw and hit-test only these wire indices (null = all). Geometry is never changed, only hidden. */
+  setVisible(indices) { this.visible = indices ? new Set(indices) : null; this.draw(); }
+  _shown() { return this.visible ? this.wires.filter((w) => this.visible.has(w.index)) : this.wires; }
   setPoles(poles) { this.poles = poles || []; this.draw(); }
 
   /** v2.11: load WireNet's full class mask (indexed PNG, transparent background). */
@@ -209,8 +213,8 @@ export class OverlayViewer {
     ctx.lineWidth = 10 / this.view.s; // generous target for 1-px wires
     let hit = null;
     // topmost = last drawn
-    for (let i = this.wires.length - 1; i >= 0 && hit == null; i--) {
-      const w = this.wires[i];
+    for (let i = this._shown().length - 1; i >= 0 && hit == null; i--) {
+      const w = this._shown()[i];
       if (ctx.isPointInPath(w._mask, ix, iy, "evenodd") || ctx.isPointInStroke(w._curve, ix, iy) || ctx.isPointInStroke(w._skel, ix, iy)) hit = w.index;
     }
     ctx.restore();
@@ -260,12 +264,11 @@ export class OverlayViewer {
     const w = index == null ? null : this.wires.find((x) => x.index === index);
     if (!w) { this.tip.removeAttribute("data-show"); return; }
     const r = this.wrap.getBoundingClientRect();
-    const crs = w.crs == null ? "—" : w.crs.toFixed(1);
-    const ratio = w.sag_ratio == null ? "—" : `${(w.sag_ratio * 100).toFixed(2)}%`;
+    // v2.19: condition and sag in plain terms; the score itself stays in the technical diagnostics
+    const scored = w.status === "scored" && w.sag_ratio != null;
     this.tip.innerHTML = `<b>Wire ${w.index} · ${classLabel(w)}</b>
-      <div class="row"><span>Condition</span><span>${{ high: "High risk", medium: "Moderate risk", low: "Low risk" }[w.level] || "Not assessed"}</span></div>
-      <div class="row"><span>Sag</span><span>${ratio}</span></div>
-      <div class="row"><span>Sag score</span><span>${crs}</span></div>`;
+      <div class="row"><span>Condition</span><span>${(scored && { high: "Critical", medium: "Minor sag", low: "Within reference" }[w.level]) || "Not assessed"}</span></div>
+      ${scored ? `<div class="row"><span>Sag</span><span>${(w.sag_ratio * 100).toFixed(1)}% of its length</span></div>` : ""}`;
     const x = Math.min(e.clientX - r.left + 14, r.width - 200);
     const y = Math.min(e.clientY - r.top + 14, r.height - 90);
     this.tip.style.left = `${x}px`;
@@ -297,6 +300,7 @@ export class OverlayViewer {
     const { ctx, canvas, view, dpr = 1 } = this;
     const off = this._off;
     if (off.width !== canvas.width || off.height !== canvas.height) { off.width = canvas.width; off.height = canvas.height; }
+    if (!off.width || !off.height) return; // v2.21: not laid out yet (0 x 0); the next draw paints it
     const o = off.getContext("2d");
     o.setTransform(1, 0, 0, 1, 0, 0); o.clearRect(0, 0, off.width, off.height);
     o.setTransform(dpr * view.s, 0, 0, dpr * view.s, dpr * view.x, dpr * view.y);
@@ -363,7 +367,7 @@ export class OverlayViewer {
     }
 
     if (L.masks) {
-      this._spanLayer(this.wires.filter((w) => w !== fw), fw ? 0.32 : 0.62);
+      this._spanLayer(this._shown().filter((w) => w !== fw), fw ? 0.32 : 0.62);
       if (fw) {
         T(); ctx.globalAlpha = 1; ctx.strokeStyle = "rgba(255,255,255,0.95)"; ctx.lineWidth = 3 * px; ctx.stroke(fw._mask);
         this._spanLayer([fw], 0.95);
@@ -373,7 +377,7 @@ export class OverlayViewer {
     TL();
     ctx.lineJoin = "round"; ctx.lineCap = "round";
     if (L.skeleton) {
-      for (const w of this.wires) {
+      for (const w of this._shown()) {
         ctx.globalAlpha = dim(w) ? 0.25 : 1;
         ctx.strokeStyle = "rgba(0,0,0,0.7)"; ctx.lineWidth = 3 * px; ctx.stroke(w._skel);
         ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 1.25 * px; ctx.stroke(w._skel);
@@ -382,7 +386,7 @@ export class OverlayViewer {
 
     if (L.inferred) {
       // gaps the span assembler bridged: geometry used by the fit, never detected by the model
-      for (const w of this.wires) {
+      for (const w of this._shown()) {
         if (!w._hasInf) continue;
         ctx.globalAlpha = dim(w) ? 0.3 : 1;
         ctx.setLineDash([]);
@@ -393,7 +397,7 @@ export class OverlayViewer {
       ctx.setLineDash([]);
     }
 
-    for (const w of this.wires) {
+    for (const w of this._shown()) {
       const scored = w.status === "scored";
       const c = wireColor(w, this.mode);
       ctx.globalAlpha = dim(w) ? 0.25 : 1;
@@ -432,23 +436,28 @@ export class OverlayViewer {
     const toScreen = ([x, y]) => [(x + 0.5) * view.s + view.x, (y + 0.5) * view.s + view.y];
     ctx.font = `600 11px ${css("--mono") || "monospace"}`;
     ctx.textBaseline = "middle";
-    for (const w of this.wires) {
+    for (const w of this._shown()) {
       if (focus != null && w.index !== focus && this.selected != null) continue; // selected: only its own label
       const c = wireColor(w, this.mode);
       const curve = w.catenary_curve?.length ? w.catenary_curve : w.centerline;
       const anchor = curve?.length ? curve[Math.floor(curve.length * 0.18)] : [(w.bbox[0] + w.bbox[2]) / 2, w.bbox[1]];
       const [bx, by] = toScreen(anchor);
-      const t = String(w.index), tw = Math.max(18, ctx.measureText(t).width + 8);
+      const t = String(w.index), tw = Math.max(30, ctx.measureText("888").width + 10); // one width for 1-3 digits
       ctx.globalAlpha = dim(w) ? 0.4 : 1;
       ctx.fillStyle = "rgba(20,21,23,0.9)";
       ctx.beginPath(); ctx.roundRect(bx - tw / 2, by - 23, tw, 16, 3); ctx.fill();
       ctx.fillStyle = c; ctx.fillRect(bx - tw / 2, by - 9, tw, 2);
-      ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.fillText(t, bx, by - 15);
+      // v2.21: centre on the measured digit box (textBaseline "middle" centres the em box, which sits off-centre)
+      ctx.textBaseline = "alphabetic";
+      const m = ctx.measureText(t);
+      ctx.fillStyle = "#fff"; ctx.textAlign = "center";
+      ctx.fillText(t, bx, by - 15 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
+      ctx.textBaseline = "middle";
 
       const f = w.fit || {};
       if (L.sag && w.status === "scored" && f.sag_point && focus === w.index) {
         const [sx, sy] = toScreen(f.sag_point);
-        const label = `sag ${(w.sag_ratio * 100).toFixed(1)}% of length  ·  score ${w.crs.toFixed(1)}/10`;
+        const label = `sags ${(w.sag_ratio * 100).toFixed(1)}% of its length`; // v2.19: no raw score on the photo
         const lw = ctx.measureText(label).width + 16;
         const cw = this.canvas.width / dpr, ch = this.canvas.height / dpr;
         const lx = Math.max(4, Math.min(sx + 10, cw - lw - 4)), ly = Math.max(14, Math.min(sy + 16, ch - 14));

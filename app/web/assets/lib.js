@@ -17,8 +17,8 @@ export async function api(path, opts = {}) {
 export const json = (method, body) => ({ method, headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-export const fmt = (v, d = 2) => (v == null || Number.isNaN(v) ? "—" : Number(v).toFixed(d));
-export const pct = (v, d = 2) => (v == null ? "—" : `${(v * 100).toFixed(d)}%`);
+export const fmt = (v, d = 2) => (v == null || Number.isNaN(v) ? "–" : Number(v).toFixed(d));
+export const pct = (v, d = 2) => (v == null ? "–" : `${(v * 100).toFixed(d)}%`);
 
 export function ago(iso) {
   const s = (Date.now() - new Date(iso).getTime()) / 1000;
@@ -28,13 +28,12 @@ export function ago(iso) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-export const LEVEL_LABEL = { low: "Low risk", medium: "Medium risk", high: "High risk" };
 export const STATUS_LABEL = { processing: "Processing", complete: "Complete", no_wires_detected: "No wires",
   fit_failed: "Fit failed", error: "Failed" };
 
 export function levelChip(level, status) {
   if (level) return `<span class="chip ${level}">${level}</span>`;
-  return `<span class="chip ${status === "processing" ? "processing" : "plain"}">${esc(STATUS_LABEL[status] || status || "—")}</span>`;
+  return `<span class="chip ${status === "processing" ? "processing" : "plain"}">${esc(STATUS_LABEL[status] || status || "–")}</span>`;
 }
 
 /** Poll an analysis until it leaves "processing". Resolves with the status payload. */

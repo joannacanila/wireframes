@@ -1,17 +1,15 @@
 // System status: one source of truth for "what can the console do right now".
-//   field       the segmentation model is loaded; uploads are segmented by YOLO11-seg
+//   field       the models are loaded; uploads are analysed
 //   validation  no model; uploads need reference polygons (the pipeline never invents masks)
 //   offline     the API is unreachable
-// When the model appears, the admin portal can re-queue analyses that failed for want of it.
 
-import { toast, update } from "./toast.js?v=2.17";
+import { toast } from "./toast.js?v=2.23";
 
 const POLL_MS = 20_000;
 const OFFLINE_MS = 4_000;
 const listeners = new Set();
 let state = { mode: "checking", health: null };
 let timer = 0;
-let opts = { retryFailed: false };
 
 export const getStatus = () => state;
 export function onStatus(fn) { listeners.add(fn); fn(state); return () => listeners.delete(fn); }
@@ -36,31 +34,12 @@ async function poll() {
 
 function transition(prev, mode) {
   if (prev === "offline" && mode !== "offline") toast.success("Connection restored");
-  if (prev === "validation" && mode === "field") {
-    if (opts.retryFailed) offerRetry(); else toast.success("Detection model online", { description: "Photos are now segmented automatically." });
-  }
+  // v2.23: announce only. Failed inspections are re-run one at a time from the Inspections page (Failed tab, Retry);
+  // they are never re-processed automatically, which also used to remount the open page under the user's click.
+  if (prev === "validation" && mode === "field") toast.success("Inspection processing is available", { description: "New photos can be screened." });
 }
 
-async function offerRetry() {
-  const id = toast.loading("Segmentation model loaded — field mode on", { description: "Looking for analyses that failed without it…" });
-  try {
-    const list = await (await fetch("/api/analysis?limit=200")).json();
-    const failed = list.items.filter((a) => a.status === "error");
-    if (!failed.length) { update(id, "Segmentation model loaded — field mode on", { type: "success" }); return; }
-    let ok = 0;
-    for (const a of failed) {
-      const r = await fetch(`/api/analysis/${a.id}/retry`, { method: "POST" });
-      if (r.ok) ok++;
-    }
-    update(id, `Field mode on · ${ok} failed ${ok === 1 ? "analysis" : "analyses"} re-queued`, { type: "success" });
-    dispatchEvent(new CustomEvent("wf:refresh"));
-  } catch (e) {
-    update(id, "Field mode on", { type: "success", description: "Re-run failed analyses from their pages." });
-  }
-}
-
-export function startStatus(options = {}) {
-  opts = { ...opts, ...options };
+export function startStatus() {
   addEventListener("focus", poll);
   addEventListener("online", poll);
   poll();

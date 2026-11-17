@@ -1,67 +1,74 @@
-// Side B: admin command centre. Signed-in engineers and administrators only; every API it
-// calls is guarded server-side, so this file decides presentation, never access.
+// WIREFRAME admin portal (v2.20; first written v2.19). Three operational destinations, Dashboard, Inspections and Map & Dispatch, plus
+// (v2.23: the System page was removed; technical exports are on Inspections, diagnostics on each inspection).
+// Every API it calls is guarded server-side (inspector vs admin included); this file decides presentation only.
+// Operational pages show plain statuses (risk level, assessment, review); scores, fit parameters and formulas stay
+// in System and in the collapsed technical diagnostics.
 
-import { api, json, esc, fmt, pct, ago, levelChip, LEVEL_LABEL, STATUS_LABEL, waitForAnalysis } from "./lib.js?v=2.17";
-import { OverlayViewer, CLASS_LABEL, wireColor } from "./viewer.js?v=2.17";
-import { mountSites } from "./sites.js?v=2.17";
-import { mountEvaluation } from "./evaluation.js?v=2.17";
-import { onStatus, startStatus } from "./status.js?v=2.17";
-import { toast, update } from "./toast.js?v=2.17";
+import { api, json, esc, ago, waitForAnalysis } from "./lib.js?v=2.23";
+import { OverlayViewer, wireColor, classLabel } from "./viewer.js?v=2.23";
+import { assessment, limitations, recommendations, finding, group, CONDITION, SECTION } from "./findings.js?v=2.23";
+import { onStatus, startStatus } from "./status.js?v=2.23";
+import { toast } from "./toast.js?v=2.23";
+import { mountMap } from "./admin-map.js?v=2.23";
+import { diagnosticsHtml, bindDiagnostics } from "./admin-diagnostics.js?v=2.23";
+import { mountAssistant } from "./assistant.js?v=2.23";
 
 const view = document.getElementById("view");
 const $ = (s, r = document) => r.querySelector(s);
 let me = null;
 let cleanup = () => {};
+let assistant = null;
+const ctx = { page: "/admin", analysisId: null, label: "" }; // what the assistant knows about the current page
 
-// Plain-language explanations shown on hover/focus next to technical labels.
-const TIP = {
-  vni: "Visual Noise Index: share of image power at high spatial frequencies (2D FFT, Eq. 3–4). Scene clutter, not wire condition.",
-  vni_raw: "Before quantile rescaling: Σ power beyond r_L ÷ Σ non-zero power.",
-  a: "Catenary parameter a = horizontal tension ÷ weight per length, in pixels. Larger a = tauter wire.",
-  bc: "b: x of the lowest point; c: vertical offset (y-up frame, pixels).",
-  rms: "Root-mean-square vertical distance between the centerline points and the fitted catenary.",
-  rel: "RMS residual ÷ chord length. The fit is rejected above the residual limit τ.",
-  chord: "L: straight distance between the two ends of the fitted curve.",
-  sag: "δ: largest perpendicular distance from the fitted curve to the chord.",
-  ratio: "δ/L, the sag ratio (Eq. 8). Unchanged by image scale.",
-  lim: "Allowable sag ratio for this class (Eq. 9); development placeholder until calibrated.",
-  crs: "Catenary Risk Score = min{10, 10·(δ/L ÷ δ_lim)·w_class} (Eq. 10). Low < 3 ≤ Medium ≤ 6 < High.",
-  pruned: "Skeleton pixels removed as spur branches shorter than L_min = 30 px (Zhang-Suen + pruning).",
-  pts: "Centerline points used in the Levenberg–Marquardt fit.",
-  mspi: "Multi-Site Priority Index (Eq. 11): orders poles for inspection.",
-};
-const tip = (k, label) => `<span class="tipped" tabindex="0" data-tip="${esc(TIP[k])}">${label}</span>`;
+export const RISK = { high: "High risk", medium: "Moderate risk", low: "Low risk", unassessed: "Not assessed",
+  failed: "Processing failed", processing: "Processing" };
+export const REVIEW = { pending: "Needs review", not_reviewed: "Not reviewed", confirmed: "Confirmed",
+  flagged: "Flagged for inspection", overridden: "Level changed", dismissed: "Dismissed" };
+export const COMPLETE = { complete: "Complete", partial: "Partial", not_assessed: "Not assessed" };
+export const riskBadge = (r, big = false) => `<span class="risk risk-${esc(r)}${big ? " big" : ""}"><i aria-hidden="true"></i>${esc(RISK[r] || r)}</span>`;
+export const reviewText = (v, row) => `<span class="rev rev-${esc(v)}">${esc(REVIEW[v] || v)}${v === "overridden" && row?.override_level ? ` to ${esc(RISK[row.override_level].toLowerCase())}` : ""}</span>`;
+const day = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" });
+const dayTime = (iso) => new Date(iso).toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const place = (r) => [r.barangay, r.city].filter(Boolean).join(", ");
+export const isAdmin = () => me?.role === "admin";
 
 // ------------------------------------------------------------------ session
 async function boot() {
-  try { me = (await api("/api/auth/me")).user; } catch { me = null; }  // null when signed out
+  try { me = (await api("/api/auth/me")).user; } catch { me = null; }
   if (!me) return showLogin();
   $("#top").hidden = false;
   $("#who").textContent = me.display_name;
+  $("#who-full").textContent = me.display_name;
+  $("#who-role").textContent = me.role === "admin" ? "Administrator" : "Inspector";
+  $("#avatar").textContent = me.display_name.trim().slice(0, 1).toUpperCase();
   if (location.pathname === "/admin/login") history.replaceState({}, "", "/admin");
-  startStatus({ retryFailed: true });
-  onStatus(({ mode, health }) => {
-    const pill = $("#mode-pill");
-    pill.dataset.mode = mode;
-    pill.textContent = { field: "Model active", validation: "Reference masks only", offline: "Offline", checking: "Checking…" }[mode];
-    pill.title = mode === "field" ? `Segmentation: ${health?.model?.weights}` : health?.model?.error || "";
+  startStatus();
+  onStatus(({ mode }) => {
+    const a = $("#sys-alert");
+    // a subtle line only when something needs attention; nothing when all is well
+    a.hidden = mode === "field" || mode === "checking";
+    a.textContent = { validation: "Inspection processing unavailable", offline: "Server unreachable" }[mode] || "";
+    a.href = "/admin"; // v2.23: the System page is gone; the dashboard banner explains the problem
   });
+  assistant ??= mountAssistant({ api, json, esc, getContext: () => ({ ...ctx }), navigate, launcher: $("#asst-open") });
+  assistant.show();
   route();
 }
 
 function showLogin() {
   $("#top").hidden = true;
+  assistant?.hide();
   if (location.pathname !== "/admin/login") history.replaceState({}, "", "/admin/login");
   view.innerHTML = `<section class="login">
     <form class="login-card" id="login" novalidate>
-      <img src="/assets/logo.svg" alt="" width="40" height="40">
-      <h1>Admin portal</h1>
-      <p class="hint">For city engineers and administrators. Field screening needs no account.</p>
+      <img src="/assets/logo.svg" alt="" width="36" height="36">
+      <h1>Sign in to WIREFRAME</h1>
+      <p class="hint">For inspectors, engineers and administrators. The Field Screener needs no account.</p>
       <label class="field"><span>Username</span><input name="username" autocomplete="username" required autofocus></label>
       <label class="field"><span>Password</span><input name="password" type="password" autocomplete="current-password" required></label>
       <p class="form-error" id="login-error" role="alert" hidden></p>
       <button class="btn primary lg" type="submit">Sign in</button>
-      <a class="back" href="/">← Back to WIREFRAME</a>
+      <a class="back" href="/">Back to WIREFRAME</a>
     </form></section>`;
   const f = $("#login");
   f.addEventListener("submit", async (e) => {
@@ -79,39 +86,72 @@ function showLogin() {
 
 $("#signout").addEventListener("click", async () => {
   try { await api("/api/auth/logout", { method: "POST" }); } catch { /* already signed out */ }
-  me = null; showLogin();
+  me = null; closeMenu(); showLogin();
 });
 addEventListener("wf:unauthorized", () => {
   if (!me) return;
   me = null; toast("Session ended", { description: "Sign in again to continue." }); showLogin();
 });
 
+// user menu
+const menuBtn = $("#user-btn"), menu = $("#user-menu");
+const closeMenu = () => { menu.hidden = true; menuBtn.setAttribute("aria-expanded", "false"); };
+menuBtn.addEventListener("click", () => { const open = menu.hidden; menu.hidden = !open; menuBtn.setAttribute("aria-expanded", String(open)); });
+document.addEventListener("click", (e) => { if (!menu.hidden && !e.target.closest(".adm-menu")) closeMenu(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !menu.hidden) { closeMenu(); menuBtn.focus(); } });
+menu.addEventListener("click", (e) => { if (e.target.closest("a")) closeMenu(); });
+// v2.20: day / night toggle beside the profile menu; one attribute on <html> themes every page, the map and the assistant
+const syncTheme = () => {
+  const dark = document.documentElement.dataset.theme === "dark";
+  $("#theme-btn").setAttribute("aria-label", dark ? "Switch to day theme" : "Switch to night theme");
+  document.querySelector('meta[name="theme-color"]').content = dark ? "#0c0d0f" : "#f3f2ef";
+  dispatchEvent(new CustomEvent("wf:theme", { detail: dark ? "dark" : "light" }));
+};
+$("#theme-btn").addEventListener("click", () => {
+  const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  try { localStorage.setItem("wf-admin-theme", next); } catch { /* private window */ }
+  syncTheme();
+});
+syncTheme();
+
 // ------------------------------------------------------------------ router
+const LEGACY = [ // v2.18 addresses keep working
+  [/^\/admin\/analyses\/([0-9a-f]{32})$/, (m) => `/admin/inspections/${m[1]}`],
+  [/^\/admin\/analyses\/?$/, () => "/admin/inspections"],
+  [/^\/admin\/poles\/(.+)$/, (m) => `/admin/inspections?q=${m[1]}`],
+  [/^\/admin\/poles\/?$/, () => "/admin/inspections?latest_only=1"],
+  [/^\/admin\/sites\/?$/, () => "/admin/map"],
+  [/^\/admin\/(models|evaluation)\/?$/, () => "/admin"],  // v2.23: their System page was removed
+  [/^\/admin\/exports\/?$/, () => "/admin/inspections"],  // technical exports are on Inspections
+];
 const ROUTES = [
-  [/^\/admin\/?$/, "overview", () => mountOverview()],
-  [/^\/admin\/analyses\/?$/, "analyses", () => mountAnalyses()],
-  [/^\/admin\/analyses\/([0-9a-f]{32})$/, "analyses", (m) => mountAnalysis(m[1])],
-  [/^\/admin\/sites\/?$/, "sites", () => mountSites(view, { api, esc, navigate })],
-  [/^\/admin\/poles\/?$/, "poles", () => mountPoles()],
-  [/^\/admin\/poles\/(.+)$/, "poles", (m) => mountPole(decodeURIComponent(m[1]))],
-  [/^\/admin\/models\/?$/, "models", () => mountModels()],
-  [/^\/admin\/exports\/?$/, "exports", () => mountExports()],
-  [/^\/admin\/evaluation\/?$/, "evaluation", () => mountEvaluation(view, { api, esc })],
+  [/^\/admin\/?$/, "dashboard", () => mountDashboard()],
+  [/^\/admin\/inspections\/?$/, "inspections", () => mountInspections()],
+  [/^\/admin\/inspections\/([0-9a-f]{32})$/, "inspections", (m) => mountInspection(m[1])],
+  [/^\/admin\/map\/?$/, "map", () => mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVIEW, isAdmin, poleName })],
 ];
 function route() {
   if (!me) return;
   cleanup(); cleanup = () => {};
+  for (const [re, to] of LEGACY) {
+    const m = location.pathname.match(re);
+    if (m) { history.replaceState({}, "", to(m)); break; }
+  }
   const p = location.pathname;
+  Object.assign(ctx, { page: p, analysisId: null, label: "" });
   for (const [re, nav, fn] of ROUTES) {
     const m = p.match(re);
     if (m) {
       document.querySelectorAll("[data-nav]").forEach((a) => a.toggleAttribute("aria-current", a.dataset.nav === nav));
       cleanup = fn(m) || (() => {});
       view.focus({ preventScroll: true });
+      scrollTo({ top: 0 });
+      assistant?.context();
       return;
     }
   }
-  view.innerHTML = `<section class="page"><h1 class="page-title">Not found</h1><a class="btn" href="/admin" data-link>Back to overview</a></section>`;
+  view.innerHTML = `<section class="page"><h1 class="pg-title">Page not found</h1><p><a class="btn" href="/admin" data-link>Go to the dashboard</a></p></section>`;
 }
 export function navigate(href) { history.pushState({}, "", href); route(); }
 document.addEventListener("click", (e) => {
@@ -120,396 +160,777 @@ document.addEventListener("click", (e) => {
   e.preventDefault(); navigate(a.getAttribute("href"));
 });
 addEventListener("popstate", route);
+addEventListener("wf:refresh", () => route());
 
-const page = (title, sub, actions = "") => `<header class="page-head"><div><h1 class="page-title">${title}</h1>${sub ? `<p class="page-sub">${sub}</p>` : ""}</div>${actions}</header>`;
-
-// ------------------------------------------------------------------ overview
-function mountOverview() {
-  view.innerHTML = `<section class="page">${page("Overview", "What needs attention now.")}<div id="ov"></div></section>`;
-  api("/api/admin/overview").then((o) => {
-    const st = o.analyses_by_status;
-    const kpi = (k, v, cls = "") => `<div class="kpi ${cls}"><div class="k">${k}</div><div class="v">${v}</div></div>`;
-    $("#ov").innerHTML = `
-      <div class="kpis kpis-5">${kpi("Poles", o.poles)}${kpi("High-risk poles", o.poles_by_level.high, "level-high")}
-        ${kpi("Medium", o.poles_by_level.medium, "level-medium")}${kpi("Low", o.poles_by_level.low, "level-low")}
-        ${kpi("In queue", o.queue.depth + o.queue.processing.length)}</div>
-      <div class="cols">
-        <section class="panel"><header class="panel-head"><h2>Needs professional review</h2><span class="muted">High risk, not yet reviewed</span></header>
-          ${o.needs_review.length ? `<table class="tbl"><tbody>${o.needs_review.map((r) => `<tr data-href="/admin/analyses/${r.id}">
-            <td class="strong">${esc(r.pole_code)}</td><td class="num">CRS ${fmt(r.max_crs, 1)}</td><td class="muted">${ago(r.created_at)}</td>
-            <td class="right"><span class="chip high">high</span></td></tr>`).join("")}</tbody></table>`
-            : `<p class="empty-line">Nothing waiting. Every high-risk pole has a recorded review.</p>`}</section>
-        <section class="panel"><header class="panel-head"><h2>Failed analyses</h2><a class="link" href="/admin/models" data-link>Queue →</a></header>
-          ${o.queue.errors.length ? `<table class="tbl"><tbody>${o.queue.errors.slice(0, 6).map((e) => `<tr data-href="/admin/analyses/${e.id}">
-            <td class="strong">${esc(e.pole_code)}</td><td class="muted">${esc((e.code || "").replace(/_/g, " "))}</td><td class="muted right">${ago(e.at)}</td></tr>`).join("")}</tbody></table>`
-            : `<p class="empty-line">No failures.</p>`}
-          <p class="hint">${["complete", "no_wires_detected", "fit_failed"].map((k) => `${st[k] || 0} ${STATUS_LABEL[k].toLowerCase()}`).join(" · ")}</p></section>
-      </div>`;
-    bindRowLinks($("#ov"));
-  }).catch(fail("#ov"));
-}
-
-const fail = (sel) => (e) => { const el = $(sel); if (el) el.innerHTML = `<p class="empty-line">Could not load: ${esc(e.message)}</p>`; };
+const fail = (el) => (e) => { if (el) el.innerHTML = `<p class="empty">Could not load this page: ${esc(e.message)}. <button class="link-btn" type="button" data-reload>Try again</button></p>`; };
+view.addEventListener("click", (e) => { if (e.target.closest("[data-reload]")) route(); });
 function bindRowLinks(root) {
   root.addEventListener("click", (e) => {
-    const tr = e.target.closest("tr[data-href]");
-    if (tr && !e.target.closest("a,button")) navigate(tr.dataset.href);
+    const tr = e.target.closest("[data-href]");
+    if (tr && !e.target.closest("a,button,input,select,label")) navigate(tr.dataset.href);
+  });
+  root.addEventListener("keydown", (e) => {
+    const tr = e.target.closest("[data-href]");
+    if (tr && e.key === "Enter" && e.target === tr) navigate(tr.dataset.href);
+  });
+}
+const loading = `<div class="loading" aria-busy="true"><span></span><span></span><span></span></div>`;
+
+// ------------------------------------------------------------------ shared pieces (v2.20)
+const PER_PAGE = 10;
+/** A pole as people read it: the readable label first, the immutable pole code beside it. */
+export const poleName = (r) => {
+  const lab = r.label && r.label !== r.pole_code ? r.label : null;
+  return lab ? `<span class="pn"><b>${esc(lab)}</b><span class="pn-code mono">${esc(r.pole_code)}</span></span>`
+    : `<span class="pn"><b class="mono">${esc(r.pole_code)}</b></span>`;
+};
+/** Barangay / city when recorded, else coordinates, else nothing (a dash; never a "not recorded" placeholder). */
+const placeHtml = (r) => {
+  const p = place(r);
+  if (p) return esc(p);
+  if (r.location) return `<span class="mono coord">${r.location.lat.toFixed(5)}, ${r.location.lon.toFixed(5)}</span>`;
+  return `<span class="muted" aria-label="No location recorded" title="No barangay or GPS recorded">–</span>`;
+};
+/** The one thing a person should know about a row, from recorded counts only. */
+const issue = (r) => {
+  const w = r.wires || {};
+  if (r.risk === "failed") return "Could not be processed";
+  if (r.risk === "processing") return "Still processing";
+  if (w.high) return `${w.high} wire section${w.high === 1 ? "" : "s"} at high risk`;
+  if (w.medium) return `${w.medium} wire section${w.medium === 1 ? "" : "s"} at moderate risk`;
+  if (r.risk === "unassessed") return r.wires_total ? "No wire section could be assessed" : "No wire detected";
+  return "";
+};
+const shortDay = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
+const shortTime = (iso) => new Date(iso).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+
+/** Selection + bulk actions over the visible rows. Every action is a real backend operation, recorded in the
+ *  audit trail; re-classifying records is for administrators and asks for confirmation. */
+function bulkBar(el, getSelected, onDone) {
+  const draw = () => {
+    const ids = getSelected();
+    el.hidden = !ids.length;
+    if (!ids.length) { el.innerHTML = ""; return; }
+    el.innerHTML = `<span class="bk-n"><b class="num">${ids.length}</b> selected</span>
+      <button class="btn sm" type="button" data-bk="assign_barangay">Assign barangay</button>
+      ${isAdmin() ? `<button class="btn sm" type="button" data-bk="mark_test">Mark as test</button>
+        <button class="btn sm" type="button" data-bk="mark_operational">Mark as operational</button>` : ""}
+      <button class="link-btn" type="button" data-bk="clear">Clear selection</button>`;
+  };
+  const run = async (action, extra = {}) => {
+    const ids = getSelected();
+    try {
+      const r = await api("/api/admin/inspections/bulk", json("POST", { ids, action, ...extra }));
+      toast.success(`${r.updated} inspection${r.updated === 1 ? "" : "s"} updated`); onDone(true);
+    } catch (ex) { toast.error("Not changed", { description: ex.message }); }
+  };
+  el.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-bk]"); if (!b) return;
+    const n = getSelected().length;
+    if (b.dataset.bk === "clear") return onDone(false);
+    if (b.dataset.bk === "assign_barangay") { pickBarangay(`${n} selected inspection${n === 1 ? "" : "s"}`).then((v) => v && run("assign_barangay", { barangay: v })); return; }
+    if (b.dataset.bk === "mark_test" && !confirm(`Mark ${n} inspection${n === 1 ? "" : "s"} as test records? They leave the dashboard, the lists, the map and the exports. Nothing is deleted. To bring them back, turn on Filters, Include test records, select them and choose Mark as operational.`)) return;
+    if (b.dataset.bk === "mark_operational" && !confirm(`Mark ${n} inspection${n === 1 ? "" : "s"} as operational records? They will count in the dashboard, the map and the exports.`)) return;
+    run(b.dataset.bk);
+  });
+  return draw;
+}
+const checkboxCell = (id, on) => `<td class="cb"><input type="checkbox" data-sel="${esc(id)}" ${on ? "checked" : ""} aria-label="Select"></td>`;
+const sortHead = (key, label, sort, cls = "") => {
+  const on = sort.key === key;
+  return `<th class="${cls}" aria-sort="${on ? (sort.desc ? "descending" : "ascending") : "none"}"><button type="button" class="th-sort" data-sort="${key}">${label}<i aria-hidden="true">${on ? (sort.desc ? "↓" : "↑") : ""}</i></button></th>`;
+};
+const pager = (page, pages, matched, per, what = "") => pages <= 1 ? (matched ? `<p class="pager-sum">${matched} ${what}</p>` : "")
+  : `<nav class="pager" aria-label="Pages"><span class="pager-sum">${(page - 1) * per + 1}–${Math.min(page * per, matched)} of ${matched} ${what}</span>
+    <button class="btn sm" type="button" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>Previous</button>
+    <span class="num pager-n">${page} / ${pages}</span>
+    <button class="btn sm" type="button" data-page="${page + 1}" ${page >= pages ? "disabled" : ""}>Next</button></nav>`;
+
+
+/** v2.21: choose a barangay from the official list (PSGC). A free-text prompt once stored a person's name as a
+ *  barangay; the server refuses anything that is not an official name, and this picker only offers those. */
+export function pickBarangay(poleLabel) {
+  return new Promise((resolve) => {
+    const dlg = document.createElement("dialog");
+    dlg.className = "pick";
+    dlg.innerHTML = `<form method="dialog" class="pick-f"><h2>Assign a barangay</h2><p class="muted">${esc(poleLabel)}</p>
+      <label class="field"><span>Barangay</span><input id="pk-q" autocomplete="off" placeholder="Start typing, e.g. Malagasang" required></label>
+      <ol class="pick-res" id="pk-res"></ol><p class="form-error" id="pk-err" hidden></p>
+      <div class="pick-acts"><button class="btn" value="cancel" type="submit">Cancel</button><button class="btn primary" id="pk-ok" value="ok" type="submit" disabled>Assign</button></div></form>`;
+    document.body.append(dlg);
+    let chosen = null, t = 0;
+    const q = dlg.querySelector("#pk-q"), res = dlg.querySelector("#pk-res"), ok = dlg.querySelector("#pk-ok");
+    const choose = (name) => { chosen = name; q.value = name; res.innerHTML = ""; ok.disabled = false; };
+    q.addEventListener("input", () => {
+      chosen = null; ok.disabled = true; clearTimeout(t);
+      t = setTimeout(async () => {
+        const hits = q.value.trim() ? await api(`/api/admin/barangays?q=${encodeURIComponent(q.value.trim())}`).catch(() => []) : [];
+        res.innerHTML = hits.map((h) => `<li><button type="button" data-name="${esc(h.name)}">${esc(h.name)} <span class="muted">${esc(h.city)}</span></button></li>`).join("")
+          || (q.value.trim() ? `<li class="muted">Not in the official barangay list for Cavite.</li>` : "");
+      }, 150);
+    });
+    res.addEventListener("click", (e) => { const b = e.target.closest("[data-name]"); if (b) choose(b.dataset.name); });
+    dlg.addEventListener("close", () => { resolve(dlg.returnValue === "ok" ? chosen : null); dlg.remove(); });
+    dlg.showModal(); q.focus();
   });
 }
 
-// ------------------------------------------------------------------ analyses
-function mountAnalyses() {
-  const params = new URLSearchParams(location.search);
-  view.innerHTML = `<section class="page">${page("Analyses", "Every screening, newest first.",
-    `<a class="btn" href="/admin/exports" data-link>Batch upload</a>`)}
-    <form class="filters" id="filters">
-      <input type="search" name="q" placeholder="Pole code, barangay or file" value="${esc(params.get("q") || "")}" aria-label="Search">
-      <select name="level" aria-label="Risk level"><option value="">Any level</option>${["high", "medium", "low"].map((l) => `<option ${params.get("level") === l ? "selected" : ""} value="${l}">${LEVEL_LABEL[l]}</option>`).join("")}</select>
-      <select name="status" aria-label="Status"><option value="">Any status</option>${Object.entries(STATUS_LABEL).map(([k, v]) => `<option ${params.get("status") === k ? "selected" : ""} value="${k}">${v}</option>`).join("")}</select>
-      <label class="check"><input type="checkbox" name="unreviewed" ${params.get("unreviewed") ? "checked" : ""}> Unreviewed only</label>
-    </form>
-    <div id="list"></div></section>`;
-  const f = $("#filters");
-  const load = () => {
-    const q = new URLSearchParams();
-    for (const k of ["q", "level", "status"]) if (f[k].value) q.set(k, f[k].value);
-    if (f.unreviewed.checked) q.set("unreviewed", "true");
-    history.replaceState({}, "", `/admin/analyses${q.toString() ? "?" + q : ""}`);
-    q.set("limit", "200");
-    api(`/api/analysis?${q}`).then((d) => {
-      $("#list").innerHTML = d.items.length ? `<table class="tbl tbl-lg">
-        <thead><tr><th>Pole</th><th>Barangay</th><th>Analysed</th><th>Source</th><th class="num">${tip("crs", "Max CRS")}</th><th class="num">${tip("ratio", "Max δ/L")}</th><th>Level</th><th>Review</th></tr></thead>
-        <tbody>${d.items.map((a) => `<tr data-href="/admin/analyses/${a.id}">
-          <td class="strong"><img class="thumb-sm" src="${a.thumbnail_url}" alt="" loading="lazy">${esc(a.pole_code)}</td>
-          <td>${esc(a.barangay || "—")}</td><td class="muted">${ago(a.created_at)}</td>
-          <td class="muted">${a.segmentation_source === "model" ? "model" : a.segmentation_source === "annotation" ? "reference" : "—"} · ${a.submitted_via}</td>
-          <td class="num">${fmt(a.max_crs, 1)}</td><td class="num">${pct(a.max_sag_ratio)}</td>
-          <td>${levelChip(a.level, a.status)}</td>
-          <td>${a.review ? `<span class="rev ${a.review.decision}">${a.review.decision}${a.review.override_level ? ` → ${a.review.override_level}` : ""}</span>` : `<span class="muted">—</span>`}</td></tr>`).join("")}</tbody></table>
-        <p class="hint">${d.matched} of ${d.total} analyses</p>`
-        : `<p class="empty-line">No analyses match.</p>`;
-    }).catch(fail("#list"));
+// ------------------------------------------------------------------ dashboard
+const DIST = [["high", "High"], ["medium", "Moderate"], ["low", "Low"], ["unassessed", "Not assessed"], ["failed", "No result"]];
+const NOTICE_KEY = "wf-dash-notice";
+function mountDashboard() {
+  let hideNotice = false;
+  try { hideNotice = localStorage.getItem(NOTICE_KEY) === "hidden"; } catch { /* storage blocked */ }
+  view.innerHTML = `<section class="page">
+    <header class="pg-head"><div><h1 class="pg-title">Dashboard</h1>
+      <p class="pg-sub">${esc(new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" }))}</p></div>
+      <div class="pg-actions"><a class="btn" href="/api/admin/exports/sites.pdf" target="_blank" rel="noopener">Export report</a>
+        <a class="btn primary" href="/workspace" target="_blank" rel="noopener">New inspection</a></div></header>
+    ${hideNotice ? "" : `<div class="slim-notice" id="slim"><wf-notice variant="brief"></wf-notice><button class="slim-x" type="button" aria-label="Dismiss the notice">×</button></div>`}
+    <div id="dash">${loading}</div></section>`;
+  $("#slim .slim-x")?.addEventListener("click", () => { $("#slim").remove(); try { localStorage.setItem(NOTICE_KEY, "hidden"); } catch { /* ignore */ } });
+  const el = $("#dash");
+  const st = { quick: "all", q: "", sort: { key: "triage", desc: false }, page: 1, sel: new Set(), risk: null, rows: [], triage: [] };
+  let data = null, t = 0;
+
+  const QUICK = [["all", "All"], ["failed", "Failed"], ["flagged", "Flagged"], ["high", "High"], ["medium", "Moderate"], ["unassessed", "Not assessed"]];
+  const quickOk = (r) => st.quick === "all" || (st.quick === "failed" ? ["failed", "processing"].includes(r.risk) : st.quick === "flagged" ? r.review === "flagged" : r.risk === st.quick);
+  const RANK = { failed: 0, processing: 0, high: 1, medium: 2, unassessed: 3, low: 4 };
+  const SORT = { pole: (r) => r.label || r.pole_code, location: (r) => place(r) || "~", risk: (r) => RANK[r.risk] ?? 9, submitted: (r) => r.created_at };
+
+  function rowsShown() {
+    const k = st.q.trim().toLowerCase();
+    let rows = (st.risk ? st.rows : st.triage).filter((r) => (st.risk || quickOk(r)) && (!k || [r.pole_code, r.label, r.barangay, r.city, r.inspection_name].some((x) => (x || "").toLowerCase().includes(k))));
+    const f = SORT[st.sort.key];
+    if (f) rows = [...rows].sort((a, b) => (f(a) < f(b) ? -1 : f(a) > f(b) ? 1 : 0) * (st.sort.desc ? -1 : 1));
+    return rows;
+  }
+
+  function drawTable() {
+    const rows = rowsShown(), pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
+    st.page = Math.min(st.page, pages);
+    const pageRows = rows.slice((st.page - 1) * PER_PAGE, st.page * PER_PAGE);
+    const all = pageRows.length && pageRows.every((r) => st.sel.has(r.id));
+    $("#tq").innerHTML = pageRows.length ? `<table class="tbl tbl-dense tbl-triage">
+      <thead><tr><th class="cb"><input type="checkbox" data-all ${all ? "checked" : ""} aria-label="Select all on this page"></th>
+        ${sortHead("pole", "Pole", st.sort)}${sortHead("location", "Location", st.sort)}${sortHead("risk", st.risk ? "Risk" : "Issue", st.sort)}${sortHead("submitted", "Submitted", st.sort)}<th class="act">Action</th></tr></thead>
+      <tbody>${pageRows.map((r) => `<tr data-href="/admin/inspections/${r.id}" tabindex="0" ${st.sel.has(r.id) ? 'aria-selected="true"' : ""}>
+        ${checkboxCell(r.id, st.sel.has(r.id))}
+        <td>${poleName(r)}</td><td class="loc">${placeHtml(r)}</td>
+        <td><div class="iss">${riskBadge(r.risk)}${r.review === "flagged" ? '<span class="tag tag-flag">Flagged</span>' : ""}</div>${issue(r) && !["failed", "processing"].includes(r.risk) ? `<span class="iss-sub">${esc(issue(r))}</span>` : ""}</td>
+        <td class="mono when"><time datetime="${esc(r.created_at)}" title="${esc(dayTime(r.created_at))}">${esc(shortDay(r.created_at))}</time></td>
+        <td class="act"><a class="go" href="/admin/inspections/${r.id}" data-link>${r.risk === "failed" ? "Resolve" : "Review"}</a></td></tr>`).join("")}</tbody></table>
+      ${pager(st.page, pages, rows.length, PER_PAGE, st.risk ? "poles" : "items")}`
+      : `<p class="empty">${st.risk ? "No pole has this result." : st.triage.length ? "Nothing matches." : "Nothing needs attention. Every pole has a finished inspection, and every high-risk, moderate-risk and not-assessed result has a recorded review."}</p>`;
+    $("#tq-count").textContent = rows.length;
+    drawBulk();
+  }
+
+  function render() {
+    const p = data.poles, total = p.total;
+    const failedN = data.triage.filter((r) => ["failed", "processing"].includes(r.risk)).length;
+    const flagged = data.triage.filter((r) => r.review === "flagged").length;
+    el.innerHTML = `
+      ${data.system.alerts.length ? `<div class="banner" role="status">${data.system.alerts.map((a) => `<p>${esc(a.text)}</p>`).join("")}
+</div>` : ""}
+      <section class="kpis" aria-label="Summary">
+        <a class="kpi" href="/admin/inspections?latest_only=1" data-link><span class="k">Registered poles</span><b class="num">${total}</b>
+          <span class="s">Counted from each pole's latest inspection</span></a>
+        <div class="kpi"><span class="k">Needs attention</span><b class="num">${data.triage_total}</b>
+          <span class="s">${[data.pending_reviews ? `${data.pending_reviews} awaiting review` : "", flagged ? `${flagged} flagged` : "", failedN ? `${failedN} without a result` : ""].filter(Boolean).join(" · ") || "Queue is clear"}</span></div>
+        <div class="kpi kpi-dist"><span class="k">Risk distribution</span>
+          <div class="dist" role="img" aria-label="${DIST.map(([k, t]) => `${p[k]} ${t.toLowerCase()}`).join(", ")}">
+            ${total ? DIST.filter(([k]) => p[k]).map(([k]) => `<i class="d-${k}" style="flex:${p[k]}"></i>`).join("") : `<i class="d-none" style="flex:1"></i>`}</div>
+          <ul class="dist-key">${DIST.map(([k, t]) => `<li><button type="button" data-risk="${k}" aria-pressed="${st.risk === k}" ${p[k] ? "" : "disabled"}><i class="d-${k}"></i>${t}<b class="num">${p[k]}</b></button></li>`).join("")}</ul>
+        </div>
+      </section>
+      <div class="work">
+        <section class="block work-main" aria-labelledby="tq-h">
+          <header class="tq-head">
+            <h2 id="tq-h">${st.risk ? `${esc(DIST.find(([k]) => k === st.risk)[1])} ${st.risk === "failed" ? "" : "risk "}poles` : "Needs attention"}</h2><span class="count num" id="tq-count"></span>
+            ${st.risk ? `<button class="link-btn" type="button" id="tq-back">Back to Needs attention</button>` : `<div class="chips" role="group" aria-label="Quick filter">${QUICK.map(([k, t]) => `<button type="button" data-quick="${k}" aria-pressed="${st.quick === k}">${t}</button>`).join("")}</div>`}
+            <label class="tq-search"><span class="sr-only">Search the queue</span><input type="search" id="tq-q" placeholder="Pole or place" value="${esc(st.q)}"></label>
+          </header>
+          <div class="bulk" id="bulk-d" hidden></div>
+          <div id="tq"></div>
+        </section>
+        <aside class="block rail" aria-labelledby="au-h">
+          <header class="block-head"><h2 id="au-h">Activity</h2></header>
+          ${data.activity.length ? `<ol class="audit">${data.activity.map((x) => `<li>
+              <p><b>${esc(x.actor)}</b> ${esc(x.text)}${x.target ? ` ${x.analysis_id ? `<a href="/admin/inspections/${x.analysis_id}" data-link>` : ""}<span class="${x.target_label ? "" : "mono"}">${esc(x.target_label || x.target)}</span>${x.analysis_id ? "</a>" : ""}` : ""}${auditDetail(x)}</p>
+              <time datetime="${esc(x.at)}" title="${esc(dayTime(x.at))}">${esc(ago(x.at))}</time></li>`).join("")}</ol>`
+            : `<p class="empty">No actions recorded yet. Reviews, location changes and record changes appear here with who made them.</p>`}
+        </aside>
+      </div>`;
+    const bulkEl = $("#bulk-d");
+    const draw = bulkBar(bulkEl, () => [...st.sel], (changed) => { st.sel.clear(); changed ? load() : drawTable(); });
+    drawBulkRef.fn = draw;
+    drawTable();
+  }
+  const drawBulkRef = { fn: () => {} };
+  function drawBulk() { drawBulkRef.fn(); }
+
+  const load = () => api("/api/admin/dashboard").then(async (d) => {
+    data = d; st.triage = d.triage;
+    if (st.risk) await loadRisk();
+    render();
+  }).catch(fail(el));
+  const loadRisk = async () => {
+    const r = st.risk === "failed" ? "failed,processing" : st.risk;
+    st.rows = (await api(`/api/admin/inspections?risk=${r}&latest_only=true&per_page=500`)).items;
   };
-  let t = 0;
-  f.addEventListener("input", () => { clearTimeout(t); t = setTimeout(load, 180); });
-  f.addEventListener("submit", (e) => e.preventDefault());
-  bindRowLinks($("#list"));
+
+  el.addEventListener("click", async (e) => {
+    const rk = e.target.closest("[data-risk]");
+    if (rk) { st.risk = st.risk === rk.dataset.risk ? null : rk.dataset.risk; st.page = 1; st.sel.clear(); if (st.risk) await loadRisk().catch(() => { st.rows = []; }); render(); return; }
+    if (e.target.closest("#tq-back")) { st.risk = null; st.page = 1; st.sel.clear(); render(); return; }
+    const qb = e.target.closest("[data-quick]");
+    if (qb) { st.quick = qb.dataset.quick; st.page = 1; el.querySelectorAll("[data-quick]").forEach((b) => b.setAttribute("aria-pressed", String(b === qb))); drawTable(); return; }
+    const sb = e.target.closest("[data-sort]");
+    if (sb) { const k = sb.dataset.sort; st.sort = { key: k, desc: st.sort.key === k ? !st.sort.desc : k === "submitted" }; drawTable(); return; }
+    const pb = e.target.closest("[data-page]");
+    if (pb && !pb.disabled) { st.page = Number(pb.dataset.page); drawTable(); $("#tq-h").scrollIntoView({ block: "nearest" }); }
+  });
+  el.addEventListener("change", (e) => {
+    const cb = e.target.closest("[data-sel]");
+    if (cb) { cb.checked ? st.sel.add(cb.dataset.sel) : st.sel.delete(cb.dataset.sel); cb.closest("tr").toggleAttribute("aria-selected", cb.checked); syncAll(); drawBulk(); }
+    if (e.target.closest("[data-all]")) {
+      const on = e.target.checked;
+      el.querySelectorAll("#tq [data-sel]").forEach((x) => { x.checked = on; on ? st.sel.add(x.dataset.sel) : st.sel.delete(x.dataset.sel); x.closest("tr").toggleAttribute("aria-selected", on); });
+      drawBulk();
+    }
+  });
+  const syncAll = () => { const a = $("#tq [data-all]"); if (a) { const boxes = [...el.querySelectorAll("#tq [data-sel]")]; a.checked = boxes.length && boxes.every((x) => x.checked); } };
+  el.addEventListener("input", (e) => { if (e.target.id === "tq-q") { clearTimeout(t); t = setTimeout(() => { st.q = e.target.value; st.page = 1; drawTable(); }, 150); } });
+  bindRowLinks(el);
   load();
   return () => clearTimeout(t);
 }
+function auditDetail(x) {
+  const d = x.detail || {};
+  if (x.action === "barangay.set" && d.new) return `: <span class="muted">${esc(d.new)}</span>`;
+  if (x.action === "review.overridden" && d.override_level) return ` to ${esc((RISK[d.override_level] || "").toLowerCase())}`;
+  if (x.action === "location.set" && Array.isArray(d.new)) return ` <span class="mono muted">${Number(d.new[0]).toFixed(5)}, ${Number(d.new[1]).toFixed(5)}</span>`;
+  if (x.action === "model.activated" && d.name) return ` <span class="mono muted">${esc(d.name)}</span>`;
+  return "";
+}
 
-// ------------------------------------------------------------------ analysis detail
-function mountAnalysis(id) {
+// ------------------------------------------------------------------ inspections
+const TABS = [["all", "All"], ["needs_review", "Needs review"], ["failed", "Failed"], ["low", "Low risk"]];
+const POP_FILTERS = ["barangay", "completeness", "date_from", "date_to"];
+function mountInspections() {
+  const params = new URLSearchParams(location.search);
+  const st = {
+    tab: TABS.some(([k]) => k === params.get("tab")) ? params.get("tab") : "all",
+    q: params.get("q") || "", risk: params.get("risk") || "", review: params.get("review") || "",
+    f: Object.fromEntries(POP_FILTERS.map((k) => [k, params.get(k) || ""])),
+    latest_only: !!params.get("latest_only"), include_test: !!params.get("include_test"),
+    sort: { key: params.get("sort") || "triage", desc: params.get("desc") === "1" }, page: Number(params.get("page")) || 1,
+    per: Number(params.get("per_page")) || 25, sel: new Set(), facets: null,
+  };
+  view.innerHTML = `<section class="page page-wide">
+    <header class="pg-head pg-head-line"><div class="pg-title-line"><h1 class="pg-title">Inspections</h1><span class="pg-count num" id="count"></span></div>
+      <div class="pg-actions btn-group">
+        <a class="btn" id="csv" href="/api/admin/exports/inspections.csv">Download CSV</a>
+        ${isAdmin() ? `<div class="more"><button class="btn" type="button" id="tx-btn" aria-expanded="false" aria-controls="tx-pop">Technical exports</button>
+          <div class="adm-pop tx-pop" id="tx-pop" hidden>
+            <a href="/api/admin/exports/wires.csv"><b>Wire measurements (CSV)</b><span>Every wire of every inspection: fitted curve, residuals, sag, reference, score.</span></a>
+            <a href="/api/admin/exports/manifest.csv"><b>Site manifest (CSV)</b><span>One row per pole: rank, priority score, level, clutter, review, location.</span></a>
+            <a href="/api/admin/exports/sites.pdf?technical=true" target="_blank" rel="noopener"><b>Technical priority report (PDF)</b><span>The ranking with priority scores, weights and their sensitivity.</span></a>
+          </div></div>` : ""}
+        <button class="btn" type="button" id="batch-btn" aria-expanded="false" aria-controls="batch">Upload photos</button>
+        <a class="btn primary" href="/workspace" target="_blank" rel="noopener">New inspection</a></div></header>
+    <section class="batch" id="batch" hidden aria-label="Upload several photos"></section>
+    <div class="toolbar" role="search">
+      <div class="tabs-q" role="tablist" aria-label="Status" id="tabs"></div>
+      <label class="tb-search"><span class="sr-only">Search pole ID or location</span><input type="search" id="q" placeholder="Pole ID or location" value="${esc(st.q)}"></label>
+      <div class="more"><button class="btn" type="button" id="flt-btn" aria-expanded="false" aria-controls="flt-pop">Filters<span class="flt-n num" id="flt-n" hidden></span></button>
+        <form class="adm-pop flt-pop" id="flt-pop" hidden>
+          <label class="flt"><span>Barangay</span><select name="barangay"><option value="">Any</option></select></label>
+          <label class="flt"><span>Assessment</span><select name="completeness"><option value="">Any</option>${Object.entries(COMPLETE).map(([k, v]) => `<option value="${k}" ${st.f.completeness === k ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+          <div class="flt-dates"><label class="flt"><span>From</span><input type="date" name="date_from" value="${esc(st.f.date_from)}"></label>
+            <label class="flt"><span>To</span><input type="date" name="date_to" value="${esc(st.f.date_to)}"></label></div>
+          <label class="chk"><input type="checkbox" name="latest_only" ${st.latest_only ? "checked" : ""}> Latest per pole</label>
+          ${isAdmin() ? `<label class="chk"><input type="checkbox" name="include_test" ${st.include_test ? "checked" : ""}> Include test records</label>` : ""}
+        </form></div>
+      <button class="link-btn" type="button" id="clear" hidden>Clear all</button>
+    </div>
+    <div class="active-flt" id="active-flt" hidden></div>
+    <div class="bulk" id="bulk" hidden></div>
+    <div id="list">${loading}</div></section>`;
+  const fp = $("#flt-pop"), fbtn = $("#flt-btn");
+  let t = 0, reqN = 0;
+  const activeCount = () => POP_FILTERS.filter((k) => st.f[k]).length + st.latest_only + st.include_test + !!st.risk + !!st.review + !!st.q;
+  const qs = (forApi) => {
+    const q = new URLSearchParams();
+    if (st.tab !== "all") q.set("tab", st.tab);
+    if (st.q) q.set("q", st.q);
+    if (st.risk) q.set("risk", st.risk);
+    if (st.review) q.set("review", st.review);
+    for (const k of POP_FILTERS) if (st.f[k]) q.set(k, st.f[k]);
+    if (st.latest_only) q.set("latest_only", forApi ? "true" : "1");
+    if (st.include_test) q.set("include_test", forApi ? "true" : "1");
+    if (st.sort.key !== "triage") { q.set("sort", st.sort.key); if (st.sort.desc) q.set("desc", forApi ? "true" : "1"); }
+    if (st.page > 1) q.set("page", st.page);
+    if (st.per !== 25) q.set("per_page", st.per);
+    return q;
+  };
+  const drawBulk = bulkBar($("#bulk"), () => [...st.sel], (changed) => { st.sel.clear(); changed ? load() : draw(lastData); });
+  let lastData = null;
+
+  function draw(d) {
+    lastData = d;
+    $("#tabs").innerHTML = TABS.map(([k, tx]) => `<button type="button" role="tab" data-tab="${k}" aria-selected="${st.tab === k}">${tx}<b class="num">${d.tabs[k]}</b></button>`).join("");
+    $("#count").textContent = d.matched === d.total ? `${d.total}` : `${d.matched} of ${d.total}`;
+    const n = activeCount(); $("#flt-n").hidden = !(n - !!st.q); $("#flt-n").textContent = n - !!st.q;
+    $("#clear").hidden = !n;
+    const chips = [st.risk && `Risk: ${st.risk.split(",").map((x) => RISK[x] || x).join(", ")}`, st.review && `Review: ${st.review.split(",").map((x) => REVIEW[x] || x).join(", ")}`].filter(Boolean);
+    $("#active-flt").hidden = !chips.length;
+    $("#active-flt").innerHTML = chips.map((c, i) => `<span class="fchip">${esc(c)}<button type="button" data-unset="${i === 0 && st.risk ? "risk" : "review"}" aria-label="Remove filter">×</button></span>`).join("");
+    const all = d.items.length && d.items.every((r) => st.sel.has(r.id));
+    $("#list").innerHTML = d.items.length ? `<div class="tbl-scroll"><table class="tbl tbl-dense tbl-insp">
+      <thead><tr><th class="cb"><input type="checkbox" data-all ${all ? "checked" : ""} aria-label="Select all on this page"></th>
+        ${sortHead("pole", "Pole ID", st.sort)}${sortHead("location", "Location", st.sort)}${sortHead("risk", "Risk", st.sort)}${sortHead("inspected", "Inspected", st.sort)}
+        <th>Assessment</th>${sortHead("review", "Review", st.sort)}<th class="act">Action</th></tr></thead>
+      <tbody>${d.items.map((r) => `<tr data-href="/admin/inspections/${r.id}" tabindex="0" ${st.sel.has(r.id) ? 'aria-selected="true"' : ""}>
+        ${checkboxCell(r.id, st.sel.has(r.id))}
+        <td data-label="Pole ID">${poleName(r)}${r.record_kind === "test" ? '<span class="tag">Test</span>' : ""}${r.same_day > 1 ? `<span class="tag tag-dup" title="${r.same_day} inspections of this pole on the same day">Duplicate</span>` : ""}</td>
+        <td data-label="Location" class="loc">${place(r) || r.location ? placeHtml(r) : `<span class="muted">–</span><button type="button" class="assign" data-assign="${esc(r.pole_code)}">Assign</button>`}</td>
+        <td data-label="Risk">${riskBadge(r.risk)}</td>
+        <td data-label="Inspected" class="mono when"><time datetime="${esc(r.created_at)}" title="${esc(dayTime(r.created_at))}">${esc(shortDay(r.created_at))}<span class="when-t">${esc(shortTime(r.created_at))}</span></time></td>
+        <td data-label="Assessment">${assessCell(r)}</td>
+        <td data-label="Review">${r.review === "not_reviewed" ? '<span class="muted">–</span>' : reviewText(r.review, r)}</td>
+        <td class="act"><a href="/admin/inspections/${r.id}" data-link class="go">Open</a></td></tr>`).join("")}</tbody></table></div>
+      <div class="tbl-foot">${pager(d.page, d.pages, d.matched, d.per_page, "inspections")}
+        <label class="per"><span>Rows</span><select id="per">${[25, 50, 100].map((v) => `<option ${v === d.per_page ? "selected" : ""}>${v}</option>`).join("")}</select></label></div>`
+      : `<p class="empty">${d.total ? "No inspection matches these filters." : "No inspections yet. Screen a photo in the Field Screener to start."}</p>`;
+    drawBulk();
+  }
+  function load() {
+    const n = ++reqN;
+    const q = qs(false), aq = qs(true);
+    history.replaceState({}, "", `/admin/inspections${q.toString() ? "?" + q : ""}`);
+    const ex = new URLSearchParams(aq); ex.delete("page"); ex.delete("per_page"); ex.delete("tab"); ex.delete("sort"); ex.delete("desc"); ex.delete("include_test");
+    $("#csv").href = `/api/admin/exports/inspections.csv?${ex}`;
+    aq.set("per_page", st.per); aq.set("page", st.page);
+    return api(`/api/admin/inspections?${aq}`).then((d) => {
+      if (n !== reqN) return;
+      if (!st.facets) {
+        st.facets = d.facets;
+        fp.barangay.innerHTML = `<option value="">Any</option>${d.facets.barangays.map((b) => `<option ${b === st.f.barangay ? "selected" : ""}>${esc(b)}</option>`).join("")}
+          ${d.facets.no_barangay ? `<option value="__none__" ${st.f.barangay === "__none__" ? "selected" : ""}>No barangay</option>` : ""}`;
+      }
+      draw(d);
+    }).catch(fail($("#list")));
+  }
+  const reload = () => { st.page = 1; st.sel.clear(); load(); };
+  $("#q").addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => { st.q = e.target.value.trim(); reload(); }, 220); });
+  fbtn.addEventListener("click", () => { const o = fp.hidden; fp.hidden = !o; fbtn.setAttribute("aria-expanded", String(o)); });
+  const txb = $("#tx-btn"), txp = $("#tx-pop");  // v2.23: technical exports, moved here from the removed System page
+  txb?.addEventListener("click", () => { const o = txp.hidden; txp.hidden = !o; txb.setAttribute("aria-expanded", String(o)); });
+  const closeTx = (e) => { if (txp && !txp.hidden && !e.target.closest(".pg-actions .more")) { txp.hidden = true; txb.setAttribute("aria-expanded", "false"); } };
+  document.addEventListener("click", closeTx);
+  const closePop = (e) => { if (!fp.hidden && !e.target.closest(".toolbar .more")) { fp.hidden = true; fbtn.setAttribute("aria-expanded", "false"); } };
+  document.addEventListener("click", closePop);
+  const esck = (e) => { if (e.key === "Escape" && !fp.hidden) { fp.hidden = true; fbtn.setAttribute("aria-expanded", "false"); fbtn.focus(); } };
+  document.addEventListener("keydown", esck);
+  fp.addEventListener("change", () => {
+    for (const k of POP_FILTERS) st.f[k] = fp[k].value;
+    st.latest_only = fp.latest_only.checked; st.include_test = !!fp.include_test?.checked;
+    reload();
+  });
+  fp.addEventListener("submit", (e) => e.preventDefault());
+  $("#clear").addEventListener("click", () => {
+    st.q = ""; st.risk = ""; st.review = ""; st.latest_only = false; st.include_test = false;
+    for (const k of POP_FILTERS) st.f[k] = "";
+    fp.reset(); $("#q").value = ""; reload();
+  });
+  const root = view.querySelector(".page");
+  root.addEventListener("click", async (e) => {
+    const tb = e.target.closest("[data-tab]");
+    if (tb) { st.tab = tb.dataset.tab; st.risk = ""; st.review = ""; return reload(); }
+    const un = e.target.closest("[data-unset]");
+    if (un) { st[un.dataset.unset] = ""; return reload(); }
+    const sb = e.target.closest("[data-sort]");
+    if (sb) { const k = sb.dataset.sort; st.sort = st.sort.key === k ? { key: k, desc: !st.sort.desc } : { key: k, desc: k === "inspected" }; st.page = 1; return load(); }
+    const pb = e.target.closest("[data-page]");
+    if (pb && !pb.disabled) { st.page = Number(pb.dataset.page); await load(); $(".toolbar").scrollIntoView({ block: "nearest" }); return; }
+    const as = e.target.closest("[data-assign]");
+    if (as) {
+      const v = await pickBarangay(`Pole ${as.dataset.assign}`);
+      if (!v) return;
+      try { await api(`/api/admin/poles/${encodeURIComponent(as.dataset.assign)}/barangay`, json("PUT", { barangay: v })); toast.success("Barangay assigned"); st.facets = null; load(); }
+      catch (ex) { toast.error("Not assigned", { description: ex.message }); }
+    }
+  });
+  root.addEventListener("change", (e) => {
+    if (e.target.id === "per") { st.per = Number(e.target.value); return reload(); }
+    const cb = e.target.closest("[data-sel]");
+    if (cb) { cb.checked ? st.sel.add(cb.dataset.sel) : st.sel.delete(cb.dataset.sel); cb.closest("tr").toggleAttribute("aria-selected", cb.checked); drawBulk(); }
+    if (e.target.closest("[data-all]")) {
+      const on = e.target.checked;
+      root.querySelectorAll("#list [data-sel]").forEach((x) => { x.checked = on; on ? st.sel.add(x.dataset.sel) : st.sel.delete(x.dataset.sel); x.closest("tr").toggleAttribute("aria-selected", on); });
+      drawBulk();
+    }
+  });
+  bindRowLinks($("#list"));
+  mountBatch($("#batch"), $("#batch-btn"), load);
+  load();
+  return () => { clearTimeout(t); document.removeEventListener("click", closePop); document.removeEventListener("click", closeTx); document.removeEventListener("keydown", esck); };
+}
+const assessCell = (r) => {
+  if (r.risk === "failed") return '<span class="badge badge-bad">Failed</span>';
+  if (r.risk === "processing") return '<span class="muted">Processing</span>';
+  if (!r.wires_total) return '<span class="muted">No wires</span>';
+  if (r.completeness === "complete") return '<span class="badge badge-ok">Complete</span>';
+  return `<span class="prog" title="${r.wires_assessed} of ${r.wires_total} wire sections assessed"><i style="--p:${(r.wires_assessed / r.wires_total) * 100}%"></i><span class="num">${r.wires_assessed}/${r.wires_total}</span></span>`;
+};
+
+/** Several photos at once (moved here from the retired Exports page). Each becomes its own inspection. */
+function mountBatch(el, btn, onDone) {
+  el.innerHTML = `<header class="block-head"><h2>Upload photos</h2><span class="muted">Each photo becomes its own inspection</span></header>
+    <label class="drop"><input type="file" id="b-files" multiple accept="image/jpeg,image/png,image/webp,image/tiff,.txt"><span>Choose photos</span></label>
+    <div class="batch-opts">
+      <label class="field"><span>Barangay <i>optional, for every photo</i></span><input id="b-brgy" maxlength="120"></label>
+      <label class="chk"><input type="checkbox" id="b-stem" checked> Use each file name as the pole ID</label></div>
+    <ol class="batch-list" id="b-list"></ol>
+    <wf-notice variant="upload"></wf-notice>
+    <button class="btn primary" id="b-run" disabled>Screen 0 photos</button>`;
+  btn.addEventListener("click", () => { el.hidden = !el.hidden; btn.setAttribute("aria-expanded", String(!el.hidden)); });
+  let pairs = [];
+  const render = () => {
+    $("#b-list", el).innerHTML = pairs.map((p) => `<li><span class="mono">${esc(p.img.name)}</span>
+      <span class="b-state ${p.state}">${esc(p.msg || { ready: "Ready", uploading: "Uploading", queued: "Processing", done: "Done", failed: "Failed" }[p.state])}</span>
+      ${p.id ? `<a class="link" href="/admin/inspections/${p.id}" data-link>Open</a>` : "<span></span>"}</li>`).join("");
+    const n = pairs.filter((p) => p.state === "ready").length;
+    const b = $("#b-run", el); b.disabled = !n; b.textContent = `Screen ${n} photo${n === 1 ? "" : "s"}`;
+  };
+  $("#b-files", el).addEventListener("change", (e) => {
+    const files = [...e.target.files];
+    const labels = new Map(files.filter((x) => x.name.toLowerCase().endsWith(".txt")).map((x) => [x.name.replace(/\.[^.]+$/, ""), x]));
+    pairs = files.filter((x) => x.type.startsWith("image/")).map((x) => ({ img: x, labels: labels.get(x.name.replace(/\.[^.]+$/, "")) || null, state: "ready" }));
+    render();
+  });
+  $("#b-run", el).addEventListener("click", async () => {
+    const stem = $("#b-stem", el).checked, brgy = $("#b-brgy", el).value.trim();
+    for (const p of pairs.filter((x) => x.state === "ready")) {
+      p.state = "uploading"; render();
+      const fd = new FormData(); fd.append("file", p.img);
+      if (p.labels) fd.append("labels", p.labels);
+      if (brgy) fd.append("barangay", brgy);
+      if (stem) fd.append("pole_code", p.img.name.replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9_.-]/g, "-").slice(0, 64));
+      try {
+        const r = await api("/api/analysis/upload", { method: "POST", body: fd });
+        p.state = "queued"; p.id = r.id; render();
+        waitForAnalysis(r.id).then((s) => { p.state = s.status === "error" ? "failed" : "done"; render(); onDone(); });
+      } catch (ex) { p.state = "failed"; p.msg = ex.message; render(); }
+    }
+  });
+}
+
+// ------------------------------------------------------------------ inspection sheet
+const PRESETS = {
+  photo: {},
+  wires: { masks: 1, inferred: 1, catenary: 1, sag: 1, ends: 0, labels: 1, poles: 0 },
+  mask: { wiremask: 1 },
+  both: { wiremask: 1, masks: 1, inferred: 1, catenary: 1, sag: 1, labels: 1 },
+};
+const LAYERS = [["masks", "Wire sections"], ["inferred", "Estimated gaps (dashed)"], ["wiremask", "Model mask"], ["catenary", "Fitted curve"],
+  ["sag", "Sag of the selected wire"], ["skeleton", "Centre lines"], ["ends", "Section ends"], ["labels", "Wire numbers"], ["poles", "Utility poles (context)"]];
+
+function moreMenu(c) {
+  return c.can.reclassify || c.can.delete ? `<div class="more"><button class="btn icon" type="button" id="more-btn" aria-expanded="false" aria-controls="more-menu" aria-label="More actions">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></svg></button>
+    <div class="adm-pop" id="more-menu" hidden>
+      ${c.can.reclassify ? `<button type="button" id="kind">${c.record_kind === "test" ? "Mark as operational record" : "Mark as test record"}</button>` : ""}
+      ${c.can.delete ? `<button type="button" id="delete" class="danger">Delete inspection</button>` : ""}</div></div>` : "";
+}
+
+function mountInspection(id) {
   let viewer = null, alive = true;
-  view.innerHTML = `<section class="page page-wide"><div id="detail"><p class="empty-line">Loading…</p></div></section>`;
+  view.innerHTML = `<section class="page page-wide"><div id="sheet">${loading}</div></section>`;
+  const el = $("#sheet");
   const load = async () => {
     const s = await api(`/api/analysis/${id}`);
     if (s.status === "processing") {
-      $("#detail").innerHTML = `<p class="empty-line">Analysis in progress…</p>`;
+      el.innerHTML = `<p class="empty">This photo is still being processed. The inspection opens when it is ready.</p>`;
       await waitForAnalysis(id);
       if (!alive) return;
     }
-    render(await api(`/api/analysis/${id}/result`));
+    const [r, c] = await Promise.all([api(`/api/analysis/${id}/result`), api(`/api/admin/inspections/${id}/context`)]);
+    if (alive) render(r, c);
   };
-  const render = (r) => {
-    const sm = r.summary;
-    const worst = r.wires.filter((w) => w.crs != null).sort((a, b) => b.crs - a.crs)[0];
-    const lastRev = r.reviews.at(-1);
-    $("#detail").innerHTML = `
-      <header class="page-head">
-        <div><p class="crumbs"><a href="/admin/analyses" data-link>Analyses</a> / ${esc(r.pole.code)}</p>
-          <h1 class="page-title">${esc(r.pole.code)} ${levelChip(sm.level, r.status)}</h1>
-          <p class="page-sub">${esc(r.pole.barangay || "No barangay")} · ${new Date(r.created_at).toLocaleString()} ·
-            ${r.segmentation_source === "model" ? "model masks" : r.segmentation_source === "annotation" ? "reference masks" : "no masks"} · via ${r.submitted_via}
-            · <a href="/admin/poles/${encodeURIComponent(r.pole.code)}" data-link>pole history</a></p></div>
-        <div class="row-actions">
-          ${r.status !== "error" ? `<a class="btn" href="/api/reports/${r.id}/pdf" target="_blank" rel="noopener">Report PDF</a>` : ""}
-          ${r.status === "error" ? `<button class="btn primary" id="retry">Retry</button>` : ""}
-          <button class="btn danger" id="delete">Delete</button>
+  const headHtml = (r, c, row, done) => `
+      <nav class="crumbs" aria-label="Breadcrumb"><a href="/admin/inspections" data-link>Inspections</a><span aria-hidden="true">/</span><span>${esc(row.label || row.pole_code)}</span></nav>
+      <header class="pg-head sheet-head">
+        <div><h1 class="pg-title">${esc(row.label || row.pole_code)}${row.label && row.label !== row.pole_code ? ` <span class="pg-title-code mono">${esc(row.pole_code)}</span>` : ""}</h1>
+          <p class="pg-sub">${[row.inspection_name ? esc(row.inspection_name) : "", place(row) ? esc(place(row)) : "", esc(dayTime(row.created_at))].filter(Boolean).join(" · ")}</p></div>
+        <div class="pg-actions">
+          ${done ? `<a class="btn" href="/api/reports/${r.id}/pdf" target="_blank" rel="noopener">PDF report</a>
+            <a class="btn" href="/api/admin/inspections/${r.id}/findings.csv">Findings CSV</a>` : ""}
+          ${moreMenu(c)}
         </div>
       </header>
-      ${r.status === "error" ? `<div class="notice-err"><b>${esc((r.error?.code || "error").replace(/_/g, " "))}</b> ${esc(r.error?.message || "")}</div>` : ""}
-      <div class="detail-grid">
-        <div class="stage-card">
-          <div class="stage-bar">
-            ${["masks", "catenary", "sag", "skeleton"].map((l) => `<button class="toggle" data-layer="${l}" aria-pressed="${l !== "skeleton"}">${{ masks: "Masks", catenary: "Catenary", sag: "Chord & δ", skeleton: "Skeleton" }[l]}</button>`).join("")}
-            <span class="bar-spacer"></span>
-            <div class="seg"><button data-mode="risk" aria-pressed="true">Risk</button><button data-mode="class" aria-pressed="false">Class</button></div>
-          </div>
-          <div class="canvas-wrap" id="canvas"></div>
+      ${c.record_kind === "test" ? `<p class="banner banner-quiet">Test record${c.record_kind_reason ? `: ${esc(c.record_kind_reason)}` : ""}. It is left out of the dashboard, the inspection list, the map and the exports.</p>` : ""}`;
+
+  /** v2.20: a failed run is a compact state, not a page of empty tables. */
+  const renderFailed = (r, c, row) => {
+    el.innerHTML = `${headHtml(r, c, row, false)}
+      <section class="fail-card" aria-labelledby="fail-h">
+        <div class="fail-main">
+          <p class="fail-k">Processing status</p>
+          <h2 id="fail-h">${riskBadge("failed", true)}</h2>
+          <p>${esc(r.error?.summary || "The photo could not be processed.")}</p>
+          <p class="muted">No result was produced, so this pole has not been screened. This is not a finding that the wires are in good condition.</p>
+          <p class="fail-retry">${c.can.retry ? "Processing can be retried on the stored photo." : "Retry is not available for this record. Upload the photo again from the Field Screener."}</p>
+          <div class="fail-acts">${c.can.retry ? `<button class="btn primary" type="button" id="retry">Retry processing</button>` : ""}
+            <a class="btn" href="/workspace" target="_blank" rel="noopener">Upload again</a></div>
         </div>
-        <aside class="side-col">
-          <div class="kpis kpis-3">
-            <div class="kpi ${sm.level ? "level-" + sm.level : ""}"><div class="k">${tip("crs", "Max CRS")}</div><div class="v">${fmt(sm.max_crs, 1)}<small>/10</small></div></div>
-            <div class="kpi"><div class="k">${tip("mspi", "MSPI")}</div><div class="v">${r.ranking?.mspi == null ? "—" : fmt(r.ranking.mspi, 3)}</div></div>
-            <div class="kpi"><div class="k">Rank</div><div class="v">${r.ranking?.rank ? `${r.ranking.rank}<small>/${r.ranking.of}</small>` : "—"}</div></div>
+        <dl class="kv fail-kv">
+          <div><dt>Submitted</dt><dd>${esc(dayTime(row.created_at))}</dd></div>
+          <div><dt>Source photo</dt><dd>${esc(r.image?.original_filename || "–")}</dd></div>
+          <div><dt>Submitted from</dt><dd>${r.submitted_via === "field" ? "Field Screener" : "Admin upload"}</dd></div>
+        </dl>
+      </section>
+      ${historyHtml(r, c)}
+      ${isAdmin() && r.error ? `<details class="diag"><summary><b>View system trace</b><span>Administrators: the error as the server recorded it (file paths removed)</span></summary>
+        <div class="diag-body"><dl class="kv"><div><dt>Error code</dt><dd class="mono">${esc(r.error.code || "–")}</dd></div></dl>
+        <pre class="trace">${esc(r.error.message || "No detail recorded.")}</pre></div></details>` : ""}`;
+    bindCommon(r, c, row);
+  };
+
+  const historyHtml = (r, c) => c.history.length > 1 ? `<section class="block hist-block" aria-labelledby="hi-h">
+      <header class="block-head"><h2 id="hi-h">Inspections of this pole</h2><span class="count num">${c.history.length}</span></header>
+      <ol class="hist">${c.history.map((h) => `<li ${h.id === r.id ? 'aria-current="true"' : `data-href="/admin/inspections/${h.id}" tabindex="0"`}>
+        <time class="mono">${esc(shortDay(h.created_at))}</time>${riskBadge(h.risk)}${h.review === "not_reviewed" ? "<span></span>" : reviewText(h.review, h)}${h.id === r.id ? '<span class="muted">This one</span>' : '<span></span>'}</li>`).join("")}</ol></section>` : "";
+
+  const bindCommon = (r, c, row) => {
+    bindRowLinks(el.querySelector(".hist") || document.createElement("div"));
+    $("#retry", el)?.addEventListener("click", async (e) => {
+      e.target.disabled = true;
+      try { await api(`/api/analysis/${r.id}/retry`, { method: "POST" }); toast.success("Processing again"); load(); }
+      catch (ex) { e.target.disabled = false; toast.error("Retry not possible", { description: ex.message }); }
+    });
+    const moreBtn = $("#more-btn", el), more = $("#more-menu", el);
+    moreBtn?.addEventListener("click", () => { const o = more.hidden; more.hidden = !o; moreBtn.setAttribute("aria-expanded", String(o)); });
+    document.addEventListener("click", (e) => { if (more && !more.hidden && !e.target.closest(".more")) { more.hidden = true; moreBtn.setAttribute("aria-expanded", "false"); } });
+    $("#kind", el)?.addEventListener("click", async () => {
+      const to = c.record_kind === "test" ? "operational" : "test";
+      if (to === "test" && !confirm("Mark this inspection as a test record? It leaves the dashboard, the lists, the map and the exports. Nothing is deleted.")) return;
+      try { await api(`/api/admin/inspections/${r.id}/record-kind`, json("PUT", { record_kind: to })); toast.success(to === "test" ? "Marked as a test record" : "Marked as an operational record"); load(); }
+      catch (ex) { toast.error("Not changed", { description: ex.message }); }
+    });
+    $("#delete", el)?.addEventListener("click", async () => {
+      if (!confirm(`Delete this inspection of pole ${row.pole_code}? Its photo, findings, reviews and report are removed permanently. To keep it out of the operational views instead, mark it as a test record.`)) return;
+      try { await api(`/api/analysis/${r.id}`, { method: "DELETE" }); toast.success("Inspection deleted"); navigate("/admin/inspections"); }
+      catch (ex) { toast.error("Not deleted", { description: ex.message }); }
+    });
+  };
+
+  const render = (r, c) => {
+    const row = c.row;
+    Object.assign(ctx, { analysisId: r.id, label: `${row.label || row.pole_code}` });
+    assistant?.context();
+    if (r.status === "error") return renderFailed(r, c, row);
+    const a = assessment(r), lims = limitations(r), recs = recommendations(r, a, lims);
+    const counts = Object.fromEntries(["high", "medium", "low", "none"].map((g) => [g, r.wires.filter((w) => group(w) === g).length]));
+    const rank = { high: 0, medium: 1, low: 2, none: 3 };
+    const wires = [...r.wires].sort((x, y) => rank[group(x)] - rank[group(y)] || (y.crs ?? -1) - (x.crs ?? -1) || x.index - y.index);
+    const hasWires = r.wires.length > 0, hasMask = !!r.wire_mask, hasVeg = (r.vegetation || []).length > 0;
+    const loc = r.pole.location;
+    const lastRev = r.reviews.at(-1);
+    const done = c.can.review;
+    const views = [["photo", "Original"], ...(hasWires ? [["wires", "Detected wires"]] : []), ...(hasMask ? [["mask", "Mask"]] : []), ...(hasWires && hasMask ? [["both", "Both"]] : [])];
+    const layers = LAYERS.filter(([k]) => (k === "wiremask" ? hasMask : k === "poles" ? (r.scene?.poles_detected || []).length : hasWires));
+    el.innerHTML = `${headHtml(r, c, row, done)}
+      ${r.guardrail?.requires_retake ? `<div class="banner banner-warn"><p><b>Assessment may be inaccurate.</b> Some wires could not be identified reliably from this photo${r.guardrail.choice?.action === "proceed" ? ", and the person who took it chose to proceed" : ""}. Review the findings carefully.</p></div>` : ""}
+
+      <section class="status-band" aria-label="Inspection status">
+        <div><span class="k">Risk level</span>${riskBadge(row.risk, true)}</div>
+        <div><span class="k">Assessment</span><b>${hasWires ? esc(COMPLETE[row.completeness]) : "No wire detected"}</b></div>
+        <div><span class="k">Review</span>${reviewText(row.review, row)}</div>
+        <div><span class="k">Inspection order</span><b>${c.priority ? `${c.priority.position} of ${c.priority.of}` : '<span class="muted">Not ranked</span>'}</b></div>
+      </section>
+      <wf-notice variant="full" class="sheet-notice"></wf-notice>
+
+      <div class="sheet-grid">
+        <section class="viewer-card" aria-label="Visual inspection">
+          <div class="v-bar" role="toolbar" aria-label="Photo view">
+            ${views.length > 1 ? `<div class="seg" role="radiogroup" aria-label="Show">
+              ${views.map(([k, t]) => `<button type="button" role="radio" data-view="${k}" aria-checked="${k === (hasWires ? "wires" : "photo")}">${t}</button>`).join("")}
+            </div>` : `<span class="v-only">Original photo</span>`}
+            <span class="v-spacer"></span>
+            <div class="zoom"><button class="btn sm icon" type="button" data-zoom="out" aria-label="Zoom out">−</button>
+              <output id="zoom-pct" class="num">100%</output>
+              <button class="btn sm icon" type="button" data-zoom="in" aria-label="Zoom in">+</button>
+              <button class="btn sm" type="button" data-zoom="fit">Fit</button></div>
+            ${hasWires || hasVeg ? `<div class="more"><button class="btn sm" type="button" id="lay-btn" aria-expanded="false" aria-controls="lay-pop">Layers</button>
+              <div class="adm-pop lay-pop" id="lay-pop" hidden>
+                <label class="v-op"><span>Overlay opacity</span><input type="range" id="opacity" min="0" max="100" value="100"><output class="num">100%</output></label>
+                ${hasVeg ? `<label class="chk"><input type="checkbox" id="veg" checked> Vegetation</label>` : ""}
+                ${layers.length ? `<fieldset class="v-layers"><legend>Layers</legend>${layers.map(([k, t]) => `<label class="chk"><input type="checkbox" data-l="${k}"> ${t}</label>`).join("")}</fieldset>` : ""}
+              </div></div>` : ""}
           </div>
-          <section class="panel">
-            <header class="panel-head"><h2>Professional review</h2>${lastRev ? `<span class="rev ${lastRev.decision}">${lastRev.decision}${lastRev.override_level ? ` → ${lastRev.override_level}` : ""}</span>` : `<span class="muted">Not reviewed</span>`}</header>
-            ${r.reviews.length ? `<ol class="rev-log">${r.reviews.map((x) => `<li><b>${esc(x.by)}</b> ${x.decision}${x.override_level ? ` → <span class="chip ${x.override_level}">${x.override_level}</span>` : ""}
-              <span class="muted">${ago(x.at)}</span>${x.note ? `<p>${esc(x.note)}</p>` : ""}</li>`).join("")}</ol>` : ""}
-            ${["complete", "fit_failed", "no_wires_detected"].includes(r.status) ? `<form class="rev-form" id="rev">
-              <div class="seg" role="radiogroup" aria-label="Decision">
-                ${["confirmed", "overridden", "dismissed"].map((d, i) => `<label><input type="radio" name="decision" value="${d}" ${i === 0 ? "checked" : ""}><span>${{ confirmed: "Confirm", overridden: "Override", dismissed: "Dismiss" }[d]}</span></label>`).join("")}
-              </div>
-              <label class="field" id="ov-level" hidden><span>Reviewed level</span><select name="override_level">
-                ${["low", "medium", "high"].map((l) => `<option value="${l}">${LEVEL_LABEL[l]}</option>`).join("")}</select></label>
-              <label class="field"><span>Note <i id="note-req">optional</i></span><textarea name="note" rows="2" maxlength="2000" placeholder="What you checked, and why"></textarea></label>
-              <button class="btn primary" type="submit">Record review</button>
-              <p class="hint">Computed scores are never changed; the decision is recorded beside them and printed in the report.</p>
-            </form>` : ""}
-          </section>
-        </aside>
+          <div class="v-canvas" style="--ar:${r.image.width} / ${r.image.height}"><div class="canvas-wrap" id="canvas"></div></div>
+          ${hasWires ? `<ul class="legend"><li><i class="l-high"></i>${CONDITION.high}</li><li><i class="l-medium"></i>${CONDITION.medium}</li><li><i class="l-low"></i>${CONDITION.low}</li><li><i class="l-none"></i>${CONDITION.none}</li><li><i class="l-dash"></i>Estimated</li><li class="legend-hint">Scroll to zoom · click a wire to highlight it</li></ul>` : ""}
+        </section>
+
+        <section class="findings" aria-labelledby="fd-h">
+          <h2 id="fd-h">Findings</h2>
+          <p class="fd-title">${esc(a.title)}</p>
+          ${a.lines.map((l) => `<p class="fd-line">${l}</p>`).join("")}
+          ${hasWires ? `<dl class="fd-counts">${["high", "medium", "low", "none"].map((g) => [g, CONDITION[g]]).map(([g, t]) => `<div><dt><i class="l-${g}"></i>${t}</dt><dd class="num">${counts[g]}</dd></div>`).join("")}</dl>` : ""}
+          ${a.coverage ? `<p class="hint">${esc(a.coverage)}</p>` : ""}
+          ${lims.length ? `<h3>Photo limitations</h3><ul class="fd-list">${lims.map((l) => `<li>${esc(l.text)}${l.ids.length ? ` <span class="muted">(${SECTION(l.ids)})</span>` : ""}${l.help ? `<span class="help">${esc(l.help)}</span>` : ""}</li>`).join("")}</ul>` : ""}
+          <h3>Recommended next steps</h3>
+          <ol class="fd-list">${recs.map((x) => `<li>${x}</li>`).join("")}</ol>
+        </section>
       </div>
 
-      <nav class="tabs" role="tablist">
-        ${["Geometry", "Spectrum", "Acquisition"].map((t, i) => `<button role="tab" data-tab="${t.toLowerCase()}" aria-selected="${i === 0}">${t}</button>`).join("")}
-      </nav>
-      <section class="tab-panel" data-panel="geometry">${geometryTable(r)}</section>
-      <section class="tab-panel" data-panel="spectrum" hidden>
-        <div class="spec">
-          <img src="/api/admin/analyses/${r.id}/spectrum.png" alt="Centred log power spectrum of the Hann-windowed grayscale image, with the low-frequency radius marked" loading="lazy">
-          <dl class="spec-dl">
-            <div><dt>${tip("vni", "VNI")}</dt><dd>${fmt(r.vni?.value, 3)} <span class="muted">${esc(r.vni?.band || "")}</span></dd></div>
-            <div><dt>${tip("vni_raw", "VNI raw")}</dt><dd>${fmt(r.vni?.raw, 5)}</dd></div>
-            <div><dt>Radius factor</dt><dd>${r.vni?.radius_factor ?? "—"} <span class="muted">r_L = factor · min(M,N)/2</span></dd></div>
-            <div><dt>Parameters</dt><dd class="mono">${esc(r.parameters.fingerprint)}${r.parameters.fingerprint !== r.parameters.current_fingerprint ? ' <span class="chip medium">changed since</span>' : ""}</dd></div>
-          </dl>
-          <p class="hint">Brightness = log(1 + P(u,v)); the zero frequency is at the centre. Power outside the white circle counts toward the VNI.</p>
-        </div></section>
-      <section class="tab-panel" data-panel="acquisition" hidden>
-        <table class="tbl"><thead><tr><th>Envelope check</th><th>Value</th><th>Expected</th><th>Result</th></tr></thead><tbody>
-          ${r.acquisition.envelope.map((c) => `<tr><td>${esc(c.name.replace(/_/g, " "))}</td><td class="num">${c.value ?? "—"}</td><td class="num">${c.expected[0]} – ${c.expected[1]}</td><td><span class="env-${c.status}">${c.status}</span></td></tr>`).join("")}
-        </tbody></table>
-        ${r.acquisition.metadata.segmentation_input ? (() => {
-          const si = r.acquisition.metadata.segmentation_input, q = si.quality || {};
-          return `<p class="hint">Segmentation input: ${si.enhancement.length ? `enhanced with ${si.enhancement.join(" → ")}` : "no enhancement needed"}
-            · lightness ${fmt(q.mean_l, 0)} · contrast ${fmt(q.contrast, 1)} · noise σ ${fmt(q.noise_sigma, 1)} · sharpness ${fmt(q.sharpness, 0)}
-            <span class="muted">(the VNI is always computed on the unenhanced photo)</span></p>`;
-        })() : ""}
-        <p class="hint">Flags: ${r.flags.map((f) => `<code>${esc(f)}</code>`).join(" ") || "none"}</p>
-        <p class="hint">Engineering context: ${Object.keys(r.engineering_context).length ? Object.entries(r.engineering_context).map(([k, v]) => `${esc(k)} ${v}`).join(" · ") : "none supplied (reference sag limit used)"} ·
-          location ${r.pole.location ? `${r.pole.location.lat.toFixed(5)}, ${r.pole.location.lon.toFixed(5)} (${r.pole.location.source})` : "not recorded"}</p>
-      </section>`;
+      ${hasWires ? `<section class="block" aria-labelledby="wf-h">
+        <header class="block-head"><h2 id="wf-h">Wire findings</h2><span class="count num">${r.wires.length}</span>
+          <div class="chips" role="group" aria-label="Show">${[["all", "All"], ["high", CONDITION.high], ["medium", CONDITION.medium], ["low", CONDITION.low], ["none", CONDITION.none]].filter(([k]) => k === "all" || counts[k]).map(([k, t]) => `<button type="button" data-filter="${k}" aria-pressed="${k === "all"}">${t}${k !== "all" ? ` <b class="num">${counts[k]}</b>` : ""}</button>`).join("")}</div></header>
+        <div class="tbl-scroll"><table class="tbl tbl-wires"><thead><tr><th>Wire</th><th>Type</th><th>Condition</th><th>Finding</th></tr></thead><tbody>
+          ${wires.map((w) => `<tr data-wire="${w.index}" data-group="${group(w)}" tabindex="0" aria-selected="false">
+            <td><span class="wno" style="--wc:${wireColor(w)}">${w.index}</span></td><td>${esc(classLabel(w, true))}</td>
+            <td><span class="risk risk-${group(w) === "none" ? "unassessed" : group(w)}"><i></i>${CONDITION[group(w)]}</span></td>
+            <td>${esc(finding(w))}</td></tr>`).join("")}</tbody></table></div>
+      </section>` : `<section class="block nowire"><p><b>No wire was detected in this photo.</b> The photo was processed, but the model found no wire it could trace. That does not mean there are no wires or no hazard: wires can blend into the sky or background. See the recommended next steps.</p></section>`}
 
+      <div class="sheet-cols">
+        <section class="block" aria-labelledby="rv-h">
+          <header class="block-head"><h2 id="rv-h">Professional review</h2>${lastRev ? reviewText(lastRev.decision, lastRev) : ""}</header>
+          ${r.reviews.length ? `<ol class="rev-log">${r.reviews.map((x) => `<li><p><b>${esc(x.by)}</b> ${esc({ confirmed: "confirmed the finding", flagged: "flagged it for further inspection", overridden: `changed the risk level to ${(RISK[x.override_level] || "").toLowerCase()}`, dismissed: "dismissed the finding" }[x.decision])}</p>
+              <time datetime="${esc(x.at)}">${esc(dayTime(x.at))}</time>${x.note ? `<blockquote>${esc(x.note)}</blockquote>` : ""}</li>`).join("")}</ol>`
+            : `<p class="empty">Not reviewed yet.</p>`}
+          ${done ? `<form class="rev-form" id="rev">
+            <fieldset><legend>Decision</legend>
+              ${[["confirmed", "Confirm finding", "You agree with the automated result."], ["flagged", "Flag for further inspection", "The pole needs a field visit or a closer check."],
+                 ["overridden", "Change risk level", "Record a different level. A note is required."], ["dismissed", "Dismiss finding", "The finding does not apply, for example a misdetection. A note is required."]]
+                .map(([v, t, h], i) => `<label class="opt"><input type="radio" name="decision" value="${v}" ${i === 0 ? "checked" : ""}><span><b>${t}</b><small>${h}</small></span></label>`).join("")}
+            </fieldset>
+            <label class="field" id="ov-level" hidden><span>Reviewed risk level</span><select name="override_level">
+              ${["high", "medium", "low"].map((l) => `<option value="${l}">${RISK[l]}</option>`).join("")}</select></label>
+            <label class="field"><span>Note <i id="note-req">optional</i></span><textarea name="note" rows="3" maxlength="2000" placeholder="What you checked, and why"></textarea></label>
+            <button class="btn primary" type="submit">Record review</button>
+            <p class="hint">The automated findings stay as computed. Your decision is recorded beside them with your name and the time, and printed in the PDF report.</p>
+          </form>` : ""}
+        </section>
+        <section class="block" aria-labelledby="ii-h">
+          <header class="block-head"><h2 id="ii-h">Inspection details</h2></header>
+          <dl class="kv">
+            <div><dt>Pole</dt><dd>${row.label && row.label !== row.pole_code ? `${esc(row.label)} <span class="mono muted">${esc(row.pole_code)}</span>` : `<span class="mono">${esc(row.pole_code)}</span>`}</dd></div>
+            ${row.inspection_name ? `<div><dt>Inspection name</dt><dd>${esc(row.inspection_name)}</dd></div>` : ""}
+            <div><dt>Barangay</dt><dd>${row.barangay ? esc(row.barangay) : `<span class="muted">–</span> <button type="button" class="link-btn" id="set-brgy">Assign</button>`}</dd></div>
+            ${row.city ? `<div><dt>City</dt><dd>${esc(row.city)}</dd></div>` : ""}
+            <div><dt>Date and time</dt><dd>${esc(dayTime(row.created_at))}</dd></div>
+            <div><dt>Location</dt><dd>${loc ? `<span class="mono">${loc.lat.toFixed(5)}, ${loc.lon.toFixed(5)}</span> <span class="muted">(${loc.source === "exif" ? "photo GPS" : loc.source === "manual" ? "pinned by an administrator" : "entered"})</span>
+              <a class="link" href="/admin/map?pole=${encodeURIComponent(row.pole_code)}" data-link>Show on map</a>` : `<span class="muted">No GPS recorded</span>${isAdmin() ? ` <a class="link" href="/admin/map?pole=${encodeURIComponent(row.pole_code)}&tab=pinning" data-link>Drop a pin</a>` : ""}`}</dd></div>
+            <div><dt>Source photo</dt><dd>${esc(r.image.original_filename || "–")} <span class="muted">${r.image.width} × ${r.image.height}</span></dd></div>
+            <div><dt>Submitted from</dt><dd>${r.submitted_via === "field" ? "Field Screener" : "Admin upload"}</dd></div>
+          </dl>
+        </section>
+      </div>
+      ${historyHtml(r, c)}
+
+      ${c.can.diagnostics ? `<details class="diag" id="diag"><summary><b>Technical diagnostics</b><span>Administrators: metrics, fit parameters and acquisition checks</span></summary>
+        <div class="diag-body">${diagnosticsHtml(r)}</div></details>` : ""}`;
+
+    // ---- viewer
     viewer?.destroy();
-    viewer = new OverlayViewer($("#canvas"), { onSelect: (i) => markRow(i) });
-    viewer.load(r.image.url, r.wires, r.vegetation || []).then(() => { if (worst) { viewer.selected = worst.index; viewer.draw(); markRow(worst.index); } }).catch(() => {});
-    const markRow = (i) => view.querySelectorAll("tr[data-wire]").forEach((tr) => tr.toggleAttribute("aria-selected", Number(tr.dataset.wire) === i));
-    view.querySelectorAll("[data-layer]").forEach((b) => b.addEventListener("click", () => {
-      const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", String(on)); viewer.set(b.dataset.layer, on);
-    }));
-    view.querySelectorAll("[data-mode]").forEach((b) => b.addEventListener("click", () => {
-      view.querySelectorAll("[data-mode]").forEach((x) => x.setAttribute("aria-pressed", String(x === b))); viewer.setMode(b.dataset.mode);
-    }));
-    view.querySelectorAll("tr[data-wire]").forEach((tr) => tr.addEventListener("click", () => {
-      const i = Number(tr.dataset.wire); const next = viewer.selected === i ? null : i; viewer.select(next); markRow(next);
-    }));
-    view.querySelectorAll("[data-tab]").forEach((b) => b.addEventListener("click", () => {
-      view.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-      view.querySelectorAll("[data-panel]").forEach((p) => (p.hidden = p.dataset.panel !== b.dataset.tab));
-    }));
-    const rev = $("#rev");
+    viewer = new OverlayViewer($("#canvas"), { onSelect: (i) => mark(i, true) });
+    $("#canvas").addEventListener("zoom", (e) => { $("#zoom-pct").textContent = `${Math.round(e.detail * 100)}%`; });
+    const worst = r.wires.filter((w) => w.crs != null).sort((x, y) => y.crs - x.crs)[0];
+    viewer.load(r.image.url, r.wires, r.vegetation || []).then(() => {
+      if (hasMask) viewer.setWireMask(r.wire_mask.url);
+      viewer.setPoles(r.scene?.poles_detected || []);
+      if (worst && worst.level !== "low") { viewer.selected = worst.index; viewer.draw(); mark(worst.index, false); }
+    }).catch(() => toast.error("The photo could not be displayed"));
+    const table = el.querySelector(".tbl-wires");
+    const mark = (i, scroll) => table?.querySelectorAll("tr[data-wire]").forEach((tr) => {
+      const on = Number(tr.dataset.wire) === i;
+      tr.setAttribute("aria-selected", String(on));
+      if (on && scroll) tr.scrollIntoView({ block: "nearest", behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    });
+    const select = (i) => { const next = viewer.selected === i ? null : i; viewer.select(next); mark(next, false); };
+    table?.addEventListener("click", (e) => { const tr = e.target.closest("tr[data-wire]"); if (tr) select(Number(tr.dataset.wire)); });
+    table?.addEventListener("keydown", (e) => {
+      const tr = e.target.closest("tr[data-wire]"); if (!tr) return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(Number(tr.dataset.wire)); }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        const rows = [...table.querySelectorAll("tr[data-wire]:not([hidden])")];
+        const n = rows[rows.indexOf(tr) + (e.key === "ArrowDown" ? 1 : -1)];
+        if (n) { n.focus(); viewer.select(Number(n.dataset.wire)); mark(Number(n.dataset.wire), false); }
+      }
+    });
+    el.addEventListener("click", (e) => { // "(section 3)" references in the findings select the wire
+      const b = e.target.closest("[data-goto]"); if (!b) return;
+      const i = Number(b.dataset.goto); viewer.select(i); mark(i, true);
+      $(".viewer-card", el).scrollIntoView({ block: "nearest" });
+    });
+    const syncLayers = () => el.querySelectorAll("[data-l]").forEach((cb) => { cb.checked = !!viewer.layers[cb.dataset.l] && viewer.layers.overlays; });
+    const setView = (name) => {
+      el.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.view === name)));
+      for (const [k] of LAYERS) viewer.layers[k] = !!PRESETS[name][k];
+      viewer.layers.overlays = name !== "photo";
+      viewer.draw(); syncLayers();
+    };
+    el.querySelector(".seg")?.addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b) setView(b.dataset.view); });
+    el.querySelector(".v-layers")?.addEventListener("change", (e) => {
+      const cb = e.target.closest("[data-l]"); if (!cb) return;
+      viewer.layers.overlays = true; viewer.layers[cb.dataset.l] = cb.checked; viewer.draw();
+      el.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-checked", "false"));
+    });
+    const layBtn = $("#lay-btn", el), layPop = $("#lay-pop", el);
+    layBtn?.addEventListener("click", () => { const o = layPop.hidden; layPop.hidden = !o; layBtn.setAttribute("aria-expanded", String(o)); });
+    document.addEventListener("click", (e) => { if (layPop && !layPop.hidden && !e.target.closest(".v-bar .more")) { layPop.hidden = true; layBtn.setAttribute("aria-expanded", "false"); } });
+    const op = $("#opacity", el);
+    op?.addEventListener("input", () => { viewer.setOpacity(op.value / 100); op.nextElementSibling.textContent = `${op.value}%`; });
+    $("#veg", el)?.addEventListener("change", (e) => viewer.set("vegetation", e.target.checked));
+    el.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => ({ in: () => viewer.zoomIn(), out: () => viewer.zoomOut(), fit: () => viewer.reset() })[b.dataset.zoom]()));
+    viewer.layers.vegetation = hasVeg;
+    setView(hasWires ? "wires" : "photo");
+
+    // ---- wire filter
+    el.querySelector(".chips")?.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-filter]"); if (!b) return;
+      el.querySelectorAll("[data-filter]").forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      table?.querySelectorAll("tr[data-wire]").forEach((tr) => { tr.hidden = b.dataset.filter !== "all" && tr.dataset.group !== b.dataset.filter; });
+    });
+
+    // ---- review
+    const rev = $("#rev", el);
     if (rev) {
       rev.addEventListener("change", () => {
         const d = rev.decision.value;
-        $("#ov-level").hidden = d !== "overridden";
-        $("#note-req").textContent = d === "confirmed" ? "optional" : "required";
+        $("#ov-level", el).hidden = d !== "overridden";
+        $("#note-req", el).textContent = d === "overridden" || d === "dismissed" ? "required" : "optional";
       });
       rev.addEventListener("submit", async (e) => {
         e.preventDefault();
         const d = rev.decision.value;
-        const body = { decision: d, note: rev.note.value, override_level: d === "overridden" ? rev.override_level.value : null };
-        try { await api(`/api/admin/analyses/${r.id}/reviews`, json("POST", body)); toast.success("Review recorded"); load(); }
-        catch (ex) { toast.error("Review not recorded", { description: ex.message.includes("note") || ex.status === 422 ? "An override or dismissal needs a note." : ex.message }); }
+        if ((d === "overridden" || d === "dismissed") && !rev.note.value.trim()) {
+          toast.error("Add a note", { description: "Explain a level change or a dismissal in the note." }); rev.note.focus(); return;
+        }
+        const btn = rev.querySelector("button[type=submit]"); btn.disabled = true;
+        try {
+          await api(`/api/admin/analyses/${r.id}/reviews`, json("POST", { decision: d, note: rev.note.value, override_level: d === "overridden" ? rev.override_level.value : null }));
+          toast.success("Review recorded"); load();
+        } catch (ex) { toast.error("Review not recorded", { description: ex.message }); btn.disabled = false; }
       });
     }
-    $("#retry")?.addEventListener("click", async () => {
-      try { await api(`/api/analysis/${r.id}/retry`, { method: "POST" }); toast.success("Re-queued"); load(); }
-      catch (ex) { toast.error("Retry not possible", { description: ex.message }); }
+    $("#set-brgy", el)?.addEventListener("click", async () => {
+      const v = await pickBarangay(`${row.label || row.pole_code} · ${row.pole_code}`);
+      if (!v) return;
+      try { await api(`/api/admin/poles/${encodeURIComponent(row.pole_code)}/barangay`, json("PUT", { barangay: v })); toast.success("Barangay assigned"); load(); }
+      catch (ex) { toast.error("Not assigned", { description: ex.message }); }
     });
-    $("#delete").addEventListener("click", async () => {
-      if (!confirm(`Delete this analysis of pole ${r.pole.code}? Its wires, reviews and report are removed with it.`)) return;
-      try { await api(`/api/analysis/${r.id}`, { method: "DELETE" }); toast.success("Analysis deleted"); navigate("/admin/analyses"); }
-      catch (ex) { toast.error("Delete failed", { description: ex.message }); }
-    });
+    bindCommon(r, c, row);
+    if (c.can.diagnostics) bindDiagnostics(el, viewer);
   };
-  load().catch(fail("#detail"));
+  load().catch(fail(el));
   return () => { alive = false; viewer?.destroy(); };
-}
-
-function geometryTable(r) {
-  if (!r.wires.length) return `<p class="empty-line">No wires were detected.</p>`;
-  const n = (v, d) => (v == null ? "—" : fmt(v, d));
-  return `<div class="tbl-scroll"><table class="tbl tbl-num">
-    <thead><tr><th>#</th><th>Class</th><th>Status</th><th>${tip("a", "a")}</th><th>${tip("bc", "b")}</th><th>${tip("bc", "c")}</th>
-      <th>${tip("rms", "RMS px")}</th><th>${tip("rel", "RMS / L")}</th><th>${tip("chord", "L px")}</th><th>${tip("sag", "δ px")}</th>
-      <th>${tip("ratio", "δ/L")}</th><th>${tip("lim", "δ_lim")}</th><th>${tip("crs", "CRS")}</th><th>${tip("pruned", "Pruned")}</th><th>${tip("pts", "Points")}</th></tr></thead>
-    <tbody>${r.wires.map((w) => {
-      const f = w.fit || {};
-      return `<tr data-wire="${w.index}" style="--wc:${wireColor(w)}">
-        <td><span class="wno">${w.index}</span></td><td class="txt">${CLASS_LABEL[w.class]}</td>
-        <td class="txt">${w.status === "scored" ? levelChip(w.level) : `<span class="chip plain">${esc((w.fail_reason || w.status).replace(/_/g, " "))}</span>`}</td>
-        <td>${n(f.a, 0)}</td><td>${n(f.b, 0)}</td><td>${n(f.c, 0)}</td><td>${n(f.rms_residual_px, 2)}</td><td>${f.rel_residual == null ? "—" : pct(f.rel_residual, 2)}</td>
-        <td>${n(w.chord_px, 0)}</td><td>${n(w.sag_px, 1)}</td><td>${pct(w.sag_ratio, 2)}</td><td>${pct(w.delta_lim, 2)}</td>
-        <td class="strong">${n(w.crs, 2)}</td><td>${f.pruned_px ?? "—"}</td><td>${f.n_points ?? "—"}</td></tr>`;
-    }).join("")}</tbody></table></div>
-    <p class="hint">Fit: Levenberg–Marquardt on y = a·cosh((x − b)/a) + c in the y-up image frame; chord and δ from the fitted curve. Click a row to focus the wire.</p>`;
-}
-
-// ------------------------------------------------------------------ poles & temporal tracking
-function mountPoles() {
-  view.innerHTML = `<section class="page">${page("Poles", "Latest inspection per pole, worst first. Open one to see how it has changed.")}
-    <form class="filters" id="pf"><input type="search" name="q" placeholder="Pole code or barangay" aria-label="Search poles"></form><div id="poles"></div></section>`;
-  const load = (q = "") => api(`/api/admin/poles${q ? `?q=${encodeURIComponent(q)}` : ""}`).then((rows) => {
-    $("#poles").innerHTML = rows.length ? `<table class="tbl tbl-lg"><thead><tr><th>Pole</th><th>Barangay</th><th class="num">Inspections</th>
-      <th class="num">${tip("crs", "Latest max CRS")}</th><th class="num">Change since first</th><th>Level</th><th>Location</th></tr></thead>
-      <tbody>${rows.map((p) => {
-        const t = p.trend_max_crs;
-        return `<tr data-href="/admin/poles/${encodeURIComponent(p.pole_code)}"><td class="strong">${esc(p.pole_code)}</td><td>${esc(p.barangay || "—")}</td>
-          <td class="num">${p.inspections}</td><td class="num">${fmt(p.latest?.max_crs, 1)}</td>
-          <td class="num">${t == null ? '<span class="muted">—</span>' : `<span class="trend ${t > 0.05 ? "up" : t < -0.05 ? "down" : ""}">${t > 0 ? "+" : ""}${fmt(t, 1)}</span>`}</td>
-          <td>${levelChip(p.latest?.level, p.latest?.status)}</td><td class="muted">${p.has_location ? "recorded" : "—"}</td></tr>`;
-      }).join("")}</tbody></table>` : `<p class="empty-line">No poles yet.</p>`;
-  }).catch(fail("#poles"));
-  let t = 0;
-  $("#pf").addEventListener("input", (e) => { clearTimeout(t); t = setTimeout(() => load(e.target.value.trim()), 180); });
-  $("#pf").addEventListener("submit", (e) => e.preventDefault());
-  bindRowLinks($("#poles"));
-  load();
-  return () => clearTimeout(t);
-}
-
-function mountPole(code) {
-  view.innerHTML = `<section class="page"><div id="pole"><p class="empty-line">Loading…</p></div></section>`;
-  api(`/api/admin/poles/${encodeURIComponent(code)}`).then((p) => {
-    const h = p.history.filter((x) => x.max_crs != null);
-    $("#pole").innerHTML = `${page(esc(p.pole_code), `<a href="/admin/poles" data-link>Poles</a> / ${esc(p.barangay || "No barangay")} · ${p.history.length} inspection${p.history.length === 1 ? "" : "s"}`)}
-      <section class="panel"><header class="panel-head"><h2>Worst wire over time</h2><span class="muted">${tip("crs", "max CRS")} per inspection</span></header>
-        ${h.length >= 1 ? trendChart(h) : `<p class="empty-line">No scored inspection yet.</p>`}
-        <p class="hint">${esc(p.note)}</p></section>
-      <table class="tbl tbl-lg"><thead><tr><th>Inspected</th><th class="num">Max CRS</th><th class="num">Mean CRS</th><th class="num">Max δ/L</th><th class="num">VNI</th><th>Level</th><th>Source</th><th>Review</th></tr></thead>
-        <tbody>${p.history.slice().reverse().map((x) => `<tr data-href="/admin/analyses/${x.analysis_id}"><td>${new Date(x.at).toLocaleString()}</td>
-          <td class="num strong">${fmt(x.max_crs, 2)}</td><td class="num">${fmt(x.mean_crs, 2)}</td><td class="num">${pct(x.max_sag_ratio)}</td><td class="num">${fmt(x.vni, 2)}</td>
-          <td>${levelChip(x.level, x.status)}</td><td class="muted">${x.source || "—"}</td>
-          <td>${x.review ? `<span class="rev ${x.review.decision}">${x.review.decision}</span>` : '<span class="muted">—</span>'}</td></tr>`).join("")}</tbody></table>`;
-    bindRowLinks($("#pole"));
-  }).catch(fail("#pole"));
-}
-
-function trendChart(h) {
-  const W = 880, H = 220, L = 40, R = 16, T = 14, B = 30;
-  const t0 = new Date(h[0].at).getTime(), t1 = new Date(h.at(-1).at).getTime();
-  const X = (t) => (h.length === 1 ? L + (W - L - R) / 2 : L + ((new Date(t).getTime() - t0) / (t1 - t0 || 1)) * (W - L - R));
-  const Y = (v) => T + (1 - v / 10) * (H - T - B);
-  const bands = `<rect x="${L}" y="${Y(10)}" width="${W - L - R}" height="${Y(6) - Y(10)}" class="band high"/>
-    <rect x="${L}" y="${Y(6)}" width="${W - L - R}" height="${Y(3) - Y(6)}" class="band medium"/>
-    <rect x="${L}" y="${Y(3)}" width="${W - L - R}" height="${Y(0) - Y(3)}" class="band low"/>`;
-  const ticks = [0, 3, 6, 10].map((v) => `<text x="${L - 8}" y="${Y(v) + 4}" text-anchor="end">${v}</text>`).join("");
-  const path = h.map((x, i) => `${i ? "L" : "M"}${X(x.at).toFixed(1)} ${Y(x.max_crs).toFixed(1)}`).join(" ");
-  const dots = h.map((x) => `<circle cx="${X(x.at).toFixed(1)}" cy="${Y(x.max_crs).toFixed(1)}" r="4.5" class="pt ${x.level}"><title>${new Date(x.at).toLocaleString()} · CRS ${fmt(x.max_crs, 2)} · δ/L ${pct(x.max_sag_ratio)}</title></circle>`).join("");
-  const sameDay = new Date(h[0].at).toDateString() === new Date(h.at(-1).at).toDateString();
-  const when = (x) => (sameDay ? new Date(x.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
-    : new Date(x.at).toLocaleDateString());
-  const labels = (h.length === 1 ? [[h[0], "middle"]] : [[h[0], "start"], [h.at(-1), "end"]])
-    .map(([x, anchor]) => `<text x="${X(x.at)}" y="${H - 8}" text-anchor="${anchor}">${when(x)}</text>`).join("");
-  return `<svg class="trend-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Maximum CRS per inspection over time">${bands}${ticks}<path d="${path}" class="ln"/>${dots}${labels}</svg>`;
-}
-
-// ------------------------------------------------------------------ models & queue
-function mountModels() {
-  view.innerHTML = `<section class="page">${page("Models & queue", "Which segmentation source runs, and what is waiting.")}<div id="mq"></div></section>`;
-  const load = () => Promise.all([api("/api/admin/models"), api("/api/admin/queue")]).then(([m, q]) => {
-    $("#mq").innerHTML = `
-      <div class="cols">
-        <section class="panel"><header class="panel-head"><h2>Segmentation source</h2><span class="mode-pill" data-mode="${m.mode}">${m.mode === "field" ? "Model active" : "Reference masks only"}</span></header>
-          <dl class="kv">
-            <div><dt>Active checkpoint</dt><dd class="mono">${esc(m.ready ? m.active : "none loaded")}</dd></div>
-            <div><dt>Confidence threshold</dt><dd class="mono">${m.conf_min}${m.conf_provisional ? ' <span class="chip medium">provisional</span>' : ' <span class="chip low">tuned on validation</span>'}</dd></div>
-            <div><dt>NMS IoU</dt><dd class="mono">${m.iou_nms}</dd></div>
-            ${!m.ready && m.error ? `<div><dt>Status</dt><dd class="muted">${esc(m.error)}</dd></div>` : ""}
-          </dl>
-          <label class="switch"><input type="checkbox" id="reqref" ${m.require_reference_masks ? "checked" : ""}>
-            <span class="sw" aria-hidden="true"></span>
-            <span><b>Require reference masks</b><small>Even with a model loaded, accept only uploads that carry polygons: for validation runs against ground truth.</small></span></label>
-        </section>
-        <section class="panel"><header class="panel-head"><h2>Checkpoints in models/</h2></header>
-          ${m.checkpoints.length ? `<table class="tbl"><tbody>${m.checkpoints.map((c) => `<tr><td class="strong mono">${esc(c.name)}</td><td class="muted">${c.size_mb} MB · ${ago(c.modified)}</td>
-            <td class="right">${c.active ? '<span class="chip low">active</span>' : `<button class="btn" data-activate="${esc(c.name)}">Activate</button>`}</td></tr>`).join("")}</tbody></table>`
-            : `<p class="empty-line">No checkpoints. Train with <code>python -m ml.train</code>; it installs <code>models/wireframe-yolo11m-seg.pt</code>.</p>`}
-          <p class="hint">A checkpoint must load as a segmentation model with the four WIREFRAME classes before it replaces the active one.</p>
-        </section>
-      </div>
-      <section class="panel"><header class="panel-head"><h2>Queue</h2><span class="muted">${q.depth} waiting · ${q.processing.length} running · ${q.processed_since_start} processed since start</span></header>
-        ${q.processing.length ? `<p class="hint">Running: ${q.processing.map((p) => esc(p.pole_code)).join(", ")}</p>` : ""}
-        ${q.errors.length ? `<table class="tbl"><thead><tr><th>Pole</th><th>Error</th><th>When</th><th></th></tr></thead><tbody>${q.errors.map((e) => `<tr>
-          <td class="strong"><a href="/admin/analyses/${e.id}" data-link>${esc(e.pole_code)}</a></td><td class="muted">${esc((e.code || "").replace(/_/g, " "))}</td>
-          <td class="muted">${ago(e.at)}</td><td class="right"><button class="btn" data-retry="${e.id}">Retry</button></td></tr>`).join("")}</tbody></table>`
-          : `<p class="empty-line">No failed analyses.</p>`}
-      </section>`;
-    $("#reqref").addEventListener("change", async (e) => {
-      try { await api("/api/admin/settings", json("PUT", { require_reference_masks: e.target.checked })); toast.success(e.target.checked ? "Reference masks now required" : "Model segmentation re-enabled"); load(); }
-      catch (ex) { e.target.checked = !e.target.checked; toast.error("Setting not saved", { description: ex.message }); }
-    });
-
-  }).catch(fail("#mq"));
-  $("#mq").addEventListener("click", async (e) => {
-      const act = e.target.closest("[data-activate]"), rt = e.target.closest("[data-retry]");
-      if (act) {
-        const id = toast.loading(`Loading ${act.dataset.activate}…`);
-        try { await api("/api/admin/models/active", json("POST", { name: act.dataset.activate })); update(id, "Checkpoint active", { type: "success" }); load(); }
-        catch (ex) { update(id, "Checkpoint rejected", { type: "error", description: ex.message }); }
-      }
-      if (rt) {
-        try { await api(`/api/analysis/${rt.dataset.retry}/retry`, { method: "POST" }); toast.success("Re-queued"); load(); }
-        catch (ex) { toast.error("Retry not possible", { description: ex.message }); }
-      }
-    });
-  load();
-}
-
-// ------------------------------------------------------------------ exports & batch
-function mountExports() {
-  view.innerHTML = `<section class="page">${page("Exports", "Manifests for spreadsheets, an executive report for the LGU, and batch screening.")}
-    <div class="cards">
-      <a class="card-link" href="/api/admin/exports/manifest.csv"><b>Site manifest</b><span>One row per pole: rank, MSPI, level, review, location. CSV, opens in Excel.</span><em>Download CSV</em></a>
-      <a class="card-link" href="/api/admin/exports/wires.csv"><b>Wire measurements</b><span>Every wire: class, fit parameters a, b, c, residuals, L, δ, δ/L, δ_lim, CRS.</span><em>Download CSV</em></a>
-      <a class="card-link" href="/api/admin/exports/sites.pdf" target="_blank" rel="noopener"><b>Executive priority report</b><span>Ranked poles, review state and weight sensitivity, with the screening disclaimer on every page.</span><em>Open PDF</em></a>
-    </div>
-    <section class="panel"><header class="panel-head"><h2>Batch screening</h2><span class="muted">Pair each photo with an optional same-named .txt of polygons</span></header>
-      <label class="batch-drop"><input type="file" id="batch" multiple accept="image/jpeg,image/png,image/webp,image/tiff,.txt">
-        <span>Choose photos (and their .txt polygons)</span></label>
-      <label class="check"><input type="checkbox" id="stem-code" checked> Use the file name as the pole code</label>
-      <ol class="batch-list" id="batch-list"></ol>
-      <button class="btn primary" id="batch-run" disabled>Screen 0 photos</button>
-    </section></section>`;
-  let pairs = [];
-  $("#batch").addEventListener("change", (e) => {
-    const files = [...e.target.files];
-    const labels = new Map(files.filter((f) => f.name.toLowerCase().endsWith(".txt")).map((f) => [f.name.replace(/\.[^.]+$/, ""), f]));
-    pairs = files.filter((f) => f.type.startsWith("image/")).map((f) => ({ img: f, labels: labels.get(f.name.replace(/\.[^.]+$/, "")) || null, state: "ready" }));
-    renderBatch();
-  });
-  const renderBatch = () => {
-    $("#batch-list").innerHTML = pairs.map((p, i) => `<li data-i="${i}"><span class="mono">${esc(p.img.name)}</span>
-      <span class="muted">${p.labels ? "with polygons" : "photo only"}</span><span class="b-state ${p.state}">${esc(p.msg || p.state)}</span></li>`).join("");
-    const btn = $("#batch-run"); btn.disabled = !pairs.some((p) => p.state === "ready"); btn.textContent = `Screen ${pairs.filter((p) => p.state === "ready").length} photos`;
-  };
-  $("#batch-run").addEventListener("click", async () => {
-    const useStem = $("#stem-code").checked;
-    for (const p of pairs.filter((x) => x.state === "ready")) {
-      p.state = "uploading"; renderBatch();
-      const fd = new FormData(); fd.append("file", p.img);
-      if (p.labels) fd.append("labels", p.labels);
-      if (useStem) fd.append("pole_code", p.img.name.replace(/\.[^.]+$/, "").replace(/[^A-Za-z0-9_.-]/g, "-").slice(0, 64));
-      try {
-        const r = await api("/api/analysis/upload", { method: "POST", body: fd });
-        p.state = "queued"; p.id = r.id; renderBatch();
-        waitForAnalysis(r.id).then((s) => { p.state = s.status === "complete" ? "done" : "failed"; p.msg = STATUS_LABEL[s.status]; renderBatch(); });
-      } catch (ex) { p.state = "failed"; p.msg = ex.message; renderBatch(); }
-    }
-    toast.success("Batch submitted", { description: "Results appear under Analyses as they finish." });
-  });
 }
 
 boot();
