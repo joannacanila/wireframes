@@ -43,7 +43,9 @@ from scipy import ndimage as ndi
 HIGH, MODERATE, NOT = "AT RISK - HIGH", "AT RISK - MODERATE", "NOT AT RISK"
 INCONCLUSIVE = "INCONCLUSIVE - RETAKE PHOTO"
 _NOT_ASSESSED = {"endpoint_unavailable": "run off the photo (endpoint not visible)",
-                 "class_uncertain": "of uncertain type", "no_reference_for_class": "power or abandoned wires without a sag reference"}
+                 "class_uncertain": "of uncertain type",
+                 "no_validated_reference": "without a validated sag reference for their wire type",
+                 "no_reference_for_class": "power or abandoned wires without a sag reference"}
 _RANK = {NOT: 0, MODERATE: 1, HIGH: 2}
 
 
@@ -85,8 +87,11 @@ def _pixels(mask: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     return ys + rows[0], xs + cols[0]
 
 
-def clearance_scale(power_masks: list[np.ndarray], diameter_m: float) -> dict | None:
-    """Metres per pixel from the median power-wire width, with a +-1 px range."""
+def clearance_scale(power_masks: list[np.ndarray], diameter_m: float | None) -> dict | None:
+    """Metres per pixel from the median power-wire width, with a +-1 px range. None without a data-sheet diameter
+    (S4, register D-14)."""
+    if not diameter_m:
+        return None
     widths = [mean_width_px(m) for m in power_masks if m.sum() >= 30]
     if not widths:
         return None
@@ -127,7 +132,7 @@ def _spans(ix: list[int]) -> str:
 
 
 def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[int, int],
-           conductor_diameter_m: float = 0.0101, veg_moderate_px: int = 15, rule=None,
+           conductor_diameter_m: float | None = None, veg_moderate_px: int = 15, rule=None,
            frame_rows: tuple[int, int] | None = None) -> Hazard:
     """wires: [{"index", "class", "mask", "level" (CRS level or None), "status"}].
 
@@ -185,7 +190,7 @@ def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[in
     power = [w for w in wires if w["class"] == POWER]
     scale = clearance_scale([w["mask"] for w in power], conductor_diameter_m)
     f["clearance_scale"] = scale
-    veg_rows = []
+    veg_rows, veg_obs = [], []
     if veg_masks:
         veg = np.zeros(image_shape, bool)
         for m in veg_masks:
@@ -202,13 +207,20 @@ def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[in
             if scale:
                 row["gap_m_approx"] = [round(gap * scale["m_per_px_low"], 2), round(gap * scale["m_per_px_high"], 2)]
             veg_rows.append(row)
-            if w["class"] == POWER and gap == 0:
+            if not getattr(rule, "vegetation_verdict", True):
+                # S4 (register D-15): an image observation for review, never a hazard finding
+                if gap == 0 or (w["class"] == POWER and gap <= veg_moderate_px):
+                    veg_obs.append(w["index"])
+            elif w["class"] == POWER and gap == 0:
                 raise_to(HIGH, f"vegetation in contact with power span {w['index']}")
             elif w["class"] == POWER and gap <= veg_moderate_px:
                 raise_to(MODERATE, f"vegetation {gap:.0f} px from power span {w['index']}"
                          + (f" (approx. {row['gap_m_approx'][0]}-{row['gap_m_approx'][1]} m)" if scale else ""))
             elif w["class"] == TELECOM and gap == 0:
                 raise_to(MODERATE, f"vegetation in contact with telecom span {w['index']}")
+    if veg_obs:
+        notes.append(f"NOTE: vegetation overlaps or adjoins {_spans(sorted(set(veg_obs)))} in the image; a photo cannot "
+                     "measure physical clearance, so check on site")
     f["vegetation"] = sorted(veg_rows, key=lambda r: r["gap_px"])[:10]
     f["congestion"] = congestion([w["mask"] for w in wires], image_shape)
     if verdict == NOT:
@@ -242,11 +254,18 @@ def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[in
                               "the Minor or Critical level; the full span could not be measured, so verify on site")
         elif verdict == NOT and need and share < need:
             verdict = INCONCLUSIVE
-            reasons.insert(0, f"{INCONCLUSIVE}: only {len(scored)} of {len(scored) + len(unassessed)} measured spans "
-                              f"could be assessed ({detail}); the rest are unknown, not low risk")
+            reasons.insert(0, f"{INCONCLUSIVE}: {len(scored)} of {len(scored) + len(unassessed)} measured spans "
+                              f"could be assessed ({detail}); a span that was not assessed is unknown, not low risk")
         else:
             notes.append(f"NOTE: {len(unassessed)} measured span{'s' if len(unassessed) > 1 else ''} not assessed "
                          f"({detail})")
+    # S4 (register D-08, D-19): NOT AT RISK needs at least one assessed span; with none (e.g. no validated sag
+    # reference, or every trace too short to fit) the photo supports no conclusion either way
+    if verdict == NOT and getattr(rule, "min_assessed_share", 0.0) and not scored:
+        verdict = INCONCLUSIVE
+        if not (reasons and reasons[0].startswith(INCONCLUSIVE)):
+            reasons.insert(0, f"{INCONCLUSIVE}: no span could be assessed for sag; the photo supports no conclusion "
+                              "about the wires, so a field inspection is needed")
     reasons.extend(notes)
     hz = Hazard(verdict, reasons, f)
     # v2.11: every span's closest vegetation (the factors keep the 10 closest); not part of as_dict()

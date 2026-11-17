@@ -20,7 +20,7 @@ let cleanup = () => {};
 let assistant = null;
 const ctx = { page: "/admin", analysisId: null, label: "" }; // what the assistant knows about the current page
 
-export const RISK = { high: "High risk", medium: "Moderate risk", low: "Low risk", unassessed: "Not assessed",
+export const RISK = { high: "High risk", medium: "Moderate risk", low: "Low risk", unassessed: "Assessment incomplete",
   failed: "Processing failed", processing: "Processing" };
 export const REVIEW = { pending: "Needs review", not_reviewed: "Not reviewed", confirmed: "Confirmed",
   flagged: "Flagged for inspection", overridden: "Level changed", dismissed: "Dismissed" };
@@ -198,7 +198,7 @@ const issue = (r) => {
   if (r.risk === "processing") return "Still processing";
   if (w.high) return `${w.high} wire section${w.high === 1 ? "" : "s"} at high risk`;
   if (w.medium) return `${w.medium} wire section${w.medium === 1 ? "" : "s"} at moderate risk`;
-  if (r.risk === "unassessed") return r.wires_total ? "No wire section could be assessed" : "No wire detected";
+  if (r.risk === "unassessed") return r.wires_total ? "Assessment incomplete: no wire section could be assessed" : "Assessment incomplete: no wire detected";
   return "";
 };
 const shortDay = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
@@ -276,7 +276,7 @@ export function pickBarangay(poleLabel) {
 }
 
 // ------------------------------------------------------------------ dashboard
-const DIST = [["high", "High"], ["medium", "Moderate"], ["low", "Low"], ["unassessed", "Not assessed"], ["failed", "No result"]];
+const DIST = [["high", "High"], ["medium", "Moderate"], ["low", "Low"], ["unassessed", "Assessment incomplete"], ["failed", "No result"]];
 const NOTICE_KEY = "wf-dash-notice";
 function mountDashboard() {
   let hideNotice = false;
@@ -293,7 +293,7 @@ function mountDashboard() {
   const st = { quick: "all", q: "", sort: { key: "triage", desc: false }, page: 1, sel: new Set(), risk: null, rows: [], triage: [] };
   let data = null, t = 0;
 
-  const QUICK = [["all", "All"], ["failed", "Failed"], ["flagged", "Flagged"], ["high", "High"], ["medium", "Moderate"], ["unassessed", "Not assessed"]];
+  const QUICK = [["all", "All"], ["failed", "Failed"], ["flagged", "Flagged"], ["high", "High"], ["medium", "Moderate"], ["unassessed", "Assessment incomplete"]];
   const quickOk = (r) => st.quick === "all" || (st.quick === "failed" ? ["failed", "processing"].includes(r.risk) : st.quick === "flagged" ? r.review === "flagged" : r.risk === st.quick);
   const RANK = { failed: 0, processing: 0, high: 1, medium: 2, unassessed: 3, low: 4 };
   const SORT = { pole: (r) => r.label || r.pole_code, location: (r) => place(r) || "~", risk: (r) => RANK[r.risk] ?? 9, submitted: (r) => r.created_at };

@@ -270,7 +270,8 @@ export class OverlayViewer {
     const scored = w.status === "scored" && w.sag_ratio != null;
     this.tip.innerHTML = `<b>Wire ${w.index} · ${classLabel(w)}</b>
       <div class="row"><span>Condition</span><span>${(scored && { high: "Critical", medium: "Minor sag", low: "Within reference" }[w.level]) || "Not assessed"}</span></div>
-      ${scored ? `<div class="row"><span>Sag</span><span>${(w.sag_ratio * 100).toFixed(1)}% of its length</span></div>` : ""}`;
+      ${scored ? `<div class="row"><span>Sag</span><span>${(w.sag_ratio * 100).toFixed(1)}% of its length</span></div>`
+        : w.sag_ratio != null && w.status === "not_assessed" ? `<div class="row"><span>Sag ratio (image)</span><span>${(w.sag_ratio * 100).toFixed(1)}%, measured only</span></div>` : ""}`;
     const x = Math.min(e.clientX - r.left + 14, r.width - 200);
     const y = Math.min(e.clientY - r.top + 14, r.height - 90);
     this.tip.style.left = `${x}px`;

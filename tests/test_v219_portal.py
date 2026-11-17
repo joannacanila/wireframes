@@ -41,7 +41,8 @@ def test_notice_text_is_identical_in_web_and_server_copies():
     js = (ROOT_DIR / "app/web/assets/notice.js").read_text()
     m = re.search(r'export const NOTICE_TEXT = "(.+?)";', js)
     assert m and m.group(1) == notice.TEXT
-    assert notice.TEXT.startswith("WIREFRAME is designed to support the screening") and "qualified professional" in notice.TEXT
+    assert notice.TEXT.startswith("WIREFRAME is a decision-support tool intended for preliminary visual screening")
+    assert "qualified professional" in notice.TEXT and "inconclusive or not assessed" in notice.TEXT
 
 
 def test_every_user_facing_page_loads_the_notice(anon):
@@ -167,7 +168,7 @@ def test_inspection_filters_and_operational_exports(client, scene):
     row = got["items"][0]
     assert {"risk", "completeness", "review", "wires"} <= set(row) and "max_crs" not in row and "mspi" not in row
     csv = client.get("/api/admin/exports/inspections.csv?barangay=Salitran%20I").content.decode("utf-8-sig").splitlines()
-    assert csv[0].startswith('"Important Notice: WIREFRAME is designed') and "Pole ID" in csv[2] and "X-1" in csv[3]
+    assert csv[0].startswith('"Important Notice: WIREFRAME is a decision-support tool') and "Pole ID" in csv[2] and "X-1" in csv[3]
     f = client.get(f"/api/admin/inspections/{a}/findings.csv").content.decode("utf-8-sig")
     assert "Important Notice" in f and "Wire,Type,Condition,Finding" in f and "crs" not in f.lower()
 

@@ -94,6 +94,7 @@ def test_result_exposes_full_wirenet_mask_and_coverage(mclient):
     assert tel["model"].startswith("WireNet-R34") and tel["resolution"] == [640, 480] and tel["inference_s"] is not None
 
 
+@pytest.mark.test_reference
 def test_every_unmeasured_span_has_a_reason(mclient):
     res = _upload_and_wait(mclient)
     unmeasured = [w for w in res["wires"] if w["crs"] is None]

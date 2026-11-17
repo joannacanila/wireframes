@@ -5,7 +5,8 @@ description = "Vision-based diagnostic framework for urban overhead wire infrast
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
-markers = ["every_class_assessed: run with the pre-v2.21 assessment policy (measurement-mechanics tests on synthetic scenes)"]
+markers = ["every_class_assessed: run with the pre-v2.21 assessment policy and the TEST-ONLY sag reference (measurement-mechanics tests on synthetic scenes)",
+           "test_reference: run with the v2.21-v2.23 assessment policy and the TEST-ONLY sag reference (assessment-mechanics tests)"]
 testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-q"

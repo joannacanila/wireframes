@@ -1,0 +1,92 @@
+{
+ "v221-val": {
+  "photos": 22,
+  "reported_spans": 755,
+  "status": {
+   "scored": 256,
+   "not_assessed": 373,
+   "fit_failed": 77,
+   "too_short": 49
+  },
+  "not_assessed_reasons": {
+   "endpoint_unavailable": 235,
+   "no_reference_for_class": 138
+  },
+  "candidates": 629,
+  "scored": 256,
+  "assessment_coverage_pct": 40.7,
+  "measured_spans_with_sag_ratio": 754,
+  "measurement_share_pct": 99.87,
+  "verdicts": {
+   "AT RISK - MODERATE": 9,
+   "NOT AT RISK": 3,
+   "INCONCLUSIVE - RETAKE PHOTO": 10
+  }
+ },
+ "v221-test": {
+  "photos": 21,
+  "reported_spans": 787,
+  "status": {
+   "scored": 320,
+   "too_short": 63,
+   "fit_failed": 66,
+   "not_assessed": 338
+  },
+  "not_assessed_reasons": {
+   "endpoint_unavailable": 176,
+   "no_reference_for_class": 162
+  },
+  "candidates": 658,
+  "scored": 320,
+  "assessment_coverage_pct": 48.63,
+  "measured_spans_with_sag_ratio": 787,
+  "measurement_share_pct": 100.0,
+  "verdicts": {
+   "AT RISK - MODERATE": 7,
+   "INCONCLUSIVE - RETAKE PHOTO": 8,
+   "NOT AT RISK": 3,
+   "AT RISK - HIGH": 3
+  }
+ },
+ "s4-val": {
+  "photos": 22,
+  "reported_spans": 755,
+  "status": {
+   "not_assessed": 677,
+   "fit_failed": 77,
+   "too_short": 1
+  },
+  "not_assessed_reasons": {
+   "no_validated_reference": 436,
+   "endpoint_unavailable": 241
+  },
+  "candidates": 677,
+  "scored": 0,
+  "assessment_coverage_pct": 0.0,
+  "measured_spans_with_sag_ratio": 754,
+  "measurement_share_pct": 99.87,
+  "verdicts": {
+   "INCONCLUSIVE - RETAKE PHOTO": 22
+  }
+ },
+ "s4-test": {
+  "photos": 21,
+  "reported_spans": 787,
+  "status": {
+   "not_assessed": 721,
+   "fit_failed": 66
+  },
+  "not_assessed_reasons": {
+   "no_validated_reference": 538,
+   "endpoint_unavailable": 183
+  },
+  "candidates": 721,
+  "scored": 0,
+  "assessment_coverage_pct": 0.0,
+  "measured_spans_with_sag_ratio": 787,
+  "measurement_share_pct": 100.0,
+  "verdicts": {
+   "INCONCLUSIVE - RETAKE PHOTO": 21
+  }
+ }
+}

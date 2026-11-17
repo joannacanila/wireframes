@@ -138,12 +138,14 @@ def test_change_of_state_identity_and_monotonicity():
     assert hot**2 * (hot - k) == pytest.approx(ea * 2.12**2 * 40.0**2 / 24, rel=1e-6)
 
 
+@pytest.mark.test_reference
 def test_allowable_sag_without_context_is_reference_value(cfg):
     lim = allowable_sag("telecom-cable", EngineeringContext(), cfg.crs, cfg.engineering)
     assert lim.delta_lim == cfg.crs.delta_lim0["telecom-cable"]
     assert "default_parameters" in lim.flags and not lim.used_context
 
 
+@pytest.mark.test_reference
 def test_allowable_sag_at_reference_conditions_equals_reference(cfg):
     ctx = EngineeringContext(span_m=40, temperature_c=cfg.engineering.reference_temperature_c, wind_speed_mps=0)
     lim = allowable_sag("power-distribution-lines", ctx, cfg.crs, cfg.engineering)

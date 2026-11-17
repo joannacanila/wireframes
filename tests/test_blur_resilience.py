@@ -75,6 +75,7 @@ class _Recorder:
         return self.dets
 
 
+@pytest.mark.test_reference
 def test_blur_fallback_recovers_spans_on_a_degraded_photo(cfg, scene):
     h, w = scene.rgb.shape[:2]
     ref = [WireDetection(d.wire_class, 0.6, d.mask, d.bbox) for d in parse_yolo_seg_labels(scene.labels, w, h)]

@@ -19,8 +19,10 @@ def test_class_order_matches_the_dataset_export():
 
 
 def test_config_carries_sag_parameters_for_wire_classes_only(cfg):
-    for block in (cfg.crs.class_weights, cfg.crs.delta_lim0, cfg.engineering.conductors):
-        assert set(block) == set(WIRE_CLASSES)
+    assert set(cfg.crs.class_weights) == set(WIRE_CLASSES)
+    # S4: references and conductor data exist only where verified (none); never for a non-wire class
+    for block in (cfg.crs.delta_lim0, cfg.engineering.conductors):
+        assert set(block) <= set(WIRE_CLASSES)
 
 
 def _veg(mask):

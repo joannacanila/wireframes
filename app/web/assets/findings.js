@@ -21,18 +21,23 @@ export function skipReason(w) {
   if (w.status === "service_drop") return "drop wire, not checked";
   const r = { chord_below_precision_gate: "too small or distant", too_short: "too small or distant", residual_too_large: "overlapping",
     non_positive_a: "overlapping", empty_mask: "too faint", endpoint_unavailable: "endpoint off the photo",
-    class_uncertain: "uncertain wire type", no_reference_for_class: "power line, no sag reference" }[w.reason_code];
+    class_uncertain: "uncertain wire type", no_reference_for_class: "power line, no sag reference",
+    no_validated_reference: "measured, no validated sag reference", withdrawn_reference: "measured, earlier reference withdrawn" }[w.reason_code];
   if (r) return r;
   return (w.flags || []).includes("truncated") ? "outside the photo" : "unclear in the photo";
 }
+// S4 (register D-02..D-05): reasons for which the sag ratio is a measurement only (no validated reference exists)
+export const MEASURED_ONLY = new Set(["no_validated_reference", "withdrawn_reference"]);
+/** The image-derived sag ratio with its 1 px resolution ("2.1% ±0.3"); a measurement, never a severity. */
+export const measuredText = (w) => `${pc(w.sag_ratio)}${w.sag_ratio_resolution ? ` ±${(w.sag_ratio_resolution * 100).toFixed(1)}` : ""}`;
 export const SCORE_HELP = "Sag score, 0 to 10: how far the wire hangs compared with the sag allowed for its type. "
   + "10 means it hangs as low as the allowance or lower. Low below 3, moderate 3 to 6, high above 6.";
 
 /** One plain sentence on what the photo shows for this wire section. Measurements only; never a guess. */
 export function finding(w, short = false) {
   const veg = w.veg_clearance;
-  const vegTxt = veg ? (veg.gap_px === 0 ? (short ? "; vegetation touching" : "; vegetation is touching it")
-    : veg.gap_px <= 15 ? (short ? "; vegetation close" : "; vegetation is close to it") : "") : "";
+  // S4 (register D-15): a pixel gap is an image observation, not a clearance; no pixel distance is called "close"
+  const vegTxt = veg && veg.gap_px === 0 ? (short ? "; vegetation overlaps in photo" : "; vegetation overlaps it in the photo (check clearance on site)") : "";
   const edge = (w.flags || []).includes("truncated") ? (short ? "; runs past photo edge" : "; it runs past the edge of the photo, so the full span may not be shown") : "";
   if (short && w.status === "scored") {
     return `${{ high: "Hangs low", medium: "Some sag", low: "Normal sag" }[w.level]} (${pc(w.sag_ratio)})${vegTxt}${edge}`;
@@ -50,6 +55,9 @@ export function finding(w, short = false) {
     return base + vegTxt + edge;
   }
   if (w.status === "service_drop") return "Runs steeply down, likely a drop wire to a building; drop wires are not checked for sag" + vegTxt;
+  if (w.status === "not_assessed" && w.sag_ratio != null && MEASURED_ONLY.has(w.reason_code)) {
+    return `${short ? "Measured" : "Measured, not assessed"}: image-derived sag ratio ${measuredText(w)}${short ? "" : "; no validated sag reference"}` + vegTxt + edge;
+  }
   const why = {
     chord_below_precision_gate: "Too small or too far away in the photo to measure",
     too_short: "Too small or too far away in the photo to measure",

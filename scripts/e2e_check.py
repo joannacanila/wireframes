@@ -61,8 +61,18 @@ def main() -> int:
         wires = api.get("wires") or []
         n = {k: sum(1 for w in wires if w.get("level") == k) for k in ("high", "medium", "low")}
         counts = {t: int(v) for t, v in zip(pg.locator(".rx-counts dt").all_inner_texts(), pg.locator(".rx-counts dd").all_inner_texts(), strict=False)}
-        check(counts.get("Critical") == n["high"] and counts.get("Minor sag") == n["medium"]
-              and counts.get("Within reference") == n["low"], f"page counts {counts} match API {n}")
+        assessed = sum(1 for w in wires if w.get("status") == "scored")
+        if assessed:
+            check(counts.get("Critical") == n["high"] and counts.get("Minor sag") == n["medium"]
+                  and counts.get("Within reference") == n["low"], f"page counts {counts} match API {n}")
+        else:  # S4: no validated reference -> no severity anywhere, measurements only
+            measured = sum(1 for w in wires if w.get("sag_ratio") is not None)
+            check(counts.get("Sag ratio measured") == measured and counts.get("Not assessed") == len(wires)
+                  and not {"Critical", "Minor sag", "Within reference"} & set(counts), f"page counts {counts} (S4)")
+            check(api["hazard"]["verdict"] != "NOT AT RISK" and not api["hazard"]["verdict"].startswith("AT RISK"),
+                  f"no unsupported pole verdict: {api['hazard']['verdict']}")
+            check(all(w.get("reason_code") in ("no_validated_reference", "endpoint_unavailable", "class_uncertain")
+                      for w in wires if w.get("status") == "not_assessed"), "not-assessed reasons are S4 codes")
         check(not any(w.get("status") != "scored" and w.get("level") for w in wires), "no severity on an unassessed wire")
         check(pg.locator("[data-view=mask]").count() == 1, "Mask view present")
 
@@ -74,8 +84,11 @@ def main() -> int:
             doc = pdfium.PdfDocument(io.BytesIO(r.body()))
             text = " ".join(" ".join(doc[i].get_textpage().get_text_range() for i in range(len(doc))).split())
             doc.close()
-            check(f"{n['high']} Critical" in text and f"{n['medium']} Minor sag" in text, "PDF summary counts match the API")
-            check("field verification required" in text.lower(), "PDF footer carries the verification notice")
+            if assessed:
+                check(f"{n['high']} Critical" in text and f"{n['medium']} Minor sag" in text, "PDF summary counts match the API")
+            else:
+                check("none validated" in text and "Measured Spans (not assessed)" in text, "PDF shows measurements, no severity (S4)")
+            check("preliminary visual screening" in text.lower(), "PDF carries the decision-support notice")
         except ImportError:
             print("SKIP PDF text check (pypdfium2 not installed)")
 
@@ -86,6 +99,8 @@ def main() -> int:
         pg.click("button[type=submit]")
         pg.wait_for_selector("#top:not([hidden])")
         pg.wait_for_selector(".kpis", timeout=60_000)
+        dash = pg.inner_text("main")
+        check("Assessment incomplete" in dash, "dashboard labels INCONCLUSIVE poles 'Assessment incomplete'")
         check(pg.locator("#user-menu a[href='/admin/system']").count() == 0, "no System entry in the user menu")
         pg.goto(f"{a.base}/admin/inspections")
         pg.wait_for_selector(".tbl-insp", timeout=60_000)
@@ -109,6 +124,8 @@ def main() -> int:
         pg.wait_for_timeout(1500)
         pg.screenshot(path=str(a.out / "map.png"))
         check(pg.locator(".base-seg [data-base]").count() == 3, "base map switch (Light, Dark, Satellite)")
+        check("Assessment incomplete" in pg.inner_text(".map-legend") and "Not assessed" not in pg.inner_text(".map-legend"),
+              "map legend uses 'Assessment incomplete'")
         check(pg.request.get(f"{a.base}/admin/system").status == 404, "/admin/system answers 404")
 
         # keep the check out of operational records

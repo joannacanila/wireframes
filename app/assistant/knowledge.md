@@ -99,26 +99,27 @@ Each wire section is labelled as a power line, a telecom cable (including fibre 
 ## Risk levels {#risk-levels}
 Link: /admin/inspections
 Each inspection gets one overall risk level:
-- High risk: the inspection found a wire condition that may need prompt professional attention, such as wires hanging noticeably low or vegetation touching a power line. Review the findings and follow your organisation's inspection procedure.
-- Moderate risk: some wires show sag or a condition that should be looked at in the next routine inspection.
-- Low risk: no measured wire was flagged. This is not a safety clearance; it only means nothing in this photo was flagged.
-- Not assessed: the photo was not clear enough for a reliable screening. A new photo or a field visit is needed. Not assessed is never the same as low risk.
-- Processing failed: the photo could not be processed at all.
-Each wire section also has its own condition: Critical, Minor sag, Within reference or Not assessed (see Excessive sag).
+- High risk means a wire condition that may need prompt professional attention under a validated criterion.
+- Moderate risk means a condition to look at in the next routine inspection under a validated criterion.
+- Low risk means every measured wire was assessed and none was flagged. This is not a safety clearance.
+- Assessment incomplete: no conclusion could be reached. A field inspection or more information is needed. It is never the same as low risk.
+- Processing failed: the photo could not be processed.
+Since 18 Nov 2026 no sag or vegetation criterion is validated (see Excessive sag), so new inspections with measured wires are Assessment incomplete. Older inspections used withdrawn provisional criteria and are shown as Assessment incomplete with a notice.
 
 ## Why one wire reading may not decide the pole's level {#corroboration}
-One or two wire sections can read as Critical because of the photo (an overlap, a faint stretch, the angle) rather than the wire. The overall level for the pole therefore needs enough consistent readings. When single sections read Critical but the pole as a whole was not flagged, the result says so and those sections are still worth a look.
+If a validated sag reference is ever configured, one or two wire sections could read as over it because of the photo (an overlap, a faint stretch, the angle) rather than the wire, so the pole's level would need enough consistent readings. No reference is configured, so this rule does not currently apply.
 
 ## Excessive sag {#sag}
-Sag is how far a wire hangs below the straight line between its two ends. WIREFRAME fits a hanging-wire curve to each measurable wire section and compares its sag with the sag allowed for that wire type. For telecom cables the configured reference is 4.0% of the span length: below 2.4% is **Within reference**, from 2.4% up to 4.0% is **Minor sag**, and 4.0% or more is **Critical**. The sag allowances in this version are reference values that have not yet been calibrated against local field measurements, so a sag finding is a reason to inspect, not a measurement of the wire.
+Sag is how far a wire hangs below the straight line between its two ends. WIREFRAME fits a hanging-wire curve to each measurable wire section and reports its **image-derived sag ratio**: the largest distance from the curve to that line, divided by the line's length, in image pixels, with its 1 pixel resolution (for example 2.1% ±0.3). This is a measurement of the photo, not physical sag: there is no camera-angle correction and no field calibration. It is **not compared with any limit**. Research completed on 18 Nov 2026 found no current standard, regulation or manufacturer document that gives a universal allowable sag percentage for telecom cables (ITU-T L.102 and manufacturer guides calculate sag for each cable from its weight, span, tension rating, temperature, wind and ice), and the 3% power-line rule of ERB Resolution No. 95-21 was superseded in 2006. The former 4.0% telecom reference and 2.4% Minor-sag band were development values and were removed. So there is no Critical, Minor sag or Within reference condition: every measured wire is "measured, not assessed".
 
 ## Wires that were not assessed {#not-assessed}
 A wire section is "not assessed" when its shape could not be measured reliably, or when the measurement cannot support a severity. Reasons:
 - **Endpoint unavailable**: the wire runs past the edge of the photo, so at least one pole attachment is not visible and the full span cannot be measured.
-- **No sag reference for this wire type**: power distribution lines and abandoned wires are measured, but no engineering sag criteria have been set for them yet, and the telecom limit is not applied to them.
+- **No validated sag reference**: the wire was measured (its image-derived sag ratio is shown), but no applicable engineering sag reference exists for any wire type, so no severity is given.
+- **Earlier reference withdrawn**: an inspection from before 18 Nov 2026 used a provisional reference that was withdrawn; the measurement is kept, the earlier severity is not a finding.
 - **Uncertain type**: the photo does not show clearly whether the wire is a power line or a telecom cable.
 - **Too small, overlapping or too faint**: the shape could not be traced or separated from other wires.
-A wire that was not assessed is never counted as low risk. When fewer than half of the measured spans could be assessed, or a partial span already shows sag, the pole's result is "assessment incomplete" rather than low risk.
+A wire that was not assessed is never counted as low risk. Unless every measured span was assessed, the pole's result is "assessment incomplete" rather than low risk.
 
 ## Why a wire was not detected {#missed-wires}
 The photograph may not provide enough visual detail for reliable detection. This happens when wires blend into the background (buildings, trees, a bright or grey sky), overlap other wires or structures, are very thin or far away, or the photo is dark, blurred or compressed. Telecom cables are harder to detect than power lines. Take another photograph with better light and a clearer view of the wires against the sky. Absence of a detected wire or hazard does not mean there is none.
@@ -137,7 +138,7 @@ When the photo is unlikely to give a reliable result (wires hard to tell apart, 
 Retake the photo when the result is "Not assessed", when a retake warning appears, when many wire sections could not be assessed, or when the photo is dark, blurred, against the sun or cut off at the edges. If a retake is not possible, request a field inspection.
 
 ## Vegetation {#vegetation}
-WIREFRAME marks vegetation in the photo and notes when it touches or is close to a wire. This is a visual observation from one photo, not a clearance measurement. Report vegetation touching a power line to the electric utility or barangay; do not trim branches near wires yourself.
+WIREFRAME marks vegetation in the photo and notes when it overlaps or adjoins a wire in the image. This is a visual observation from one photo, not a clearance measurement: a photo cannot tell whether a branch in front of or behind a wire touches it, and pixel distances are not metres. It does not change the pole's level. Report vegetation touching a power line to the electric utility or barangay; do not trim branches near wires yourself.
 
 ## Utility poles in the photo {#poles}
 A pole detector draws dashed boxes around utility poles for context. It has not reached the accuracy target set for it, so its boxes may miss poles or mark lamp posts and other structures. It never changes how wires are found or scored.
@@ -169,7 +170,7 @@ Request or record a professional review whenever a result is high or moderate ri
 
 ## Dashboard {#dashboard}
 Link: /admin
-The Dashboard shows the number of registered poles and how many are high risk, moderate, low and not assessed (each pole counted once, by its latest inspection, so the numbers add up to the total), how many inspections are waiting for review, a Needs attention list (flagged poles first, then unreviewed high-risk, moderate and not-assessed inspections) and recent inspections and reviews. A short status line appears only when inspection processing needs attention.
+The Dashboard shows the number of registered poles and how many are high risk, moderate, low and assessment incomplete (each pole counted once, by its latest inspection, so the numbers add up to the total), how many inspections are waiting for review, a Needs attention list (flagged poles first, then unreviewed high-risk, moderate and assessment-incomplete inspections) and recent inspections and reviews. A short status line appears only when inspection processing needs attention.
 
 ## Inspections page {#inspections}
 Link: /admin/inspections
@@ -185,7 +186,7 @@ Map & Dispatch shows the latest inspection of each pole on a map and the inspect
 
 ## How poles are ranked {#ranking}
 Link: /admin/map
-The inspection order puts first the poles whose photos show the worst and most widespread wire conditions in the most cluttered scenes. It combines the pole's worst wire condition, the average condition of its measured wires and how visually cluttered the scene is. Poles with no measured wire are listed last without a position. The ranking only orders poles for inspection; each pole keeps its own risk level. The weighting is set by administrators.
+The inspection order puts first the poles whose photos show the worst and most widespread wire conditions in the most cluttered scenes. It combines the pole's worst wire condition, the average condition of its measured wires and how visually cluttered the scene is. Poles with no assessed wire are listed last without a position; while no validated sag reference exists, that applies to every pole. The ranking only orders poles for inspection; each pole keeps its own risk level. The weighting is set by administrators.
 
 ## GPS and locations {#gps}
 Link: /admin/map

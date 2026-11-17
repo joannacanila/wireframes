@@ -75,7 +75,7 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
         <form class="place-search" id="place" role="search"><label class="sr-only" for="place-q">Find a street, barangay or pole</label>
           <input id="place-q" type="search" placeholder="Find a street or barangay" autocomplete="off">
           <button class="btn sm" type="submit">Find</button><ol class="place-res" id="place-res" hidden></ol></form>
-        <ul class="map-legend" aria-label="Marker colours"><li><i style="background:var(--risk-high)"></i>High</li><li><i style="background:var(--risk-med)"></i>Moderate</li><li><i style="background:var(--risk-low)"></i>Low</li><li><i style="background:var(--risk-none)"></i>Not assessed</li></ul>
+        <ul class="map-legend" aria-label="Marker colours"><li><i style="background:var(--risk-high)"></i>High</li><li><i style="background:var(--risk-med)"></i>Moderate</li><li><i style="background:var(--risk-low)"></i>Low</li><li><i style="background:var(--risk-none)"></i>Assessment incomplete</li></ul>
         <div class="seg base-seg" role="radiogroup" aria-label="Base map">${[["light", "Light"], ["dark", "Dark"], ["satellite", "Satellite"]].map(([k, t]) => `<button type="button" role="radio" data-base="${k}" aria-checked="${k === base}">${t}</button>`).join("")}</div>
         <div class="pin-bar" id="pin-bar" hidden role="status"></div>
         <div class="map-note" id="map-note" hidden></div>
@@ -86,7 +86,7 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
             <button type="button" role="tab" data-tab="pinning" aria-selected="false">Needs pinning <b class="num pin-n" id="n-pin"></b></button></div>
           <form class="dsp-filters" id="df">
             <input type="search" name="q" placeholder="Search pole ID, code or barangay" value="${esc(params.get("q") || "")}" aria-label="Search the list">
-            <div class="chips" role="group" aria-label="Risk level">${[["", "All"], ["high", "High"], ["medium", "Moderate"], ["low", "Low"], ["unassessed", "Not assessed"]].map(([k, t]) => `<button type="button" data-risk="${k}" aria-pressed="${(params.get("risk") || "") === k}">${t}</button>`).join("")}</div>
+            <div class="chips" role="group" aria-label="Risk level">${[["", "All"], ["high", "High"], ["medium", "Moderate"], ["low", "Low"], ["unassessed", "Assessment incomplete"]].map(([k, t]) => `<button type="button" data-risk="${k}" aria-pressed="${(params.get("risk") || "") === k}">${t}</button>`).join("")}</div>
             <select name="barangay" aria-label="Barangay"><option value="">All barangays</option></select>
           </form>
         </div>

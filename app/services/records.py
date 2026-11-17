@@ -93,7 +93,7 @@ def list_columns():
             Detection.level, Detection.crs, Detection.sag_ratio, Detection.fail_reason, Detection.flags_json)
 VERDICT_RISK = {"AT RISK - HIGH": "high", "AT RISK - MODERATE": "medium", "NOT AT RISK": "low",
                 "INCONCLUSIVE - RETAKE PHOTO": "unassessed"}
-RISK_LABEL = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk", "unassessed": "Not assessed",
+RISK_LABEL = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk", "unassessed": "Assessment incomplete",
               "failed": "Processing failed", "processing": "Processing"}
 REVIEW_LABEL = {"pending": "Needs review", "not_reviewed": "Not reviewed", "confirmed": "Confirmed",
                 "flagged": "Flagged for inspection", "overridden": "Level changed", "dismissed": "Dismissed"}
@@ -106,11 +106,12 @@ def risk(a: Analysis) -> str:
         return "processing"
     if a.status == "error":
         return "failed"
-    verdict = ((a.metadata_json or {}).get("hazard") or {}).get("verdict")
+    from app.services.basis import verdict_of
+    verdict = verdict_of(a.metadata_json)  # S4: a pre-S4 verdict from withdrawn criteria reads INCONCLUSIVE
     if verdict in VERDICT_RISK:
         return VERDICT_RISK[verdict]
     # records from before the pole-level verdict (v2.8): the worst measured wire
-    scored = [d for d in a.detections if d.crs is not None and d.level]
+    scored = [d for d in a.detections if d.crs is not None and d.level] if a.valid_crs else []
     if not scored:
         return "unassessed"
     return max(scored, key=lambda d: d.crs).level

@@ -116,6 +116,7 @@ def test_invalid_labels_and_location_rejected_without_orphan_files(client, scene
     assert list(client.state.settings.upload_dir.iterdir()) == []
 
 
+@pytest.mark.test_reference
 def test_priority_weights_validation_and_reranking(client, scene):
     for i, k in enumerate((0.6, 1.6)):
         from app.devtools.synthetic import make_scene

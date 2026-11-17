@@ -19,16 +19,48 @@ def shipped_cfg():
     return load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
 
 
+# S4 (register D-02..D-15): the shipped configuration has no sag reference, no conductor data and no vegetation
+# verdict. The CRS, banding, corroboration and change-of-state code is kept for a future validated reference, and is
+# tested with these TEST-ONLY values (the former v2.23 development placeholders). They are not engineering values
+# and are never loaded by the application.
+TEST_ONLY_REFERENCE = {"abandoned-wire": 0.040, "power-distribution-lines": 0.040, "telecom-cable": 0.040}
+_TEST_ONLY_CONDUCTOR = {"weight_n_per_m": 2.12, "diameter_m": 0.0101, "area_m2": 6.24e-5, "elastic_modulus_pa": 7.6e10,
+                        "thermal_expansion_per_c": 1.91e-5, "reference_tension_n": 2900.0}
+TEST_ONLY_CONDUCTORS = {"power-distribution-lines": _TEST_ONLY_CONDUCTOR, "abandoned-wire": _TEST_ONLY_CONDUCTOR,
+                        "telecom-cable": {"weight_n_per_m": 3.10, "diameter_m": 0.0200, "area_m2": 3.10e-5,
+                                          "elastic_modulus_pa": 1.86e11, "thermal_expansion_per_c": 1.15e-5,
+                                          "reference_tension_n": 3500.0}}
+
+
+def with_test_reference(shipped, every_class: bool = False):
+    """The shipped configuration plus the test-only reference. ``every_class``: the pre-v2.21 policy (Table 1.2
+    cut-offs, every class compared, border spans measured); otherwise the v2.21-v2.23 policy (telecom only, bands at
+    CRS 6 / 10, precision gate 100 px, NOT AT RISK with >= half assessed, vegetation verdict on)."""
+    from app.core.config import Conductor
+    conductors = {k: Conductor(**v) for k, v in TEST_ONLY_CONDUCTORS.items()}
+    eng = shipped.engineering.model_copy(update={"conductors": conductors})
+    if every_class:
+        lv = shipped.crs.levels.model_copy(update={"minor_from": None, "critical_from": None})  # Table 1.2
+        crs = shipped.crs.model_copy(update={"delta_lim0": dict(TEST_ONLY_REFERENCE), "assessed_classes": [],
+                                             "require_both_endpoints": False, "levels": lv, "min_chord_px": 100.0})
+        hz = shipped.hazard.model_copy(update={"vegetation_verdict": True, "min_assessed_share": 0.0})
+    else:
+        lv = shipped.crs.levels.model_copy(update={"minor_from": 6.0, "critical_from": 10.0})
+        crs = shipped.crs.model_copy(update={"delta_lim0": dict(TEST_ONLY_REFERENCE), "assessed_classes": ["telecom-cable"],
+                                             "levels": lv, "min_chord_px": 100.0})
+        hz = shipped.hazard.model_copy(update={"vegetation_verdict": True, "min_assessed_share": 0.5})
+    return shipped.model_copy(update={"crs": crs, "engineering": eng, "hazard": hz})
+
+
 @pytest.fixture
 def cfg(shipped_cfg, request):
     """The shipped configuration. Tests marked ``every_class_assessed`` check measurement mechanics on synthetic
-    scenes (all power lines, some spans touching the border): they keep the pre-v2.21 assessment policy (thesis
-    Table 1.2 cut-offs, every class compared with its reference, border spans measured); the v2.21 policy has its
-    own tests (tests/test_v221_ml.py)."""
+    scenes with the pre-v2.21 policy; tests marked ``test_reference`` check the v2.21-v2.23 assessment mechanics.
+    Both use the TEST-ONLY reference above (see with_test_reference)."""
     if request.node.get_closest_marker("every_class_assessed"):
-        lv = shipped_cfg.crs.levels.model_copy(update={"minor_from": None, "critical_from": None})  # Table 1.2
-        crs = shipped_cfg.crs.model_copy(update={"assessed_classes": [], "require_both_endpoints": False, "levels": lv})
-        return shipped_cfg.model_copy(update={"crs": crs})
+        return with_test_reference(shipped_cfg, every_class=True)
+    if request.node.get_closest_marker("test_reference"):
+        return with_test_reference(shipped_cfg)
     return shipped_cfg
 
 

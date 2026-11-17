@@ -283,6 +283,14 @@ class Levels(_Strict):
         return self.low_below, self.high_above, False
 
 
+def _known_classes(v: dict):
+    """S4: a validated reference or conductor entry may exist for only some classes (or none)."""
+    extra = set(v) - set(WIRE_CLASSES)
+    if extra:
+        raise ValueError(f"unknown wire classes: {sorted(extra)}")
+    return v
+
+
 def _all_classes(v: dict[str, float]) -> dict[str, float]:
     missing = set(WIRE_CLASSES) - set(v)
     extra = set(v) - set(WIRE_CLASSES)
@@ -294,8 +302,10 @@ def _all_classes(v: dict[str, float]) -> dict[str, float]:
 class CRSConfig(_Strict):
     provisional: bool = True
     class_weights: dict[str, float]
-    delta_lim0: dict[str, float]
-    levels: Levels
+    # S4 (register D-02..D-04): allowable sag ratio per class, ONLY for classes with a verified, applicable reference.
+    # A class without an entry is measured and not assessed (reason no_validated_reference). Empty = no class assessed.
+    delta_lim0: dict[str, float] = Field(default_factory=dict)
+    levels: Levels = Field(default_factory=Levels)
     # v2.8 measurement-precision gate: a span gets a CRS only if its chord L satisfies
     # sigma / L <= f * delta_lim (sigma = skeleton noise, px). 0 disables the gate.
     min_chord_px: float = Field(0.0, ge=0)
@@ -310,7 +320,12 @@ class CRSConfig(_Strict):
     # assessed: its chord and sag are not those of the pole-to-pole span.
     require_both_endpoints: bool = False
 
-    _v = field_validator("class_weights", "delta_lim0")(_all_classes)
+    _v = field_validator("class_weights")(_all_classes)
+    _k = field_validator("delta_lim0")(_known_classes)
+
+    def has_reference(self, wire_class: str) -> bool:
+        """True only when a reference is configured for the class and (if listed) the class is assessed."""
+        return wire_class in self.delta_lim0 and (not self.assessed_classes or wire_class in self.assessed_classes)
 
     @field_validator("delta_lim0")
     @classmethod
@@ -334,9 +349,11 @@ class EngineeringConfig(_Strict):
     reference_temperature_c: float = 25.0
     air_density: float = Field(1.225, gt=0)
     drag_coefficient: float = Field(1.0, gt=0)
-    conductors: dict[str, Conductor]
+    # S4 (register D-14): conductor data only from data sheets of the photographed conductors; none are available,
+    # so the change-of-state adjustment (Equation 9) and any metre conversion are unavailable.
+    conductors: dict[str, Conductor] = Field(default_factory=dict)
 
-    _v = field_validator("conductors")(_all_classes)
+    _v = field_validator("conductors")(_known_classes)
 
 
 class HazardConfig(_Strict):
@@ -346,6 +363,10 @@ class HazardConfig(_Strict):
     # v2.21: NOT AT RISK needs at least this share of the measured spans to have been assessed; below it the
     # verdict is INCONCLUSIVE (spans that run off the photo or have no reference are unknown, not safe). 0 = off.
     min_assessed_share: float = Field(0.0, ge=0, le=1)
+    # S4 (register D-15): vegetation proximity measured in image pixels raises AT RISK only when True. Pixel gaps in
+    # one perspective photo are not physical clearances and a 2-D overlap is not contact, so the shipped
+    # configuration sets False: vegetation is reported as an image observation for review.
+    vegetation_verdict: bool = True
     loose_ends: bool = False
     loose_end_tau: float = Field(0.5, ge=0, le=1)
     border_px: int = Field(12, ge=0)

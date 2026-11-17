@@ -24,6 +24,13 @@ REASONS = {
     "no_reference_for_class": ("Not assessed: no configured sag reference for this wire type. Power distribution "
                                "lines and abandoned wires need their own engineering criteria; the telecom limit is "
                                "not applied"),
+    # S4 (register D-02..D-05): no applicable standard gives a sag limit that an image measurement can be compared with
+    "no_validated_reference": ("Not assessed: no validated sag reference. No applicable standard, regulation or "
+                               "manufacturer document gives a sag limit for this wire type that a photo measurement "
+                               "can be compared with, so the image-derived sag ratio is shown as a measurement only"),
+    "withdrawn_reference": ("Not assessed: this result was produced with a provisional sag reference that was "
+                            "withdrawn on 18 Nov 2026 (no engineering source supports it); the measurement is kept, "
+                            "the earlier severity is not a finding"),
 }
 # v2.14: the table label for each code (field reading); the full sentence above stays in the API and the detail view
 REASONS_SHORT = {
@@ -38,6 +45,8 @@ REASONS_SHORT = {
     "endpoint_unavailable": "Endpoint unavailable",
     "class_uncertain": "Uncertain infrastructure type",
     "no_reference_for_class": "No sag reference for this wire type",
+    "no_validated_reference": "No validated sag reference",
+    "withdrawn_reference": "Earlier reference withdrawn",
 }
 
 
@@ -47,7 +56,7 @@ def wire_reason_short(code: str | None) -> str | None:
 
 SCORED_NOTES = {
     "truncated": "Touches the photo edge: the span may continue out of frame",
-    "vegetation_contact": "Vegetation touches this wire",
+    "vegetation_contact": "Vegetation overlaps or adjoins this wire in the photo (not a measured clearance; check on site)",
     "lens_outside_envelope": "Ultra-wide lens: the sag shown is distorted by the lens and is not used for the verdict",
     "class_uncertain": "Wire type uncertain: the photo does not clearly show whether this is a power or a telecom line",
 }

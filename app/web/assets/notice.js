@@ -6,7 +6,7 @@
 // The wording is approved; app/core/notice.py holds the same text for PDFs and CSVs (a test keeps them equal).
 
 export const NOTICE_TITLE = "Important Notice";
-export const NOTICE_TEXT = "WIREFRAME is designed to support the screening and assessment of overhead utility wires. Its results are generated using automated computer-vision models and may contain errors, omissions, or inaccurate classifications. Findings should not be considered a definitive safety assessment or a substitute for an actual inspection. Always have results verified by a qualified professional before making engineering, maintenance, or safety-related decisions.";
+export const NOTICE_TEXT = "WIREFRAME is a decision-support tool intended for preliminary visual screening of overhead conductor conditions. Its automated outputs and image-derived measurements may be inaccurate or incomplete due to image quality, visibility, perspective, classification errors, environmental conditions, and other limitations. Results do not constitute a certified engineering inspection, confirmation of structural or electrical safety, or proof of regulatory compliance. All findings should be reviewed by a qualified professional. Results marked as inconclusive or not assessed require further information, verification, or an appropriate field inspection.";
 
 const LEAD = {
   brief: "Risk levels here are automated screening results and need verification by a qualified professional.",

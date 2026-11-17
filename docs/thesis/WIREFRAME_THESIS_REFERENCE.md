@@ -401,46 +401,52 @@ If x* falls outside [x_0, x_1] there is no interior maximum and the sag is 0.
 An endpoint within 1 % of the image side from the border marks the fit as truncated: the span leaves the photo, so its
 chord is not the pole-to-pole chord (Section 8.1).
 
-### 7.4 Measurement-precision gate
+### 7.4 Measurement resolution (precision gate removed in S4)
 
-With 1 px of skeleton noise (sigma) and the requirement that noise move delta/L by at most a quarter of the reference
-ratio:
+Until v2.23 a chord had to reach L_min = 1 / (0.25 * 0.040) = 100 px (sigma = 1 px of skeleton noise, f = 0.25 of
+the reference ratio). Both the reference 0.040 and f had no source (register D-02, D-09), so the gate was removed
+(`crs.min_chord_px: 0`). Every measured ratio now carries its resolution, one model pixel over the chord:
 
-    sigma / L <= f * delta_lim    =>    L_min = 1 / (0.25 * 0.040) = 100 px
+    resolution = gate_scale / L        (gate_scale = photo pixels per model pixel, >= 1)
 
-Shorter chords get status `too_short` (`chord_below_precision_gate`). The gate scales with the photo's resolution
-relative to the 1024 px model input. The value was derived from precision, not tuned.
+shown as "2.1 % +/- 0.3". sigma = 1 px is an assumption (skeleton quantisation), not a measured noise level.
 
 ### 7.5 Reference sag and Catenary Risk Score
 
-The allowable sag ratio delta_lim starts from the reference value delta_lim,0 = 0.040 for every class. When span
-length, temperature or wind are supplied, a change-of-state relation with wind load (1/2 * rho * V^2 * C_d * d),
-solved with Brent's method, adjusts it; otherwise delta_lim = delta_lim,0 with flag `default_parameters`. All
-conductor values are illustrative placeholders (flag `development_limits`).
+**S4 decision (18 Nov 2026; register D-02 to D-04, D-14, section "S4 threshold resolution").** No class has a sag
+reference: `crs.delta_lim0: {}`. Every fitted span is measured and reported as `not_assessed` with reason
+`no_validated_reference`; no CRS, no severity level and no MSPI ranking are produced. The equations below are kept in
+the code, and tested with a test-only value, for use once a verified reference exists.
 
-    CRS = min(10, 10 * (delta_rel / delta_lim) * w_class),     w_class = 1 for every class
+Research summary. ITU-T L.102 (11/2025), in force, the applicable recommendation for aerial telecom fibre cable
+(full text read), defines tensile ratings (LS = 1.5 W, max 2700 N; long-term LL = 30 % of LS, cl. 7.2.2.1) and
+states that sag/tension follow from span, wind, ice and permitted clearances (cl. 7.3.10, 8.2.6); it gives no
+sag-to-span limit. Manufacturer and industry guidance treats sag as a cable-specific installation target computed
+from sag-tension tables (Europacable 2023: typically 1 % or 1.3 % of span; a correctly installed 70 m span goes from
+1.3 % to 2.7 % under loading case A2; lower sag means higher tension). One vendor article describes 2-4 % final sag
+as normal. No Philippine instrument found (JMC No. 01 s.2021 on permits, NTC circulars, ERB 95-21 superseded in 2006)
+states a sag ratio for telecom cable. The former 0.040 was a development placeholder (initial commit) and the 2.4 %
+Minor band was 60 % of it; both were removed.
 
-With delta_lim = 0.040 and w = 1 the severity levels correspond to sag ratios:
+Mechanics retained for a future verified reference (not active):
 
-| Level (stored) | Shown as | CRS | Sag ratio |
-|---|---|---|---|
-| low | Within reference | CRS < 6.0 | delta/L < 2.4 % |
-| medium | Minor sag | 6.0 <= CRS < 10.0 | 2.4 % <= delta/L < 4.0 % |
-| high | Critical | CRS >= 10.0 | delta/L >= 4.0 % |
-| (none) | Not assessed | no CRS | any |
+    delta_lim = delta_lim,0 * (delta_exp / delta_exp,0)    (change of state; needs data-sheet conductor values,
+                                                            none configured: `engineering.conductors: {}`)
+    CRS = min(10, 10 * (delta_rel / delta_lim) * w_class)
 
-Lower bounds are inclusive (`crs.levels.minor_from: 6.0`, `critical_from: 10.0`). CRS is compared after rounding to 9
-decimals, so a sag of exactly 2.4 % lies on its boundary as configured. Tests cover each boundary value
-(`tests/test_v221.py`).
+| Level (stored) | Shown as | CRS (former cut-offs, removed) |
+|---|---|---|
+| low / medium / high | Within reference / Minor sag / Critical | < 6 / 6 to < 10 / >= 10 (v2.21-v2.23 only) |
+| (none) | Not assessed (`no_validated_reference`) | all spans since S4 |
 
 **Status of the reference values.** No reference value in the configuration is a validated engineering or regulatory
 limit.
 
 | Class | Configured behaviour | Status |
 |---|---|---|
-| Telecom cable | Assessed against delta_lim,0 = 0.040 (bands at 2.4 % and 4.0 %) | Provisional development value chosen by the project; not a regulatory standard and not engineer-approved |
-| Power distribution line | Measured, not assessed (`no_reference_for_class`) | No reference configured; see the regulatory note below |
-| Abandoned wire | Measured, not assessed (`no_reference_for_class`; since v2.23) | No criteria configured: the hazard of an abandoned wire depends on attachment integrity, clearance and physical condition, not on an operating sag limit |
+| Telecom cable | Measured, not assessed (`no_validated_reference`, since S4) | No applicable source gives a universal sag ratio; the former 0.040 / 2.4 % were removed (D-02, D-03) |
+| Power distribution line | Measured, not assessed (`no_validated_reference`) | 3 % of ERB 95-21 superseded in 2006; current PEC Part 2 text not available (D-04) |
+| Abandoned wire | Measured, not assessed (`no_validated_reference`) | No criteria: the hazard depends on attachment integrity, clearance and physical condition (D-05) |
 
 **Philippine regulatory reference for power lines.** ERB Resolution No. 95-21 (Standard Rules and Regulations
 Governing the Operation of Electrical Power Services, 3 Aug 1995), Section 19, requires that horizontal wires attached
@@ -472,17 +478,20 @@ sag limit, plus a licensed engineer's confirmation that it applies to the photog
 
     MSPI = alpha * VNI + beta * mean(CRS) / 10 + gamma * max(CRS) / 10,     alpha + beta + gamma = 1
 
-Default weights are 1/3 each. Rankings use the latest operational inspection of each pole. A 66-point weight grid
+Since S4 no analysis has a CRS (no verified reference), so new analyses are not ranked (`NO_VALID_WIRES`), and CRS
+values stored before S4 are not used (register D-20, D-21). Default weights are 1/3 each. Rankings use the latest operational inspection of each pole. A 66-point weight grid
 (step 0.1) gives the Spearman rank correlation of each weighting with the baseline ranking; it is printed in the
 technical priority report.
 
-### 7.7 Vegetation clearance
+### 7.7 Vegetation proximity (image observation)
 
-Vegetation masks are never skeletonised or scored. A wire is in contact when at least 2 % of its pixels lie within 1 %
-of the longer image side of a vegetation mask. Clearance in pixels comes from the distance transform of the vegetation
-union; metre values are labelled approximate (scale from the median power-wire width and a 10.1 mm conductor
-diameter).
-
+Vegetation masks are never skeletonised or scored. A wire is flagged `vegetation_contact` when at least 2 % of its
+pixels lie within 1 % of the longer image side of a vegetation mask, and its pixel gap to the vegetation union comes
+from the distance transform. **S4 (register D-15):** all clearance rules found are physical distances in metres set
+per voltage and jurisdiction; a pixel gap in one perspective photo is not a clearance, and a 2-D overlap does not show
+contact (the branch may be in front of or behind the wire). The flag and the gap are therefore reported as an image
+observation for on-site review; they no longer raise AT RISK (`hazard.vegetation_verdict: false`), the 15 px rule is
+off, and no metre value is shown (the 10.1 mm assumed conductor diameter was removed with the conductor data, D-14).
 
 ### 7.8 Image-derived sag, physical sag and engineering compliance
 
@@ -541,45 +550,35 @@ The checks run in this order; the first that applies decides the status.
 |---|---|---|---|---|
 | 1 | Centerline has fewer than 20 points | `too_short` | `too_short` | none |
 | 2 | Catenary fit fails | `fit_failed` | `no_convergence`, `non_positive_a`, `residual_too_large`, `degenerate` | none |
-| 3 | Chord below the precision gate (100 px at 1024) | `too_short` | `chord_below_precision_gate` | none |
-| 4 | An endpoint is at the photo border | `not_assessed` | `endpoint_unavailable` | none (the visible sag is kept as `unverified_level`, a review cue) |
-| 5 | Strand type uncertain | `not_assessed` | `class_uncertain` | none |
-| 6 | Class has no configured reference (power distribution lines, abandoned wires) | `not_assessed` | `no_reference_for_class` | none |
-| 7 | Otherwise | `scored` | none | CRS and level (Section 7.5) |
+| 3 | An endpoint is at the photo border | `not_assessed` | `endpoint_unavailable` | none (sag ratio and curve kept as a measurement) |
+| 4 | Strand type uncertain | `not_assessed` | `class_uncertain` | none |
+| 5 | No verified reference for the class (since S4: every class) | `not_assessed` | `no_validated_reference` | none (sag ratio, resolution and curve kept) |
+| 6 | Otherwise (only with a verified reference; none configured) | `scored` | none | CRS and level (Section 7.5) |
 
-`crs.assessed_classes: [telecom-cable]`: the provisional 4.0 % telecom reference is never applied to power
-distribution lines or, since v2.23, to abandoned wires; both are measured and shown, but not assessed. Before v2.23
-abandoned wires were compared with the telecom value; no abandoned strand reached the assessment step on validation or
-test, so no reported metric, coverage figure or verdict changes, and stored inspections are not reprocessed. A severity label is never shown on a wire that was
-not scored; the end-to-end check verifies this on a live server (Section 15.3).
+The former precision gate (100 px) is off since S4 (Section 7.4). The photo status is `complete` when at least one
+span was measured (fitted), whether or not it could be assessed; `fit_failed` when no span could be measured.
 
 ### 8.2 Pole verdict (`app/pipeline/hazard.py`)
 
-| Factor | Rule | Verdict |
+| Factor | Rule (S4 configuration) | Effect |
 |---|---|---|
-| Sag | k*(n) or more scored spans at Critical (p0 = 0.050) | AT RISK - HIGH |
-| Sag | k*(n) or more scored spans at Minor sag or above (p0 = 0.090) | AT RISK - MODERATE |
-| Vegetation | Power span in contact | AT RISK - HIGH |
-| Vegetation | Power span within 15 px | AT RISK - MODERATE |
-| Vegetation | Telecom span in contact | AT RISK - MODERATE |
-| Coverage | Fewer than half of the measured spans assessed (`hazard.min_assessed_share: 0.5`) | INCONCLUSIVE - RETAKE PHOTO instead of NOT AT RISK |
-| Partial spans | A span running off the photo whose visible part already sags into a band | INCONCLUSIVE - RETAKE PHOTO instead of NOT AT RISK |
-| Reliability | Grade Retake and no hazard found | INCONCLUSIVE - RETAKE PHOTO (a found hazard is kept, with a note) |
-| None of the above | | NOT AT RISK |
+| Sag | Only spans with a verified reference are banded; none exists | no sag verdict |
+| Vegetation | Overlap or proximity in the image | NOTE for on-site review (never AT RISK; Section 7.7) |
+| Coverage | NOT AT RISK needs every measured span assessed (`hazard.min_assessed_share: 1.0`) and at least one assessed span | otherwise INCONCLUSIVE |
+| Reliability | Grade Retake and no hazard found | INCONCLUSIVE (unchanged) |
 
-Corroboration: with n scored spans, a band counts only when the number of spans in it reaches
+Consequence (register D-19): every new analysis is INCONCLUSIVE, shown as **Assessment incomplete** with its reasons
+("a span that was not assessed is unknown, not low risk"; "no validated sag reference ... a field inspection is
+needed"). NOT AT RISK and AT RISK are not produced. The binomial corroboration rule (p0 0.050 / 0.090, alpha 0.05,
+v2.9) remains in the code for a future banded reference and is inactive (D-10). The former rules (v2.21-v2.23):
+k*(n) scored spans at Critical or Minor-or-above, power vegetation contact (HIGH) or within 15 px (MODERATE), telecom
+contact (MODERATE), INCONCLUSIVE below 50 % assessed.
 
-    k*(n) = min { k : P(Binomial(n, p0) >= k) <= alpha },     alpha = 0.05
-
-p0 is the per-span test-retest disagreement rate measured on validation (each photo analysed as is and mirrored, 492
-matched scored spans; `results/v29_span_geometry_summary_all_val.json`). Spans in a band that do not reach k* are
-listed as a note to verify visually. The rule is a significance test against measurement noise, not an estimate of
-the true hazard rate.
-
-| Scored spans n | 1 | 2 | 5 | 10 | 22 | 30 |
-|---|---|---|---|---|---|---|
-| k* Critical (p0 0.050) | 1 | 2 | 2 | 3 | 4 | 5 |
-| k* Minor or above (p0 0.090) | 2 | 2 | 3 | 4 | 5 | 6 |
+**Stored results from before S4 (register D-21).** Never reprocessed and never modified. On display (page, PDF, admin,
+CSV, assistant) a stored level whose class has no verified reference is shown as not assessed
+(`withdrawn_reference`, stored values under `historical`), a stored verdict other than INCONCLUSIVE is shown as
+INCONCLUSIVE with a notice (`historical_verdict` kept), and stored CRS values are not used for ranking
+(`app/services/basis.py`). New analyses carry `metadata_json.assessment_basis = "S4-2026-11-18"`.
 
 ### 8.3 Reliability grade (`app/pipeline/quality.py`)
 
@@ -677,8 +676,9 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 
 - Upload card: photo, inspection name, city, barangay (validated suggestions), optional coordinates and span data.
 - Processing state with the queue position.
-- Result page (`/workspace/result/{id}`): inspection summary with the counts of Critical, Minor sag, Within reference
-  and Not assessed wires; the photo with three views (Wires, Mask, Photo); circular wire badges centred on each
+- Result page (`/workspace/result/{id}`): inspection summary with the counts of measured and not-assessed wires
+  (since S4 no severity counts: no validated reference); each measured wire's image-derived sag ratio with its
+  resolution; the photo with three views (Wires, Mask, Photo); circular wire badges centred on each
   strand; the wire list with plain findings and the reason for every unassessed wire; what to do next; photo
   limitations; a location block when coordinates exist; PDF download.
 - A retake prompt when the guardrail holds the result.
@@ -918,33 +918,31 @@ the weak conditions. The guardrail holds most glare photos behind the retake pro
 
 ### 14.5 Assessment coverage and inconclusive results
 
-A span that passes the fit and the precision gate is a **candidate** for assessment; it is then either scored or not
-assessed for a stated reason (Section 8.1).
+A span whose catenary fit succeeds is **measured**; a measured span is then either scored (only with a verified
+reference) or not assessed for a stated reason (Section 8.1).
 
-    Assessment coverage = scored candidate spans / total candidate spans x 100
+    Assessment coverage = scored measured spans / measured spans x 100
 
-Coverage is the share of measurable spans for which the system could produce a sag assessment. It is not detection
-recall: it says nothing about wires that were never detected, and every scored span is a telecom span.
+Since S4 no class has a verified reference, so assessment coverage is 0 % by design. Before/after on the release
+splits (same frozen models; `runs/v217/dump/{v221,s4}-{val,test}.json`; summary
+`docs/thesis/results/s4_coverage_before_after.json`):
 
-| | Validation (22 photos) | Test (21 photos) |
-|---|---|---|
-| Reported spans (all statuses) | 755 | 787 |
-| Not measurable: fit failed / too short | 77 / 49 | 66 / 63 |
-| Candidate spans | 629 | 658 |
-| Scored | 256 | 320 |
-| Not assessed: endpoint off the photo | 235 | 176 |
-| Not assessed: no reference for the class (power lines) | 138 | 162 |
-| Not assessed: uncertain type | 0 | 0 |
-| **Assessment coverage** | **40.70 %** | **48.63 %** |
-| Scored share of all reported spans | 33.91 % | 40.66 % |
-| Pole verdicts HIGH / MODERATE / NOT AT RISK | 0 / 9 / 3 | 3 / 7 / 3 |
-| Pole verdicts INCONCLUSIVE | 10 | 8 |
-| Conclusive / inconclusive poles | 12 / 10 | 13 / 8 |
+| | Validation v2.23 | Validation S4 | Test v2.23 | Test S4 |
+|---|---|---|---|---|
+| Reported spans (all statuses) | 755 | 755 | 787 | 787 |
+| Fit failed / too short | 77 / 49 | 77 / 1 | 66 / 63 | 66 / 0 |
+| Measured spans (candidates) | 629 | 677 | 658 | 721 |
+| Scored | 256 | 0 | 320 | 0 |
+| Not assessed: endpoint off the photo | 235 | 241 | 176 | 183 |
+| Not assessed: no (validated) reference | 138 | 436 | 162 | 538 |
+| **Assessment coverage** | **40.70 %** | **0 %** | **48.63 %** | **0 %** |
+| Pole verdicts HIGH / MODERATE / NOT AT RISK / INCONCLUSIVE | 0 / 9 / 3 / 10 | 0 / 0 / 0 / 22 | 3 / 7 / 3 / 8 | 0 / 0 / 0 / 21 |
 
-Source: the release dumps `runs/v217/dump/v221-{val,test}.json` (per-span status and flags), recounted for v2.23; the
-verdicts match the score files. INCONCLUSIVE is returned when fewer than half of the candidate spans are scored, when a
-partial span already sags into a band, or when the photo grades Retake (Section 8.2). The system therefore never treats
-an unassessed span or an unmeasurable photo as evidence that a pole is safe; these rules were not relaxed.
+The extra measured spans (48 validation, 63 test) were rejected before by the 100 px precision gate, now removed
+(Section 7.4); they are measured with a coarser resolution. Every segmentation and strand metric of Section 14.2
+(centerline P/R/F1 and intervals, strand class, mask mAP50, fragments, mixed rate) is **identical** between the
+v2.21 and S4 score files (`docs/thesis/results/v217_eval_{v221,s4}_{val,test}.json`): S4 changed only the assessment
+layer. The system never treats an unassessed span or an unmeasurable photo as evidence that a pole is safe.
 
 ### 14.6 Pole detector (public photos only)
 
@@ -976,7 +974,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 | Area | Examples |
 |---|---|
-| Geometry | Catenary fit and closed-form sag on exact curves; precision gate; truncation; inclusive band boundaries at 2.4 % and 4.0 % |
+| Geometry | Catenary fit and closed-form sag on exact curves; truncation; band mechanics with a test-only reference; S4: identical "not assessed" outcome below, at and above the former 2.4 % and 4.0 % cut-offs (`tests/test_s4_thresholds.py`) |
 | Pipeline | Strand extraction, gap bridging, pixel ownership, provenance, dual polarity, scene gates, strand head loading, guardrail |
 | Assessment | Not-assessed reasons, no severity without a score, corroborated verdict, INCONCLUSIVE coverage rule, vegetation rules |
 | API | Upload validation and limits, GPS stripping, refusal without a model, results, PDF content, reviews, exports, bulk actions, record kinds, barangay and coordinate validation |
@@ -1058,10 +1056,13 @@ Rollback: transformers 4.57.6, huggingface-hub 0.36.2, tokenizers 0.22.2.
 
 ## 17. Limitations
 
-1. **Sag reference not calibrated.** delta_lim = 0.040 and all conductor values are development placeholders. No
-   result has been compared with an engineer's rating, and sag accuracy on real spans has no ground truth (no
-   field-measured sag exists for the photos).
-2. **Power distribution lines are not assessed.** They have no configured reference; they are measured and shown only.
+1. **No sag severity and no pole-level screening verdict (S4).** No applicable source gives a sag limit for the
+   image-derived ratio (Section 7.5), so no span is assessed and every analysis with measured wires is INCONCLUSIVE
+   ("Assessment incomplete"). The system measures, displays and explains; it does not classify. Sag accuracy on real
+   spans has no ground truth (no field-measured sag exists for the photos), and no result has been compared with an
+   engineer's rating.
+2. **No class is assessed.** Telecom, power and abandoned wires are measured and shown only; restoring an assessment
+   needs a cable- or conductor-specific verified reference, span data and the physical validation of Section 7.8.
 3. **Perspective.** Sag is measured in the image plane. A span receding in depth, or seen from a steep angle, does not
    show its true sag ratio; there is no camera-pose correction.
 4. **Partial spans.** Many spans leave the frame in ground-level photos and are not assessed, so many poles are
@@ -1129,12 +1130,15 @@ The manuscript drafts in `docs/thesis/` (`Chapter4_5_v218.docx`, Chapters IV and
 earlier Chapter V) describe earlier versions. They are the authors' documents and were not edited by the tooling; the
 statements below differ from the current implementation and should be revised against this reference:
 
-| Manuscript statement (v2.18 or earlier) | Current implementation (v2.23) | Section here |
+| Manuscript statement (v2.18 or earlier) | Current implementation (S4, after v2.23) | Section here |
 |---|---|---|
-| CRS levels Low < 3.0, Medium 3.0 to 6.0, High > 6.0 (Table 1.2) for every span | Within reference < 6.0, Minor sag 6.0 to < 10.0, Critical >= 10.0 (2.4 % / 4.0 % sag), telecom only; power and abandoned wires not assessed | 7.5, 8.1 |
-| Verdicts reported as High / Moderate / Not at risk only | INCONCLUSIVE when coverage < 50 % or a partial span sags; validation 0 / 9 / 3 / 10, test 3 / 7 / 3 / 8 | 8.2, 14.5 |
-| No assessment coverage reported | Coverage 40.70 % (validation), 48.63 % (test) with reasons | 14.5 |
-| δlim = 0.040 described as a placeholder awaiting the engineer, without a regulatory note | Same placeholder for telecom; ERB Resolution No. 95-21 Section 19 recorded as a potential power-line reference, pending engineering validation | 7.5 |
+| CRS levels Low < 3.0, Medium 3.0 to 6.0, High > 6.0 (Table 1.2) for every span | No levels: no verified sag reference exists for any class; every span is measured and "not assessed" (`no_validated_reference`). v2.21-v2.23 used 2.4 % / 4.0 % telecom bands, removed in S4 | 7.5, 8.1 |
+| Verdicts reported as High / Moderate / Not at risk only | Every analysis with measured wires is INCONCLUSIVE ("Assessment incomplete"); NOT AT RISK and AT RISK are not produced | 8.2, 14.5 |
+| No assessment coverage reported | Assessment coverage 0 % by design (no reference); measurement coverage reported instead | 14.5 |
+| δlim = 0.040 described as a placeholder awaiting the engineer, without a regulatory note | Placeholder removed after research (ITU-T L.102, manufacturer guidance, Philippine instruments): no universal sag ratio exists; ERB 95-21 3 % superseded (2006) | 7.5 |
+| Equation 9 (change of state) with conductor data | Unavailable: no data-sheet conductor values; illustrative values removed | 7.5 |
+| Vegetation contact and 15 px proximity raise the verdict | Image observation only; no pixel clearance rule | 7.7, 8.2 |
+| MSPI ranks every inspected pole | No CRS, so no new analysis is ranked | 7.6 |
 | CRS against the engineer's severity rating (H3) presented as the sag validation | Expert rating is a qualitative assessment; physical sag validation needs field measurement (protocol given) | 7.8 |
 | Telecom F1 described against a "75 percent target" | Centerline metric defined and contrasted with the planned mask metrics; intervals and sample size discussed against the Table 3.10 targets | 14.1, 14.2 |
 | API list with `/api/dashboard/map`, `/sensitivity`, `/summary` and an admin "overview" | Those endpoints were removed; current list in 20.1 | 20.1 |
@@ -1219,6 +1223,21 @@ with each analysis and report. Runtime varies with machine load, so the benchmar
 39. Energy Regulatory Commission (2010). *ERC Resolution No. 02, Series of 2010: A Resolution Adopting the Amendments to
     the Distribution Services and Open Access Rules (DSOAR)*, 22 February 2010. Supreme Court E-Library:
     https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/10/49331
+40. International Telecommunication Union (2025). *Recommendation ITU-T L.102 (11/2025): Optical fibre cables for
+    aerial application*. Approved 29 Nov 2025, in force. Clauses 6.1-6.2, 7.2.2.1 (p. 11), 7.3.10 (p. 15), 8.2.6
+    (p. 20). https://www.itu.int/rec/T-REC-L.102-202511-I/en
+41. Europacable (2023). *Technical Newsletter: Aerial cables in FTTH*, June 2023.
+    https://europacable.eu/wp-content/uploads/2023/06/Technical-Newsletter-Aerial-cables-in-FTTH-June-2023.pdf
+42. Fiber Optic Association (2024). *The FOA Reference for Fiber Optics: Outside Plant Construction, Aerial Cable
+    Installation* (training reference; secondary).
+    https://www.thefoa.org/tech/ref/OSP_Construction/Aerial%20Cable%20Installation.html
+43. Hengtong Optic-Electric (2025). *What are aerial fiber optic cable specifications?* (vendor article, 4 Nov 2025;
+    secondary). https://www.hengtongglobal.com/info/aerial-fiber-optic-cable-specifications-103192771.html
+44. ARTA, DICT, DILG, DPWH, DHSUD, CAAP, NTC, ERC, NEA and PCC (2021). *Joint Memorandum Circular No. 01, Series of
+    2021: Streamlined Guidelines for the Issuance of Permits and Clearances for the Erection of Poles, Construction of
+    Underground Fiber Ducts and Installation of Aerial and Underground Cables and Facilities*; reiterated by DILG
+    Memorandum Circular No. 2021-135. https://arta.gov.ph/documents/ (full text not retrieved: the official hosts
+    refused automated access; described from ARTA releases only)
 
 ---
 
@@ -1304,13 +1323,15 @@ keeps them removed.
 | `segmentation.pole_conf`, `pole_occluder_gap` | 0.25, 0 | Pole detector; never joins wires |
 | `centerline.l_min_px`, `n_min_points` | 30, 20 | Spur pruning, minimum points |
 | `catenary.max_rel_residual`, `border_margin_frac` | 0.02, 0.01 | Fit acceptance, truncation |
-| `crs.delta_lim0` | 0.040 (all classes) | Reference sag ratio (placeholder) |
-| `crs.levels.minor_from`, `critical_from` | 6.0, 10.0 | Inclusive level bounds (2.4 % and 4.0 % sag) |
-| `crs.assessed_classes` | telecom-cable | Classes with a (provisional) reference |
+| `crs.delta_lim0` | `{}` (S4) | Verified reference sag ratio per class: none |
+| `crs.levels` | `{}` (S4) | Severity cut-offs (former 2.4 % / 4.0 % removed) |
+| `crs.assessed_classes` | `[]` | Optional restriction on classes with a reference |
 | `crs.require_both_endpoints` | true | Partial spans not assessed |
-| `crs.min_chord_px` | 100 | Precision gate |
-| `hazard.p0_high`, `p0_medium`, `alpha` | 0.050, 0.090, 0.05 | Corroborated verdict |
-| `hazard.min_assessed_share` | 0.5 | INCONCLUSIVE coverage rule |
+| `crs.min_chord_px` | 0 (S4) | Precision gate off; resolution reported |
+| `engineering.conductors` | `{}` (S4) | Data-sheet conductor values: none |
+| `hazard.vegetation_verdict` | false (S4) | Vegetation is an image observation |
+| `hazard.p0_high`, `p0_medium`, `alpha` | 0.050, 0.090, 0.05 | Corroborated verdict (inactive without bands) |
+| `hazard.min_assessed_share` | 1.0 (S4) | NOT AT RISK only if every measured span was assessed |
 | `quality.grade_a`, `grade_b`, `grade_c` | 0.78, 0.66, 0.64 | Reliability grades |
 | `vni.radius_factor`, `q01`, `q99` | 0.15, 0.034, 0.243 | VNI |
 | `mspi.alpha`, `beta`, `gamma` | 1/3 each | Priority weights |

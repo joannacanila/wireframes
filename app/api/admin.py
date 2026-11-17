@@ -457,17 +457,23 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
                "abandoned-wire": "Abandoned wire"}
         cond = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk"}
         out = []
+        from app.services.basis import level_withdrawn
         for d in a.detections:
-            scored = d.status == "scored" and d.level
+            # S4: a level from a withdrawn criterion is not a finding (app/services/basis.py)
+            withdrawn = level_withdrawn(d.level, d.wire_class, st.config)
+            scored = d.status == "scored" and d.level and not withdrawn
             if d.status == "service_drop":
                 condition, finding = "Not checked", "Drop wire to a building; not checked for sag"
             elif scored:
                 condition = cond[d.level]
                 finding = {"high": "Hangs low", "medium": "Some sag", "low": "Sag within the normal range"}[d.level]
             else:
-                condition, finding = "Not assessed", wire_reason_short(d.fail_reason or d.status) or "Not measured"
+                code = "withdrawn_reference" if withdrawn else (d.fail_reason or d.status)
+                condition, finding = "Not assessed", wire_reason_short(code) or "Not measured"
+                if d.sag_ratio is not None:
+                    finding += f"; image-derived sag ratio {d.sag_ratio * 100:.1f}% (measurement only)"
             if "vegetation_contact" in (d.flags_json or []):
-                finding += "; vegetation touching"
+                finding += "; vegetation overlaps the wire in the photo (check on site)"
             out.append([d.wire_index, cls.get(d.wire_class, d.wire_class), condition, finding])
         name = f"wireframe-{a.pole.pole_code}-{a.id[:8]}-findings.csv"
         head = [[f"Pole {a.pole.pole_code}", a.inspection_name or "", a.created_at.isoformat()[:19]]]

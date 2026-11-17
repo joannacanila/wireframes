@@ -14,8 +14,9 @@ import pytest
 
 from app.core.config import get_analysis_config
 from app.pipeline.crs import catenary_risk_score, risk_level
+from tests.conftest import with_test_reference  # noqa: E402
 
-CFG = get_analysis_config()
+CFG = with_test_reference(get_analysis_config())  # TEST-ONLY reference (S4: none is shipped)
 EXPECTED = {"low": "Within reference", "medium": "Minor sag", "high": "Critical"}
 
 
@@ -24,6 +25,7 @@ EXPECTED = {"low": "Within reference", "medium": "Minor sag", "high": "Critical"
     (2.4, "Minor sag"), (2.5, "Minor sag"), (2.7, "Minor sag"), (3.3, "Minor sag"), (3.6, "Minor sag"),
     (3.8, "Minor sag"), (3.9, "Minor sag"), (4.0, "Critical"), (4.9, "Critical"),
 ])
+@pytest.mark.test_reference
 def test_telecom_severity_boundaries(sag_pct, label):
     lim = CFG.crs.delta_lim0["telecom-cable"]
     assert lim == pytest.approx(0.04)
@@ -31,6 +33,7 @@ def test_telecom_severity_boundaries(sag_pct, label):
     assert EXPECTED[risk_level(crs, CFG.crs.levels)] == label
 
 
+@pytest.mark.test_reference
 def test_sag_bands_report_the_same_cut_offs():
     from app.services.analysis import sag_bands
     b = sag_bands(CFG, "telecom-cable", 0.04)
@@ -51,6 +54,7 @@ def _wire(h=600, w=1000, x0=200, x1=800, sag=20):
     return m
 
 
+@pytest.mark.test_reference
 def test_validity_gates():
     from app.pipeline.runner import score_wire
     from app.pipeline.sag_limits import EngineeringContext
@@ -60,7 +64,7 @@ def test_validity_gates():
     edge = score_wire(_det(_wire(x0=0, x1=700)), 2, (1000, 600), CFG, ctx)
     assert (edge.status, edge.fail_reason, edge.level) == ("not_assessed", "endpoint_unavailable", None)
     power = score_wire(_det(_wire(), cls="power-distribution-lines"), 3, (1000, 600), CFG, ctx)
-    assert (power.status, power.fail_reason, power.crs) == ("not_assessed", "no_reference_for_class", None)
+    assert (power.status, power.fail_reason, power.crs) == ("not_assessed", "no_validated_reference", None)
     unsure = score_wire(_det(_wire(), status="uncertain"), 4, (1000, 600), CFG, ctx)
     assert (unsure.status, unsure.fail_reason) == ("not_assessed", "class_uncertain")
     assert edge.fit.get("sag_ratio") is not None  # the measurement is kept for audit, not shown as a finding
@@ -79,6 +83,7 @@ def test_lowmem_inference_matches_fused_forward():
     assert np.abs(got - ref).max() < 1e-5 and (got.argmax(1) == ref.argmax(1)).all()
 
 
+@pytest.mark.test_reference
 def test_mostly_unassessed_pole_is_inconclusive_not_safe():
     from app.pipeline.hazard import INCONCLUSIVE, NOT, assess
     m = np.zeros((50, 50), bool)
@@ -92,6 +97,7 @@ def test_mostly_unassessed_pole_is_inconclusive_not_safe():
     assert hz.verdict == NOT and any("1 measured span not assessed" in r for r in hz.reasons)
 
 
+@pytest.mark.test_reference
 def test_partial_span_with_visible_sag_keeps_the_pole_under_review():
     from app.pipeline.hazard import INCONCLUSIVE, assess
     from app.pipeline.runner import score_wire

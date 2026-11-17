@@ -234,7 +234,8 @@ def persist(db: Database, analysis_id: str, o: AnalysisOutcome) -> None:
         a.timings_json = _jsonable(o.timings_ms)
         a.vegetation_json = [_jsonable(asdict(r)) for r in o.vegetation]
         if o.hazard is not None:
-            a.metadata_json = {**a.metadata_json, "hazard": _jsonable(o.hazard)}
+            from app.services.basis import BASIS
+            a.metadata_json = {**a.metadata_json, "hazard": _jsonable(o.hazard), "assessment_basis": BASIS}
         if o.quality is not None:
             a.metadata_json = {**a.metadata_json, "quality": _jsonable(o.quality)}
         if o.mask_stats is not None:
@@ -253,7 +254,8 @@ def persist(db: Database, analysis_id: str, o: AnalysisOutcome) -> None:
                 polygons_json=_jsonable(w.polygons), centerline_json=_jsonable(w.centerline),
                 curve_json=_jsonable(w.curve), fit_json=_jsonable(w.fit),
                 chord_px=_jsonable(w.fit.get("chord_px")), sag_px=_jsonable(w.fit.get("sag_px")),
-                sag_ratio=_jsonable(w.fit.get("sag_ratio")) if w.status == "scored" else None,
+                # S4: every fitted span keeps its measured ratio (scored, or measured and not assessed)
+                sag_ratio=_jsonable(w.fit.get("sag_ratio")) if w.status in ("scored", "not_assessed") else None,
                 delta_lim=_jsonable(w.delta_lim), delta_lim0=_jsonable(w.delta_lim0), crs=_jsonable(w.crs),
                 level=w.level, flags_json=_jsonable(w.flags),
             ))
@@ -312,12 +314,26 @@ def serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] |
     return _jsonable(r)
 
 
+def _wire_view(d, cfg: AnalysisConfig) -> dict[str, Any]:
+    """The stored wire as shown. S4 (app/services/basis.py): a stored level from a withdrawn criterion is shown as not
+    assessed (reason withdrawn_reference); the stored values stay under ``historical``."""
+    from app.services.basis import level_withdrawn
+    if level_withdrawn(d.level, d.wire_class, cfg):
+        return {"status": "not_assessed", "fail_reason": "withdrawn_reference", "level": None, "crs": None,
+                "delta_lim": None, "delta_lim0": None,
+                "historical": {"status": d.status, "level": d.level, "crs": d.crs, "delta_lim": d.delta_lim}}
+    return {"status": d.status, "fail_reason": d.fail_reason, "level": d.level, "crs": d.crs,
+            "delta_lim": d.delta_lim, "delta_lim0": d.delta_lim0, "historical": None}
+
+
 def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] | None = None) -> dict[str, Any]:
-    crs = a.valid_crs
+    views = {id(d): _wire_view(d, cfg) for d in a.detections}
+    crs = [views[id(d)]["crs"] for d in a.detections if views[id(d)]["crs"] is not None]
     counts: dict[str, int] = {}
     for d in a.detections:
         counts[d.wire_class] = counts.get(d.wire_class, 0) + 1
-    worst = max((d for d in a.detections if d.crs is not None), key=lambda d: d.crs, default=None)
+    worst = max((d for d in a.detections if views[id(d)]["crs"] is not None), key=lambda d: d.crs, default=None)
+    from app.services.basis import WITHDRAWN_NOTICE, hazard_view, is_current
     from app.services.reasons import wire_action, wire_notes, wire_reason, wire_reason_short
     md = a.metadata_json or {}
     clearance = md.get("clearance") or {}
@@ -367,29 +383,38 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
             "detector_weights": Path(cfg.segmentation.weights).name,
             "inference_s": round(total_ms / 1000, 2) if total_ms else None,
             "resolution": [a.width, a.height], "config": a.config_fingerprint},
-        "hazard": (a.metadata_json or {}).get("hazard"),
+        "hazard": hazard_view(md),
+        # S4: results analysed with the withdrawn provisional criteria carry a notice (never reprocessed)
+        "assessment_basis": {"current": is_current(md) or not md.get("hazard"),
+                             "notice": None if is_current(md) or not md.get("hazard") else WITHDRAWN_NOTICE},
         "quality": (a.metadata_json or {}).get("quality"),
         "wires": [
             {
                 "index": d.wire_index, "class": d.wire_class, "confidence": d.confidence,
-                "status": d.status, "fail_reason": d.fail_reason, "bbox": d.bbox_json,
+                "status": v["status"], "fail_reason": v["fail_reason"], "bbox": d.bbox_json,
                 "mask_polygons": d.polygons_json, "centerline": d.centerline_json,
                 "catenary_curve": d.curve_json, "fit": d.fit_json,
-                "chord_px": d.chord_px, "sag_px": d.sag_px, "sag_ratio": d.sag_ratio,
-                "delta_lim": d.delta_lim, "delta_lim0": d.delta_lim0, "crs": d.crs, "level": d.level,
-                "sag_bands": sag_bands(cfg, d.wire_class, d.delta_lim),
+                "chord_px": d.chord_px, "sag_px": d.sag_px,
+                "sag_ratio": d.sag_ratio if d.sag_ratio is not None or d.status != "not_assessed"
+                else (d.fit_json or {}).get("sag_ratio"),
+                # S4: resolution of the image-derived ratio (1 px / chord); measurement only, never a limit
+                "sag_ratio_resolution": (d.fit_json or {}).get("sag_ratio_resolution"),
+                "delta_lim": v["delta_lim"], "delta_lim0": v["delta_lim0"], "crs": v["crs"], "level": v["level"],
+                "historical": v["historical"],
+                "sag_bands": sag_bands(cfg, d.wire_class, v["delta_lim"]),
                 "flags": d.flags_json,
                 # v2.16: one class per strand; "uncertain" when the class evidence is split (no forced type)
                 "class_status": "uncertain" if "class_uncertain" in (d.flags_json or []) else "confident",
                 "class_evidence": (d.fit_json or {}).get("class_evidence"),
-                "reason_code": wire_reason(d.status, d.fail_reason, d.flags_json, (d.fit_json or {}).get("chord_gate_px") or gate)[0],
-                "reason": wire_reason(d.status, d.fail_reason, d.flags_json, (d.fit_json or {}).get("chord_gate_px") or gate)[1],
-                "reason_short": wire_reason_short(wire_reason(d.status, d.fail_reason, d.flags_json, (d.fit_json or {}).get("chord_gate_px") or gate)[0]),
+                "reason_code": rc[0], "reason": rc[1], "reason_short": wire_reason_short(rc[0]),
                 "notes": wire_notes(d.flags_json),
-                "action": wire_action(d.status, d.fail_reason, d.flags_json, d.bbox_json, a.width, a.height),
+                "action": wire_action(v["status"], v["fail_reason"], d.flags_json, d.bbox_json, a.width, a.height),
                 "veg_clearance": clearance.get(str(d.wire_index)),
             }
             for d in a.detections
+            for v in (views[id(d)],)
+            for rc in (wire_reason(v["status"], v["fail_reason"], d.flags_json,
+                                   (d.fit_json or {}).get("chord_gate_px") or gate),)
         ],
         "acquisition": {"metadata": a.metadata_json, "envelope": a.envelope_json},
         "engineering_context": a.context_json,
@@ -443,6 +468,7 @@ def public_error(code: str | None, message: str | None) -> str:
 
 
 _PUBLIC_WIRE = ("index", "class", "status", "bbox", "mask_polygons", "centerline", "catenary_curve", "sag_ratio",
+                "sag_ratio_resolution",
                 "delta_lim", "sag_bands", "level", "flags", "class_status", "reason_code", "reason_short", "notes", "action",
                 "veg_clearance", "provenance")
 

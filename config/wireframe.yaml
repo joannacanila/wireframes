@@ -180,68 +180,36 @@ crs:                              # Section 3.6.5, Equation 10, Table 1.2
     abandoned-wire: 1.0
     power-distribution-lines: 1.0
     telecom-cable: 1.0
-  # delta_lim,0: allowable sag ratio under reference conditions. The thesis assumes no
-  # value (to be derived from conductor design sag/tension data with the consulting
-  # engineer). These are DEVELOPMENT PLACEHOLDERS so that the pipeline can run; every
-  # CRS computed with them carries the flag `development_limits`.
-  delta_lim0:
-    abandoned-wire: 0.040
-    power-distribution-lines: 0.040
-    telecom-cable: 0.040
-  levels:                         # thesis Table 1.2: Low < 3.0 <= Medium <= 6.0 < High
-    low_below: 3.0
-    high_above: 6.0
-    # v2.21 (project decision, 2026-11-17): inclusive lower bounds. With the 4.0% telecom reference:
-    # sag < 2.4% Within reference, 2.4% <= sag < 4.0% Minor sag, sag >= 4.0% Critical.
-    minor_from: 6.0
-    critical_from: 10.0
-  # v2.21: only telecom wires have a configured (provisional) reference. Power distribution lines need their own
-  # engineering reference before they can be assessed; they are measured, not assessed.
-  # v2.23 research follow-up: abandoned wires are no longer compared with the telecom operating limit. Their hazard
-  # depends on attachment integrity, clearance and condition, for which no engineering criteria are configured, so
-  # they are measured and reported as not assessed (no_reference_for_class). Validation and test results unchanged
-  # (no abandoned strand reaches the assessment step); stored inspections are not reprocessed.
-  assessed_classes: [telecom-cable]
+  # delta_lim,0: allowable sag ratio, ONLY for a class with a verified, applicable reference.
+  # S4 (18 Nov 2026, docs/handoff/RESEARCH_AND_DECISION_REGISTER.md D-02..D-04, D-09): no current standard,
+  # regulation or manufacturer document gives a universal allowable sag-to-span ratio for aerial telecom cable
+  # (ITU-T L.102 (11/2025) cl. 7.2.2.1, 7.3.10, 8.2.6: sag follows from cable-specific tension ratings, span and
+  # loading); the former 4.0 % was a development placeholder and 2.4 % was 60 % of it. The power-line 3 % of ERB
+  # Res. 95-21 was superseded in 2006. No class has a reference: every span is measured (image-derived sag ratio,
+  # with its pixel resolution) and reported as not assessed (no_validated_reference). No severity is produced.
+  delta_lim0: {}
+  # Severity cut-offs exist only for a configured reference (none). The S4 removal deleted minor_from (2.4 %) and
+  # critical_from (4.0 %); the code defaults are inactive while delta_lim0 is empty.
+  levels: {}
+  assessed_classes: []
   # v2.21: a trace that reaches the photo border is not a complete pole-to-pole span: not assessed
   require_both_endpoints: true
-  # v2.8 measurement-precision gate: CRS only when sigma / L <= f * delta_lim, with sigma = 1 px
-  # skeleton noise, f = 0.25, delta_lim = 0.040 -> L >= 100 px. Shorter spans: status too_short.
-  min_chord_px: 100.0
+  # S4 (D-09): the v2.8 precision gate (100 px = 1 / (0.25 x 0.040)) was derived from the removed reference and an
+  # unjustified f = 0.25, so it is off. Each measured ratio carries its resolution (1 px / chord) instead.
+  min_chord_px: 0.0
   # v2.9 service-drop split (chord steeper than N deg -> no CRS). OFF: a visual audit of 24 validation
   # "drops" found pole-to-pole spans seen steeply in upward-looking photos, not drops (Chapter 4 v2.9 4.11.2).
   max_span_inclination_deg: 0.0
 
 engineering:                      # Section 3.6.5, Equation 9, Table 3.8
   provisional: true
-  # Reference state for the change-of-state relation. Conductor values below are
-  # ILLUSTRATIVE (typical published magnitudes) and must be replaced with the data
-  # sheets of the conductors found in the study area.
+  # Reference state for the change-of-state relation (Equation 9). S4 (register D-14): the former conductor values
+  # were ILLUSTRATIVE (no data sheet of the photographed conductors) and were removed. Without conductor data the
+  # adjustment is unavailable, and vegetation gaps are reported in pixels only (no metre conversion).
   reference_temperature_c: 25.0
-  air_density: 1.225              # kg/m^3
+  air_density: 1.225              # kg/m^3 (ISA sea-level standard atmosphere)
   drag_coefficient: 1.0
-  conductors:
-    power-distribution-lines:     # e.g. ACSR 1/0 class conductor
-      weight_n_per_m: 2.12
-      diameter_m: 0.0101
-      area_m2: 6.24e-5
-      elastic_modulus_pa: 7.6e10
-      thermal_expansion_per_c: 1.91e-5
-      reference_tension_n: 2900.0
-    telecom-cable:                # cable lashed to a steel messenger strand; the class now
-                                  # also covers fiber optic drops, which share this entry
-      weight_n_per_m: 3.10
-      diameter_m: 0.0200
-      area_m2: 3.10e-5
-      elastic_modulus_pa: 1.86e11
-      thermal_expansion_per_c: 1.15e-5
-      reference_tension_n: 3500.0
-    abandoned-wire:               # unknown conductor: same as distribution conductor
-      weight_n_per_m: 2.12
-      diameter_m: 0.0101
-      area_m2: 6.24e-5
-      elastic_modulus_pa: 7.6e10
-      thermal_expansion_per_c: 1.91e-5
-      reference_tension_n: 2900.0
+  conductors: {}
 
 vegetation:                       # revised taxonomy (2026-11-14); not a Chapter III equation
   provisional: true
@@ -254,16 +222,22 @@ vegetation:                       # revised taxonomy (2026-11-14); not a Chapter
 
 hazard:                           # v2.8 explainable verdict on top of CRS (app/pipeline/hazard.py)
   enabled: true
-  veg_moderate_px: 15             # power within 15 px of vegetation -> MODERATE; contact -> HIGH (team rule)
-  # v2.21: a pole is NOT AT RISK only if at least half of its measured spans could be assessed; otherwise
-  # INCONCLUSIVE (a span with no visible endpoint or no reference is unknown, not safe). A policy choice, not tuned.
-  min_assessed_share: 0.5
+  # S4 (register D-15): pixel distances in one perspective photo are not clearances and a 2-D overlap is not
+  # contact; the former rules (power contact -> HIGH, power within 15 px -> MODERATE, telecom contact -> MODERATE)
+  # are off. Vegetation near a wire is reported as an image observation for on-site review.
+  vegetation_verdict: false
+  # S4 (register D-08): NOT AT RISK only when every measured span was assessed (a span that was not assessed is
+  # unknown, not safe). Replaces the unjustified 0.5. With no validated reference no span is assessed, so the
+  # verdict is INCONCLUSIVE ("Assessment incomplete").
+  min_assessed_share: 1.0
   loose_ends: false               # off: ~10 candidates per photo, mostly mask gaps and hardware terminations (Chapter 4 v2.8)
   loose_end_tau: 0.5
   border_px: 12
   isolation_px: 8
   cluster_px: 25
   cluster_n: 2
+  # S4 (register D-10): inactive while no sag reference exists (no span is banded). Kept for a future validated
+  # reference; p0 must then be re-measured for its bands.
   # v2.9 pole-level sag aggregation: a band counts only when more spans are in it than the per-span
   # test-retest false-alarm rate p0 explains (one-sided binomial test). p0 measured on validation over
   # all scored spans (photo vs mirrored photo, 492 matched pairs,

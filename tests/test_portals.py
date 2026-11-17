@@ -180,6 +180,7 @@ def test_unreviewed_pdf_says_so(client, scene):
     assert "Not yet reviewed" in pdf_text(client.get(f"/api/reports/{aid}/pdf").content)
 
 
+@pytest.mark.test_reference
 def test_pole_history_tracks_inspections(client):
     from app.devtools.synthetic import make_scene
     aids = []
@@ -226,6 +227,7 @@ def test_queue_reports_processed_analyses(client, scene):
     assert q["depth"] == 0 and q["processed_since_start"] >= 1
 
 
+@pytest.mark.test_reference
 def test_live_sensitivity_baseline(client):
     from app.devtools.synthetic import make_scene
     for i, k in enumerate((0.5, 1.2, 1.8)):

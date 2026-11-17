@@ -91,11 +91,13 @@ def test_server_no_wires_and_vegetation_only(client, scene):
     aid = upload(client, scene.rgb, "")
     assert wait_done(client, aid)["status"] == "no_wires_detected"
     res = client.get(f"/api/analysis/{aid}/result").json()
-    assert res["hazard"]["verdict"] == "NOT AT RISK" and "0 power and 0 telecom" in res["hazard"]["reasons"][-1]
+    # S4: a photo with no wire supports no conclusion; it is never NOT AT RISK
+    assert res["hazard"]["verdict"] == "INCONCLUSIVE - RETAKE PHOTO"
+    assert "0 power and 0 telecom" in res["hazard"]["reasons"][-1]
     assert client.get(f"/api/reports/{aid}/pdf").content[:4] == b"%PDF"
     veg_only = "0 0.1 0.1 0.4 0.1 0.4 0.5 0.1 0.5\n"
     aid2 = upload(client, scene.rgb, veg_only)
     wait_done(client, aid2)
     res2 = client.get(f"/api/analysis/{aid2}/result").json()
-    assert res2["summary"]["vegetation_count"] == 1 and res2["hazard"]["verdict"] == "NOT AT RISK"
+    assert res2["summary"]["vegetation_count"] == 1 and res2["hazard"]["verdict"] == "INCONCLUSIVE - RETAKE PHOTO"
     assert client.get(f"/api/reports/{aid2}/pdf").content[:4] == b"%PDF"

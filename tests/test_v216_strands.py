@@ -121,9 +121,11 @@ def _sagging(h, w, sag_frac):
     return WireDetection("telecom-cable", 0.9, m, _bbox(m))
 
 
+@pytest.mark.test_reference
 def test_lens_outside_envelope_keeps_crs_but_not_the_sag_verdict():
     from app.pipeline.runner import run_analysis
-    cfg = load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
+    from tests.conftest import with_test_reference
+    cfg = with_test_reference(load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml"))
     rgb = np.full((600, 800, 3), 200, np.uint8)
     det = _sagging(600, 800, 0.08)
 
@@ -143,10 +145,12 @@ def test_lens_outside_envelope_keeps_crs_but_not_the_sag_verdict():
     assert any("ultra-wide lens" in r for r in wide.hazard["reasons"])
 
 
+@pytest.mark.test_reference
 def test_chord_gate_scales_with_the_segmentation_resolution():
     from app.pipeline.runner import score_wire
     from app.pipeline.sag_limits import EngineeringContext
-    cfg = load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
+    from tests.conftest import with_test_reference
+    cfg = with_test_reference(load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml"))
     det = _sagging(1536, 2048, 0.03)
     # chord ~1640 px: above both gates
     assert score_wire(det, 1, (2048, 1536), cfg, EngineeringContext(), gate_scale=2.0).status == "scored"

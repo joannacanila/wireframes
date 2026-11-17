@@ -179,6 +179,11 @@ class Analysis(Base):
 
     @property
     def valid_crs(self) -> list[float]:
+        """CRS values usable for ranking. S4: values stored before the withdrawal of the provisional criteria
+        (no current ``assessment_basis``) are not used; the stored rows are unchanged (app/services/basis.py)."""
+        from app.services.basis import is_current
+        if not is_current(self.metadata_json):
+            return []
         return [d.crs for d in self.detections if d.crs is not None]
 
 

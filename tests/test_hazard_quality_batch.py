@@ -35,8 +35,12 @@ def _veg(y0, y1, x0=300, x1=420):
 P, T = "power-distribution-lines", "telecom-cable"
 
 
+@pytest.mark.test_reference
 def test_vegetation_contact_with_power_is_high_and_explained():
-    hz = assess([_row(1, P, _wire(100)), _row(2, T, _wire(250))], [_veg(60, 112)], SHAPE)
+    from tests.conftest import TEST_ONLY_CONDUCTORS
+    rule = type("Rule", (), {"vegetation_verdict": True})()
+    hz = assess([_row(1, P, _wire(100)), _row(2, T, _wire(250))], [_veg(60, 112)], SHAPE,
+                TEST_ONLY_CONDUCTORS[P]["diameter_m"], rule=rule)  # TEST-ONLY diameter (S4: none shipped)
     assert hz.verdict == HIGH and any("contact with power span 1" in r for r in hz.reasons)
     near = hz.factors["vegetation"][0]
     assert near["span"] == 1 and near["gap_px"] == 0 and "wire_point" in near and "gap_m_approx" in near
@@ -87,6 +91,7 @@ def test_chord_gate_removes_noisy_short_spans_from_scoring(cfg, scene):
     assert all(x.crs is None and x.fail_reason == "chord_below_precision_gate" for x in gated.wires)
 
 
+@pytest.mark.test_reference
 def test_hazard_and_quality_flow_through_the_runner(cfg, scene):
     h, w = scene.rgb.shape[:2]
     on = cfg.model_copy(update={"hazard": cfg.hazard.model_copy(update={"enabled": True, "loose_ends": True}),

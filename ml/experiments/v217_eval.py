@@ -31,6 +31,7 @@ VARIANTS: dict[str, dict] = {
                               "span_class_min_share": 0.9}},
     "v217": {},  # config/wireframe.yaml as shipped in v2.17
     "v221": {},  # v2.21: same models; low-memory inference and the measurement-validity rules
+    "s4": {},  # S4 (18 Nov 2026): same models; shipped configuration without unsupported thresholds (register D-02..D-21)
 }
 
 

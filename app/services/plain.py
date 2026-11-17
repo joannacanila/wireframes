@@ -22,7 +22,18 @@ UNASSESSED = {
     "endpoint_unavailable": "endpoint off the photo (partial span)",
     "class_uncertain": "uncertain wire type",
     "no_reference_for_class": "no sag reference for the wire type (power or abandoned)",
+    "no_validated_reference": "no validated sag reference (measured only)",
+    "withdrawn_reference": "earlier provisional reference withdrawn (measured only)",
 }
+
+
+def measured(w: dict) -> str | None:
+    """S4: the image-derived sag ratio as a measurement, with its 1 px resolution; never a severity."""
+    if w.get("sag_ratio") is None:
+        return None
+    r = w.get("sag_ratio_resolution")
+    res = f" (+/- {r * 100:.1f} points)" if r else ""
+    return f"image-derived sag ratio {w['sag_ratio'] * 100:.1f}%{res}"
 
 
 def wire_type(w: dict) -> str:
@@ -46,7 +57,12 @@ def finding(w: dict) -> str:
     if w.get("status") == "service_drop":
         return "Drop wire to a building; not checked for sag"
     why = UNASSESSED.get(w.get("reason_code") or "")
-    return f"Unable to assess: {why}" if why else ("Partially outside the photograph" if edge else "Unable to assess from this photo")
+    m = measured(w)
+    if m and w.get("reason_code") in ("no_validated_reference", "withdrawn_reference"):
+        return f"Measured, not assessed: {m}; no validated sag reference" + ("; partly outside the photo" if edge else "")
+    if why:
+        return f"Unable to assess: {why}" + (f"; {m}" if m else "")
+    return "Partially outside the photograph" if edge else "Unable to assess from this photo"
 
 
 def summary_title(c: dict[str, int]) -> str:
@@ -72,7 +88,7 @@ def short_observation(w: dict) -> str:
     if kind and w.get("class_status") != "uncertain":
         bits.insert(0, kind.capitalize())
     if (w.get("veg_clearance") or {}).get("gap_px") == 0:
-        bits.append("vegetation contact")
+        bits.append("vegetation overlaps in photo")
     if w.get("class_status") == "uncertain":
         bits.append("type uncertain")
     return " · ".join(b for b in bits if b)
@@ -83,6 +99,8 @@ def recommended_action(w: dict) -> str:
         w.get("class") if w.get("class_status") != "uncertain" else "", "line operator")
     if w.get("level") == "high":
         return f"Field check; notify {owner}"
+    if w.get("status") == "not_assessed":
+        return "Not assessed: qualified review or field inspection"
     return "Monitor at next inspection"
 
 
@@ -117,8 +135,11 @@ def summary(r: dict[str, Any]) -> dict[str, Any]:
         why = next((x for x in (r.get("hazard") or {}).get("reasons") or [] if x.startswith("INCONCLUSIVE")), None)
         if why:
             lines.insert(0, why.split(":", 1)[1].strip().capitalize() + ".")
-        lines.append("This is not a low-risk result. Retake the photo with both poles in the frame, or arrange a "
-                     "field check.")
+        no_ref = any(w.get("reason_code") in ("no_validated_reference", "withdrawn_reference") for w in wires)
+        lines.append("This is not a low-risk result. " + (
+            "No validated sag reference exists for these wires, so a retake will not complete the assessment; "
+            "arrange a field inspection by a qualified person." if no_ref else
+            "Retake the photo with both poles in the frame, or arrange a field check."))
     elif not scored:
         head, level = "Inspection summary: no span could be assessed", "none"
     elif v in ("AT RISK - HIGH", "AT RISK - MODERATE"):

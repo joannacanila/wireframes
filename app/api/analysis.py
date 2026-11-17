@@ -95,7 +95,7 @@ async def upload(
 
 def _summary(a: Analysis) -> dict:
     crs = a.valid_crs
-    worst = max((d for d in a.detections if d.crs is not None), key=lambda d: d.crs, default=None)
+    worst = max((d for d in a.detections if d.crs is not None), key=lambda d: d.crs, default=None) if crs else None
     review = a.reviews[-1] if a.reviews else None
     return {
         "id": a.id, "status": a.status, "pole_code": a.pole.pole_code, "barangay": a.pole.barangay,

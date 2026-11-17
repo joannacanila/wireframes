@@ -181,8 +181,8 @@ def test_migration_backup_restores_to_an_identical_database(client, scene, tmp_p
 
 def test_abandoned_wires_are_not_held_to_the_telecom_operating_limit(cfg):
     """v2.23 research follow-up: no engineering criteria exist for abandoned wires, so they are measured but not
-    assessed against the provisional telecom limit (reason no_reference_for_class, worded for both classes)."""
+    assessed. S4: no class has a validated reference (register D-02..D-05)."""
     from app.services.reasons import REASONS_SHORT
 
-    assert cfg.crs.assessed_classes == ["telecom-cable"]
+    assert not cfg.crs.has_reference("abandoned-wire") and cfg.crs.delta_lim0 == {}
     assert "power lines" not in REASONS_SHORT["no_reference_for_class"].lower()

@@ -199,6 +199,7 @@ def test_result_without_suppression_has_empty_list(tmp_path, cfg):
     assert not {"ground_structures_suppressed", "ground_gate_unavailable"} & set(res["flags"])
 
 
+@pytest.mark.test_reference
 def test_unmeasured_span_gets_action_and_photo_gets_retake_guidance(tmp_path, cfg):
     with _client(tmp_path, cfg, []) as c:
         res = _result(c, _photo())

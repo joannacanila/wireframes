@@ -8,17 +8,19 @@ each strand and measures its sag ratio, checks vegetation contact and photo reli
 verdict with a plain-language result page and a PDF report. Staff manage inspections, reviews, maps and dispatch
 routes in an admin portal.
 
-> WIREFRAME is a screening aid. Its results need field verification by qualified personnel before any maintenance or
-> regulatory action. The sag reference values in `config/wireframe.yaml` are development placeholders until they are
-> calibrated with a licensed engineer, and every result carries flags that say so.
+> WIREFRAME is a decision-support tool for preliminary visual screening. Its results do not constitute a certified
+> engineering inspection, confirmation of safety, or proof of regulatory compliance, and need review by a qualified
+> professional.
 
-**How sag is assessed.** Sag ratio = sag / chord length of the fitted catenary, measured in the image (it is an
-image-derived estimate, not a physical sag measurement). With the provisional 4.0 % telecom reference (a development
-value, not a regulatory standard): below 2.4 % *Within reference*, 2.4 % to under 4.0 % *Minor sag*, 4.0 % and above
-*Critical*. A wire is *Not assessed* when an endpoint is outside the photo, its type is uncertain, or its class has no
-reference (power distribution lines and abandoned wires). A pole is INCONCLUSIVE rather than NOT AT RISK when fewer
-than half of its measured spans could be assessed. Applicable engineering and regulatory limits are pending
-validation by a licensed engineer (thesis reference Sections 7.5 and 7.8).
+**How sag is handled.** Sag ratio = sag / chord length of the fitted catenary, measured in the image (an
+image-derived measurement, not physical sag), shown with its 1 pixel resolution. Research completed on 18 Nov 2026
+found no applicable standard, regulation or manufacturer document that gives a universal sag limit this measurement
+could be compared with (ITU-T L.102 and manufacturer guidance compute sag per cable; the 3 % rule of ERB Resolution
+No. 95-21 was superseded in 2006). The former 4.0 % / 2.4 % telecom bands were development placeholders and were
+removed, as were the pixel vegetation rules and the illustrative conductor data. Every measured span is therefore
+*Not assessed* (`no_validated_reference`), and a pole is INCONCLUSIVE ("Assessment incomplete") rather than at risk or
+not at risk. Decisions and sources: `docs/handoff/RESEARCH_AND_DECISION_REGISTER.md`; thesis reference Sections 7.5,
+7.7, 7.8 and 8.
 
 ## Quick start: run WIREFRAME on a new computer (step by step)
 

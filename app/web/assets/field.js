@@ -300,7 +300,7 @@ function guardBanner(r) {
 }
 
 // ------------------------------------------------------------------ result model (v2.15: written for non-specialists)
-import { css, group, plural, pc, SECTION, CONDITION, SEVERITY, spanId, skipReason, SCORE_HELP, sagFactors, finding, limitations, assessment, recommendations } from "./findings.js?v=2.23";
+import { css, group, plural, pc, SECTION, CONDITION, SEVERITY, spanId, skipReason, SCORE_HELP, sagFactors, finding, limitations, assessment, recommendations, MEASURED_ONLY, measuredText } from "./findings.js?v=2.23";
 // ------------------------------------------------------------------ result view (v2.20: written for the public)
 // Reading order: what was found (headline from the record), the photo with only the problem wires, the selected
 // wire against its reference limit, the wire list (needs attention first), what to do, photo limitations, notice.
@@ -336,9 +336,11 @@ function headline(r) {
   if (r.status === "error") return { cls: "none", title: "This photo could not be processed", lines: ["Try again. If it fails again, take a new photo or contact your administrator."] };
   if (v.startsWith("INCONCLUSIVE")) { // v2.21: say why (spans off the photo, no reference, poor photo), never "safe"
     const why = (r.hazard?.reasons || []).find((x) => x.startsWith("INCONCLUSIVE"));
+    const noRef = r.wires.some((w) => MEASURED_ONLY.has(w.reason_code));
     return { cls: "none", title: "Inspection summary: assessment incomplete",
       lines: [why ? why.replace(/^INCONCLUSIVE - RETAKE PHOTO:\s*/, "").replace(/^./, (c) => c.toUpperCase()) + "." : "The photo is not clear enough to assess.",
-        "This is not a low-risk result. Retake the photo with both poles in the frame, or arrange a field check."] };
+        noRef ? "This is not a low-risk result. No validated sag reference exists for these wires, so a retake will not complete the assessment; the sag ratios shown are image measurements only. Arrange a field inspection by a qualified person for any concern."
+          : "This is not a low-risk result. Retake the photo with both poles in the frame, or arrange a field check."] };
   }
   if (!scored.length) return { cls: "none", title: "Inspection summary: no span could be assessed", lines: ["Take a new photo using the tip above, or arrange a field check."] };
   if (v === "AT RISK - HIGH" || v === "AT RISK - MODERATE") {
@@ -372,7 +374,9 @@ function plainFinding(w) {
   }
   if (w.status === "service_drop") return "Drop wire to a building; not checked for sag";
   if (w.status === "not_assessed") return { endpoint_unavailable: "Not assessed: endpoint unavailable (runs off the photo)",
-    class_uncertain: "Not assessed: uncertain wire type", no_reference_for_class: "Not assessed: no sag reference for power lines" }[w.reason_code] || "Not assessed";
+    class_uncertain: "Not assessed: uncertain wire type", no_reference_for_class: "Not assessed: no sag reference for power lines",
+    no_validated_reference: w.sag_ratio != null ? `Measured, not assessed: image-derived sag ratio ${measuredText(w)}` : "Not assessed: no validated sag reference",
+    withdrawn_reference: w.sag_ratio != null ? `Measured, not assessed: image-derived sag ratio ${measuredText(w)} (earlier reference withdrawn)` : "Not assessed: earlier reference withdrawn" }[w.reason_code] || "Not assessed";
   return { chord_below_precision_gate: "Unable to assess: too small or far away", too_short: "Unable to assess: too small or far away",
     residual_too_large: "Unable to assess due to overlapping wires", non_positive_a: "Unable to assess due to overlapping wires",
     empty_mask: "Unable to assess: too faint" }[w.reason_code] || (edge ? "Partially outside the photograph" : "Unable to assess from this photo");
@@ -419,6 +423,8 @@ function wireCard(w) {
       ${lim != null ? `${meter(w, g)}
         <p class="rx-note">Sag is how far the wire hangs below the straight line between its ends, as a share of that length. The reference is the sag configured for this wire type in WIREFRAME; it has not been calibrated against local field measurements.</p>` : ""}`
       : ""}
+    ${!scored && w.sag_ratio != null && MEASURED_ONLY.has(w.reason_code) ? `<dl class="rx-meas"><div><dt>Image-derived sag ratio</dt><dd>${measuredText(w)}</dd></div></dl>
+      <p class="rx-note">Measured in image pixels: the largest distance from the traced wire to the straight line between its visible ends, divided by that line's length (± is the 1 pixel resolution). It is not physical sag and is not compared with any limit, because no validated sag reference exists for this wire type.</p>` : ""}
     ${w.class_status === "uncertain" ? `<p class="rx-note">The photo does not show clearly whether this is a power line or a telecommunications cable, so no type is claimed.</p>` : ""}`;
 }
 
@@ -466,7 +472,9 @@ function renderResult(r) {
       <h2 id="rx-title">${esc(h.title)}</h2>
       ${h.lines.map((l) => `<p>${esc(l)}</p>`).join("")}
       <dl class="rx-counts">
-        ${[["high", SEVERITY.high, groups.high.length], ["medium", SEVERITY.medium, groups.medium.length], ["low", SEVERITY.low, groups.low.length], ["none", SEVERITY.none, groups.none.length]]
+        ${(assessed ? [["high", SEVERITY.high, groups.high.length], ["medium", SEVERITY.medium, groups.medium.length], ["low", SEVERITY.low, groups.low.length], ["none", SEVERITY.none, groups.none.length]]
+          // S4: no validated reference, so no severity counts; the measurements and the not-assessed total only
+          : [["none", "Sag ratio measured", r.wires.filter((w) => w.sag_ratio != null).length], ["none", SEVERITY.none, groups.none.length]])
           .map(([k, t, n]) => `<div class="${k}"><dt>${t}</dt><dd>${n}</dd></div>`).join("")}
       </dl>
       ${r.wires.length ? `<p class="rx-coverage">${r.wires.length} ${r.wires.length === 1 ? "wire" : "wires"} detected · ${assessed} assessed · ${notAssessed} not assessed${statusLine(r) ? ` · ${esc(statusLine(r))}` : ""}</p>` : ""}

@@ -4,9 +4,9 @@ Pure with respect to storage: takes decoded inputs, returns an ``AnalysisOutcome
 Persistence, queueing and MSPI ranking across poles (Algorithm 6) live in services.
 
 Terminal statuses (Figure 3.6 / 3.7):
-    complete           at least one wire received a CRS
+    complete           at least one wire was measured (catenary fitted; S4: whether or not it could be assessed)
     no_wires_detected  no wire above the confidence threshold
-    fit_failed         wires were detected but none could be scored
+    fit_failed         wires were detected but none could be measured
 
 Vegetation detections (revised taxonomy) are separated before Algorithm 4: they are never
 fitted or scored and never count as wires. They are returned as regions, and each wire they
@@ -175,28 +175,33 @@ def _score_wire(
         return WireOutcome(**{**base, "fit": fit_info}, status="fit_failed", fail_reason=fit.reason,
                            flags=flags + [f"fit_failed:{fit.reason}"])
     fit_info["chord_gate_px"] = round(min_chord, 1)
+    # S4 (register D-09): resolution of the image-derived ratio, 1 model pixel (gate_scale photo pixels) of skeleton
+    # quantisation over the chord. Reported with every measured ratio so a short chord reads as imprecise.
+    if fit.chord_px:
+        fit_info["sag_ratio_resolution"] = round(max(gate_scale, 1.0) / fit.chord_px, 6)
     if cfg.crs.min_chord_px and fit.chord_px < min_chord:
         # too short to measure sag reliably: 1 px of skeleton noise would move delta/L by more
         # than the configured share of the allowable sag ratio (config crs.min_chord_px)
         return WireOutcome(**{**base, "fit": fit_info}, status="too_short", fail_reason="chord_below_precision_gate",
                            flags=flags + ["chord_below_precision_gate"])
 
-    # v2.21 measurement validity: measured, but no severity, when the span or its class cannot support one
+    # v2.21 measurement validity: measured, but no severity, when the span or its class cannot support one.
+    # S4: a class is assessed only when a verified reference is configured for it (cfg.crs.has_reference).
+    has_ref = cfg.crs.has_reference(det.wire_class)
     if cfg.crs.require_both_endpoints and fit.truncated:
-        # the visible part's sag is kept as an unverified review cue (never a finding): a partial span that already
-        # sags into the Minor or Critical band must not let the pole read as low risk
-        if not cfg.crs.assessed_classes or det.wire_class in cfg.crs.assessed_classes:
+        # with a configured reference, the visible part's sag is kept as an unverified review cue (never a finding)
+        if has_ref:
             lim = allowable_sag(det.wire_class, ctx, cfg.crs, cfg.engineering)
             fit_info["unverified_level"] = risk_level(
                 catenary_risk_score(fit.sag_ratio, lim.delta_lim, cfg.crs.class_weights[det.wire_class]), cfg.crs.levels)
-        return WireOutcome(**{**base, "fit": fit_info}, status="not_assessed", fail_reason="endpoint_unavailable",
+        return WireOutcome(**{**base, "curve": fit.curve(96), "fit": fit_info}, status="not_assessed", fail_reason="endpoint_unavailable",
                            flags=flags + ["endpoint_unavailable"])
-    if getattr(det, "class_status", "confident") == "uncertain" and cfg.crs.assessed_classes:
-        return WireOutcome(**{**base, "fit": fit_info}, status="not_assessed", fail_reason="class_uncertain",
+    if getattr(det, "class_status", "confident") == "uncertain":
+        return WireOutcome(**{**base, "curve": fit.curve(96), "fit": fit_info}, status="not_assessed", fail_reason="class_uncertain",
                            flags=flags + ["class_uncertain"])
-    if cfg.crs.assessed_classes and det.wire_class not in cfg.crs.assessed_classes:
-        return WireOutcome(**{**base, "fit": fit_info}, status="not_assessed", fail_reason="no_reference_for_class",
-                           flags=flags + ["no_reference_for_class"])
+    if not has_ref:
+        return WireOutcome(**{**base, "curve": fit.curve(96), "fit": fit_info}, status="not_assessed", fail_reason="no_validated_reference",
+                           flags=flags + ["no_validated_reference"])
 
     limit = allowable_sag(det.wire_class, ctx, cfg.crs, cfg.engineering)
     w_class = cfg.crs.class_weights[det.wire_class]
@@ -447,7 +452,8 @@ def run_analysis(
         cond = cfg.engineering.conductors.get("power-distribution-lines")
         content_rows = np.flatnonzero(~(np.abs(rgb.astype(np.int16) - cfg.preprocessing.letterbox_fill) <= 3)
                                       .all(axis=2).all(axis=1))
-        hz = assess(rows, [v.mask for v in veg], (h, w), cond.diameter_m if cond else 0.0101,
+        # S4 (D-14): no assumed conductor diameter; without data-sheet values gaps stay in pixels
+        hz = assess(rows, [v.mask for v in veg], (h, w), cond.diameter_m if cond else None,
                     cfg.hazard.veg_moderate_px, rule=cfg.hazard,
                     frame_rows=(int(content_rows[0]), int(content_rows[-1])) if len(content_rows) else (0, h - 1))
         if cfg.hazard.loose_ends:
@@ -477,7 +483,8 @@ def run_analysis(
 
     if not wires:
         status = "no_wires_detected"
-    elif not any(x.crs is not None or x.status == "service_drop" for x in wires):
+    elif not any(x.crs is not None or x.status == "service_drop"
+                 or (x.status == "not_assessed" and (x.fit or {}).get("sag_ratio") is not None) for x in wires):
         status = "fit_failed"
     else:
         status = "complete"

@@ -77,7 +77,8 @@ def geometry_benchmark(n_scenes: int = 40, seed: int = 0) -> dict:
 
     cfg = load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
     # v2.21: the geometric layer only; the assessment policy (classes with a reference, both endpoints in frame)
-    # decides whether a measured span gets a severity, which this benchmark does not evaluate
+    # decides whether a measured span gets a severity, which this benchmark does not evaluate. S4: no class has a
+    # reference, so a measured span is "not_assessed" with its fitted curve and ratio; that is what is compared.
     cfg = cfg.model_copy(update={"crs": cfg.crs.model_copy(update={"assessed_classes": [], "require_both_endpoints": False})})
     rng = np.random.default_rng(seed)
     curve_err, ratio_err, a_err, failures, n = [], [], [], 0, 0
@@ -89,7 +90,7 @@ def geometry_benchmark(n_scenes: int = 40, seed: int = 0) -> dict:
         for spec, det in zip(sc.wires, dets, strict=True):
             n += 1
             out = score_wire(det, 1, (w, h), cfg, EngineeringContext())
-            if out.status != "scored":
+            if out.status in ("too_short", "fit_failed") or out.fit.get("sag_ratio") is None:  # S4: measured = fitted
                 failures += 1
                 continue
             def truth(x, s=spec):
