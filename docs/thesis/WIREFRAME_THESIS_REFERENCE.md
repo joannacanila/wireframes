@@ -451,6 +451,20 @@ a given conductor and installation, and whether it is still the controlling requ
 determinations. Its measurement (sag relative to the distance between poles) is also not the same quantity as
 WIREFRAME's image-derived ratio (Section 7.8). The power-line configuration is therefore unchanged.
 
+**Status of the provision (verified 18 Nov 2026 from primary texts).** The resolution itself (Supreme Court
+E-Library, NAR Vol. 6 No. 3) limits its scope to electric power utilities under ERB jurisdiction (Section 2), requires
+plant to follow the Philippine Electrical Code with the US NESC as fallback (Section 10), and does not define "public
+place", "sag" or "span". ERC Resolution No. 02, Series of 2010 (Supreme Court E-Library, NAR Vol. 21 No. 1) records in
+its recitals that ERB Resolution 95-21 was **superseded by the Distribution Services and Open Access Rules (DSOAR,
+promulgated 18 Jan 2006, effective 17 Feb 2006)**. No current instrument containing a 3 % sag limit could be verified:
+the current Philippine Electrical Code Part 2 is not openly published (unofficial copies conflict), and the DSOAR
+technical annex and the Philippine Distribution Code text were not obtained. Some local ordinances state their own sag
+rules in metres (e.g., Naga City Ordinance 2005-030: 0.30 m), which apply only in those cities and need a physical
+measurement. Decision: the 3 % figure is **not** implemented as an assessment of power lines, because its legal force
+and applicability are not established; power lines remain measured and not assessed. What would change this: the
+current PEC Part 2 provision on sag (edition, article, exact text), or another in-force ERC/PEC instrument stating a
+sag limit, plus a licensed engineer's confirmation that it applies to the photographed installations.
+
 > **PENDING ENGINEERING VALIDATION:** The 3% provision identified in ERB Resolution No. 95-21 has not yet been
 > confirmed as directly applicable to the specific conductors and image-derived measurement method used by WIREFRAME.
 
@@ -1202,6 +1216,9 @@ with each analysis and report. Runtime varies with machine load, so the benchmar
     consent check* (CVE-2026-80047). https://kb.cert.org/vuls/id/456290
 38. SQLite. *SQLite Online Backup API* (https://www.sqlite.org/backup.html) and *PRAGMA integrity_check,
     foreign_key_check* (https://www.sqlite.org/pragma.html).
+39. Energy Regulatory Commission (2010). *ERC Resolution No. 02, Series of 2010: A Resolution Adopting the Amendments to
+    the Distribution Services and Open Access Rules (DSOAR)*, 22 February 2010. Supreme Court E-Library:
+    https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/10/49331
 
 ---
 
