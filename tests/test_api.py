@@ -11,6 +11,7 @@ from tests.conftest import jpeg_bytes, upload, wait_done
 from tests.test_acquisition_preprocess import exif_with
 
 
+@pytest.mark.every_class_assessed
 def test_full_flow_with_reference_masks(client, scene):
     aid = upload(client, scene.rgb, scene.labels, pole_code="SYN-1", barangay="Test",
                  latitude=14.33, longitude=120.94, span_m=40, temperature_c=33)
@@ -28,23 +29,24 @@ def test_full_flow_with_reference_masks(client, scene):
     levels = {w["level"] for w in r["wires"]}
     assert levels == {"low", "medium", "high"}
 
-    geo = client.get("/api/dashboard/map")
-    assert geo.headers["content-type"].startswith("application/geo+json")
-    feat = geo.json()["features"][0]
-    assert feat["geometry"] == {"type": "Point", "coordinates": [120.94, 14.33]}  # [lon, lat]
-    assert feat["properties"]["rank"] == 1
+    site = client.get("/api/dashboard/priority").json()["sites"][0]
+    assert site["location"] == {"lat": 14.33, "lon": 120.94, "source": site["location"]["source"]} and site["rank"] == 1
 
     pdf = client.get(f"/api/reports/{aid}/pdf")
     assert pdf.status_code == 200 and pdf.content[:5] == b"%PDF-"
     doc = pdfium.PdfDocument(pdf.content)
     text = "".join(doc[i].get_textpage().get_text_range() for i in range(len(doc)))
     doc.close()
-    assert "professional" in text and "Professional review required" in text
-    assert "SYN-1" in text and "Per-wire metrics" in text
+    flat = " ".join(text.split())
+    # v2.21: one short footer and three scope points replace the repeated notice block
+    assert "field verification required" in flat.lower() and "verified by qualified personnel" in flat
+    assert "SYN-1" in text and "Flagged Spans Schedule" in text and "Field Verification" in text  # v2.20 formal
+    tech = client.get(f"/api/reports/{aid}/pdf?technical=true")
+    assert tech.status_code == 200 and b"%PDF" in tech.content[:5]
 
     assert client.delete(f"/api/analysis/{aid}").status_code == 204
     assert client.get(f"/api/analysis/{aid}").status_code == 404
-    assert client.get("/api/dashboard/map").json()["features"] == []
+    assert client.get("/api/dashboard/priority").json()["sites"] == []
 
 
 def test_upload_strips_gps_and_stores_location_separately(client, scene):
@@ -93,7 +95,7 @@ def test_upload_without_model_or_labels_is_refused_before_storage(client, scene)
     err = r.json()["error"]
     assert err["code"] == "model_unavailable" and "reference polygons" in err["hint"]
     assert list(client.state.settings.upload_dir.iterdir()) == []
-    assert client.get("/api/analysis").json()["total"] == 0
+    assert client.get("/api/admin/inspections?include_test=true").json()["total"] == 0
 
 
 @pytest.mark.parametrize("files,code", [
@@ -123,7 +125,9 @@ def test_priority_weights_validation_and_reranking(client, scene):
     assert client.get("/api/dashboard/priority?alpha=0.5").status_code == 422
     r = client.get("/api/dashboard/priority?alpha=0&beta=0&gamma=1").json()
     assert [s["pole_code"] for s in r["sites"]] == ["P1", "P0"]
-    sens = client.get("/api/dashboard/sensitivity").json()
+    from app.services import sites  # the weight sensitivity behind the technical priority report
+    with client.state.db.session() as s:
+        sens = sites.sensitivity_payload(s, client.state.config)
     assert sens["n_sites"] == 2 and len(sens["grid"]) == 66
 
 

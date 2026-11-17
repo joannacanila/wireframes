@@ -16,6 +16,7 @@ from app.core.config import CLASSES, Settings
 from app.core.state import build_state
 from app.main import create_app
 from app.pipeline.segment import WireDetection, _bbox
+from tests.conftest import sign_in_staff
 
 ORIGIN = {"origin": "http://testserver"}
 TEL = CLASSES.index("telecom-cable") + 1
@@ -52,6 +53,7 @@ def mclient(tmp_path, cfg):
     st = build_state(Settings(data_dir=tmp_path, start_worker=True), cfg, segmenter=MaskSegmenter())
     with TestClient(create_app(st), headers=ORIGIN) as c:
         c.state = st
+        sign_in_staff(c, st)
         yield c
 
 
@@ -206,17 +208,20 @@ def test_field_page_and_assets_are_the_v215_screener(client):
         assert gone not in html, gone
     for field in ('name="inspection_name"', 'name="city"', 'name="barangay"', 'id="locate"', 'id="clear-file"'):
         assert field in html, field
-    js = client.get("/assets/field.js").text
-    for needle in ('data-view="photo"', 'data-view="spans"', 'data-view="mask"', 'data-view="overlay"',
-                   'id="opacity"', 'id="diag"', 'id="verdict-pill"', 'id="span-detail"', "Technical diagnostics",
-                   "Photo limitations", "What to do next", "not a safety inspection", "Estimated gaps",
-                   "Model mask", "Ignored as not wires / not vegetation", 'data-zoom="reset"', 'data-zoom="fit"',
-                   "Do not touch", "inspection_name"):
+    js = client.get("/assets/field.js").text + client.get("/assets/findings.js").text  # v2.19: shared wording
+    # v2.20 result page: problem wires by default, three views, sag against the reference, wires grouped with
+    # "needs attention" first, three-step guidance, short photo limitations, the notice; no technical drawer
+    for needle in ('data-view="problem"', 'data-view="photo"', 'data-view="all"', "View options", 'id="opacity"',
+                   'id="span-detail"', "Reference limit", "percentage points", 'data-tab="att"', "Needs attention",
+                   "Not assessed", "They have not passed any check", "Keep your distance", "Report the findings",
+                   "Arrange field verification", "Photo limitations", "Overlapping wires can prevent reliable separation",
+                   "Inspection summary", "not a safety inspection", 'wf-notice variant="full"', "inspection_name",
+                   'data-zoom="fit"', "Do not touch"):
         assert needle in js, needle
-    for gone in ("Model ready", "Inspection quality", "#sample"):
-        assert gone not in js, gone
-    for pill in ("High risk found", "Moderate risk found", "No high risk found", "Photo not clear enough"):
-        assert pill in js
+    for gone in ("Model ready", "Inspection quality", "#sample", 'id="diag"', "Sag score", "Fit residual",
+                 "HIGH RISK FOUND"):
+        assert gone not in client.get("/assets/field.js").text.split("// --------------------------------------------------------------"
+                                                                     "---- result view")[-1], gone
     css = client.get("/assets/field.css").text
-    assert "fx-shimmer" in css and ".fx-drawer[data-open]" in css and "backdrop-filter" not in css
+    assert "fx-shimmer" in css and ".rx-summary" in css and "backdrop-filter" not in css
     assert "gradient(" not in css.replace("linear-gradient(90deg, transparent", "")

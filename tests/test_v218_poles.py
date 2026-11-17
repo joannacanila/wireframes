@@ -23,11 +23,6 @@ def test_corrupt_yolo_weights_fail_soft(tmp_path):
     assert d.detect(np.zeros((64, 64, 3), np.uint8)) is None and d.error
 
 
-def test_zero_shot_spec_selects_grounding_dino_backend(tmp_path):
-    d = pl.make_pole_detector("grounding-dino:some/model", 0.25, tmp_path)
-    assert isinstance(d, pl.ZeroShotPoleDetector) and d.model_id == "some/model" and d.conf == 0.25
-
-
 def test_yolo_inference_returns_boxes_in_image_pixels():
     pytest.importorskip("ultralytics")
     from app.core.config import ROOT_DIR

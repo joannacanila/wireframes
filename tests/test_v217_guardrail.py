@@ -142,7 +142,7 @@ def test_pdf_and_result_carry_the_guardrail_warning(client, scene):
     assert g["requires_retake"] and g["choice"]["action"] == "proceed"
     pdf = client.get(f"/api/reports/{a}/pdf").content
     doc = pdfium.PdfDocument(pdf)
-    text = "".join(doc[i].get_textpage().get_text_range() for i in range(len(doc)))
+    text = " ".join(" ".join(doc[i].get_textpage().get_text_range() for i in range(len(doc))).split())  # line wraps
     doc.close()
     assert "Assessment may be inaccurate" in text and "chose to proceed" in text
 

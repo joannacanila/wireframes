@@ -1,14 +1,10 @@
 """Landing/console routes, field/validation mode, retry, evaluation API, sample assets."""
 
-import json
 
 import pytest
 
-from app.core.config import ROOT_DIR
 from app.models.orm import Analysis
 from tests.conftest import upload, wait_done
-
-SAMPLES = ROOT_DIR / "app" / "web" / "assets" / "samples"
 
 
 def test_landing_and_console_routes(client):
@@ -19,7 +15,7 @@ def test_landing_and_console_routes(client):
         assert r.status_code == 200 and "WIREFRAME Admin" in r.text, path
     for old in ("/sites", "/evaluation", "/analysis/" + "0" * 32):  # the v2.1 console routes are retired
         assert client.get(old).status_code == 404, old
-    for asset in ("landing.js", "landing.css", "status.js", "evaluation.js", "logo.svg",
+    for asset in ("landing.js", "landing.css", "status.js", "logo.svg",
                   "field.js", "field.css", "admin.js", "admin.css", "lib.js"):
         assert client.get(f"/assets/{asset}").status_code == 200, asset
 
@@ -29,6 +25,7 @@ def test_health_reports_validation_mode_without_weights(client):
     assert h["mode"] == "validation" and h["model"]["ready"] is False
 
 
+@pytest.mark.every_class_assessed
 def test_retry_requeues_a_failed_analysis(client, scene):
     aid = upload(client, scene.rgb, scene.labels)
     assert wait_done(client, aid)["status"] == "complete"
@@ -54,16 +51,15 @@ def test_retry_without_labels_waits_for_the_model(client, scene):
     assert r.status_code == 503 and r.json()["error"]["code"] == "model_unavailable"
 
 
-def test_evaluation_metrics_not_run_then_reported(client, tmp_path):
-    m = client.get("/api/evaluation/metrics").json()
-    assert m["targets"]["map50"]["value"] == 0.70 and m["targets"]["h3_rmse"]["op"] == "<="
-    assert all(s["status"] == "not_run" and "command" in s for s in m["sections"].values())
+def test_geometry_benchmark_recovers_known_catenaries(tmp_path):
+    """The geometric layer on rendered wires with exact parameters (ml.evaluate geometry)."""
     from ml.evaluate import geometry_benchmark, write_section
-    path = client.state.settings.data_dir / "evaluation" / "report.json"
-    write_section("geometry_synthetic", geometry_benchmark(n_scenes=2), path)
-    g = client.get("/api/evaluation/metrics").json()["sections"]["geometry_synthetic"]
-    assert g["status"] == "complete" and g["synthetic"] is True and g["wires"] == 10
+    g = geometry_benchmark(n_scenes=2)
+    assert g["synthetic"] is True and g["wires"] == 10
     assert g["fit_failures"] == 0 and g["relative_sag_ratio_error"]["median"] < 0.05
+    path = tmp_path / "report.json"
+    write_section("geometry_synthetic", g, path)
+    assert path.exists()
 
 
 def test_pdf_carries_validation_mode_badge(client, scene):
@@ -76,12 +72,3 @@ def test_pdf_carries_validation_mode_badge(client, scene):
     assert "VALIDATION MODE" in text and "REFERENCE MASKS" in text
 
 
-def test_sample_assets_are_real_pipeline_output(cfg):
-    res = json.loads((SAMPLES / "synthetic-pole.result.json").read_text())
-    assert res["synthetic"] is True and res["segmentation_source"] == "annotation"
-    assert {w["level"] for w in res["wires"]} == {"low", "medium", "high"}
-    from app.pipeline.mspi import mspi
-    crs = [w["crs"] for w in res["wires"] if w["crs"] is not None]
-    assert res["mspi"]["value"] == pytest.approx(mspi(res["vni"]["value"], crs, *res["mspi"]["weights"]))
-    labels = (SAMPLES / "synthetic-pole.txt").read_text().strip().splitlines()
-    assert len(labels) == len(res["wires"])

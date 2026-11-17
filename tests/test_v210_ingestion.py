@@ -20,6 +20,7 @@ from PIL import Image
 from app.core.config import Settings
 from app.core.state import build_state
 from app.main import create_app
+from tests.conftest import sign_in_staff
 
 ORIGIN = {"origin": "http://testserver"}
 OK_STATUSES = {"complete", "no_wires_detected", "fit_failed"}
@@ -42,6 +43,7 @@ def field(tmp_path, cfg):
     st = build_state(Settings(data_dir=tmp_path, start_worker=True), cfg, segmenter=NoWireSegmenter())
     with TestClient(create_app(st), headers=ORIGIN) as c:
         c.state = st
+        sign_in_staff(c, st)
         yield c
 
 
@@ -174,6 +176,7 @@ def test_upload_works_on_a_database_created_before_submitted_via(tmp_path, cfg):
     con.close()
     st2 = build_state(Settings(data_dir=tmp_path, start_worker=True), cfg, segmenter=NoWireSegmenter())
     with TestClient(create_app(st2), headers=ORIGIN) as c:
+        sign_in_staff(c, st2)
         _check(c, _bytes(_rgb(), "JPEG"), "pole.jpg")
     con = sqlite3.connect(db)
     assert con.execute("SELECT submitted_via FROM analyses").fetchone()[0] in {"field", "admin"}

@@ -17,6 +17,7 @@ from app.core.config import Settings
 from app.core.state import build_state
 from app.main import create_app
 from app.services.reasons import SMALL_PHOTO_PX, retake_summary, touches_edge, wire_action
+from tests.conftest import sign_in_staff
 from tests.test_v211_field_ui import ORIGIN, MaskSegmenter
 
 # ---------------------------------------------------------------- touches_edge
@@ -134,7 +135,20 @@ class GatedSegmenter(MaskSegmenter):
 
 def _client(tmp_path, cfg, suppressed):
     st = build_state(Settings(data_dir=tmp_path, start_worker=True), cfg, segmenter=GatedSegmenter(suppressed))
-    return TestClient(create_app(st), headers=ORIGIN)
+    return _Staff(create_app(st), st)
+
+
+class _Staff(TestClient):
+    """A client that signs in as staff on entry (v2.20: technical result fields are staff-only)."""
+
+    def __init__(self, app, st):
+        super().__init__(app, headers=ORIGIN)
+        self._st = st
+
+    def __enter__(self):
+        c = super().__enter__()
+        sign_in_staff(c, self._st)
+        return c
 
 
 def _photo(w=640, h=480):

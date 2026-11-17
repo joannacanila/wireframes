@@ -71,6 +71,7 @@ def test_clearance_scale_and_congestion():
     assert congestion([], SHAPE)["spans"] == 0
 
 
+@pytest.mark.every_class_assessed
 def test_chord_gate_removes_noisy_short_spans_from_scoring(cfg, scene):
     h, w = scene.rgb.shape[:2]
     dets = parse_yolo_seg_labels(scene.labels, w, h)

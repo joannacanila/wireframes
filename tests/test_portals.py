@@ -12,10 +12,9 @@ from app.core.security import COOKIE, token_digest
 from app.models.orm import AdminSession, PoleLocation
 from tests.conftest import ADMIN, ORIGIN, jpeg_bytes, upload, wait_done
 
-ADMIN_ONLY_GET = ["/api/analysis", "/api/dashboard/map", "/api/dashboard/priority", "/api/dashboard/sensitivity",
-                  "/api/dashboard/summary", "/api/admin/overview", "/api/admin/queue", "/api/admin/models",
-                  "/api/admin/poles", "/api/admin/exports/manifest.csv", "/api/admin/exports/wires.csv",
-                  "/api/admin/exports/sites.pdf"]
+ADMIN_ONLY_GET = ["/api/dashboard/priority", "/api/admin/dashboard", "/api/admin/inspections", "/api/admin/audit",
+                  "/api/admin/queue", "/api/admin/models", "/api/admin/exports/manifest.csv",
+                  "/api/admin/exports/wires.csv", "/api/admin/exports/sites.pdf"]
 
 
 def pdf_text(content: bytes) -> str:
@@ -43,7 +42,10 @@ def test_field_user_can_screen_without_signing_in(anon, scene):
     aid = upload(anon, scene.rgb, scene.labels, pole_code="F-1")
     assert wait_done(anon, aid)["status"] == "complete"
     r = anon.get(f"/api/analysis/{aid}/result").json()
-    assert r["submitted_via"] == "field" and r["summary"]["level"] in {"low", "medium", "high"}
+    assert r["submitted_via"] == "field" and r["public"] is True and r["wires"]
+    # v2.20: the public view carries no scores, fit parameters, model names, configuration hash or timings
+    assert not {"summary", "telemetry", "parameters", "timings_ms", "ranking", "acquisition"} & set(r)
+    assert all("crs" not in w and "confidence" not in w and set(w["fit"]) <= {"endpoints", "sag_point", "chord_foot"} for w in r["wires"])
     assert anon.get(f"/api/analysis/{aid}/image").status_code == 200
     assert anon.get(f"/api/reports/{aid}/pdf").status_code == 200
     # but cannot delete, retry or enumerate
@@ -78,10 +80,10 @@ def test_login_logout_and_session_storage(anon):
     with anon.state.db.session() as s:
         stored = s.scalars(select(AdminSession.token_sha256)).all()
     assert token_digest(token) in stored and token not in stored  # only the hash is kept
-    assert anon.get("/api/admin/overview").status_code == 200
+    assert anon.get("/api/admin/dashboard").status_code == 200
     assert anon.post("/api/auth/logout").status_code == 204
     replay = TestClient(anon.app, headers=ORIGIN, cookies={COOKIE: token})
-    assert replay.get("/api/admin/overview").status_code == 401  # revoked server-side
+    assert replay.get("/api/admin/dashboard").status_code == 401  # revoked server-side
 
 
 def test_login_is_throttled(anon):
@@ -95,7 +97,7 @@ def test_expired_session_is_rejected(client):
     with client.state.db.session() as s:
         for row in s.scalars(select(AdminSession)):
             row.expires_at = datetime.now(UTC) - timedelta(minutes=1)
-    assert client.get("/api/admin/overview").status_code == 401
+    assert client.get("/api/admin/dashboard").status_code == 401
 
 
 def test_cross_site_writes_are_refused(client, scene):
@@ -122,13 +124,13 @@ def test_anonymous_uploads_are_rate_limited(anon, scene):
 
 
 def test_anonymous_upload_cannot_move_a_recorded_pole(client, anon, scene):
-    upload(client, scene.rgb, scene.labels, pole_code="P-9", barangay="Salitran", latitude=14.30, longitude=120.90)
+    upload(client, scene.rgb, scene.labels, pole_code="P-9", barangay="Salitran I", latitude=14.30, longitude=120.90)
     upload(anon, scene.rgb, scene.labels, pole_code="P-9", barangay="Elsewhere", latitude=10.0, longitude=100.0)
     with client.state.db.session() as s:
         from app.models.orm import Pole
         p = s.scalar(select(Pole).where(Pole.pole_code == "P-9"))
         loc = s.get(PoleLocation, p.id)
-        assert (p.barangay, loc.latitude) == ("Salitran", 14.30)
+        assert (p.barangay, loc.latitude) == ("Salitran I", 14.30)
     upload(client, scene.rgb, scene.labels, pole_code="P-9", latitude=14.31, longitude=120.91)
     with client.state.db.session() as s:
         assert s.get(PoleLocation, p.id).latitude == pytest.approx(14.31)  # an admin may correct it
@@ -165,9 +167,9 @@ def test_reviews_are_recorded_beside_scores_and_reach_the_pdf(client, scene):
     assert res["summary"]["level"] == "high"  # the computed level is never changed
     assert res["reviews"][-1]["override_level"] == "medium"
     text = pdf_text(client.get(f"/api/reports/{aid}/pdf").content)
-    assert "Overrode the risk level to MEDIUM" in text and "drip loop" in text
-    listed = client.get("/api/analysis?unreviewed=true").json()["items"]
-    assert aid not in {i["id"] for i in listed}
+    assert "Changed the risk level to MEDIUM" in text and "drip loop" in text
+    row = next(i for i in client.get("/api/admin/inspections").json()["items"] if i["id"] == aid)
+    assert row["review"] == "overridden" and row["override_level"] == "medium"
 
 
 def test_unreviewed_pdf_says_so(client, scene):
@@ -178,15 +180,15 @@ def test_unreviewed_pdf_says_so(client, scene):
 
 def test_pole_history_tracks_inspections(client):
     from app.devtools.synthetic import make_scene
+    aids = []
     for k in (0.25, 0.4, 0.55):  # the same pole photographed as its sag deepens
         sc = make_scene(seed=3, sag_scale=k)
-        wait_done(client, upload(client, sc.rgb, sc.labels, pole_code="H-1"))
-    h = client.get("/api/admin/poles/H-1").json()["history"]
-    assert len(h) == 3 and h[0]["max_crs"] < h[1]["max_crs"] < h[2]["max_crs"]
-    assert h[0]["max_sag_ratio"] < h[2]["max_sag_ratio"]
-    row = next(p for p in client.get("/api/admin/poles").json() if p["pole_code"] == "H-1")
-    assert row["inspections"] == 3 and row["trend_max_crs"] > 0
-    assert client.get("/api/admin/poles/NOPE").status_code == 404
+        aids.append(upload(client, sc.rgb, sc.labels, pole_code="H-1"))
+        wait_done(client, aids[-1])
+    crs = [client.get(f"/api/analysis/{a}/result").json()["summary"]["max_crs"] for a in aids]
+    assert crs[0] < crs[1] < crs[2]
+    h = client.get(f"/api/admin/inspections/{aids[-1]}/context").json()["history"]
+    assert [x["id"] for x in h] == aids[::-1]  # the inspection page lists every inspection of the pole, newest first
 
 
 def test_exports(client, scene):
@@ -200,7 +202,10 @@ def test_exports(client, scene):
     assert "rms_residual_px" in wires[0] and len(wires) == 1 + 10
     pdf = client.get("/api/admin/exports/sites.pdf?alpha=0.2&beta=0.3&gamma=0.5")
     text = pdf_text(pdf.content)
-    assert "MULTI-SITE PRIORITY REPORT" in text and "E-1" in text and "Professional review required" in text
+    assert "MULTI-SITE PRIORITY REPORT" in text and "E-1" in text and "Important Notice" in text  # technical
+    plain = pdf_text(client.get("/api/admin/exports/sites.pdf").content)  # v2.19 default: the dispatch report
+    assert "INSPECTION PRIORITY" in plain and "E-1" in plain and "Important Notice" in plain
+    assert "MSPI" not in plain and "Spearman" not in plain
     assert client.get("/api/admin/exports/sites.pdf?alpha=0.5&beta=0.5&gamma=0.5").status_code == 422
 
 
@@ -212,15 +217,11 @@ def test_models_panel_and_checkpoint_guard(client):
         assert r.status_code == 422 and r.json()["error"]["code"] == "checkpoint_rejected"
 
 
-def test_spectrum_and_queue(client, scene):
+def test_queue_reports_processed_analyses(client, scene):
     aid = upload(client, scene.rgb, scene.labels)
     wait_done(client, aid)
-    png = client.get(f"/api/admin/analyses/{aid}/spectrum.png")
-    assert png.status_code == 200 and png.content[:8] == b"\x89PNG\r\n\x1a\n"
     q = client.get("/api/admin/queue").json()
     assert q["depth"] == 0 and q["processed_since_start"] >= 1
-    ov = client.get("/api/admin/overview").json()
-    assert ov["poles"] >= 1 and sum(ov["poles_by_level"].values()) >= 1
 
 
 def test_live_sensitivity_baseline(client):
@@ -228,20 +229,12 @@ def test_live_sensitivity_baseline(client):
     for i, k in enumerate((0.5, 1.2, 1.8)):
         sc = make_scene(seed=i, sag_scale=k, clutter=2 + 5 * i)
         wait_done(client, upload(client, sc.rgb, sc.labels, pole_code=f"S{i}"))
-    base = client.get("/api/dashboard/sensitivity").json()
-    live = client.get("/api/dashboard/sensitivity?alpha=1&beta=0&gamma=0").json()
+    from app.services import sites  # the weight sensitivity printed in the technical priority report
+    with client.state.db.session() as s:
+        base = sites.sensitivity_payload(s, client.state.config)
+        live = sites.sensitivity_payload(s, client.state.config, baseline=(1.0, 0.0, 0.0))
     assert live["baseline"] == {"alpha": 1, "beta": 0, "gamma": 0} and len(live["grid"]) == 66
     cell = next(g for g in live["grid"] if (g["alpha"], g["beta"], g["gamma"]) == (1.0, 0.0, 0.0))
     assert cell["rho"] == pytest.approx(1.0)
     assert base["baseline"]["alpha"] == pytest.approx(1 / 3)
     _ = np  # numpy imported for parity with other test modules
-
-
-def test_overview_counts_each_pole_once_by_latest_inspection(client):
-    from app.devtools.synthetic import make_scene
-    for k in (0.25, 0.4, 0.62):  # medium, medium, high
-        sc = make_scene(seed=3, sag_scale=k)
-        wait_done(client, upload(client, sc.rgb, sc.labels, pole_code="ONE"))
-    ov = client.get("/api/admin/overview").json()
-    assert ov["poles"] == 1 and sum(ov["poles_by_level"].values()) == 1
-    assert ov["poles_by_level"]["high"] == 1 and len(ov["needs_review"]) == 1

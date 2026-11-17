@@ -15,8 +15,21 @@ from app.main import create_app
 
 
 @pytest.fixture(scope="session")
-def cfg():
+def shipped_cfg():
     return load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
+
+
+@pytest.fixture
+def cfg(shipped_cfg, request):
+    """The shipped configuration. Tests marked ``every_class_assessed`` check measurement mechanics on synthetic
+    scenes (all power lines, some spans touching the border): they keep the pre-v2.21 assessment policy (thesis
+    Table 1.2 cut-offs, every class compared with its reference, border spans measured); the v2.21 policy has its
+    own tests (tests/test_v221_ml.py)."""
+    if request.node.get_closest_marker("every_class_assessed"):
+        lv = shipped_cfg.crs.levels.model_copy(update={"minor_from": None, "critical_from": None})  # Table 1.2
+        crs = shipped_cfg.crs.model_copy(update={"assessed_classes": [], "require_both_endpoints": False, "levels": lv})
+        return shipped_cfg.model_copy(update={"crs": crs})
+    return shipped_cfg
 
 
 @pytest.fixture(scope="session")
@@ -83,3 +96,11 @@ def upload(client, rgb, labels: str | None = None, **data) -> str:
     r = client.post("/api/analysis/upload", files=files, data={k: str(v) for k, v in data.items()})
     assert r.status_code == 202, r.text
     return r.json()["id"]
+
+
+def sign_in_staff(c, st) -> None:
+    """v2.20: technical result fields are served to signed-in staff only; tests that read them sign in first."""
+    from scripts.create_admin import upsert_admin
+    upsert_admin(st.db, *ADMIN, display_name="Test Engineer")
+    r = c.post("/api/auth/login", json={"username": ADMIN[0], "password": ADMIN[1]})
+    assert r.status_code == 200, r.text
