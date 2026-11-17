@@ -1,0 +1,46 @@
+[
+ {
+  "image": "71b1ebd29f17454e91c3c408b68b66de",
+  "spans": 19,
+  "wall_ms": 50112.636124598794,
+  "stages_ms": {
+   "preprocess": 244.45000000000002,
+   "vni": 263.35,
+   "segmentation": 49505.3,
+   "geometry_and_risk": 93.95
+  }
+ },
+ {
+  "image": "249aa018bf554d488717fa76220cf434",
+  "spans": 10,
+  "wall_ms": 39676.04697949719,
+  "stages_ms": {
+   "preprocess": 91.2,
+   "vni": 62.6,
+   "segmentation": 39451.85,
+   "geometry_and_risk": 66.8
+  }
+ },
+ {
+  "image": "7e782ec6e9564c03bce3993292b5d40d",
+  "spans": 135,
+  "wall_ms": 31633.447187487036,
+  "stages_ms": {
+   "preprocess": 78.2,
+   "vni": 45.75,
+   "segmentation": 29984.15,
+   "geometry_and_risk": 1471.4499999999998
+  }
+ },
+ {
+  "image": "b3be5d7587ca48c09cf1991e2a493bc2",
+  "spans": 86,
+  "wall_ms": 21077.638812363148,
+  "stages_ms": {
+   "preprocess": 153.60000000000002,
+   "vni": 49.8,
+   "segmentation": 19908.65,
+   "geometry_and_risk": 947.15
+  }
+ }
+]

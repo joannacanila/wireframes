@@ -1,1364 +1,1099 @@
-# WIREFRAME — Thesis Reference (single consolidated document)
+# WIREFRAME Thesis Reference
 
-**A Vision-Based Diagnostic Framework for Urban Overhead Wire Infrastructure Risk Assessment**
+Technical reference for the WIREFRAME thesis manuscript. It describes the system as released (v2.23, 18 Nov 2026):
+what it computes, how, with which models and data, how well it performs, and what it cannot do. Every number is
+taken from a file in `docs/thesis/results/` or from the code and configuration in this repository; the source is
+named next to the number.
 
-Authors: Canila, Tubianosa, Villamar. State described: v2.16 (the current code on `main`).
+Contents
 
-This one file replaces every earlier report: the per-version Chapter 4 reports (v2.7–v2.15), the master
-manuscript, the synthesis, the v2.9 defence summary and the disclosure log. It is organised by topic rather than
-by version, so each part maps onto a section of the thesis:
+1. Overview
+2. System architecture
+3. Technology stack and versions
+4. Dataset
+5. Models
+6. Wire reconstruction pipeline
+7. Geometry and sag equations
+8. Assessment rules
+9. Backend, database and API
+10. User interface
+11. Reports
+12. Algorithmic complexity
+13. Runtime performance
+14. Evaluation
+15. Testing
+16. Security and data handling
+17. Limitations
+18. Reproducibility
+19. References
+20. Appendix: endpoint, schema and configuration inventory
 
-| Part | Use it for |
+---
+
+## 1. Overview
+
+WIREFRAME is a web application for screening overhead telecommunication and distribution wires from one
+ground-level photograph of a utility pole. For each photo it:
+
+1. finds the overhead wires at pixel level and separates them into individual strands;
+2. classifies each strand as a power distribution line, a telecom cable (including fiber drops) or an abandoned wire;
+3. fits a catenary to each strand's centerline and measures its sag ratio (sag / chord length);
+4. assesses the sag against a configured reference, but only where the measurement is valid (both span endpoints
+   visible, a confident wire type, a class with a configured reference);
+5. checks vegetation contact and the photo's reliability;
+6. returns a pole-level verdict, a plain-language result page and a PDF report, and stores the inspection for
+   staff (dashboard, records, map and dispatch routes).
+
+**Scope.** WIREFRAME is a screening aid. It does not certify that a span is safe, does not measure sag in metres,
+and its sag reference values are development placeholders until calibrated with a licensed engineer
+(Section 17). Every result page and report states that field verification by qualified personnel is required.
+
+**Deployment target.** A desktop or laptop browser (window width at least 1024 px); there is no mobile application.
+The server runs on one machine (developed and measured on an Apple M1 with 8 GB of unified memory).
+
+**Users.**
+
+| Role | Access |
 |---|---|
-| 1. What WIREFRAME is | Chapter 1 scope, Chapter 3 system overview |
-| 2. Data | Chapter 3 data and Chapter 4 data description |
-| 3. Models | Chapter 3 model design, Chapter 4 training |
-| 4. Method, stage by stage | Chapter 3 methodology (Algorithms 1–6, Eq. 1–18) |
-| 5. Results | Chapter 4 results tables |
-| 6. Version history | Chapter 4 development narrative |
-| 7. Everything tried and rejected | Chapter 4 discussion, defence questions |
-| 8. How the test split was used | Chapter 3 / 4 validity and integrity |
-| 9. The web application | Chapter 3 system design, Chapter 4 software results |
-| 10. Software verification | Chapter 4 testing |
-| 11. Deviations from Chapter III | Chapter 3 corrections to make in the manuscript |
-| 12. Limitations and open problems | Chapter 5 conclusions and recommendations |
-| 13. Reproduction | Appendix |
-| 14. Evidence files | Appendix (every number traces to a file) |
-
-**What is claimed:** a working, explainable screening prototype, measured honestly on a 145-photo dataset.
-**What is not claimed:** none of the Table 3.10 targets is met, and no result here validates the allowable sag
-limit δ_lim, which is still a development placeholder (0.040) awaiting the consulting engineer's reference ratings
-(hypothesis H3).
-
-**Hardware.** Every training, evaluation and latency run was executed locally on one **Apple Silicon M1 laptop
-with 8 GB of unified memory** (PyTorch MPS for the GPU; CPU and GPU share the 8 GB). No cloud or external GPU was
-used. In v2.13 the unit tests, the browser check and the documentation build were also run on a Windows 11 PC
-(CPU only); no Windows timing is reported as latency. The memory limit shaped the design: model size, batch size,
-one heavy process at a time, and latency figures from a fanless laptop that throttles under sustained load.
+| Field user (no account) | Field Screener: upload a photo, read the result, download the PDF for that inspection |
+| Inspector (account) | Admin portal: Dashboard, Inspections, inspection pages, Map & Dispatch, reviews, exports, assistant |
+| Administrator (account) | Everything an inspector can do, plus test-record management, location editing, technical exports, model and settings API |
 
 ---
 
-## 1. What WIREFRAME is
+## 2. System architecture
 
-A web application. A user uploads one ground-level photo of a utility pole. WIREFRAME finds every overhead wire,
-measures how far each wire section sags, flags vegetation touching the wires, and returns a plain-language
-screening result with a PDF report. It is a **screening** tool, not a safety inspection: every result must be
-reviewed by a qualified professional before action.
+```mermaid
+flowchart LR
+  subgraph Browser
+    FS[Field Screener<br/>/workspace]
+    AP[Admin portal<br/>/admin]
+  end
+  subgraph Server[FastAPI process]
+    API[REST API<br/>app/api]
+    Q[Analysis queue<br/>one worker]
+    P[Pipeline<br/>app/pipeline]
+    S[Services<br/>records, sites, reports]
+    DB[(SQLite<br/>var/wireframe.db)]
+    FILES[(var/uploads, renders,<br/>reports, backups)]
+  end
+  M[(models/<br/>weights)]
+  FS -->|upload, poll, result, PDF| API
+  AP -->|session cookie| API
+  API --> Q --> P
+  P --> M
+  P --> S
+  API --> S
+  S --> DB
+  S --> FILES
+```
 
-**Website only.** It runs in laptop and desktop browsers (window ≥ 1024 px). There is no mobile app and no phone
-layout; below 700 px the page asks for a computer.
+**Request path of one inspection.** `POST /api/analysis/upload` validates the file, strips GPS, stores the image
+under a random name, creates the `analyses` row with status `queued` and enqueues it (`app/services/queue.py`). One
+worker thread runs the pipeline (`app/pipeline/runner.py: run_analysis`) and persists detections, flags and timings
+(`app/services/analysis.py`). The browser polls `GET /api/analysis/{id}` and then reads
+`GET /api/analysis/{id}/result`. PDFs are built on request (`app/services/report_pdf.py`).
 
-### 1.1 The pipeline, end to end (current state)
+**Pipeline stages** (`run_analysis`; timings are stored per stage in `timings_json`):
 
-1. **Ingestion.** Every readable image is accepted and normalised to 8-bit RGB (EXIF rotation applied; 16-bit,
-   alpha, CMYK, palette and greyscale converted) and capped at 2048 px on the long side. GPS is removed at the JPEG
-   segment level, so the analysed pixels are exactly the uploaded pixels. Upload limit 64 MB. Tiny (< 320 px) or
-   blank photos are accepted but graded *Retake*.
-2. **Pre-processing (Algorithm 1).** A 1024 px letterbox (grey padding 114) for segmentation, with measured,
-   triggered enhancement: edge-preserving denoise (noisy or JPEG-blocked photos), CLAHE only for low contrast or
-   glare (not for darkness), blur-adaptive unsharp masking. A separate 640 px grey path for the VNI, never
-   enhanced.
-3. **Segmentation** (three models; Part 3):
-   - **WireNet-R34** labels every wire pixel (power, telecom/fiber, abandoned) at full resolution, averaging the
-     photo and its mirror image (flip test-time augmentation). For dark photos it also reads the photo with
-     lightness inverted and keeps whichever finds more wire (dual polarity).
-   - **YOLO11s-seg** outlines vegetation.
-   - **UperNet-ConvNeXt-Tiny** (pretrained scene parser) marks road and pavement; wire traces lying mostly on the
-     ground are removed and listed as "ground structures ignored".
-4. **Span assembly.** WireNet's class map is skeletonised, split at junctions, re-joined through crossings,
-   joined across short collinear gaps, and turned into wire sections ("spans"). Gap bridges are recorded as
-   *inferred* geometry, never presented as detections.
-5. **Chapter III mathematics, unchanged:** Zhang–Suen centreline with spur pruning (Algorithm 4);
-   Levenberg–Marquardt catenary fit y = a·cosh((x − b)/a) + c (Eq. 6); sag ratio δ/L (Eq. 8); allowable sag δ_lim
-   (Eq. 9); CRS = min(10, 10·(δ/L)/δ_lim·w) (Eq. 10) with bands Low < 3 ≤ Medium ≤ 6 < High (Table 1.2); VNI from a
-   Hann-windowed 2-D FFT (Eq. 1–4); MSPI ranking (Eq. 11). CRS is computed only for chords ≥ 100 px (precision
-   gate).
-6. **Interpretation layer** (reads CRS, changes none of it):
-   - **Pole verdict:** AT RISK – HIGH / AT RISK – MODERATE / NOT AT RISK / INCONCLUSIVE – RETAKE PHOTO. A sag band
-     counts only when more spans are in it than measurement noise explains (one-sided binomial test, p0 = 0.050 /
-     0.090, α = 0.05). Vegetation contact rules are absolute.
-   - **Reliability grade:** A / B / C / Retake, from R = 1 − (U + D)/2, with a plain-language cause and a
-     photometric glare gate. A Retake photo never reads NOT AT RISK.
-7. **Outputs:** the Field Screener results page (Part 9), a PDF report with a three-panel diagnostic figure, the
-   admin command centre (rankings, map, reviews, exports), and a batch street-audit CLI.
+```mermaid
+flowchart TD
+  A[Decode, EXIF orientation,<br/>quality checks] --> B[Letterbox 1024 px,<br/>triggered enhancement]
+  A --> V[VNI: 640 px grey,<br/>Hann window, FFT]
+  B --> Y[YOLO11s-seg<br/>vegetation, proposals]
+  B --> W[WireNet ensemble x3<br/>flip TTA, dual polarity]
+  B --> PD[Pole detector<br/>YOLO11n, context only]
+  W --> SX[Strand extraction<br/>skeleton, junctions, gap bridging]
+  SX --> TH[Strand type head<br/>DINOv2-small + MLP]
+  B --> SG[Scene gates<br/>UperNet-ConvNeXt-T]
+  TH --> G[Centerline, catenary fit,<br/>sag ratio]
+  SG --> G
+  G --> R[Validity gates, CRS,<br/>severity level]
+  Y --> H
+  R --> H[Pole verdict, reliability grade,<br/>retake guardrail]
+  V --> H
+  H --> O[Persist, overlay, report]
+```
 
-### 1.2 What the user sees (v2.15)
+**Code layout.**
 
-Overall assessment in plain words (never a safety certification); High / Moderate / Low counts; how many sections
-could be assessed; the photo with detected wires (estimated gaps dashed); a list of wire sections with plain
-findings; *What to do next*; *Photo limitations*; technical diagnostics collapsed for administrators. Part 9 has
-the full description.
+| Path | Contents |
+|---|---|
+| `app/main.py` | Application factory, static pages, health and config endpoints, security headers |
+| `app/api/` | Routers: `analysis`, `reports`, `auth`, `admin`, `dashboard`, `assistant` |
+| `app/pipeline/` | Image processing, models, geometry and assessment (no web or database code) |
+| `app/services/` | Persistence, queue, records, sites and priority, PDFs, plain-language text, barangay and coordinate validation |
+| `app/models/` | SQLAlchemy ORM and database setup |
+| `app/core/` | Settings, analysis configuration, security, state, model-weight provisioning |
+| `app/assistant/` | Documentation assistant (intent routing, live answers, optional Claude provider) |
+| `app/web/` | HTML pages, ES-module JavaScript and CSS (no build step) |
+| `config/wireframe.yaml` | Every analysis parameter (Section 20.3) |
+| `ml/` | Training, evaluation, benchmark, dataset curation, research experiments |
+| `scripts/` | Administration and verification tools |
+| `tests/` | pytest suite |
 
 ---
 
-## 2. Data
+## 3. Technology stack and versions
 
-### 2.1 The dataset
+Versions installed in the measurement environment (`.venv`, 18 Nov 2026). Minimum versions are declared in
+`requirements.txt` (runtime), `requirements-dev.txt` (tests and lint) and `requirements-ml.txt` (training).
+
+| Component | Version | Role |
+|---|---|---|
+| Python | 3.13.2 | Runtime (3.11 or later supported) |
+| FastAPI | 0.162.4 | HTTP API |
+| Uvicorn | standard extras | ASGI server |
+| Pydantic, pydantic-settings | 2.x | Request validation, settings |
+| SQLAlchemy | 2.1.8 | ORM over SQLite |
+| NumPy | 2.5.4 | Array computation |
+| SciPy | 1.x | Levenberg-Marquardt fit, Brent root finding |
+| OpenCV (headless) | 5.0.0 | Image processing, distance transform, connected components |
+| scikit-image | 0.26.0 | Zhang-Suen skeletonisation (OpenCV contrib `ximgproc` is used instead when installed) |
+| PyTorch | 2.15.0 (MPS backend) | Neural network inference |
+| segmentation-models-pytorch | 0.6.0 | WireNet U-Nets |
+| Ultralytics | 8.4.210 | YOLO11 segmentation and detection |
+| transformers | 4.57.6 | DINOv2-small, UperNet-ConvNeXt-T |
+| ReportLab | 5.1.0 | PDF reports |
+| Pillow | 11 or later | Image I/O, badge rendering |
+| Leaflet, Leaflet.markercluster | browser libraries | Map and clustering |
+| pytest, ruff, pypdfium2, Playwright | development | Tests, lint, PDF text checks, browser checks |
+| Hardware | Apple M1, 8 GB unified memory | Development and all measurements |
+| Operating system | macOS 26.0.1 | |
+
+Base maps: OpenStreetMap standard tiles (Light), Esri World Dark Gray Base with reference labels (Dark), Esri World
+Imagery (Satellite); none needs an API key. If a tile provider fails, the map falls back to OpenStreetMap.
+
+---
+
+## 4. Dataset
+
+### 4.1 Wire dataset
 
 | Item | Value |
 |---|---|
-| Dataset | Wireframes-Prelabelled-Datasets (team export, Roboflow Universe, workspace `ravens-workspace-g6fye`), export of 2026-11-14 12:02 GMT, "No pre-processing" |
+| Source | Team-labelled export "Wireframes-Prelabelled-Datasets" (Roboflow), export of 14 Nov 2026, no pre-processing |
 | Licence | CC BY 4.0 |
-| Photos | 145: train 102 / validation 22 / test 21, balanced by wire-density tertile (25.7 and 34 instances per photo) |
-| Classes | `Vegetation`, `abandoned-wire`, `power-distribution-lines`, `telecom-cable` (fiber optic drops are labelled `telecom-cable`) |
-| Why this source | The only one with span-level polygons: 11–12% of power and telecom polygons are fragments, against 72–86% in the 965-image v1/v2i exports |
+| Photos | 145 ground-level photos of utility poles |
+| Split | train 102 / validation 22 / test 21, balanced by wire-density tertile |
+| Classes | `Vegetation`, `abandoned-wire`, `power-distribution-lines`, `telecom-cable` (fiber drops are labelled telecom) |
+| Labels | Polygon masks at span level |
+| Preparation | Letterboxed to 1024 x 1024 with grey (114) padding, the same as at inference (`ml/curate.py`) |
 
-**Curation audit** (`results/dataset_audit_v27.json`): 0 excluded for viewpoint, 0 duplicates, 0 corrupt label
-lines, 0 unmapped labels. All photos letterboxed to 1024 × 1024 with grey (114) padding, as at inference. 145
-distinct native sizes, aspect ratios 0.76–3.87.
+Curation audit (`results/dataset_audit_v27.json`): 0 excluded for viewpoint, 0 duplicates, 0 corrupt label lines,
+0 unmapped labels; 145 distinct native sizes, aspect ratios 0.76 to 3.87.
 
-| Class | Instances | Median extent | Fragment share | Median width at 1024 px |
-|---|---|---|---|---|
-| Vegetation | 220 | – | – | 7.1 px |
-| abandoned-wire | 27 | 0.17 | 70% | 8.7 px |
-| power-distribution-lines | 1,801 | 0.52 | 11.5% | 2.1 px |
-| telecom-cable | 2,441 | 0.47 | 10.6% | 2.1 px |
+| Class | Instances | Fragment share | Median width at 1024 px |
+|---|---|---|---|
+| Vegetation | 220 | n/a | 7.1 px |
+| abandoned-wire | 27 | 70 % | 8.7 px |
+| power-distribution-lines | 1,801 | 11.5 % | 2.1 px |
+| telecom-cable | 2,441 | 10.6 % | 2.1 px |
 
 Test split labelled instances: power 253, telecom 361, abandoned 7, vegetation 38.
 
-### 2.2 Earlier exports (history)
+**Use of the splits.** Training used only the train split. All model and threshold selection used the validation
+split. The test split was evaluated after the configuration was frozen; the released configuration was scored on
+test once more as a reproduction check (Section 14).
 
-- **v1 export (v2.4):** 965 photos resized to 432 × 432 "Stretch" (distorting catenaries); 69% / 84% of
-  power / telecom polygons were fragments, 0 fiber-optic examples, 103 dead-wire instances. Unusable for sag
-  measurement, which needs span-length masks.
-- **2026-11-14 99-photo export (v2.5–v2.6):** span-level, split 69 / 15 / 15. Superseded by the 145-photo export.
+**Known label gaps.** Dense bundles and low isolated wires are often unlabelled, so measured precision is a lower
+bound (Section 14.1).
 
-### 2.3 External datasets screened and rejected
+### 4.2 Pole dataset (detector only)
 
-The search (Kaggle, Roboflow Universe, GitHub, Zenodo, Mendeley Data, IEEE DataPort; 2026-11-14, repeated
-2026-11-15) required five gates: polygon or pixel masks; ground-level viewpoint; span-level labels; an allowed
-licence; classes that map to the four WIREFRAME classes. **None passed** (register: `ml/sources.yaml`).
+No WIREFRAME photo has pole labels. The pole detector was trained and evaluated on public data
+(`ml/poles/lvis_prepare.py`, `ml/poles/build_v218.py`): LVIS v1 `telephone_pole` boxes (CC BY 4.0 annotations on COCO
+images, which stay local under their Flickr licences) plus 283 LVIS images verified to contain no telephone pole
+(43 of them with confusable structures such as lamp posts and masts). Train 938 images (2,412 boxes), validation 166
+(408), test 197 (516). The detector was initialised from a YOLO11n trained on the Street View pole set of Zenodo
+record 20091961 (CC BY 4.0).
 
-| Dataset | Reason rejected |
-|---|---|
-| Rural distribution power line vegetation (Zenodo 18392898) | Files restricted |
-| SEwire "wire" (Roboflow) | Classes do not separate power from telecom; not inspectable without an API key |
-| TTPLA | Aerial drone view of transmission towers |
-| VEPL (Zenodo 7800234) | Top-down orthomosaic tiles |
-| WireSegHR (CVPR 2023) | One generic wire class; no licence stated |
-| Electric Wires Dataset (Kaggle) | Synthetic chroma-key images |
-| OHL-UK (BMVC 2025) | Labels poles and signs only |
-| lonlonago LabelMe sets | Commercial; no licence |
-| Merged Public Power Cable Dataset (2025) | UAV / aerial |
-| Railway OCS conductor segmentation (2025) | Railway catenary |
-| Street-view power-line classification (arXiv 2105.03804) | Classification only; data not released |
+### 4.3 Location reference data
 
-### 2.4 v2.16 research inventory: poles and street-level infrastructure (searched 2026-11-16)
+`app/data/barangays_cavite.json`: 829 barangays of Cavite province from the Philippine Standard Geographic Code
+(PSGC), used to validate and normalise the barangay of every pole (`app/services/barangay.py`).
 
-| Name | Source | Licence | Task / labels | Perspective | Decision |
-|---|---|---|---|---|---|
-| Annotated Google Street View dataset for pole and tree detection | Zenodo 20091961 | CC BY 4.0 as published; images are Google Street View captures | 3,103 images (640 × 640), YOLO boxes: `poste` 5,969 (utility, lamp and sign posts), `arvore` 3,047 | Street level, Curitiba (Brazil), concrete distribution poles similar to Philippine ones | **Used** (poles only), research use; neither images nor trained weights are redistributed by this repository |
-| Utility Poles (Zac) | Roboflow Universe `zac-ogogt/utility-poles-kcumt` | CC BY 4.0 (v2.16 reading; not re-verified in v2.18: the page refuses automated access, HTTP 403) | ~380 images, boxes | Street level | Not used: needs a Roboflow account / API key; licence to be re-checked in a browser before use |
-| Utility Pole v7 (Yue-Hung) | Roboflow Universe `yue-hung/utility-pole-5j6dp` | CC0 (v2.16 page metadata; not re-verified in v2.18, HTTP 403) | 511 images, boxes | Street level | Not used: needs a Roboflow account / API key |
-| OHL-UK wooden pole and sign corpus | arXiv 2608.04061; University of Strathclyde, DOI 10.15129/df7cc895-1091-4cd6-bf2c-7b5ebd203e55 | CC BY 4.0 (dataset page, checked 2026-11-17); images are Google Street View captures | 4,570 images (640 × 640; 2,920 / 730 / 920), 6,773 wooden-pole and 1,805 warning-sign boxes, masks, lean angle, COCO JSON | Street View, UK suburban / rural | Released (`OHL-UK.zip`, 3.41 GB) but the file server refuses automated download (HTTP 403); not used in v2.18. Paper: YOLOv8 test F1 0.93 on its own Street View test split (not comparable to kerbside photos) |
-| Mapillary Vistas | Mapillary research | Research licence agreement | 25,000 images, 66+ classes incl. `object--support--utility-pole` | Street level, worldwide | Evaluate further: licence terms and size (≈ 25 GB) |
-| TTPLA | github.com/r3ab/ttpla_dataset | Unconfirmed (Apache 2.0 per a third-party catalogue) | 1,100 aerial images, towers + lines | UAV / aerial | Rejected: transmission towers seen from the air |
-| ADE20K scene parser (UperNet-ConvNeXt-T) | Hugging Face `openmmlab/upernet-convnext-tiny` | MIT | 150 classes incl. pole, streetlight, bridge, tree | Street level | **Used** (already loaded for the ground gate): structure-edge and vegetation gates, pole regions |
+### 4.4 Privacy
 
-The 145-photo team set has no pole labels, so pole detection is evaluated on the held-out street sequences of the
-Zenodo set, not on WIREFRAME photos.
-
-### 2.5 Privacy
-
-GPS is stripped from every stored photo; coordinates live only in a separate table and only when the user adds
-them. Pole coordinates, rankings and the multi-pole map are admin-only (§3.14.4). The curation privacy screen
-fails closed (every image listed for manual review when no face detector is available).
+GPS metadata is removed from every stored photo at the JPEG segment level, so the analysed pixels are exactly the
+uploaded pixels. Coordinates are stored only when a user enters them, in a separate table (`pole_locations`), and are
+visible only to signed-in staff. The dataset curation tool screens for faces and licence plates and fails closed
+(every image is listed for manual review when no detector is available).
 
 ---
 
-## 3. Models
+## 5. Models
 
-### 3.1 Models in the running system
+The model set is frozen. No model was trained or changed for this release.
 
-| # | Model | File | Role |
-|---|---|---|---|
-| 1 | **WireNet-R34**: U-Net, ResNet-34 encoder (ImageNet-pretrained), 5 output classes, full-resolution output, 24.4 M parameters | `models/wirenet-r34.pt` (SHA-256 prefix `ab2353c7`, frozen since v2.7) | Wire pixels (power, telecom, abandoned). Everything measured comes from it |
-| 2 | **YOLO11s-seg** fine-tuned at 1024 px (10.1 M parameters; run `yolo11s-seg-1024-mps-b1-cont`). The file keeps the name `wireframe-yolo11m-seg.pt` because that is the path the server loads; YOLO11m-seg ran out of memory on the 8 GB M1 | `models/wireframe-yolo11m-seg.pt` | Vegetation regions only (its wire masks are capped by a 1/4-resolution grid, §5.2) |
-| 3 | **UperNet + ConvNeXt-Tiny**, ADE20K-pretrained, 60 M parameters, MIT licence; not trained by the team | Downloaded: `openmmlab/upernet-convnext-tiny` | Ground gate: road / sidewalk / floor / earth / path / grass / field / sand / dirt track / runway / rug |
+### 5.1 Models loaded by the released configuration
 
-### 3.2 Trained but not shipped
-
-| Model | File | Status |
-|---|---|---|
-| U-Net, MiT-B1 encoder (16.4 M) | `models/v212_mitb1.pt` (`f595ef68`) | Part of the three-model fusion, not shipped (latency) |
-| U-Net, ConvNeXt-Tiny encoder | `models/v212_convnext_t.pt` (`9633cee8`) | Same |
-| Fusion recipe 0.25 R34 + 0.5 MiT-B1 + 0.25 ConvNeXt | `models/v212_ensemble.json` | Opt-in: set `segmentation.wirenet_weights` to this file |
-
-Each v2.12 checkpoint has `-best-tolerant` and `-last` variants and an `.arch.json` sidecar so the app can load it.
-
-**Why the fusion is off:** 4.71 s median per photo (5.47 s on the dense pole) against R34's 1.75 s and a 3.0–3.5 s
-limit on the M1; its validation gain (0.0397 → 0.0537) is probable but not established (bootstrap interval
-includes zero); the faster single-pass variant would require re-deriving p0 and the reliability grade. The team
-chose "keep R34, document the fusion".
-
-### 3.3 Training
-
-**WireNet-R34 (v2.7).** 102 training photos, 1024 letterbox, 512² random crops (80% centred on a wire). Loss:
-class-weighted cross-entropy + soft Dice + clDice. AdamW, one-cycle LR. 40 epochs, 2.63 h on MPS, best epoch 29.
-Blur and contrast augmentations (Albumentations). Validation tolerant pixel IoU: power 0.525, telecom 0.418.
-
-**YOLO detectors.**
-- v2.6: YOLO11s-seg at 640, 30 epochs, 1.2 h (best epoch 12). Validation mask mAP50 0.086, all from Vegetation;
-  every wire class AP 0.
-- v2.7: YOLO11s-seg at 1024, batch 1 with gradient accumulation to 64; 16 epochs (early stop on a fluke epoch-1
-  best), then 11 more; best at global epoch 22. This is the shipped vegetation model; it is under-trained.
-- YOLO11m-seg: out of memory at batch 4 even at 640 px on the 8 GB M1.
-
-**v2.12 backbones** (same recipe as R34, batch 2 because of memory; full validation after every epoch):
-
-| Model | Epochs | Wall time | Best epoch | Validation tolerant IoU power / telecom |
+| Model | File | Parameters | Input | Role |
 |---|---|---|---|---|
-| WireNet-R34 (reference) | 40 (batch 4) | 2.63 h | 29 | 0.525 / 0.418 |
-| MiT-B1 U-Net | 40 | 4.66 h | 32 | 0.543 / 0.404 |
-| ConvNeXt-Tiny U-Net | 20 (40 would take ~7 h) | 3.39 h | 16 | 0.540 / 0.415 |
+| WireNet-R34: U-Net, ResNet-34 encoder, 5 classes | `models/wirenet-r34.pt` | 24.4 M | 1024 x 1024 | Ensemble member |
+| WireNet-MiT-B1: U-Net, Mix Transformer B1 encoder | `models/v212_mitb1.pt` | 16.4 M | 1024 x 1024 | Ensemble member |
+| WireNet-ConvNeXt-T: U-Net, ConvNeXt-Tiny encoder | `models/v212_convnext_t.pt` | 31.9 M | 1024 x 1024 | Ensemble member |
+| Ensemble recipe (equal weights) | `models/v217_ensemble.json` | n/a | n/a | Probability fusion of the three members |
+| YOLO11s-seg, fine-tuned (file name kept for compatibility) | `models/wireframe-yolo11m-seg.pt` | 10.1 M | 1024 | Vegetation masks and wire proposals |
+| YOLO11n pole detector, fine-tuned | `models/poles-yolo11n-v218.pt` | 2.6 M | 640 | Pole boxes, context only |
+| DINOv2-small (frozen) | `models/hf/dinov2-small` | 22.1 M | 1008 x 1008 (72 x 72 patches) | Features for the strand type head |
+| Strand type head: 2-layer MLP | `models/strand_head_v217.pt` (+ `.json` statistics) | 56 -> 32 -> 1 | 24 hand features + 32 PCA dimensions of DINOv2 | Power vs telecom per strand |
+| UperNet-ConvNeXt-T, ADE20K (not trained by the team) | `models/hf/upernet-convnext-tiny` | 60.2 M | 384 px | Scene gates (ground, structure edges, vegetation check) |
 
-Backbone probe on the M1 (one training step, batch 4 × 512²; one 1024² inference): R34 0.92 s / 0.27 s; MiT-B1
-1.15 s / 0.46 s (2.4 GB); ConvNeXt-T 2.11 s / 0.60 s (3.6 GB); HRNet-W18 2.01 s / 0.55 s (not trained); MiT-B2 out of
-memory; SegFormer-B2 2.31 s inference alone (rejected).
+Parameter counts were computed from the loaded weights. The WireNet output classes are background, abandoned-wire,
+power-distribution-lines, telecom-cable and vegetation.
 
-**Abandoned wire cannot be learned.** 27 instances in all (14 train in 7 photos, 6 validation, 7 test), 0.033% of
-training pixels; a visual audit found only about a third are tight wire traces. Label tightening, 35% oversampling,
-copy-paste, procedural hanging ends, focal loss and logit adjustment all raised recall only by labelling ordinary
-wires as abandoned (precision ≤ 0.04 at every setting). Requirement: several hundred tightly traced instances from
-a few hundred photos.
+### 5.2 Training (historical record, not repeated)
 
-**Pretrained components:** YOLO11 (Ultralytics 8.4, AGPL-3.0), ResNet-34 (torchvision / smp, BSD-3 / MIT),
-Albumentations 2.0.8 (MIT), UperNet-ConvNeXt-T (MIT). SAM 2.1 (Apache-2.0) was benchmarked only.
+| Model | Recipe |
+|---|---|
+| WireNet members | 102 training photos at 1024 letterbox, 512 x 512 random crops (80 % centred on a wire); loss = class-weighted cross-entropy + soft Dice + clDice; AdamW with a one-cycle schedule; blur and contrast augmentations (Albumentations); no vertical flip or rotation (an inverted catenary is an arch). R34: 40 epochs, best 29, 2.63 h on MPS. MiT-B1: 40 epochs, best 32, 4.66 h. ConvNeXt-T: 20 epochs, best 16, 3.39 h |
+| YOLO11s-seg | 1024 px, batch 1 with gradient accumulation to 64, best at epoch 22; YOLO11m-seg ran out of memory on the 8 GB M1 |
+| Strand type head | Stacked on validation strands plus train strands (the members' output on their own training photos is unrealistically clean); a strand is a training case only when 50 % or more of its skeleton lies on a labelled power or telecom wire; validation figures for the head are leave-one-photo-out |
+| Pole detector | YOLO11n from the Street View checkpoint, 50 epochs, rotation augmentation of 5 degrees; threshold 0.25 chosen on validation |
+
+Abandoned wire cannot be learned from 27 instances: every attempt (oversampling, copy-paste, focal loss, logit
+adjustment) raised recall only by labelling ordinary wires as abandoned (precision at most 0.04).
+
+### 5.3 Model provisioning
+
+Weights are not in the code history. They are published on the repository's `model-weights` branch;
+`app/core/weights.py` downloads any missing file in a background thread on first start, checks size and SHA-256,
+joins files published in parts, installs atomically and never overwrites an existing file.
+`WIREFRAME_AUTO_DOWNLOAD=0` disables downloads. Until the weights are present the screener runs in validation mode,
+and an upload without reference polygons is refused with HTTP 503 before anything is stored: there is no mock
+detector.
 
 ---
 
-## 4. Method, stage by stage
+## 6. Wire reconstruction pipeline
 
-### 4.1 Pre-processing and enhancement
+### 6.1 Ingestion and pre-processing (`app/pipeline/preprocess.py`, `enhance.py`)
 
-| Step | Trigger | Notes |
+- Every readable image is converted to 8-bit RGB (EXIF orientation applied; 16-bit, alpha, CMYK, palette and grey
+  images converted) and capped at 2048 px on the long side. Upload limit 64 MB (`WIREFRAME_MAX_UPLOAD_MB`).
+- Photos under 320 px on the short side, or blank, are accepted but graded Retake.
+- Segmentation input: letterbox to 1024 px with fill 114. Enhancement runs only when its trigger fires: bilateral
+  denoise for Immerkaer noise sigma >= 3 or JPEG blockiness >= 1.3; CLAHE on L* for low contrast (std of L <= 12)
+  or overexposure (share of L > 97 at least 0.25), never for darkness; blur-adaptive unsharp mask for Laplacian
+  variance <= 60.
+- VNI input: a separate 640 px grey path with a fixed 5 x 5 Gaussian, never enhanced, so VNI stays comparable.
+
+### 6.2 Segmentation (`app/pipeline/wirenet.py`, `segment.py`)
+
+- **WireNet ensemble.** The three members run one at a time on the photo and on its mirror image; the six softmax
+  maps are averaged (`_probs_lowmem`). This is arithmetically the fused module and keeps peak GPU memory near one
+  member's (Section 13.4).
+- **Dual polarity.** For a photo with mean L* <= 40 the ensemble also runs on the photo with L* inverted (chroma
+  kept); the inverted result is used when it finds at least 1.2 times the wire pixels. Flag `polarity_inverted`.
+- **Wire mask.** A pixel is wire when P(any wire class) >= 0.4 (`span_wire_tau`), not only when a wire class wins
+  the argmax; this keeps faint cables whose probability is split between power and telecom.
+- **YOLO11s-seg** supplies vegetation masks (confidence >= 0.20, NMS IoU 0.45) and coarse proposals.
+- **Pole detector** supplies pole boxes (confidence >= 0.25) for display and endpoint context. It never creates or
+  joins a wire (`pole_occluder_gap: 0`).
+
+### 6.3 Strand extraction (`app/pipeline/wire_instances.py`)
+
+Spans are built once on the union of the wire classes, so each physical strand has one class:
+
+1. Wire mask components under 30 px are removed; the mask is skeletonised (Zhang-Suen).
+2. Junction pixels (3 or more skeleton neighbours) are removed; junction points within 5 px count as one crossing.
+3. Pieces meeting at a crossing are re-joined when their end directions agree within 35 degrees, straightest pair
+   first. Pieces shorter than 15 px are dropped before joining.
+4. **Gap bridging.** Two span ends a and b are joined when |b - a| <= 70 px, the end tangents are opposed within 35
+   degrees, the gap continues both tangents within 35 degrees, and the lateral offset is at most 15 px. Tangents come
+   from the 12 skeleton points nearest each end. Candidate pairs are evaluated vectorised and accepted nearest first
+   with union-find, each end used once. The bridge is drawn 2 px wide so the fit runs through it.
+5. Stitched spans shorter than 90 px are dropped.
+6. **Pixel ownership.** Each mask pixel is assigned, by Euclidean distance transform, to the nearest span within its
+   own connected mask blob, so a neighbouring cable is not painted into a span.
+7. **Provenance.** Pixels added by bridging were never labelled wire by the model. The API reports observed and
+   inferred pixels per span, and the viewer draws inferred gaps dashed ("Estimated, not detected"). The bridge stays
+   in the measurement.
+
+### 6.4 Strand type (`app/pipeline/strand_head.py`)
+
+For each strand the head reads 24 hand-crafted features (summed fused class evidence, mean P(wire) and entropy,
+length, straightness, sag ratio, orientation, width, height in the photo, share of strands above it, darkness against
+a local ring, colour, local texture) and DINOv2-small patch features pooled along the skeleton and projected to 32 PCA
+dimensions. Features are standardised with the stored training statistics and passed to a 2-layer MLP
+(56 -> 32 -> 1) that outputs P(telecom). The abstention threshold is 0.5, so every power or telecom strand receives a
+type. Strands whose evidence is mostly abandoned-wire keep the pixel rule and are typed "uncertain" when the top
+class holds under 90 % of the evidence. The head never removes a strand.
+
+### 6.5 Scene gates (`app/pipeline/scene.py`)
+
+UperNet-ConvNeXt-T parses the scene at 384 px (ADE20K classes). The gates fail open, with a flag, if the parser cannot
+load.
+
+| Gate | Rule | Effect |
 |---|---|---|
-| Edge-preserving denoise (bilateral, d = 5, σ_space = 3) | Immerkær noise σ ≥ 3, or JPEG blockiness B ≥ 1.3 | B = mean step across 8-px block boundaries ÷ mean step inside blocks |
-| CLAHE on L* (clip 2.0, 8×8) | Low contrast or glare; **not** darkness | The v2.7 darkness trigger hurt low light (0.464 vs 0.504) and was removed in v2.8 |
-| Blur-adaptive unsharp mask | Laplacian variance ≤ 60 | A fixed 1 px radius returned blurred photos unchanged (gain 1.0); adaptive radius gives 1.7–2.1 |
-| VNI grey path | always 640 px, 5×5 Gaussian, never enhanced | Keeps VNI comparable across photos |
+| Ground | 50 % or more of a span's pixels on road, sidewalk, floor, earth, path, grass, field, sand, dirt track, runway or rug | Span listed as suppressed ("Lies on the road or pavement"), never scored |
+| Structure edge | Different ADE20K classes on the two sides of a span along 60 % or more of its length | Span listed as suppressed (outline of a flyover, canopy or sign) |
+| Vegetation check | A YOLO vegetation region with under 40 % of its area on tree, grass, plant or palm | Region suppressed (no vegetation contact from it) |
 
-Motion coherence (v2.9) is measured on soft photos to name "camera shake" in the reliability reason: per 128 px tile
-the whitened tensor M = J_c^{−1/2} J_f J_c^{−1/2} cancels content orientation; coherence = |mean doubled-angle
-anisotropy vector|; motion when soft, coherence ≥ 0.16 and clipped share < 0.25. It separates 22/22 synthetic motion
-photos from 22/22 defocus and 3/3 soft clean photos. It does not change processing (routing was rejected, Part 7).
+### 6.6 Centerline
 
-### 4.2 Segmentation
+Each kept strand's mask is thinned again (vectorised Zhang-Suen) and turned into an 8-connected pixel graph; spurs
+shorter than 30 px are pruned iteratively and the longest path is found by double breadth-first search. With fewer
+than 20 points the status is `too_short`. The catenary fit and sag are defined in Section 7.
 
-- **WireNet + flip TTA:** plain and mirrored probability maps averaged (v2.8).
-- **Dual polarity (v2.11):** for a photo with mean L* ≤ 40, WireNet also runs on the photo with L* inverted (chroma
-  kept, padding at its training value); the inverted pass is used when it finds ≥ 1.2× the wire pixels. On
-  validation the populations separate cleanly: daytime ratio ≤ 0.92, synthetic night ≥ 1.53; the rule switches
-  22/22 night and 0/176 daytime cases. Flag `polarity_inverted`.
-- **Vegetation:** YOLO11s-seg at 1024, `conf_min` 0.20 (chosen on validation for best strict mean F1).
-- **Ground gate (v2.13):** run only when some span's bounding box reaches the lower half of the photo. The scene
-  parser runs at 384 px (UperNet's pyramid pooling needs a feature map divisible by 6 on MPS: 384/32 = 12), 0.26 s,
-  agreeing with 576 px on 98.8% of pixels. A span with ≥ 50% of its pixels on ground classes is not scored; it is
-  returned in `suppressed_spans` with the reason "Lies on the road or pavement: a kerb, manhole or pavement edge, not
-  an overhead wire". It fails open (`ground_gate_unavailable`) if the parser cannot load.
+### 6.7 Vegetation Noise Index (`app/pipeline/vni.py`)
 
-### 4.3 Span assembly (`app/pipeline/wire_instances.py`)
+The 640 px grey image, mean removed, is multiplied by a periodic Hann window and transformed by a 2-D FFT. VNI_raw is
+the share of spectral power beyond r_L = 0.15 * min(M, N) / 2; it is scaled between the training quantiles
+q01 = 0.034 and q99 = 0.243 and clipped to [0, 1]. Bands: Low <= 0.25, Moderate <= 0.50, High <= 0.75, Severe <= 1.00.
+VNI feeds the multi-pole priority index (Section 7.6); it does not change any wire's assessment.
 
-Per wire class:
-1. Class mask, components < 30 px removed, Zhang–Suen skeleton.
-2. Junction pixels (≥ 3 skeleton neighbours) removed; junction points within **5 px** count as one crossing.
-3. Pieces meeting at a crossing re-joined when their end directions are collinear within **35°**, straightest pair
-   first.
-4. Every mask pixel assigned to its nearest skeleton piece **within its own connected mask blob** (v2.14; before,
-   a detached blob of a neighbouring cable could be painted into the nearest span).
-5. **Collinear gap bridging (v2.8):** spans of one class joined through endpoints a, b when ‖b − a‖ ≤ **70 px**,
-   −t_a·t_b ≥ cos 25°, and the gap continues both tangents (t_a·û, t_b·(−û) ≥ cos 25°). Tangents from the mean of
-   the 12 skeleton points nearest each end; nearest-first, union-find, each end used once. The bridge is drawn 2 px
-   wide so the fit runs through it.
-6. Spans whose stitched skeleton is shorter than **90 px** are dropped; minimum piece length 15 px. Confidence =
-   area-weighted mean class probability.
+---
 
-**Provenance (v2.14).** Bridge pixels were never labelled wire by the model. For every span the API reports
-`observed_px`, `inferred_px`, `inferred_segments`, `inferred_polygons` and `centerline_inferred_share`, computed from
-the stored class mask (so older analyses get it too). The viewer cuts inferred pixels out of the span mask and draws
-the gaps dashed ("Estimated, not detected"). CRS is unchanged: the bridge stays in the measurement.
+## 7. Geometry and sag equations
 
-### 4.4 Geometry and risk (Chapter III, unchanged)
+Coordinates are image pixels with the y axis pointing up (the fit flips image rows), so a sagging wire is convex.
 
-- **Centreline (Algorithm 4):** Zhang–Suen thinning, 8-connected graph, iterative spur pruning < 30 px, double-BFS
-  longest path, n_min check.
-- **Catenary fit (Eq. 6–7):** parabola starting values; `curve_fit(method="lm")` with an analytic Jacobian in
-  normalised coordinates. Fails on non-convergence, a ≤ 0, or RMS residual / L > 0.02. Truncation flag at the border.
-- **Sag (Eq. 8):** δ = largest perpendicular distance of the fitted curve from its chord, closed form
-  (x* = b + a·asinh(m)); δ_rel = δ/L.
-- **Allowable sag (Eq. 9):** change-of-state cubic (elasticity, thermal expansion) with wind load ½ρV²C_d·d, solved
-  with Brent's method; falls back to δ_lim,0 = 0.040 with flag `default_parameters`. All engineering values are
-  provisional (`development_limits`).
-- **CRS (Eq. 10):** min{10, 10·(δ_rel/δ_lim)·w_class}, class weights 1. Levels: Low < 3.0 ≤ Medium ≤ 6.0 < High.
-- **Precision gate (v2.8):** σ/L ≤ f·δ_lim with σ = 1 px, f = 0.25 → L_min = 1/(0.25 × 0.040) = **100 px**. Shorter
-  spans: status `too_short`, reason `chord_below_precision_gate`, no CRS. Derived from precision, not tuned.
-- **VNI (Eq. 1–4):** periodic Hann window, power spectrum, share beyond r_L = 0.15·min(M,N)/2, clipped and scaled by
-  q01 / q99 (calibrated on training photos; provisional), Table 3.7 bands. The image mean is removed before
-  windowing (see Part 11).
-- **MSPI (Eq. 11, Algorithm 6):** α·VNI + β·mean(CRS)/10 + γ·max(CRS)/10, α + β + γ = 1; 66-point sensitivity grid
-  (Table 3.11) in the admin portal.
-- **Vegetation:** never skeletonised or scored. Clearance by Euclidean distance transform of the vegetation union.
-  Approximate metres use s = D / w̃ (conductor diameter 10.1 mm ÷ median power-wire width in px) with a ±1 px range,
-  so metre values are always labelled approximate.
+### 7.1 Catenary model
 
-### 4.5 The pole verdict (`app/pipeline/hazard.py`)
+    y(x) = a * cosh((x - b) / a) + c,        a > 0
+
+Starting values come from a parabola fitted to the centerline. The parameters are estimated by Levenberg-Marquardt
+(`scipy.optimize.curve_fit(method="lm")`) with an analytic Jacobian, in coordinates normalised by the chord length:
+
+    u = (x - b) / a
+    dy/da = cosh(u) - u * sinh(u),    dy/db = -sinh(u),    dy/dc = 1
+
+The fit fails (status `fit_failed`, reason `no_convergence`, `non_positive_a`, `residual_too_large` or `degenerate`)
+on non-convergence within 4,000 function evaluations, a <= 0, a degenerate centerline, or a relative RMS residual
+above 0.02:
+
+    rel_residual = sqrt(mean((y_i - y(x_i))^2)) / L  >  0.02
+
+### 7.2 Chord, sag and sag ratio
+
+The chord joins the fitted curve's values at the two end abscissas x_0 and x_1:
+
+    L = sqrt((x_1 - x_0)^2 + (y(x_1) - y(x_0))^2),     m = (y(x_1) - y(x_0)) / (x_1 - x_0)
+
+The sag delta is the largest perpendicular distance from the chord to the curve. Setting the curve's slope equal to the
+chord's slope gives the point of maximum sag in closed form:
+
+    sinh((x* - b) / a) = m    =>    x* = b + a * asinh(m)
+
+    delta = |y_chord(x*) - y(x*)| / sqrt(1 + m^2)
+
+    sag ratio:  delta_rel = delta / L
+
+If x* falls outside [x_0, x_1] there is no interior maximum and the sag is 0.
+
+### 7.3 Truncation and endpoints
+
+An endpoint within 1 % of the image side from the border marks the fit as truncated: the span leaves the photo, so its
+chord is not the pole-to-pole chord (Section 8.1).
+
+### 7.4 Measurement-precision gate
+
+With 1 px of skeleton noise (sigma) and the requirement that noise move delta/L by at most a quarter of the reference
+ratio:
+
+    sigma / L <= f * delta_lim    =>    L_min = 1 / (0.25 * 0.040) = 100 px
+
+Shorter chords get status `too_short` (`chord_below_precision_gate`). The gate scales with the photo's resolution
+relative to the 1024 px model input. The value was derived from precision, not tuned.
+
+### 7.5 Reference sag and Catenary Risk Score
+
+The allowable sag ratio delta_lim starts from the reference value delta_lim,0 = 0.040 for every class. When span
+length, temperature or wind are supplied, a change-of-state relation with wind load (1/2 * rho * V^2 * C_d * d),
+solved with Brent's method, adjusts it; otherwise delta_lim = delta_lim,0 with flag `default_parameters`. All
+conductor values are illustrative placeholders (flag `development_limits`).
+
+    CRS = min(10, 10 * (delta_rel / delta_lim) * w_class),     w_class = 1 for every class
+
+With delta_lim = 0.040 and w = 1 the severity levels correspond to sag ratios:
+
+| Level (stored) | Shown as | CRS | Sag ratio |
+|---|---|---|---|
+| low | Within reference | CRS < 6.0 | delta/L < 2.4 % |
+| medium | Minor sag | 6.0 <= CRS < 10.0 | 2.4 % <= delta/L < 4.0 % |
+| high | Critical | CRS >= 10.0 | delta/L >= 4.0 % |
+| (none) | Not assessed | no CRS | any |
+
+Lower bounds are inclusive (`crs.levels.minor_from: 6.0`, `critical_from: 10.0`). CRS is compared after rounding to 9
+decimals, so a sag of exactly 2.4 % lies on its boundary as configured. Tests cover each boundary value
+(`tests/test_v221.py`).
+
+### 7.6 Multi-pole priority index
+
+    MSPI = alpha * VNI + beta * mean(CRS) / 10 + gamma * max(CRS) / 10,     alpha + beta + gamma = 1
+
+Default weights are 1/3 each. Rankings use the latest operational inspection of each pole. A 66-point weight grid
+(step 0.1) gives the Spearman rank correlation of each weighting with the baseline ranking; it is printed in the
+technical priority report.
+
+### 7.7 Vegetation clearance
+
+Vegetation masks are never skeletonised or scored. A wire is in contact when at least 2 % of its pixels lie within 1 %
+of the longer image side of a vegetation mask. Clearance in pixels comes from the distance transform of the vegetation
+union; metre values are labelled approximate (scale from the median power-wire width and a 10.1 mm conductor
+diameter).
+
+---
+
+## 8. Assessment rules
+
+### 8.1 Per-wire decision table (`app/pipeline/runner.py: _score_wire`)
+
+The checks run in this order; the first that applies decides the status.
+
+| # | Condition | Status | Reason code | Severity |
+|---|---|---|---|---|
+| 1 | Centerline has fewer than 20 points | `too_short` | `too_short` | none |
+| 2 | Catenary fit fails | `fit_failed` | `no_convergence`, `non_positive_a`, `residual_too_large`, `degenerate` | none |
+| 3 | Chord below the precision gate (100 px at 1024) | `too_short` | `chord_below_precision_gate` | none |
+| 4 | An endpoint is at the photo border | `not_assessed` | `endpoint_unavailable` | none (the visible sag is kept as `unverified_level`, a review cue) |
+| 5 | Strand type uncertain | `not_assessed` | `class_uncertain` | none |
+| 6 | Class has no configured reference (power distribution lines) | `not_assessed` | `no_reference_for_class` | none |
+| 7 | Otherwise | `scored` | none | CRS and level (Section 7.5) |
+
+`crs.assessed_classes: [telecom-cable, abandoned-wire]`: the 4.0 % telecom reference is never applied to power
+distribution lines; they are measured and shown, but not assessed. A severity label is never shown on a wire that was
+not scored; the end-to-end check verifies this on a live server (Section 15.3).
+
+### 8.2 Pole verdict (`app/pipeline/hazard.py`)
 
 | Factor | Rule | Verdict |
 |---|---|---|
-| Sag | ≥ k*(n) spans in the High band (p0 = 0.050) | AT RISK – HIGH |
-| | ≥ k*(n) spans at Medium or above (p0 = 0.090) | AT RISK – MODERATE |
-| Vegetation | Power span in contact | AT RISK – HIGH |
-| | Power span within 15 px | AT RISK – MODERATE |
-| | Telecom span in contact | AT RISK – MODERATE |
-| Reliability | Grade Retake and no hazard found | INCONCLUSIVE – RETAKE PHOTO (a found hazard is kept, with a note) |
+| Sag | k*(n) or more scored spans at Critical (p0 = 0.050) | AT RISK - HIGH |
+| Sag | k*(n) or more scored spans at Minor sag or above (p0 = 0.090) | AT RISK - MODERATE |
+| Vegetation | Power span in contact | AT RISK - HIGH |
+| Vegetation | Power span within 15 px | AT RISK - MODERATE |
+| Vegetation | Telecom span in contact | AT RISK - MODERATE |
+| Coverage | Fewer than half of the measured spans assessed (`hazard.min_assessed_share: 0.5`) | INCONCLUSIVE - RETAKE PHOTO instead of NOT AT RISK |
+| Partial spans | A span running off the photo whose visible part already sags into a band | INCONCLUSIVE - RETAKE PHOTO instead of NOT AT RISK |
+| Reliability | Grade Retake and no hazard found | INCONCLUSIVE - RETAKE PHOTO (a found hazard is kept, with a note) |
+| None of the above | | NOT AT RISK |
 
-k*(n) = min{k : P(Bin(n, p0) ≥ k) ≤ α}, α = 0.05.
+Corroboration: with n scored spans, a band counts only when the number of spans in it reaches
 
-| Measurable spans n | 1 | 2 | 5 | 10 | 22 | 30 | 49 |
-|---|---|---|---|---|---|---|---|
-| k* HIGH (p0 0.050) | 1 | 2 | 2 | 3 | 4 | 5 | 6 |
-| k* MODERATE (p0 0.090) | 2 | 2 | 3 | 4 | 5 | 6 | 9 |
+    k*(n) = min { k : P(Binomial(n, p0) >= k) <= alpha },     alpha = 0.05
 
-**Why (v2.9).** The v2.8 rule (worst single span) saturates: with ~30 spans per pole and a per-span false-alarm rate
-p, P(≥ 1 high) = 1 − (1 − p)^30 ≈ 0.78 at p = 0.05. p0 was **measured**, not assumed: each validation photo
-measured twice (as is and mirrored, TTA off), 492 matched scored spans; discordance high 0.050, medium-or-above
-0.090. Only 13 of 35 saturated CRS = 10 spans reproduced (37%), which rules out a "single extreme span" override.
-Spans in a band that do not reach k* are listed as a NOTE ("verify visually"), never dropped. The rule is a
-significance test against measurement noise, not a claim about the true hazard rate.
+p0 is the per-span test-retest disagreement rate measured on validation (each photo analysed as is and mirrored, 492
+matched scored spans; `results/v29_span_geometry_summary_all_val.json`). Spans in a band that do not reach k* are
+listed as a note to verify visually. The rule is a significance test against measurement noise, not an estimate of
+the true hazard rate.
 
-### 4.6 The reliability grade (`app/pipeline/quality.py`)
+| Scored spans n | 1 | 2 | 5 | 10 | 22 | 30 |
+|---|---|---|---|---|---|---|
+| k* Critical (p0 0.050) | 1 | 2 | 2 | 3 | 4 | 5 |
+| k* Minor or above (p0 0.090) | 2 | 2 | 3 | 4 | 5 | 6 |
+
+### 8.3 Reliability grade (`app/pipeline/quality.py`)
 
 Over predicted wire pixels: U = mean normalised entropy; D = share whose class flips between the plain and mirrored
-passes; **R = 1 − (U + D)/2**. Grades: **A ≥ 0.78, B ≥ 0.66, C ≥ 0.64**, else Retake. Also Retake when < 500 wire
-pixels, mean L* < 8, > 85% clipped, too small or blank.
+passes; R = 1 - (U + D) / 2. Grade A if R >= 0.78, B if R >= 0.66, C if R >= 0.64, else Retake. The grade is also
+Retake when there are fewer than 500 wire pixels, mean L* < 8, more than 85 % clipped pixels, or when the glare gate
+fires (near-white share >= 0.6 and thin-line contrast < 15 L* units). Each grade below A carries a plain cause (blank,
+low resolution, glare, too dark, almost no wire, camera shake, out of focus, low light, model uncertainty).
 
-**Glare gate (v2.10):** near-white share (L* > 90) ≥ 0.6 **and** thin-line contrast (mean of the strongest 1% of
-black-top-hat responses, 5 px ellipse, on L*) < 15 → Retake. Model-independent, so it catches "confident absence".
+### 8.4 Retake guardrail (`app/pipeline/guardrail.py`)
 
-Reason shown for every grade below A, in the order a field worker can act on: blank; resolution too low; severe glare
-washed out conductors; too dark; almost no wire pixels; camera shake; out of focus; bright-sky glare lowered contrast;
-low light; model uncertainty (clutter or low contrast).
+The guardrail reads the finished analysis and never changes a wire, class, CRS or verdict. It decides whether the
+result is held behind "Retake photo / Proceed anyway" from the reliability grade, capture envelope, class conflicts,
+uncertain-type share, fragmentation and structure edges (thresholds in `config/wireframe.yaml: guardrail`). The
+user's choice is recorded (`POST /api/analysis/{id}/guardrail`) and printed in the PDF.
 
-### 4.7 Metrics (Eq. 5, 12–18)
+### 8.5 Human review
 
-- **Strict (official, Eq. 5):** an instance is a true positive at mask IoU ≥ 0.5, matched per class; AP is COCO
-  101-point; P / R / F1 at `conf_min` 0.20. Predictions under confidence 0.01 are excluded from AP.
-- **Tolerant (supplementary):** both masks widened by 2 px (at 1024) before IoU. On a 2 px wire a 1 px offset alone
-  caps strict IoU at about 0.33; hand labels are ±1–2 px.
-- **Pixel level:** per-class IoU, precision, recall, F1 with the same 2 px tolerance.
-- **Decision rule:** on 22 validation photos, differences below ~0.002 tolerant mAP50 are ties; the more conservative
-  value is kept.
-- Agreement statistics for H1–H3 (RMSE, MAE, Pearson, Spearman, weighted κ, bootstrap CIs) are implemented
-  (`app/pipeline/evaluation.py`) but cannot run without engineer reference ratings.
+A reviewer can confirm a result, flag it for further inspection (note required) or override its level (level and note
+required). The computed level is never changed: reviews are stored beside it (`reviews` table), shown on the
+inspection page and printed in the PDF, and every review is written to the audit log.
 
 ---
 
-## 5. Results
+## 9. Backend, database and API
 
-### 5.1 Headline numbers (test split, 21 photos, shipped configuration)
+### 9.1 Processing
 
-Strict / tolerant (2 px). Source: `results/v212_spans_test.jsonl` (the R34 configuration that shipped).
+- One asyncio queue with one worker thread (`app/services/queue.py`); the models are loaded once at startup. On
+  startup, inspections left in `processing` by a crash or restart are re-queued.
+- Failed inspections are never re-run automatically. An inspector re-runs one at a time from the Failed tab
+  (`POST /api/analysis/{id}/retry`). Historical inspections are never reprocessed in bulk, so stored model findings
+  stay as produced; each analysis stores the configuration fingerprint it was produced with.
+- List views load only the detection columns they need (`app/services/records.py: list_columns`), never the stored
+  polygons and curves: the inspections list takes 0.05 to 0.2 s on the 98-inspection database instead of 3 to 4 s.
 
-| Category | Metric | Class | Clean | Low light | Night (synthetic) |
-|---|---|---|---|---|---|
-| Overall | mAP@50 | all | 0.020 / 0.047 | 0.005 / 0.022 | 0.009 / 0.031 |
-| | mAP@50–95 | all | 0.004 / 0.009 | 0.001 / 0.004 | 0.002 / 0.006 |
-| Power (253) | Precision | | 0.022 / 0.175 | 0.016 / 0.167 | 0.011 / 0.194 |
-| | Recall | | 0.028 / 0.225 | 0.016 / 0.170 | 0.012 / 0.217 |
-| | **F1** | | **0.024 / 0.197** | 0.016 / 0.168 | 0.011 / 0.205 |
-| | AP@50 | | 0.002 / 0.105 | 0.000 / 0.065 | 0.001 / 0.088 |
-| Telecom (361) | Precision | | 0.004 / 0.032 | 0.002 / 0.022 | 0.000 / 0.021 |
-| | Recall | | 0.006 / 0.050 | 0.003 / 0.033 | 0.000 / 0.025 |
-| | **F1** | | **0.004 / 0.039** | 0.002 / 0.026 | 0.000 / 0.023 |
-| | AP@50 | | 0.000 / 0.004 | 0.000 / 0.003 | 0.000 / 0.001 |
-| Abandoned (7) | Recall / F1 / AP@50 | | 0 / – / 0 | 0 / – / 0 | 0 / 0 / 0 |
-| Vegetation (38) | P / R / **F1** / AP@50 | | 0.364 / 0.105 / **0.163** / 0.079 | 0.080 / 0.053 / 0.063 / 0.021 | 0.036 / 0.053 / 0.043 / 0.036 |
-| Pixel level (validation, 22) | **F1** power / telecom | | **0.792 / 0.677** (IoU 0.528 / 0.422) | – | – |
-| Sag score and verdicts | accuracy | | not measurable: no engineer reference ratings; δ_lim placeholder | | |
-| Table 3.10 targets | | | none met or validated | | |
+### 9.2 Database
 
-**How to read it.** WireNet finds wire *pixels* reasonably well (F1 0.79 / 0.68); cutting them into the same
-sections a person drew is hard, so section-level scores are low. Any split, merge or trim counts as both a miss and a
-false alarm. Telecom in dense bundles is the weakest case. The v2.14 span-ownership change has not been scored on test
-(on validation it is identical to four decimals: 0.035557 → 0.035554).
+SQLite with foreign keys enforced and CHECK constraints (`app/models/orm.py`). Missing columns are added at startup; a
+table-rebuild migration first writes a timestamped backup to `var/backups/`.
 
-### 5.2 Why YOLO masks cannot represent wires (v2.7)
-
-Ceiling IoU of a *perfect* mask on YOLO's 1/4-resolution grid, upsampled, against the full-resolution label (2,129
-instances):
-
-| Class | Median width | Ceiling IoU (median) | Can reach IoU ≥ 0.5 |
-|---|---|---|---|
-| power | 2.1 px | 0.40 | 17% |
-| telecom | 2.1 px | 0.41 | 21% |
-| Vegetation | 7.1 px | 0.72 | 76% |
-| abandoned | 8.7 px | 0.78 | 67% |
-
-YOLO's wire mask AP50 is therefore capped at ~0.2 however well it is trained; observed: 0.000. At the operating
-threshold YOLO-1024 alone predicts 0 power and 4 telecom spans against 253 and 361. **SAM 2.1** prompted with the true
-boxes (and skeleton points) reaches median wire IoU 0.04–0.08 and ~40 s per image on CPU.
-
-| Test, overall | Strict mAP50 | Strict mAP50–95 | Tolerant mAP50 |
-|---|---|---|---|
-| v2.6 baseline (YOLO 640) | 0.0005 | 0.0001 | 0.0005 |
-| YOLO-1024 | 0.0198 | 0.0042 | 0.0199 |
-| Hybrid v2.7 (WireNet spans) | 0.0204 | 0.0043 | 0.0375 |
-| Hybrid v2.8+ (shipped) | 0.0204 | 0.0043 | **0.0469** |
-
-### 5.3 Eight-condition stress benchmark (test, span level)
-
-Conditions (`ml/stress.py`): low light (γ 2.4 + noise σ 6), glare (×1.6 + 60, local contrast halved), motion (linear
-kernel 1.5% of the long side), defocus (disk radius 0.5%), JPEG q20, low-res (480 px then upscaled), rain-haze;
-synthetic night (v2.11: L* inverted, ×0.55, noise σ 4).
-
-| Condition | v2.7 strict / tol. | **Shipped (v2.8 → v2.15) strict / tol.** | Power tol. AP50 / R | Telecom tol. AP50 / R |
-|---|---|---|---|---|
-| clean | 0.0204 / 0.0372 | 0.0204 / 0.0469 | 0.105 / 0.225 | 0.004 / 0.050 |
-| lowlight | 0.0018 / 0.0123 | 0.0053 / 0.0222 | 0.065 / 0.170 | 0.003 / 0.033 |
-| glare | 0.0225 / 0.0281 | 0.0206 / 0.0257 | 0.019 / 0.043 | 0.002 / 0.014 |
-| motion | 0.0158 / 0.0164 | 0.0166 / 0.0227 | 0.022 / 0.091 | 0.004 / 0.022 |
-| defocus | 0.0257 / 0.0264 | 0.0255 / 0.0271 | 0.005 / 0.032 | 0.001 / 0.014 |
-| jpeg | 0.0250 / 0.0401 | 0.0210 / 0.0410 | 0.078 / 0.186 | 0.004 / 0.050 |
-| lowres | 0.0236 / 0.0377 | 0.0225 / 0.0503 | 0.105 / 0.209 | 0.007 / 0.053 |
-| rainhaze | 0.0220 / 0.0399 | 0.0220 / 0.0520 | 0.117 / 0.237 | 0.002 / 0.030 |
-| **mean of 8** | 0.0196 / 0.0298 | **0.0192 / 0.0360** | | |
-| night (synthetic) | v2.10: 0.0089 / 0.0090 | **0.0091 / 0.0313** | 0.088 / 0.217 | 0.001 / 0.025 |
-
-Tolerant mAP50 +21% over v2.7 on average (clean +26%, low light +80%, low-res +33%, rain-haze +30%); strict ties.
-Motion blur is the open condition: enhancement *off* beats every version there (tolerant 0.0272).
-
-### 5.4 Validation results
-
-**Span extraction ablation (v2.8; one constant varied, others at final; tolerant mAP50, final in bold):**
-
-| Constant | Values |
+| Table | Purpose |
 |---|---|
-| `max_gap` | 0: 0.0307, 35: 0.0339, 50: 0.0346, **70: 0.0356**, 100: 0.0330, 150: 0.0321 |
-| `gap_angle_deg` | 10: 0.0336, 15: 0.0332, 20: 0.0328, **25: 0.0356**, 30: 0.0339, 35: 0.0366 |
-| `draw_bridge` | False: 0.0350, **True: 0.0356** |
-| `min_span_len` | 0: 0.0343, 45: 0.0345, 60: 0.0346, **90: 0.0356**, 120: 0.0354, 200: 0.0366 |
-| `max_turn_deg` | 15: 0.0328, 25: 0.0350, **35: 0.0356**, 45: 0.0357 |
-| `cluster_radius` | 2: 0.0262, **5: 0.0356**, 10: 0.0341, 15: 0.0289 |
-| `min_len` | **15: 0.0356**, 30: 0.0340, 45: 0.0339 |
+| `poles` | One row per pole code; validated barangay; stored readable label (e.g. SAL-001) |
+| `pole_locations` | Optional coordinates (Philippine bounds 4.2 to 21.3 N, 116 to 127 E), source, time |
+| `analyses` | One inspection: file names, status, error, VNI, metadata, flags, timings, vegetation, configuration fingerprint, record kind (operational or test) |
+| `detections` | One wire: class, confidence, status, reason, geometry (JSON), chord, sag, sag ratio, delta_lim, CRS, level, flags |
+| `reviews` | Human decisions stored beside the computed result |
+| `reports` | PDF build records (file, SHA-256, configuration fingerprint) |
+| `admin_users`, `admin_sessions` | Accounts (scrypt hashes, role) and sessions (SHA-256 of the token only) |
+| `audit_events` | Who changed what and when |
+| `app_settings` | Administrator settings (active model, priority weights) |
 
-Confirmed on the v2.8 probability maps: v2.7 constants 0.0064 / 0.0296 → v2.8 **0.0068 / 0.0397**; power tolerant
-AP50 / F1 / R 0.108 / 0.190 / 0.213; telecom F1 / R 0.075 / 0.088; power spans 564 → 390 for 314 labelled
-(fragmentation 1.84 → 1.24 per labelled span). **0.0397 is the validation reference every later version is judged
-against.**
+Audited actions: reviews, record-kind changes, location and barangay edits, retries, deletions, model activation and
+settings changes.
 
-**Pre-processing and TTA under eight conditions (validation, tolerant pixel IoU power / telecom):**
+**Test records.** QA, synthetic, timing and check uploads are kept but marked `record_kind = test`; they never count
+in the dashboard, lists, map or exports. Administrators can view them (`include_test=true`) and re-classify a record
+by hand; nothing is deleted.
 
-| Condition | Enhancement off | v2.7 | **v2.8 (shipped)** |
-|---|---|---|---|
-| clean | 0.525 / 0.418 | 0.525 / 0.417 | 0.528 / 0.422 |
-| lowlight | 0.504 / 0.360 | 0.464 / 0.334 | 0.512 / 0.368 |
-| glare | 0.069 / 0.161 | 0.080 / 0.191 | 0.079 / 0.185 |
-| motion | 0.375 / 0.271 | 0.360 / 0.270 | 0.357 / 0.277 |
-| defocus | 0.387 / 0.290 | 0.395 / 0.310 | 0.403 / 0.314 |
-| jpeg | 0.479 / 0.392 | 0.477 / 0.388 | 0.490 / 0.400 |
-| lowres | 0.515 / 0.407 | 0.515 / 0.404 | 0.517 / 0.408 |
-| rainhaze | 0.517 / 0.415 | 0.520 / 0.410 | 0.523 / 0.412 |
-| mean | 0.3802 | 0.3788 | **0.3872** |
+### 9.3 API summary
 
-Glare is catastrophic for every variant (power ≈ 0.08): with the sky clipped white, wire contrast is gone.
+37 operations (full list in Section 20.1). Access levels: public, inspector session, administrator session.
 
-**Night (validation, v2.11):** synthetic night tolerant mAP50 0.0051 → **0.0312**; power AP50 / R 0 → 0.085 / 0.204;
-telecom 0 → 0.020 / 0.106; clean and low light byte-identical. Real night pole P-D67F60 (unlabelled): wire pixels
-9,694 → 23,464, spans 12 → 27 (measured 8 → 18).
+| Group | Endpoints |
+|---|---|
+| Field Screener (public) | upload, status, result, image, wire mask PNG, guardrail choice, PDF report |
+| Health and configuration (public) | `/api/health`, `/api/config` |
+| Authentication | login, logout, current user |
+| Portal (inspector) | dashboard, inspections list, bulk actions, inspection context, findings CSV, reviews, barangay search and assignment, audit log, priority ranking, site and route PDFs, inspections CSV, retry, delete, assistant |
+| Administration (administrator) | record kind, pole location, queue, models and activation, settings, system status, manifest and per-wire CSV exports |
 
-**Reliability grade calibration (176 image × condition cases):** Spearman ρ with per-image tolerant IoU: R 0.640
-(p = 1.1 × 10⁻²¹), −U 0.551, −D 0.594. Grade matches the measured band exactly in 63.1% and within one band in
-93.8%. Medians: A 0.460 (n 41), B 0.391 (112), C 0.283 (7), Retake 0.093 (16). Retake fires on 9/22 glare and 5/22
-motion photos, 0 clean.
+Errors use one envelope: `{"error": {"code", "message", "hint"}}`.
 
-**Failure audit (validation, 22):** no image property predicts accuracy significantly (wire density ρ = 0.04).
-False positives outweigh misses (32–62% of predicted wire pixels unlabelled, 10–34% of labelled pixels missed); on the
-hardest photo most "false positives" are real wires the labels omit in dense bundles. Accuracy is limited about as
-much by label completeness as by the model.
+---
 
-### 5.5 Verdicts
+## 10. User interface
 
-| | Validation (22) high / moderate / not | Test (21) high / moderate / not |
+Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with light and dark themes.
+
+### 10.1 Field Screener (`/workspace`, public)
+
+- Upload card: photo, inspection name, city, barangay (validated suggestions), optional coordinates and span data.
+- Processing state with the queue position.
+- Result page (`/workspace/result/{id}`): inspection summary with the counts of Critical, Minor sag, Within reference
+  and Not assessed wires; the photo with three views (Wires, Mask, Photo); circular wire badges centred on each
+  strand; the wire list with plain findings and the reason for every unassessed wire; what to do next; photo
+  limitations; a location block when coordinates exist; PDF download.
+- A retake prompt when the guardrail holds the result.
+
+### 10.2 Admin portal (`/admin`, signed in)
+
+| Page | Functions |
+|---|---|
+| Dashboard | Counts by pole verdict over the latest operational inspection per pole; triage list; pending reviews; alerts |
+| Inspections | Filters (search, risk, review, barangay, date range, completeness, latest only), tabs (All, Needs review, Failed), bulk actions, CSV export, technical exports menu (administrators) |
+| Inspection page | Result viewer, findings table, review panel, pole history, findings CSV, technical diagnostics (collapsed) |
+| Map & Dispatch | Leaflet map with clustered pole markers coloured by verdict; Light, Dark and Satellite base maps; drop-pin location editing (administrators); route builder with ordered stops, route PDF and a shareable map link |
+| Assistant | Answers questions about the documentation and live inspection data, with navigation actions |
+
+There is no separate System page (its URL answers 404). Model activation, settings and queue state are available to
+administrators through the API.
+
+---
+
+## 11. Reports
+
+| Report | Endpoint | Contents |
 |---|---|---|
-| v2.7 behaviour | 19 / 1 / 2 (worst level) | 21 / 0 / 0 |
-| v2.8 (worst single span) | 17 / 3 / 2 | 18 / 3 / 0 |
-| **v2.9 onward (corroborated)** | **2 / 10 / 10** | **7 / 7 / 7** |
+| Inspection report (formal) | `GET /api/reports/{id}/pdf` | Two pages: header with pole, location and time; verdict and counts; annotated photo with centred wire badges; flagged spans schedule; field verification checklist; reviews; footer "Field verification required" |
+| Inspection report (technical) | `?technical=true` (staff) | Adds per-wire measurements, fit residuals, flags, reliability and configuration fingerprint |
+| Site priority report | `GET /api/admin/exports/sites.pdf` | MSPI ranking; `technical=true` adds the weight sensitivity grid |
+| Dispatch route | `GET /api/admin/routes/pdf` | Ordered stops with pole labels, barangays, coordinates and verdicts |
+| CSV | `inspections.csv`, `findings.csv`, `manifest.csv`, `wires.csv` | Spreadsheet exports (the last two for administrators) |
 
-Test drivers: corroborated high sag 7; corroborated medium 3; telecom–vegetation contact only 4; not at risk 7 (each
-with a NOTE). No validation photo is INCONCLUSIVE.
+Severity words are the same on the page, in the PDF and in the exports (`app/services/plain.py: SEVERITY`). The
+formal PDF builds in 0.064 s median (Section 13).
 
-**Sensitivity to the placeholder δ_lim (validation spans; evidence for calibration, not a choice):**
+---
 
-| δ_lim | Spans high / medium / low | P(≥ 1 high among 30 spans) |
-|---|---|---|
-| 0.040 (placeholder) | 0.069 / 0.093 / 0.838 | 0.88 |
-| 0.060 | 0.035 / 0.075 / 0.890 | 0.65 |
-| 0.080 | 0.023 / 0.047 / 0.931 | 0.50 |
+## 12. Algorithmic complexity
 
-Image-space sag ratios: median 0.0017, p90 0.020, p95 0.028; uncorrelated with chord length (ρ = −0.03).
+Notation: P = pixels of the model input (1024^2), S = skeleton pixels, E = span ends, K = spans, n = centerline points
+of one span, I = fit iterations, T = DINOv2 tokens (72^2 = 5,184), A = inspections, D = detections.
 
-**Steep wires are not the problem (v2.9):** by chord inclination, high-band share is 12.8% (0–10°), 14.3% (10–20°),
-6.9% (20–35°), 2.2% (35–50°), 1.3% (50–90°). Geometry: δ/L ≈ (D/S)·cos²θ shrinks with inclination.
-
-**Perspective (v2.12):** high-band share rises with depth recession between a span's ends (Depth Anything V2):
-3.2% → 7.2% → 10.4% by tercile (Fisher p = 0.0039). Receding wires read high ~3.3× more often. No correction adopted
-(relative depth only; no ground truth).
-
-**Verdict instability (v2.10):** among 111 mildly degraded validation cases that kept ≥ 80% of their spans, the pole
-verdict changed in 46 (41%), 26 of them AT RISK → NOT. Per-span levels flip between measurements and the count sits
-near k*. Quantified, not solved.
-
-### 5.6 Glare (v2.10)
-
-Glare (22 clean / glare pairs): near-white share 0.07 → 0.90; thin-line contrast 25.9 → 8.5 L*; wire pixels
-7.6 → 1.1 ×10⁴; spans retained 0.32; reliability R barely moves (0.78 → 0.68): the model is confidently blind.
-
-| Gate | Recall | Specificity | Leave-one-out acc. | Silent NOT AT RISK left (of 5) | Bright-sky photos made INCONCLUSIVE |
-|---|---|---|---|---|---|
-| Exposure only | 1.00 | 0.00 | 0.39 | 0 | 14 / 22 |
-| **Thin-line contrast < 15 (adopted)** | **1.00** | **0.78** | **0.86** | **0** | **3 / 22** |
-| Wire density < 0.016 | 0.76 | 1.00 | 0.80 | 2 | 0 / 22 |
-
-Validation silent NOT AT RISK under glare 5 → **0**; test 7 → 3 (every span-dropout case caught, 2 → 0; the 3 left
-are the instability mode). Clean verdicts unchanged by construction.
-
-### 5.7 Fusion (v2.12, validation)
-
-| R34 / MiT-B1 / ConvNeXt | Strict / tolerant span mAP50 | Power tol. F1 | Telecom tol. F1 | Gate |
+| Stage | Method | Time | Memory | Note |
 |---|---|---|---|---|
-| 1 / 0 / 0 (shipped) | 0.0068 / 0.0397 | 0.792 | 0.677 | baseline |
-| 0 / 1 / 0 | 0.0065 / 0.0429 | 0.808 | 0.664 | fails (telecom F1) |
-| 0 / 0 / 1 | 0.0064 / 0.0458 | 0.797 | 0.669 | fails (telecom F1) |
-| 0.25 / 0.25 / 0.5 | 0.0065 / 0.0516 | 0.814 | 0.685 | passes |
-| **0.25 / 0.5 / 0.25** | 0.0067 / **0.0537** | **0.819** | 0.684 | passes, best |
-| best single pass (0 / 0.5 / 0.5, no flip) | – / 0.0503 | 0.814 | 0.677 | needs recalibration |
+| Letterbox, enhancement | Per-pixel filters | O(P) | O(P) | Bilateral filter and CLAHE have constant kernels |
+| VNI | 2-D FFT on 640^2 | O(N log N), N = 640^2 | O(N) | 6 ms median |
+| WireNet ensemble | 3 U-Nets x 2 flips, sequential | O(P) per pass, 6 passes | One member's activations | Dominant cost (3.0 s median) |
+| Dual polarity | Second ensemble run | Doubles the WireNet term | Same | Only for mean L* <= 40 |
+| YOLO, pole detector | Single-stage detectors | O(P) | O(P) | |
+| Scene parser | UperNet at 384 px | O(384^2) | Small | |
+| Skeletonisation | Zhang-Suen thinning | O(w * P), w = largest half-width | O(P) | w is a few pixels for wires |
+| Junction split, pixel graph | Neighbour counts | O(S) | O(S) | |
+| Gap bridging | All pairs of ends, vectorised | O(E^2) | O(E^2) | E is at most a few hundred; union-find adds O(E alpha(E)) |
+| Pixel ownership | Distance transform per blob | O(P) | O(P) | |
+| Strand type head | DINOv2-small, then MLP | O(layers * T^2 * d) attention + O(K) | O(T^2) per attention head | T is fixed (5,184); the MLP is negligible |
+| Centerline | Thinning, two BFS passes | O(n) per span after thinning | O(n) | |
+| Catenary fit | Levenberg-Marquardt, 3 parameters | O(I * n) per span, I <= 4,000 | O(n) | Usually a few dozen iterations |
+| Sag | Closed form | O(1) per span | O(1) | |
+| Pole verdict | Binomial tail | O(K) | O(1) | |
+| Vegetation contact | Distance transform | O(P + K) | O(P) | |
+| Inspection lists | One query, selected columns | O(A + D) | O(A + D) | Geometry columns not loaded |
+| Priority ranking | Sort | O(A log A) | O(A) | Sensitivity grid: 66 rankings |
+| Map clustering | Leaflet.markercluster | O(M log M) for M markers | Browser | |
 
-Paired bootstrap (2,000 resamples): the best fusion beats R34 in 94.4% of resamples; 95% interval of the gain
-−0.0039 to +0.0315 (includes zero). Latency: R34 1.75 s median (dense 1.82 s); fusion 4.71 s (dense 5.47 s); one 1024²
-pass 0.20 / 0.58 / 0.69 s, fused 1.49 s. Never run on test.
+The only super-linear terms in the pipeline are the bridging pairs (E^2) and DINOv2 attention (T^2, fixed size). The
+measured cost therefore grows with image content: the strand stage took 9.7 s on the 135-wire field photo against
+1.7 s median on the dataset photos (Section 13.3).
 
-### 5.8 Latency (M1)
+---
 
-- v2.10 rewrite of span assembly (same outputs, proven by a golden check written by v2.9 itself, 22/22): dense poles
-  35–46% faster (e.g. 5,715 → 3,078 ms on the 78-span pole); 81-span pole 4.58 s → 2.3 s end to end on a quiet
-  machine.
-- Server check: 1.33–3.46 s per upload across 14 cases on a quiet machine; 1.25–6.21 s under OS load (fanless
-  throttling: CPU stages slow as a run continues; GPU memory flat at 1.19 GB).
-- Dark photos pay two extra WireNet passes; the ground gate adds 0.26 s when it runs. A noisy v2.13 profile (load
-  average 5.8) gave validation median 1.73 → 2.29 s and night pole 2.29 → 4.23 s; the quiet re-measurement against
-  the 3.0 s target has not been run.
+## 13. Runtime performance
 
-### 5.9 Results of v2.13–v2.14 (validation)
+Benchmark: `python -m ml.benchmark` (`ml/benchmark.py`), results in `results/benchmark_v223.json`. Apple M1, 8 GB,
+macOS 26.0.1, Python 3.13.2, torch 2.15.0 on MPS, released configuration (fingerprint `31987242af35`), no other model
+work running. Procedure: models loaded once (cold start timed separately); one warm-up analysis discarded; the 21
+test-split photos once each (1024 x 1024) and 4 field photos three times each (415 x 739, 452 x 678, 1200 x 675,
+2048 x 1536). Sub-stage timers synchronise the GPU so time is not attributed to the next stage. Percentiles are
+nearest rank.
 
-| Change | Tolerant mAP50 | Decision |
+### 13.1 Start-up
+
+| Measure | Seconds |
+|---|---|
+| Model loading (cold) | 3.77 |
+| First analysis (includes kernel compilation) | 10.93 |
+
+### 13.2 End-to-end time per photo (seconds)
+
+| Set | n | Min | Median | Mean | P90 | P95 | Max | Std |
+|---|---|---|---|---|---|---|---|---|
+| Dataset photos (1024 x 1024) | 21 | 5.837 | 6.433 | 6.635 | 7.571 | 7.677 | 7.948 | 0.620 |
+| Field photos | 12 | 7.289 | 8.792 | 10.799 | 16.586 | 16.853 | 16.853 | 3.519 |
+| All runs | 33 | 5.837 | 7.289 | 8.149 | 12.378 | 16.586 | 16.853 | 2.960 |
+
+### 13.3 Per stage, median (seconds)
+
+| Stage | Dataset photos | Field photos |
 |---|---|---|
-| Ground gate (share ≥ 0.5) | 0.0397 (0 spans removed; validation photos contain no ground) | adopted; on the live problem photo it removes the road/manhole traces incl. a false CRS 8.6, verdict AT RISK – HIGH → NOT AT RISK |
-| CLAHE always on | 0.0356 (strict 0.0068 → 0.0117) | rejected |
-| Black-hat tubeness β 0.25 / 0.5 / 1 / 2 | 0.0387 / 0.0367 / 0.0280 / 0.0336 | rejected |
-| Bridging 60 px / 25° | 0.0407 (within noise) | 70 / 25 kept |
-| Bridging at 12° (60–150 px) | 0.0357–0.0381 | rejected |
-| Span ownership within blob (v2.14) | 0.035557 → 0.035554; 0 of 23 verdicts changed | adopted |
-| Bridge needs model evidence τ 0.02–0.30 (v2.14) | 0.0356 → 0.0322–0.0356 | rejected |
-| Lateral-offset gate 3–12 px (v2.14) | 0.0325–0.0351 | rejected |
+| Pre-processing | 0.053 | 0.049 |
+| VNI | 0.006 | 0.008 |
+| Segmentation (total) | 5.926 | 8.656 |
+| of which WireNet ensemble | 3.026 | 4.869 |
+| of which strand extraction and type head | 1.735 | 2.099 |
+| of which YOLO11s-seg | 0.553 | 0.591 |
+| of which scene parser | 0.403 | 0.388 |
+| of which pole detector | 0.163 | 0.248 |
+| Geometry, assessment and verdict | 0.343 | 0.432 |
+| Formal PDF build | 0.064 | 0.110 |
 
-(v2.14 runs used a cache whose shipped baseline is 0.0356, not v2.8's 0.0397; every row in a comparison uses the
-same cache.)
+Field maxima: WireNet 8.70 s (dark photo with dual polarity, two ensemble runs), strand stage 9.71 s (135 wires), PDF
+0.253 s.
 
-On P-B1D137 (dense night, 27 spans), 1,299 span pixels were bridge pixels; 4 of 5 high-risk spans contain them
-(span 14: 20% of its path, span 26: 17%).
+### 13.4 Memory
 
-### 5.10 Results of v2.16: one class per physical wire, scene checks, measurement validity
+| Measure | Value |
+|---|---|
+| Resident memory, sampled after each run | 336 to 804 MB, no upward trend over 33 runs (no leak) |
+| Peak resident memory | 1,109 MB after the first run, 1,955 MB at the end |
+| MPS driver memory, maximum | 2,466 MB |
 
-v2.16 started from three field photos of one Manila flyover junction (2048 × 1536, iPhone 14; `street1` taken with
-the 0.5× ultra-wide lens at 14 mm equivalent, `street2` and `street3` at 26 mm). v2.15 reported 136–154 "wire
-sections" per photo, sags of 9.6–12.6%, CRS 10 on 17–19 spans, AT RISK – HIGH on all three, a vegetation contact on
-shadowed concrete, and single cables drawn in two colours. Each defect was traced to its stage before anything was
-changed (error inventory below); every adopted change was decided on the 22 validation photos.
+Running the three ensemble members in one batch used about 4.8 GB of GPU memory and made unified memory swap on the
+8 GB machine (one pass took 3 to 35 s). Running them one at a time gives the same probabilities (largest difference
+1.6e-6; no pixel changes class; validation and test metrics identical) and cut the median end-to-end time on four
+field photos from 35.7 s to 8.8 s in the same session (`results/v222_latency_before.json`,
+`results/v222_latency_after.json`). Half precision (3.4 s against 1.35 s per member pass), channels-last (2.7 s) and
+CPU inference (34.6 s) were slower and are not used.
 
-**Root causes found**
+### 13.5 Web and API
 
-| Visible defect | Stage | Cause | Kind |
-|---|---|---|---|
-| One cable drawn half power, half telecom | span assembly | spans were built separately per class from WireNet's per-pixel argmax, so a cable whose pixels flip class became two spans, each with a hole where the other class won | post-processing |
-| Spans along the flyover deck, canopy and sign edges (incl. three CRS 10) | segmentation + no context check | WireNet traces any long straight contrast edge; nothing checked what the trace lies on | model + post-processing |
-| "Vegetation" on the shadowed flyover underside, raising a vegetation contact | YOLO vegetation | no check that the region is vegetation (scene parser: 0% vegetation, 70% bridge) | model |
-| CRS 10 on short traces (chord 122–136 px) | chord precision gate | the gate L ≥ σ / (¼·δ_lim) assumes σ = 1 px, but masks are predicted at 1024 px and resampled to the photo, so on a 2048 px photo σ ≈ 2 px and the gate must be 200 px | measurement validity |
-| HIGH verdict on the ultra-wide photo | verdict | the capture envelope (24–50 mm) was checked and recorded as *fail*, but never reached the sag verdict; barrel distortion bends straight wires | measurement validity |
-| A strand zig-zagging onto a neighbouring cable | gap bridging | bridges were allowed up to 70 px × tan 25° ≈ 33 px sideways | post-processing |
-| Thick ribbons, merged neighbouring wires | inference scale | the photo is shrunk to 1024 px; adjacent 1–2 px wires merge and the mask is scaled back up 2× | inference |
-| Many wires in the dense bundle missed; ~3.7 pieces per labelled wire | model | WireNet's own probability map; no assembly setting changes it (sweep below) | model + data |
+| Request | Time |
+|---|---|
+| Inspections list, dashboard, map data (98 inspections, 3,926 detections) | 0.05 to 0.2 s |
+| Formal PDF | 0.05 to 0.25 s |
 
-**Strand-level classification (adopted).** Geometry is now built once on the union of the wire classes (argmax is
-any wire class), with the shipped junction, bridging, ownership and length rules, and each strand takes the class
-with the largest summed probability over its *observed* pixels (bridge pixels carry no appearance evidence). A
-strand whose top class holds less than 90% of that evidence is shown as **type uncertain** (grey; the class is kept
-internally because δ_lim is identical for every class, and the evidence shares are in the API as `class_evidence`).
-The 0.9 cut comes from validation: strands at ≥ 0.9 have the labelled class 97.9% of the time (669 strands), strands
-below it 62% (86 strands, barely better than a guess). Crossings are unaffected: the junction rule still splits at
-a crossing and joins only collinear pieces, so each wire of an X is classified from its own pixels (unit-tested).
+---
 
-| Validation, cached probabilities (`v216_strands_val.json`) | v2.15 per class | v2.16 strand |
+## 14. Evaluation
+
+The released configuration was scored with the frozen models; no threshold was changed to improve a metric.
+`results/v217_eval_v221_val.json` and `results/v217_eval_v221_test.json` are the release scores. They equal the
+scores of the configuration that introduced the current models and strand head (`v217_eval_v217_{val,test}.json`),
+because the assessment rules added since then change neither detection nor typing.
+
+### 14.1 Metrics
+
+- **Centerline precision, recall and F1** (the thin-structure standard; `app/pipeline/centerline_eval.py`).
+  Precision = share of predicted centerline within tol of a labelled wire of that class; recall = share of labelled
+  centerline within tol of a predicted wire of that class; tol = 3 px per 1024 px of the long side. Micro-averaged over
+  photos; 95 % intervals by resampling whole photos (2,000 bootstrap draws). Every predicted pixel stays in the
+  precision denominator; because the labels omit real wires, precision is a lower bound.
+- **Strand type accuracy.** Each reported wire whose skeleton lies 50 % or more on one labelled class is a case;
+  accuracy = correct / all cases, with "uncertain" counted as wrong.
+- **Mask mAP50** (strict IoU 0.5, and tolerant with both masks widened by 2 px) is reported for continuity. A 1 px
+  offset on a 2 px wire caps strict IoU near 0.33, so mask mAP50 stays between 0.02 and 0.05 for any screener of
+  this kind.
+
+### 14.2 Results
+
+| Metric | Validation (22 photos) | Test (21 photos) |
 |---|---|---|
-| Labelled wires drawn in ≥ 2 classes | 5.86% | **3.41%** |
-| Tolerant mAP50 | 0.0397 | 0.0432 |
-| Power F1 / telecom F1 (tolerant) | 0.193 / 0.078 | 0.208 / 0.090 |
-| Wire-pixel precision / recall (2 px) | 0.758 / 0.851 | 0.758 / 0.855 |
-| Strand-τ variants (P(wire) ≥ 0.30–0.45) | – | 0.0262–0.0324: **rejected** (recall up, spans worse) |
+| Wire centerline P / R / F1 | 0.875 / 0.825 / 0.849 | 0.823 / 0.792 / 0.807 |
+| Power distribution lines P / R / F1 | 0.927 / 0.861 / 0.893 | 0.852 / 0.804 / 0.828 |
+| Telecom cable P / R / F1 | 0.785 / 0.749 / 0.767 | 0.713 / 0.706 / 0.710 |
+| Abandoned wire | not detected | not detected |
+| Strand type accuracy (power vs telecom) | 0.980 | 0.936 |
+| Labelled wires shown in two classes | 2.1 % | 5.0 % |
+| Mask mAP50 strict / tolerant | n/a | 0.0199 / 0.0485 |
 
-**Joining re-tuned for strands** (`v216_join_sweep_val.jsonl`, 18 settings). Single changes moved fragments per
-labelled wire by at most ±0.3 and tolerant mAP50 by ±0.003 (noise on 22 photos): **fragmentation is not an
-assembly-parameter problem**, it is in WireNet's probability map. Two settings gave consistent small gains and act on
-the observed wrong-join mechanism: bridge angle 25° → 35° and a 15 px lateral-offset limit (a dropout continues
-along its wire; a parallel neighbour is offset sideways). Together: tolerant mAP50 0.0432 → **0.0471**, power F1
-0.208 → 0.217, telecom 0.090 → 0.101, fragments 3.74 → 3.69, wire-pixel precision 0.758 → 0.760. (v2.14 rejected the
-lateral limit with the per-class extractor on a different cache; the strand extractor changes the trade-off, and
-both comparisons use one cache each.) Longer gaps (100–140 px), with or without model evidence in the gap, were
-worse (0.0382–0.0428).
+Test 95 % intervals: wire precision [0.773, 0.872], power precision [0.777, 0.916], telecom precision [0.665, 0.768].
+The validation figures for the strand head are partly in-sample (it was stacked on validation strands); its
+leave-one-photo-out validation telecom F1 is 0.753. A drop of the same size from validation to test was seen for the
+previous configuration, so the test photos are harder and the 22-photo validation estimate is optimistic.
 
-**Scene checks with the ADE20K parser already used by the ground gate** (`v216_context_val.json`):
+### 14.3 Contribution of the shipped components (validation, centerline F1)
 
-* *Structure-edge gate (adopted).* A real wire is seen against one background (sky on both sides, or a wall on both
-  sides) except where it crosses an edge; a deck, canopy or sign outline has sky on one side and structure on the
-  other along its whole length. *Side contrast* = share of the span's skeleton where the scene class at ±d along the
-  normal differs (d = max(8 px, 1.2% of the long side), clearing the parser's 384 px resolution). At ≥ 0.6 it removes
-  2 of 658 label-supported strands (0.3%) and 3 of 140 unsupported ones on validation, and on `street1` 9–10 traces
-  along the canopy and flyover edges (including three CRS 10). Removed traces are listed with the reason in the
-  diagnostics, never dropped silently. A simpler "share on structure classes" rule could not be validated (validation
-  has no flyovers or signboards: 0.000 signboard, ≈ 0 bridge) and would remove real wires seen in front of a deck.
-* *Vegetation gate (adopted).* A YOLO vegetation region with < 40% of its area on ADE20K tree / grass / plant / palm
-  / flower / field is suppressed. All 3 label-supported validation regions have ≥ 0.75 and are kept (vegetation AP and
-  F1 unchanged); the `street1` region (0.00 vegetation, 0.70 bridge, 0.19 building) is removed, and with it the false
-  vegetation contact. The 8 "unsupported" validation regions lie 47–100% on ADE20K vegetation: mostly unlabelled real
-  vegetation (a label-completeness limit, Part 12).
-* *Trajectory residual gate (rejected).* Catenary RMS residual ÷ stroke width does not separate supported from
-  unsupported strands (median 0.16 vs 0.22; p95 1.48 vs 1.12).
-
-**Measurement validity (correctness fixes, no threshold changed).**
-
-* *Chord gate in model pixels.* `crs.min_chord_px` (100) is applied as 100 × max(1, long side ÷ 1024) on model
-  output, because one model pixel is that many photo pixels; reference polygons, drawn at photo resolution, keep
-  100 px. The CRS formula and every band are unchanged. On the 2048 px photos it sends 36–43 short spans per photo
-  to "too short to measure", including the 12.6%, 11.7%, 10.2% and 9.7% sags measured on chords of 122–136 px. The
-  largest remaining sag on `street1` (9.7%, chord 941 px) is a strand joined through a dense crossing onto a
-  neighbouring cable: a wrong association that no validated rule removes yet (Part 12).
-* *Capture envelope applied to sag.* When the EXIF 35 mm-equivalent focal length is below the envelope minimum
-  (§3.3.1: 24 mm), CRS is still computed and stored, every scored span is flagged `lens_outside_envelope`, and sag
-  does not raise the verdict; vegetation rules still apply. NOT AT RISK becomes INCONCLUSIVE with a retake instruction
-  ("retake with the main (1×) camera").
-
-**Field photos, v2.15 → v2.16** (`runs/v216/regression/summary.json`; no ground truth exists for these photos, so this
-is visual inspection, not a measurement):
-
-| | street1 (14 mm) | street2 (26 mm) | street3 (26 mm) |
-|---|---|---|---|
-| Wire sections | 136 → 108 | 154 → 146 | 151 → 147 |
-| Scored spans | 84 → 38 | 101 → 61 | 96 → 61 |
-| Largest sag | 12.6% → 9.7% | 11.7% → 7.6% | 11.2% → 7.2% |
-| Spans with CRS > 6 | 17 → 10 | 19 → 10 | 18 → 9 |
-| Structure edges / non-vegetation removed | 9 / 1 | 3 / 0 | 2 / 0 |
-| Vegetation contacts | 1 → 0 | 0 → 0 | 0 → 0 |
-| Type uncertain | – → 23 | – → 14 | – → 10 |
-| Verdict | HIGH → **INCONCLUSIVE** (lens) | HIGH → HIGH | HIGH → HIGH |
-
-The remaining high-sag spans on `street2` / `street3` were inspected: they are real sagging cables on the left of the
-frame. They score HIGH because δ_lim is the 0.040 development placeholder (Part 12, item 1), not because of a
-segmentation error; that limit is the consulting engineer's to set, and it was not changed.
-
-**Full pipeline on validation** (`v216_pipeline_val.json`; `run_analysis` with WireNet, YOLO vegetation, scene gates
-and scoring, scored as in `ml.evaluate`):
-
-| | v2.15 | v2.16 |
+| Configuration | Telecom | Power |
 |---|---|---|
-| Strict / tolerant mAP50 | 0.0068 / 0.0382 | 0.0067 / **0.0456** |
-| Power F1 / P / R (tolerant) | 0.193 / 0.175 / 0.217 | **0.217 / 0.201 / 0.236** |
-| Telecom F1 / P / R (tolerant) | 0.078 / 0.068 / 0.091 | **0.101 / 0.091 / 0.115** |
-| Vegetation F1 / P / R | 0.088 / 0.273 / 0.053 | 0.088 / 0.273 / 0.053 |
-| Labelled wires in ≥ 2 classes | 5.86% | **3.41%** |
-| Fragments per covered labelled wire | 3.76 | 3.69 |
-| Verdicts NOT / MODERATE / HIGH | 10 / 10 / 2 | 11 / 9 / 2 |
+| R34 alone, pixel vote, class share 0.9 | 0.695 | 0.823 |
+| Three-member fusion | 0.727 | 0.871 |
+| Fusion + P(wire) >= 0.4 mask + strand type head (leave-one-photo-out) | 0.753 | 0.875 |
 
-**Full pipeline on the test split, run once after every setting was frozen** (`v216_pipeline_test.json`, 21 photos;
-same script and scoring as the validation table):
+Rejected on validation: a telecom logit bias (telecom precision fell), a shorter minimum span length (more fragments),
+multi-scale TTA, 2x tiled inference, clDice fine-tuning of R34, continuation grouping of collinear pieces
+(`results/v217_fusion_val.json`, `v217_scales_val.json`, `v217_strand_head_stack_val_*.json`).
 
-| | v2.15 | v2.16 |
-|---|---|---|
-| Strict / tolerant mAP50 | 0.0204 / 0.0468 | 0.0203 / **0.0496** |
-| Power F1 / P / R (tolerant) | 0.198 / 0.176 / 0.225 | **0.207 / 0.191** / 0.225 |
-| Telecom F1 / P / R (tolerant) | 0.039 / 0.033 / 0.050 | **0.042 / 0.036** / 0.050 |
-| Vegetation F1 / P / R | 0.163 / 0.364 / 0.105 | 0.163 / 0.364 / 0.105 |
-| Labelled wires in ≥ 2 classes | 7.24% | **4.50%** |
-| Fragments per covered labelled wire | 3.98 | 3.89 |
-| Wires reported / scored / type uncertain | 877 / 705 / 0 | 804 / 651 / 105 |
-| Verdicts NOT / MODERATE / HIGH | 7 / 7 / 7 | 10 / 5 / 6 |
-
-The held-out result confirms the direction seen on validation: tolerant mAP50 +0.0028, the mixed-class rate falls by
-about 38%, and precision rises for both wire classes at unchanged recall. Strict mAP50 is flat, because strict
-matching is dominated by 1–2 px boundary offsets that span assembly does not change. Fragmentation is essentially
-unchanged (limitation 13). On 21 photos the differences are small, so they are evidence of no regression, not proof of
-a significant gain. Verdicts move towards NOT AT RISK because short traces now fall below the scaled chord gate and
-structure edges are removed before scoring; δ_lim and the CRS mapping are unchanged.
-
-**Span assembly under the eight capture conditions** (`v216_stress_spans_val.json`; same probability maps, only the
-extractor differs; v2.15 = per-class spans, 25°, no lateral limit):
-
-| Condition | Tolerant mAP50 v2.15 → v2.16 | Wires in ≥ 2 classes | Fragments per wire |
-|---|---|---|---|
-| clean | 0.0397 → **0.0471** | 5.9% → 3.4% | 3.76 → 3.69 |
-| lowlight | 0.0213 → **0.0258** | 6.0% → 3.0% | 3.45 → 3.41 |
-| glare | 0.0075 → 0.0079 | 6.4% → 3.9% | 2.08 → 1.98 |
-| motion | 0.0135 → **0.0211** | 8.1% → 5.2% | 2.98 → 2.93 |
-| defocus | 0.0045 → 0.0045 | 5.2% → 4.6% | 2.85 → 2.82 |
-| jpeg | 0.0320 → **0.0381** | 5.4% → 3.3% | 3.28 → 3.24 |
-| lowres | 0.0294 → **0.0380** | 6.8% → 3.9% | 3.60 → 3.59 |
-| rainhaze | 0.0341 → 0.0333 | 4.7% → 3.7% | 3.76 → 3.71 |
-| **mean** | **0.0227 → 0.0270** | lower in 8 / 8 | lower in 8 / 8 |
-
-Guard rules (Part 8): validation tolerant mAP50 ≥ 0.0397 holds (0.0456); WireNet, its input and its class masks are
-unchanged, so pixel IoU (0.525 / 0.418) and the eight-condition pixel mean (0.3872) are unchanged by construction.
-
-**Full-resolution tiled inference (experimental, not shipped)** (`ml/experiments/v216_tiled.py`). Overlapping 1024 px
-tiles at the photo's own resolution, linear blend, mirrored pass: 3.4–4.1 s per 2048 px photo. Visually, strokes are
-thinner and adjacent wires separate more often than with the 1024 px pass, but each finds wires the other misses
-(pixel agreement 0.36–0.53), and both miss much of the dense bundle's dark core. It cannot be measured here: 20 of the
-22 validation photos are smaller than 1024 px (they are enlarged into the letterbox), so there is no high-resolution
-ground truth. It stays off until high-resolution labelled photos exist.
-
-**Not attempted, with the reason**
-
-* *WireNet re-training with hard negatives.* The loss already includes clDice (Part 3). Hard-negative mining needs
-  pixels known to be *not* wire, but the validation labels omit many real wires (82% of the "unsupported" strands lie
-  on open sky), so mining "false positives" from these labels would teach the model to suppress real, unlabelled
-  wires. The flyover, canopy and signboard examples that motivate it exist only in the three unlabelled field photos.
-  Required first: human-verified labels on street-level photos with overpasses, signs and canopies, and re-traced
-  dense bundles (Part 12).
-**Pole detector** (`app/pipeline/poles.py`, `ml/poles/`). YOLO11n (COCO-pretrained, 2.6 M parameters, AGPL-3.0)
-fine-tuned on the Zenodo 20091961 street-level set (§2.4), poles only, split by street sequence (train 2,009 images /
-23 sequences, val 767 / 5, test 327 / 5), 640 px, batch 8, MPS, AMP off. The run was stopped by the operating system
-for low memory after 15 of 30 epochs (it was sharing the 8 GB with the stress caching and the app); best epoch 13:
-**validation box mAP50 0.635, mAP50-95 0.278, P 0.614, R 0.596** (`runs/detect/runs/poles/yolo11n/results.csv`,
-resumable from `last.pt`). The test sequences have not been evaluated. On the 22 WIREFRAME validation photos it finds
-14 pole-like structures in 11 photos (no pole labels exist there, so this is not an accuracy figure).
-
-*Bridging across a detected pole (rejected)* (`v216_pole_bridging_val.json`): allowing a gap of up to 100 / 140 /
-180 px when it crosses a pole box gives tolerant mAP50 0.0489 / 0.0472 / 0.0459 against 0.0471, fragments 3.687–3.692
-against 3.692: no measurable gain, so `pole_occluder_gap` stays 0. The detector is shipped as *context only*
-(`pole_weights: null` by default, because the training images are Google Street View captures and the weights are not
-redistributed): boxes in the result's `scene.poles_detected` and `fit.pole_ends` per span when enabled locally.
-
-* *Pole-anchored span endpoints for sag.* Reported (`fit.pole_ends`) but not used to gate CRS: there is no labelled
-  evidence about which spans end at poles.
-
-### 5.11 Results of v2.17: centerline metrics, wire-type head, fusion, retake guardrail
-
-v2.17 set a 75 % target for precision and F1 on wire detection, Power, Telecom, strand classification and pole
-detection, each class judged on its own, "type uncertain" never counted as correct. This section reports what was
-measured, how, and which targets were and were not met. **Telecom and pole detection did not reach 75 % on the
-held-out test.**
-
-**Why a new metric.** Mask-IoU mAP@50 asks a 2–4 px predicted mask to overlap a hand-drawn polygon by 50 %; a wire
-found 1–2 px off-centre is a miss, so mAP50 stays at 0.02–0.05 whatever the screener does (§5.10). It is still
-reported, unchanged. v2.17 adds the thin-structure standard (road and vessel extraction; clDice, Shit et al. 2021):
-`app/pipeline/centerline_eval.py`.
-
-* precision = share of predicted centerline within tol of a labelled wire of that class; recall = share of labelled
-  centerline within tol of a predicted wire of that class; tol = 3 px per 1024 px of the long side
-* "wire" uses every reported wire; a class uses only confident wires of that class (an uncertain wire costs recall)
-* every predicted pixel stays in the precision denominator; because the labels omit real wires (Part 12, item 13),
-  **precision is a lower bound**
-* micro-averaged over photos; 95 % intervals by resampling whole photos (2 000 bootstrap draws)
-* strand classification: each reported wire whose skeleton lies ≥ 50 % on one labelled class is a case; accuracy =
-  correct / all cases (uncertain = not correct)
-* tolerant IoU / Dice are symmetric relaxed overlaps (matched pixels on both sides / all pixels). A first version
-  counted only the prediction side and could exceed 1; it was corrected before any table here was produced.
-
-**Where Telecom was lost (validation, v2.16 model).** Of the labelled telecom centerline, 70.7 % was found as
-telecom pixels, 6.0 % only as power, 12.2 % had weak wire probability nearby (below the argmax), 11.2 % nothing
-(`v217_telecom_loss_val.json`). Strand assembly then lost 4.6 points of telecom recall to the length gates, 1.7 to
-power strands and 0.7 to uncertain strands; 19 % of telecom strand centerline lay on no label
-(`v217_strand_loss_val.json`).
-
-**What was tried (validation, centerline F1 on strands; selection only on validation)**
-
-| Change | Telecom F1 | Power F1 | Decision |
-|---|---|---|---|
-| v2.16 as shipped (R34, argmax, share 0.9) | 0.695 | 0.823 | baseline |
-| class share 0.6 instead of 0.9 | 0.719 | 0.844 | superseded by the head |
-| telecom logit bias ×1.3–2.0 | ≤ 0.744 | – | rejected: telecom precision < 0.75 |
-| min span length 60 / 40 px | +0.00–0.01 | – | rejected: fragments 3.69 → 4.0 / 4.2 |
-| multi-scale TTA (0.85×, 1.15×) | 0.700 | 0.855 | rejected (`v217_scales_val.json`) |
-| 2× upsampled tiled inference | 0.635 | 0.801 | rejected |
-| MiT-B1 alone / ConvNeXt-T alone | 0.706 / 0.712 | 0.854 / 0.833 | members only |
-| fusion R34 + MiT-B1 + ConvNeXt-T, equal (v2.12 weights 0.25/0.5/0.25: 0.716) | 0.727 | 0.871 | **adopted** (`v217_fusion_val.json`) |
-| wire mask P(wire) ≥ τ, τ ∈ {0.3, 0.35, 0.4, 0.45} (R34) | 0.726–0.728 | 0.853–0.857 | τ = 0.4 adopted with the head |
-| fine-tune R34 with per-class clDice, chosen on strand F1 (7 of 10 epochs) | 0.694–0.719 | 0.817–0.851 | rejected, stopped (`runs/wirenet/wirenet-r34-v217.log.json`) |
-| **strand type head** + fusion + τ = 0.4 (leave-one-photo-out) | **0.753** [0.715, 0.788] | **0.875** | **adopted** |
-| + continuation grouping of collinear pieces (gap 40 / 80 / 150 px) | 0.755 / 0.752 / 0.748 | 0.876–0.875 | rejected: no gain, mixed rate 2.2 → 2.4 % |
-
-**Strand type head** (`app/pipeline/strand_head.py`, `ml/strand_classifier.py`). WireNet decides the type per pixel
-from a ~200 px receptive field and v2.16 summed those votes. The head looks at each reported strand as a whole:
-summed fused class evidence, mean P(wire) and entropy, length, straightness, sag ratio, orientation, width, height in
-the photo and share of strands above it, darkness against a local ring, colour, local texture, and frozen
-DINOv2-small (Apache-2.0) patch features pooled along the skeleton (PCA 32), into a 2-layer MLP (power vs telecom).
-Data hygiene: only strands lying ≥ 50 % on a labelled power or telecom wire are training cases, with that label as
-the target; strands on no label are never negatives (the labels omit wires), and the head never removes a strand.
-A head fitted on train strands alone gained little (0.743), because the WireNet members were trained on those photos
-and their train-split output is unrealistically clean; it is therefore fitted by **stacking** on validation strands
-(+ train strands), and every validation number for it is leave-one-photo-out. Abandoned-wire strands keep the
-pixel rule. The head's 0.5 abstention threshold (no "uncertain" strands) gave the highest validation F1
-(0.55: 0.749, 0.6: 0.746).
-
-**Full pipeline, validation (22 photos, all scene gates; `v217_eval_v21{6,7}_val.json`).** The v2.17 row is partly
-in-sample for the head (it was fitted on these strands); the leave-one-photo-out figure above is the honest
-validation estimate.
-
-| | Wire P / R / F1 | Power P / R / F1 | Telecom P / R / F1 | Strand class acc. | Uncertain | Wires in 2 classes |
-|---|---|---|---|---|---|---|
-| v2.16 | 0.882 / 0.775 / 0.825 | 0.932 / 0.738 / 0.824 | 0.801 / 0.613 / 0.694 | 0.867 | 11.8 % | 3.4 % |
-| v2.17 | 0.875 / 0.825 / 0.849 | 0.927 / 0.861 / 0.893 | 0.785 / 0.749 / 0.767 | 0.980 | 0 % | 2.1 % |
-
-**Held-out test (21 photos, run once after freezing, 17 Nov 2026; `v217_eval_v21{6,7}_test.json`)**
-
-| | Wire P / R / F1 | Power P / R / F1 | Telecom P / R / F1 | Strand class acc. | Wires in 2 classes | mAP50 strict / tolerant |
-|---|---|---|---|---|---|---|
-| v2.16 | 0.821 / 0.747 / 0.783 | 0.897 / 0.670 / 0.767 | 0.731 / 0.602 / 0.660 | 0.846 (11.9 % uncertain) | 4.5 % | 0.0203 / 0.0496 |
-| v2.17 | 0.823 / 0.792 / **0.807** | 0.852 / 0.804 / **0.828** | 0.713 / 0.706 / **0.710** | **0.936** (0 % uncertain) | 5.0 % | 0.0199 / 0.0485 |
-
-95 % intervals (test, v2.17): wire precision [0.773, 0.872], power precision [0.777, 0.916], telecom precision
-[0.665, 0.768]. The validation-to-test drop is the same for both versions (v2.16 telecom 0.694 → 0.660), i.e. the
-test photos are harder, and the 22-photo validation estimate was optimistic after many comparisons on it.
-
-**Gate status against the 75 % target (test, the only unbiased figures)**
-
-| Target | Precision | F1 | Met? |
-|---|---|---|---|
-| Wire detection | 0.823 | 0.807 | yes |
-| Power | 0.852 | 0.828 | yes |
-| Telecom | 0.713 | 0.710 | **no** (validation leave-one-photo-out 0.776 / 0.753) |
-| Strand classification (Power and Telecom; per class P/F1 0.962/0.916 and 0.921/0.948) | – | accuracy 0.936 | yes |
-| Pole detection | LVIS val: Grounding DINO-tiny 0.418 / 0.435; Street View YOLO11n 0.242 / 0.187 | – | **no** |
-
-Abandoned-wire is not detected at all (0 strands on validation or test).
-
-**Robustness (validation, seven synthetic conditions, F1 v2.16 → v2.17; `v217_eval_v21{6,7}_val-<condition>.json`)**
+### 14.4 Robustness (validation, synthetic conditions, centerline F1)
 
 | Condition | Wire | Power | Telecom |
 |---|---|---|---|
-| low light | 0.775 → 0.814 | 0.755 → 0.866 | 0.616 → 0.706 |
-| glare | 0.289 → 0.330 | 0.132 → 0.193 | 0.265 → 0.377 |
-| motion | 0.632 → 0.637 | 0.525 → 0.645 | 0.506 → 0.540 |
-| defocus | 0.703 → 0.776 | 0.660 → 0.738 | 0.585 → 0.672 |
-| JPEG | 0.783 → 0.822 | 0.745 → 0.858 | 0.658 → 0.749 |
-| low resolution | 0.809 → 0.842 | 0.774 → 0.885 | 0.680 → 0.761 |
-| rain / haze | 0.812 → 0.838 | 0.833 → 0.876 | 0.649 → 0.739 |
+| Low light | 0.814 | 0.866 | 0.706 |
+| Glare | 0.330 | 0.193 | 0.377 |
+| Motion blur | 0.637 | 0.645 | 0.540 |
+| Defocus | 0.776 | 0.738 | 0.672 |
+| JPEG compression | 0.822 | 0.858 | 0.749 |
+| Low resolution | 0.842 | 0.885 | 0.761 |
+| Rain and haze | 0.838 | 0.876 | 0.739 |
 
-**Retake guardrail** (`app/pipeline/guardrail.py`; API `POST /api/analysis/{id}/guardrail`; modal, banner and PDF
-warning in the screener). Checks: v2.8 reliability grade, capture envelope, class conflicts, uncertain-type share,
-fragmentation, structure edges, poles (information only). On validation × 8 conditions (176 photos,
-`v217_guardrail_val_v217.json`): photos held behind the retake prompt have mean wire F1 0.27, the rest 0.80; 91 % of
-glare photos and 0 % of clean, low-light, JPEG, low-resolution and rain photos are flagged; of the worst quartile of
-photos by F1, 52 % are flagged (specificity 98 %). Motion blur is the gap: 23 % of motion photos are flagged
-because the v2.8 grade rates most of them B. With the head's 0.5 abstention threshold the class-conflict and
-uncertain-type checks no longer fire; they stay in place for a stricter threshold.
+Source: `results/v217_eval_v217_val-<condition>.json` (conditions defined in `ml/stress.py`). Glare and motion blur are
+the weak conditions. The guardrail holds most glare photos behind the retake prompt: held photos have mean wire F1
+0.27, the rest 0.80 (`results/v217_guardrail_val_v217.json`).
 
-**Poles.** Root causes of "no poles": detection disabled in config, no frontend drawing, and the Zenodo Street View
-YOLO11n (resumed to 30 epochs, its own val mAP50 0.718) finds 0 poles on the upward-looking field photos at any
-size or threshold. A public, licence-checked pole set was built from LVIS v1 `telephone_pole` (CC BY 4.0
-annotations, COCO images under their Flickr licences, not redistributed): 1 018 images, 3 336 boxes, lamp posts,
-street lights, flag poles and generic poles as verified negatives (`ml/poles/lvis_prepare.py`). On its validation
-split (130 photos, 408 boxes, IoU ≥ 0.5): Grounding DINO-tiny zero-shot P 0.418 / R 0.453 / F1 0.435 (AP50 0.242,
-5.7 s per photo); the Street View model P 0.242 / R 0.152 / F1 0.187 (AP50 0.073). A YOLO11n trained on the LVIS
-train split was stopped at epoch 6 (val mAP50 0.226) to give the M1 to the wire work. Poles are drawn as dashed
-boxes when a detector is configured; `pole_weights` stays off, and pole-assisted joining stays off.
+### 14.5 Effect of the assessment rules (Section 8)
 
-**Cost.** Median segmentation time per 1024 px photo on the M1 rises from 1.9 s to 5.6 s (three WireNets + DINOv2).
+| | Validation | Test |
+|---|---|---|
+| Scored spans without / with the validity rules | 629 / 256 | 658 / 320 |
+| Not assessed: endpoint off the photo | 235 | 176 |
+| Not assessed: power distribution line | 138 | 162 |
+| Verdicts HIGH / MODERATE / NOT AT RISK / INCONCLUSIVE | 0 / 9 / 3 / 10 | 3 / 7 / 3 / 8 |
 
-**Field photos (street1–3, `runs/v217/regression/`).** Wire counts 116 / 135 / 128 (v2.16: 108 / 146 / 147), the
-same class split (dense telecom; power only on the transmission tower), 0 uncertain strands (v2.16: 23 / 14 / 10),
-verdicts unchanged (AT RISK – HIGH, field sag unaffected: δ_lim stays the 0.040 placeholder).
+Many spans in ground-level photos leave the frame, so many poles are INCONCLUSIVE rather than NOT AT RISK: the system
+states that it cannot assess them instead of reporting them as safe.
 
-### 5.12 Results of v2.18: pole detection (public photos only)
+### 14.6 Pole detector (public photos only)
 
-**Scope.** No WIREFRAME photo has a pole label, so **nothing below is accuracy on WIREFRAME photographs**. All
-numbers are on public LVIS v1 `telephone_pole` photos (COCO images). Pole detection stays **off** in the
-application (`pole_weights: null`) and pole-assisted wire joining stays off (`pole_occluder_gap: 0`).
+LVIS-derived test split (197 photos, 516 poles), box IoU 0.5, validation threshold reused:
 
-**Audit of v2.17** (`ml/poles/`): (1) 29 % of LVIS pole boxes are under 6 px wide (median width 11 px, 640 px
-images): distant poles on which a box IoU of 0.5 is nearly unreachable and which WIREFRAME photos, taken next to
-the pole, do not contain; (2) the v2.17 training set had 16 negative images; (3) the v2.17 YOLO11n was stopped
-at epoch 6; (4) Zenodo 20091961 labels every post (`poste`: utility, lamp and sign posts), which contradicts the
-LVIS definition, so it is used only as a starting point, never mixed as labels.
-
-**Data (v2.18, `ml/poles/build_v218.py`, `datasets/external/poles_v218`, local only).** The v2.17 positives with
-unchanged split membership plus 283 LVIS images whose annotators confirmed that no telephone pole is present
-(`neg_category_ids`): 43 contain a confusable structure (lamp post, street light, generic pole, flag pole, mast,
-antenna, traffic light, street / sign board, billboard, parking meter, hydrant, water tower, windmill), 240 are
-generic. Train 938 images (721 with poles, 2,412 boxes), val 166 (128, 408), test 197 (147, 516); LVIS train
-images → train/val, LVIS val images → test. Images stay local (COCO Flickr licences).
-
-**Protocols** (`ml/poles/eval_detectors.py`, box IoU ≥ 0.5, one-to-one, greedy by score; threshold chosen on val by
-maximum F1 and reused unchanged on test): *all boxes*, and *medium + large* (COCO convention: ground-truth boxes
-under 32² px are ignore regions; a prediction matched to one, or an unmatched prediction under 32² px, counts
-neither way). Also reported: photos with ≥ 1 false detection and photos with ≥ 1 missed pole.
-
-**Training changes.** More verified negatives (above); rotation augmentation ±5° (hand-held, tilted photos); a
-start from the Street View detector instead of COCO; 50 epochs (`ml/poles/train.py --set`). YOLO11s (9.4 M) was
-started and stopped at epoch 2 by the operating system's memory-pressure guard (4.4 GB MPS on the 8 GB M1);
-it is not reported.
-
-**Validation (166 photos, 408 poles; 177 medium/large)**
-
-| Detector | All: P / R / F1 | Medium+large: P / R / F1 [95 % CI] | AP50 all / m+l | Latency |
+| Protocol | P | R | F1 [95 % CI] | AP50 |
 |---|---|---|---|---|
-| v2.17 Grounding DINO-tiny, zero-shot (v2.17 val, 130 photos) | 0.418 / 0.453 / 0.435 | – | 0.242 / – | 5.7 s |
-| v2.17 Street View YOLO11n (v2.17 val) | 0.242 / 0.152 / 0.187 | – | 0.073 / – | 0.03 s |
-| Run 1: YOLO11n, COCO start, v2.18 data | 0.589 / 0.404 / 0.480 | 0.602 / 0.582 / 0.592 [0.527, 0.654] | 0.406 / 0.582 | 0.03 s |
-| **Run 2: YOLO11n, Street View start, v2.18 data (selected)** | 0.559 / 0.439 / 0.492 | 0.616 / 0.599 / **0.607** [0.551, 0.658] | 0.413 / 0.593 | 0.03 s |
+| All boxes | 0.505 | 0.386 | 0.437 [0.384, 0.491] | 0.386 |
+| Medium and large poles (COCO convention) | 0.620 | 0.518 | 0.564 [0.507, 0.619] | 0.545 |
 
-Run 2 was selected on validation medium+large F1 (the two runs are within each other's intervals). Thresholds 0.20
-(all) and 0.25 (medium+large).
+Source: `results/v218_poles_poles_v218_test_r2.json`. Its accuracy on WIREFRAME photos is unknown (no labels), which is
+why poles are used as context only.
 
-**Held-out test (197 photos, 516 poles; 224 medium/large), run once on 17 Nov 2026, Run 2, val thresholds**
+### 14.7 Geometry on known curves
 
-| Protocol | P | R | F1 [95 % CI] | AP50 | Photos with a false detection | Photos with a missed pole |
-|---|---|---|---|---|---|---|
-| All boxes | 0.505 | 0.386 | 0.437 [0.384, 0.491] | 0.386 | 97 | 111 |
-| Medium + large | 0.620 | 0.518 | **0.564** [0.507, 0.619] | 0.545 | 57 | 73 |
-
-**Gate: not met.** Precision 0.620 and F1 0.564 on medium/large poles are below 75 %.
-
-**Error analysis** (`ml/poles/v218_analysis.py`, diagnostic only). Of the test false detections on medium/large
-poles, 49 overlap a labelled pole at 0.1 ≤ IoU < 0.5 (right pole, box extent disagrees: crossarms included or
-not on a 5–15 px wide shaft, inconsistently across LVIS annotators) and 22 are on something else (validation 46 /
-20). A *pole-axis* match, defined before looking at results as the quantity the wire pipeline would use (centre
-x within max(half the labelled width, 2 % of image width), vertical-extent IoU ≥ 0.5), gives P 0.855 / R 0.634 /
-F1 0.728 on test (val 0.842 / 0.661 / 0.741). This is not the acceptance metric and is not claimed as one.
-
-**Can poles feed the wire pipeline?** Not yet. (1) No pole accuracy exists on WIREFRAME photos; (2) one medium/large
-pole in three to four is missed on public photos; (3) pole-assisted bridging gave no measurable gain in v2.16
-(`v216_pole_bridging_val.json`). Pole joining therefore stays off.
-
-**Own-photo labels (future work).** `python -m ml.poles.annotation_pack export --detector
-runs/detect/runs/poles/yolo11n-v218-gsvinit/weights/best.pt` wrote `runs/v218/pole_annotation/` (CVAT 1.1; train
-102, val 22, test 21, field 3 photos; 214 detector boxes as unverified `pole_candidate`). Annotators confirm or
-reject each candidate (`utility-pole` / `not-utility-pole` = hard negative), draw missed poles, record occlusion
-(wires / vegetation / other), sky background, attached equipment and material, and tag the photo
-`poles_complete`; only complete, fully verified photos are imported (`ml.poles.annotation_pack import`), into a new
-folder, keeping the team-set splits. The pole gate can be judged only after that.
-
-**Wires, unchanged in v2.18.** The v2.17 configuration was re-run on test on 17 Nov 2026 as a reproduction check
-(no selection): `v217_eval_v217_test.json` is byte-identical to the first run (wire 0.823 / 0.792 / 0.807, power
-0.852 / 0.804 / 0.828, telecom 0.713 / 0.706 / 0.710, strand class accuracy 0.936, mixed 5.0 %).
+`python -m ml.evaluate geometry` renders wires with exact catenary parameters and recovers them through the same
+centerline and fit code. The 2-scene configuration used in the test suite gives 10 wires, 0 fit failures and a median
+relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real photographs has no ground truth
+(Section 17).
 
 ---
 
-## 6. Version history
+## 15. Testing
 
-| Version | Main change | Headline result |
-|---|---|---|
-| v2.0 | Chapter III mathematics implemented exactly (replacing the original `main` code) | Part 11 lists the differences |
-| v2.1 | Landing page, evaluation suite (Eq. 5, 12–18), Roboflow download, self-healing console, no-mock-detector rule | Geometry benchmark (40 synthetic scenes, 200 wires): curve RMSE median 0.27 px; sag-ratio error median 1.1% |
-| v2.2 | Two portals: open Field Screener, authenticated admin command centre; reviews; exports; security | 0 console errors in browser walkthrough |
-| v2.3 | Measured, triggered enhancement; training recipe (no vertical flip or rotation: an upside-down catenary is an arch) | – |
-| v2.4 | Team dataset v1 audit (unusable fragments); VNI made illumination-invariant and calibrated on training photos | – |
-| v2.5 | Revised four-class taxonomy; span-level export; vegetation separated from scoring | – |
-| v2.6 | YOLO11s-seg trained on the M1 | Test strict mask mAP50 0.0005; wire AP 0 |
-| v2.7 | 1024 px; the mask-ceiling diagnosis; **WireNet**; spans from the skeleton | Test 0.0204 / 0.0375 |
-| v2.8 | Span stitching, chord gate, hazard verdict, reliability grade, edge denoise + flip TTA, stress suite | Validation 0.0283 → 0.0397; test 8-condition 0.0298 → 0.0360; ρ = 0.64 |
-| v2.9 | Corroborated pole verdict; grade reasons; diagnostic figure | Verdicts test 18/3/0 → 7/7/7 |
-| v2.10 | Glare gate; output-identical latency rewrite; scoped lint | Silent glare NOT AT RISK val 5 → 0, test 7 → 3; dense poles 35–46% faster |
-| v2.10.1 | Live HTTP 500 fix (schema migration); universal ingestion; lossless GPS stripping | 8/8 live uploads, 0 HTTP 500 |
-| v2.11 | Dual-polarity (night); full mask and reasons in the API; inspection console | Night test 0.0090 → 0.0313; daytime identical |
-| v2.12 | MiT-B1 and ConvNeXt-Tiny backbones; fusion; Depth Anything V2 studies | Fusion 0.0397 → 0.0537 but 4.7 s: not shipped |
-| v2.13 | Ground gate; per-span actions and retake guidance; screener redesign | Problem photo HIGH (false road trace) → NOT AT RISK |
-| v2.14 | Provenance of span pixels (observed vs inferred); span ownership within blob; console redesign; website only | 0 verdict changes; honest rendering of bridged gaps |
-| v2.15 | Single-screen landing page; centred upload card with inspection name and city; plain-language results page; diagnostics grouped and collapsed | 16/16 mocked and 3/3 real-photo browser checks |
-| v2.16 | One class per physical strand (union geometry, evidence-weighted class, "type uncertain"); structure-edge and vegetation scene gates; chord gate in model pixels; capture envelope applied to sag; bridge angle 35° + 15 px lateral limit; YOLO11n pole detector (context) | Validation tolerant mAP50 0.0382 → 0.0456; wires in two colours 5.9% → 3.4%; ultra-wide field photo HIGH → INCONCLUSIVE; false vegetation contact removed |
-| v2.17 | Centerline P/R/F1 per class with bootstrap intervals; equal-weight three-WireNet fusion; P(wire) ≥ 0.4 strand mask; strand type head (DINOv2 + geometry + scene position, stacked on validation); retake guardrail (modal, banner, PDF, recorded choice); LVIS pole set and detector comparison; poles drawn | Test centerline F1 wire 0.783 → 0.807, power 0.767 → 0.828, telecom 0.660 → 0.710; strand class accuracy 0.846 → 0.936 |
-| v2.18 | Pole audit; LVIS pole set with 283 verified negatives; COCO medium+large protocol, false-detection / missed-pole counts, error analysis; YOLO11n fine-tune from the Street View detector; CVAT pole annotation pack for the team photos; pole detection still off | LVIS test (public photos only) medium+large pole F1 0.564 (P 0.620), all boxes 0.437; v2.17 best on val was 0.435 (all boxes); gate not met |
+### 15.1 Automated tests
 
----
+`python -m pytest`: 717 tests, all passing (18 Nov 2026, 62 s). The suite uses synthetic scenes with known geometry
+(`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
-## 7. Everything tried and rejected (all measured)
-
-| Version | Idea | Evidence | Decision |
-|---|---|---|---|
-| v2.1 | High-contrast edge "fallback" detector | Edges cannot be classified; building edges would get CRS | Not built |
-| v2.7 | SAM 2.1 with true boxes | Wire IoU 0.04–0.08 | Not used |
-| v2.7 | YOLO-seg masks for wires | 1/4-grid ceiling median IoU 0.40 | Replaced by WireNet |
-| v2.7 | Abandoned-wire Stage 2 (rebalancing, focal, oversampling, copy-paste) | Precision ≤ 0.04; floods or collapses | Not shipped |
-| v2.8 | Multi-scale Retinex | Lower low-light and glare accuracy | Rejected |
-| v2.8 | Multi-scale TTA | ≤ +0.006 at 2–3.5 s per image | Rejected |
-| v2.8 | Topological loose-end (abandoned) detector | ~10 candidates per photo, precision < 0.03 | Shipped off |
-| v2.8 | Pseudo-label self-training | No candidate set reached 0.75 precision | Not attempted |
-| v2.9 | Motion-blur router (skip sharpening) | Pixel IoU +0.021, but span tolerant 0.0177 → 0.0098–0.0143 | Rejected |
-| v2.9 | JPEG deblocking | Tolerant tie; strict 0.0058 → 0.0043 | Rejected |
-| v2.9 | Service-drop split by image inclination | 24/24 audited "drops" were spans in perspective | Rejected |
-| v2.9 | X-junction perfect matching | Identical (near tangents) or 0.0353 (far) | Rejected |
-| v2.9 | Single-extreme-span override | CRS = 10 reproduces in 37% of retests | Rejected |
-| v2.10 | Exposure-only glare gate | Rejects 14/22 bright-sky controls | Rejected (policy option) |
-| v2.10 | Wire-density glare gate | Misses 2 of 5 silent cases | Rejected |
-| v2.10 | Borderline band around k* | Instability 41% → 47–50% | Rejected |
-| v2.11 | Hysteresis thresholding | Pixel recall 0.80 → 0.89, span 0.0397 → 0.018–0.028 | Rejected |
-| v2.12 | MiT-B2, SegFormer-B2 | Out of memory / 2.31 s inference | Not trained |
-| v2.12 | Three-model fusion | +0.014 tolerant, F1 up; 4.7 s | Not shipped (opt-in) |
-| v2.12 | Single-pass fusion | 0.0503; needs p0 and grade recalibration | Not adopted |
-| v2.12 | Depth gate on YOLO vegetation | Removes the night-sky false positive and 2 true trees (AP 0.024 → 0.0025) | Rejected |
-| v2.12 | Photometric / darkness vegetation gates | Miss the night case or remove a true tree | Rejected |
-| v2.13 | SegFormer-B0 scene parser | Research-only licence | Not used |
-| v2.13 | Always-on CLAHE; black-hat tubeness | Lower tolerant mAP50 | Rejected |
-| v2.13 | 12° bridging | 0.0357–0.0381 | Rejected |
-| v2.13 | Closed-loop and isolated-below rules | Remove real wires on unlabelled street photos | Rejected |
-| v2.13 | Upward-bulge rules | Remove labelled wires | Rejected |
-| v2.14 | Bridge only with model evidence | No gain; losses from τ 0.15 | Rejected |
-| v2.14 | Lateral-offset bridge gate | −0.0005 to −0.0031 | Rejected (re-tested and adopted with the v2.16 strand extractor) |
-| v2.16 | Wire mask from P(wire) ≥ τ (0.30–0.45) | Pixel recall 0.855 → 0.87–0.90, tolerant mAP50 0.0432 → 0.0262–0.0324 | Rejected |
-| v2.16 | Longer bridges 100–140 px, with or without model evidence | 0.0382–0.0428 | Rejected |
-| v2.16 | Catenary residual ÷ stroke width as a trajectory gate | Does not separate supported from unsupported strands | Rejected |
-| v2.16 | "Share on structure classes" wire gate | Not measurable on validation (no flyovers); removes wires in front of decks | Not adopted (side contrast used) |
-| v2.16 | Tiled full-resolution inference | Visually thinner, separated strokes; no high-resolution labels to measure it | Experimental, off |
-| v2.16 | Hard-negative WireNet re-training | Validation labels omit many real wires: mining would suppress them | Not attempted (annotation gap) |
-| v2.18 | YOLO11n pole detector from COCO weights (v2.18 data) | Val medium+large F1 0.592 vs 0.607 from Street View weights | Not selected (within interval) |
-| v2.18 | YOLO11s pole detector | Stopped at epoch 2 by memory pressure on the 8 GB M1 (4.4 GB MPS) | Not measured |
-| v2.18 | Mixing Zenodo `poste` boxes into the LVIS labels | Definition conflict (lamp and sign posts labelled as poles) | Not attempted; used as starting weights only |
-
-**A recurring finding.** Pixel accuracy and span accuracy disagreed four times (YOLO masks, the motion router,
-hysteresis, single v2.12 backbones). The screener needs continuous, separated spans, so span-level validation
-decides, with pixel F1 as a guard. The three-model fusion is the only change that raised both.
-
----
-
-## 8. How the test split was used (methodological integrity)
-
-- **No rule, threshold or constant was chosen on test.** Every choice was made on the 22 validation photos.
-- **v2.8:** test run once for the final tables.
-- **v2.9:** test evaluated more than once, all superseded runs kept (`results/superseded/`). A locked run differed
-  from v2.8 and the difference traced to a coupling bug (the blur fallback counted service drops as failed wires),
-  fixed as a correctness fix. The drop split was then rejected on validation evidence. The verdict layer was re-run
-  once more after p0 was re-measured on validation over all spans (subset p0 gave 6/7/8; final 7/7/7).
-- **v2.10:** gate chosen on validation; test glare evaluation run once. The exposure-only alternative that would have
-  caught the motivating test photo was **not** adopted, because choosing it after a test failure leaks test
-  information.
-- **v2.11:** one interrupted run completed by a second process; identical duplicate rows removed.
-- **v2.12:** backbones and fusion weights chosen on validation (15 grid points with flip, 15 without); winner's score
-  called optimistic; fusion never run on test. The frozen v2.12 equals v2.11 and was run once on test.
-- **v2.13–v2.15:** all candidates decided on validation; benefits of the ground gate shown on unlabelled live photos
-  (not part of any split). The v2.13+ test run on the frozen configuration has not been performed.
-- **v2.16:** every setting (strand class, the 0.9 evidence share, 35° / 15 px joining, side contrast 0.6, vegetation
-  share 0.4, pole bridging off) decided on validation; the field photos only illustrate. The single test run
-  (`python -m ml.experiments.v216_pipeline_eval --split test`) was performed once, after freezing, on 16 Nov 2026
-  (`v216_pipeline_test.json`, §5.10); no setting was changed after it.
-- **v2.17:** fusion members and weights, τ, the head's features, its training data and abstention threshold, and
-  the guardrail thresholds were all decided on validation (head numbers leave-one-photo-out). Many candidates were
-  compared on the same 22 photos, so the validation figures are optimistic. The frozen configuration was run once on
-  test on 17 Nov 2026 (`v217_eval_v217_test.json`, with v2.16 alongside); Telecom missed the 75 % target there and
-  no setting was changed after it. Pole detectors were compared only on the LVIS validation split; the LVIS test
-  split was not used.
-- **v2.18:** pole data, augmentation, starting weights and both thresholds chosen on the LVIS validation split; the
-  LVIS test split was used once, on 17 Nov 2026, for the selected detector (`v218_poles_poles_v218_test_r2.json`);
-  nothing was changed after it. The wire test was re-run once on the frozen v2.17 configuration as a reproduction
-  check; the output is identical to the first run.
-- **Guard rules.** v2.8: tolerant pixel IoU must stay ≥ 97% of v2.7's. v2.9 onward: validation tolerant mAP50 ≥ 0.0397,
-  pixel IoU ≥ 0.525 / 0.418, 8-condition mean ≥ 0.3872. Output-identical changes are proven with golden checks.
-
----
-
-## 9. The web application
-
-### 9.1 Pages (v2.15)
-
-- **Landing (`/`).** One screen, no scrolling at desktop sizes. A drafting-style drawing of two poles and their
-  wires; one gold wire shows the chord L and sag δ, with a live δ/L readout that follows the pointer. The wordmark
-  "WIREFRAME" set large and centred, one sentence, the button *Open the Field Screener*, the authors' names (CANILA ·
-  TUBIANOSA · VILLAMAR), and the screening disclaimer. Respects reduced motion.
-- **Upload (`/workspace`).** One centred card: drop or choose a photo (preview, file name, pixel size, file size,
-  Replace, Remove; type and 64 MB checks in the browser, re-checked by the server); *Inspection name*, *City* and
-  *Barangay* (all optional); *Use my location* (asked only on click; a refusal never blocks the upload; no reverse
-  geocoding, so nothing is guessed or sent elsewhere); *Screen this photo*. While processing, real steps are shown
-  (uploading, location data removed, analysing); no invented percentage.
-- **Results (`/workspace/result/{id}`).**
-  1. Header: inspection name (or file name), place, date and time, original file name, PDF report, New inspection.
-  2. Overall assessment, mirroring the server verdict: "High risk found" / "Moderate risk found" / "No high risk
-     found" (with "This is a screening from one photo, not a safety inspection.") / "Photo not clear enough".
-     Sections that read high on their own but were not corroborated are named, not hidden. A coverage line: "18 of
-     27 wire sections could be assessed; 9 could not".
-  3. Risk summary: High / Moderate / Low counts only; unassessed sections are never counted as low.
-  4. Viewer: Original / Wires / Mask / Both; Layers (model mask, wire sections, estimated gaps, centre lines, fitted
-     curve, sag measurement, section ends, numbers); overlay strength; vegetation; zoom; Fit; Reset. Masks drawn
-     pixel-exact; line geometry on pixel centres.
-  5. Wire sections list: Wire, Type, Condition, Finding ("Hangs low (4.5%)", "Too small or far to measure",
-     "Overlaps other wires"); selecting a row highlights the wire and opens its detail (sag vs allowance, a sag score
-     explained in words, vegetation, measurement details folded).
-  6. What to do next: built from the findings (who to call, which sections first, vegetation to report, what photo
-     would help) and always "Do not touch, climb toward or try to move any overhead wire. Treat every wire as live."
-  7. Photo limitations: only those found (too small or far; overlapping; past the photo edge; estimated gaps; photo
-     quality cause; drop wires not checked), each with the affected sections and what would help.
-  8. Technical diagnostics (collapsed, for administrators and researchers): model information, image quality,
-     segmentation metrics (incl. fragments outside sections and inferred pixels, ground structures ignored),
-     statistical analysis (binomial corroboration, p0, α, server verdict and reasons), processing performance,
-     configuration and execution.
-- **Admin command centre (`/admin`).** Overview, analyses and detail (per-wire a, b, c, residual, L, δ, δ/L, δ_lim,
-  CRS), sites map and MSPI ranking with live α/β sliders and the 66-cell sensitivity grid, pole history, reviews
-  (confirm / override / dismiss with a required note, stored beside the unchanged scores), model and queue
-  management, CSV and PDF exports.
-
-### 9.2 API (selected)
-
-| Endpoint | Access |
+| Area | Examples |
 |---|---|
-| `POST /api/analysis/upload` (file, inspection_name, city, barangay, latitude, longitude, labels) | public, rate-limited (20 per 15 min) |
-| `GET /api/analysis/{id}`, `/result`, `/image`, `/wiremask.png`; `GET /api/reports/{id}/pdf` | public with the 128-bit analysis id (capability) |
-| `GET /api/health`, `/api/config`, `/api/evaluation/metrics` | public |
-| Listing, retry, delete, `/api/dashboard/*`, `/api/admin/*` | admin session |
+| Geometry | Catenary fit and closed-form sag on exact curves; precision gate; truncation; inclusive band boundaries at 2.4 % and 4.0 % |
+| Pipeline | Strand extraction, gap bridging, pixel ownership, provenance, dual polarity, scene gates, strand head loading, guardrail |
+| Assessment | Not-assessed reasons, no severity without a score, corroborated verdict, INCONCLUSIVE coverage rule, vegetation rules |
+| API | Upload validation and limits, GPS stripping, refusal without a model, results, PDF content, reviews, exports, bulk actions, record kinds, barangay and coordinate validation |
+| Security | Anonymous access refused on portal routes, inspector and administrator roles, session expiry and revocation, CSRF origin check, login throttling, rate limits |
+| Frontend contracts | No automatic re-run of failed inspections; removed endpoints and the System page stay removed; list views do not decode geometry |
+| Weights | Download, part joining, SHA-256 verification, no overwrite |
 
-The result carries `inspection {name, city, barangay}`, `hazard`, `quality`, `wires` (with `reason_code`, `reason`,
-`reason_short`, `action`, `provenance`, `veg_clearance`), `suppressed_spans`, `retake_guidance`, `wire_mask`
-statistics, `telemetry`, `parameters` and `flags`.
+### 15.2 Lint
 
-### 9.3 Security and data handling
+`ruff check app tests scripts ml`: no findings.
 
-scrypt password hashing (min 12 characters), **no default account** (`python -m scripts.create_admin <name>`, password
-prompted); 256-bit session token in an HttpOnly, SameSite=Strict cookie, only its SHA-256 stored, 8 h expiry,
-server-side logout; Origin/Referer CSRF check; login throttling (5 failures per 15 min); anonymous uploads cannot change
-an existing pole's data; admin pages `X-Frame-Options: DENY`. GPS stripped losslessly; coordinates stored separately.
-SQLite with foreign keys enforced, CHECK constraints, automatic add-missing-columns migration, a config fingerprint
-stored with every analysis and report. **No mock detector:** with no model and no reference polygons the upload is
-refused (503) before anything is stored.
+### 15.3 End-to-end browser check
 
-### 9.4 Installation and model provisioning
-
-The repository is self-contained: `git clone`, `pip install -r requirements.txt`, `uvicorn app.main:app`. The trained
-weights are not in the code history; they are published on the repository's `model-weights` branch. On first start
-`app/core/weights.py` downloads any missing file (`wirenet-r34.pt`, 97,918,915 bytes, SHA-256 `ab2353c7…`;
-`wireframe-yolo11m-seg.pt`, 20,660,928 bytes, `1532d7ae…`) in a background thread, verifies size and SHA-256, installs
-it atomically, retries on network errors, and never overwrites an existing file. Until the files arrive the screener
-reports validation mode; the health check switches to screening as soon as they are in place (progress in
-`GET /api/health` → `model.downloads`). Verified on a fresh copy with an empty `models/`: both files downloaded,
-verified and loaded with no restart. `WIREFRAME_AUTO_DOWNLOAD=0` disables it (offline installs);
-`WIREFRAME_WEIGHTS_BASE_URL` points at another mirror. The scene parser is fetched from the Hugging Face Hub on first
-use. Licences: the vegetation weights derive from Ultralytics YOLO11 (AGPL-3.0); WireNet from ResNet-34 (BSD-3) and
-segmentation-models-pytorch (MIT); dataset CC BY 4.0.
-
-**v2.18: every model from the repository.** `REQUIRED` now lists every file the shipped configuration loads (12
-files, ≈ 650 MB): the three WireNets, the strand head and its statistics, the vegetation YOLO, the pole detector,
-and copies of DINOv2-small (Apache-2.0) and UperNet-ConvNeXt-T (MIT) under `models/hf/`, which the strand head and
-scene parser now load from (`weights.hf_source`; the hub id only when the local copy is incomplete). Files above
-GitHub's 100 MB limit (ConvNeXt-T WireNet, UperNet) are published as 90 MB parts and joined on download; the
-SHA-256 is checked on the joined file, and a missing part installs nothing (`tests/test_v215_weights.py`). The pole
-detector weights (LVIS/COCO photos; initialised from a Street View-trained model) are published by the project
-owner's decision for academic, non-commercial use, as stated on the `model-weights` branch README.
-
-### 9.5 Outputs beyond the page
-
-- **PDF report:** disclaimer on page 1 and every footer; inspection name, place, pole code, file name; verdict and
-  reasons; reliability and its reason; per-wire table; three-panel diagnostic figure (photo + grade badge;
-  segmentation by class; spans by CRS level with clearance lines).
-- **Batch street audit** (`scripts/batch_inspect.py`): a folder or a survey video (frames every N s, near-duplicates
-  removed by pHash) → `inspection.csv`, `summary.json/.md`, diagnostic figures, `rejected.csv`, and a LabelMe review
-  queue of high-risk and low-reliability photos for correcting into new training labels.
+`scripts/e2e_check.py` drives headless Chrome (Playwright) against a running test server: Field Screener upload,
+processing, result summary, page counts against the API, no severity on unassessed wires, Mask view, PDF download with
+counts against the API and the verification footer, admin sign-in, no System menu entry, Failed tab, technical
+exports, inspection diagnostics, map with three base layers, `/admin/system` answering 404. The uploaded photo is then
+marked as a test record. Result on the release build: 16 of 16 checks passed, 0 page errors.
 
 ---
 
-## 10. Software verification
+## 16. Security and data handling
 
-| Check | Result |
+| Control | Implementation |
 |---|---|
-| Unit and integration tests (`pytest`) | 551 passed (v2.16; `tests/test_v216_strands.py` covers the strand class, crossings, parallel wires, side contrast, the lens rule, the chord gate and pole bridging) |
-| Lint (`ruff check app ml scripts tests`) | clean |
-| Mocked browser check (`scripts/ui_check.py --mock`): 4 verdict states × light/dark × 1440 and 1024 px | 16 / 16 pass; 0 console errors |
-| Real-photo browser check (P-B1D137, a handrail street photo, the night pole) | 3 / 3 pass: name/city/barangay saved and shown, PDF valid, every view and control, table ↔ photo selection |
-| Upload behaviours | no location request on load; refusal does not block; wrong type and > 64 MB rejected; Remove; drag and drop |
-| Whole-pipeline golden check | v2.10 = v2.9 on 22/22 validation photos; v2.11 and v2.12 identical on clean photos |
-| Live upload check (v2.10.1) | every format, 64×64 to 4000×3000 RGBA (37.7 MB), 0 HTTP 500 |
+| Passwords | scrypt (N = 2^14, r = 8, p = 1, 16-byte salt), minimum 12 characters; no default account (`python -m scripts.create_admin`) |
+| Sessions | 256-bit random token in an HttpOnly, SameSite=Strict cookie (`Secure` with `WIREFRAME_COOKIE_SECURE=1`); only its SHA-256 is stored; 8 h expiry; server-side logout |
+| CSRF | SameSite=Strict plus an Origin/Referer check on every state-changing request |
+| Roles | Inspector and administrator enforced on the API (`require_admin`, `require_system`), not only in the UI |
+| Throttling | Login: 5 failures per 15 min; anonymous uploads: 20 per client per 15 min; assistant: 12 questions per account per minute |
+| Uploads | Size limit enforced while streaming; image decoded and re-validated; stored under a random UUID name (the client file name is display metadata only); GPS removed |
+| Public results | Reachable only with the 128-bit analysis id; anonymous uploads cannot change an existing pole's data |
+| Headers | `X-Frame-Options: DENY` on portal pages |
+| Data validation | Barangays against the PSGC list; coordinates within Philippine bounds; free text stripped of control characters and length-limited |
+| Secrets | None in the repository; `.env` is git-ignored; the assistant's Claude key is read only from the server environment, and the assistant works without it |
+| Audit | Reviews, record-kind changes, location and barangay edits, retries, deletions, model and settings changes are logged with actor and time |
 
-Notable bugs found by verification and fixed: untrained smoke-run weights installed into `models/` (v2.1); unsharp mask
-returning blurred photos unchanged (v2.7); silent NOT AT RISK for unreadable photos (v2.8); blur-fallback coupling with
-service drops (v2.9); a stale database schema causing HTTP 500 on every live upload (v2.10.1); GPS stripping that
-re-encoded JPEGs and changed pixels (v2.10.1); phone-width table clipping (v2.13); browsers reusing an old landing
-stylesheet with new markup (v2.15: assets now revalidated on every load).
-
----
-
-## 11. Deviations from Chapter III and corrections for the manuscript
-
-| Item | What the code does | Why / action for the manuscript |
-|---|---|---|
-| **Eq. 3 (VNI)** | The image mean is removed before the Hann window (`vni.remove_mean: true`) | As written, the window leaks the mean into low-frequency bins, so the same texture scored 0.47 dark and 0.036 bright. **State in Eq. 3 that the mean is removed** |
-| Sag measurement precision | CRS only when chord ≥ 100 px (σ/L ≤ ¼·δ_lim), with σ = 1 *model* pixel: on model output the gate is 100 × max(1, long side ÷ 1024) photo pixels (v2.16) | Add as a measurement-validity condition |
-| Capture envelope | Checked since v2.0; from v2.16 a focal length below 24 mm (35 mm eq.) also withholds sag from the verdict | State in §3.3.1 that out-of-envelope lenses invalidate image-space sag |
-| Wire classification | One class per strand from the summed class probability of its observed pixels; "type uncertain" below 90% of the evidence (v2.16) | Chapter III classifies per detection; add the strand rule and the uncertain category |
-| Pole verdict | Corroborated binomial rule (p0 measured by test–retest) | New interpretation layer; Eq. 1–11 unchanged |
-| Reliability grade, glare gate | New | Not in Chapter III |
-| Segmentation architecture | WireNet (U-Net R34) for wires, YOLO11s-seg for vegetation, scene parser for ground | Chapter III specifies YOLO11-seg; its 1/4-resolution masks cannot represent 2 px wires (Part 5.2) |
-| Evaluation sections | Equations are in §3.10–3.11 (§3.7 is the Operational Framework) | Correct cross-references |
-| H3 | RMSE between CRS and the engineer's 0–10 ratings, not a curve-fit error | Curve-fit accuracy reported separately (synthetic benchmark) |
-| Risk labels | Low / Medium / High (Table 1.2) in the API; the field page says Low / Moderate / High risk | Keep Table 1.2 in the manuscript |
-| Chord endpoints | Fitted curve at the first and last centreline x | §3.6.5 "two ends of the fitted centreline" |
-| Residual limit τ | RMS residual ÷ L ≤ 0.02 | Scale-invariant |
-| Spur pruning | Shortest spur per junction per pass | A Y-fork at a wire end otherwise erases both arms |
-| Hann window | Periodic (DFT-even) | Chapter III does not specify |
-| Multiple photos per pole | Latest analysis represents the pole | Thesis assumes one standardised photo |
-| Quality rejections | Only objective (undecodable, blank); small photos accepted and graded Retake | The original blur/darkness cut-offs had no source |
-| Bounding boxes | Never converted to polygons; sent to an annotation queue | A box around a diagonal wire is a filled rectangle |
-| Fiber optic drops | Labelled and scored as `telecom-cable`, using telecom conductor values in Eq. 9 | Revisit with the consulting engineer |
-| Removed from the original code | Detection-confidence "severity", `detection_risk`, `barangay_risk`, 50/50 score, metric clearance from an assumed pole height | Not in Chapter III; uncalibrated |
+**Dependency audit** (`pip-audit -r requirements.txt`, 18 Nov 2026): no known vulnerability in the runtime
+dependencies except transformers 4.57.6, which has advisories for checkpoint conversion, `Trainer` RNG-state loading,
+crafted remote `config.json` files, custom-code and LightGlue loading, tokenizer `save_pretrained` path traversal and
+custom generation code. WIREFRAME uses none of these paths: it loads two fixed models (DINOv2-small,
+UperNet-ConvNeXt-T) from local copies under `models/hf/`, without `trust_remote_code`, and never trains or saves with
+transformers. Moving to transformers 5 requires re-verifying both models and is left as a maintenance item.
 
 ---
 
-## 12. Limitations and open problems (in order of expected impact)
+## 17. Limitations
 
-1. **δ_lim calibration and reference ratings (H3).** Every sag band depends on the placeholder δ_lim = 0.040, and no
-   result validates CRS against an engineer.
-2. **Verdict instability.** The pole verdict changes in 41% of mildly degraded photos whose wires survive. A steadier
-   per-span sag estimate is needed (e.g. averaged over variants, or from the probability map).
-3. **Perspective.** Spans receding in depth read high 3.3× more often; image-space sag is perspective-sensitive.
-4. **Telecom** (v2.17 test, centerline): precision 0.713, recall 0.706, F1 0.710, below the 75 % target. Dense
-   bundles are not separated and ~23 % of labelled telecom is never or only weakly predicted; three backbones agree,
-   so more labelled telecom (the verification pack, `ml/annotation_pack.py`) is the next step, not another model.
-5. **Merged neighbouring cables** in very dense tangles (e.g. P-B1D137 span 14 carries a fragment of the cable below
-   it, connected through the tangle in the model's own mask).
-6. **Small dataset:** 145 photos, 21 test photos, 22 validation photos; differences below ~0.002 are noise; the test
-   split has 7 abandoned-wire instances.
-7. **Real night data:** night results use synthetic night; YOLO vegetation is unvalidated at night and marks dark sky
-   as vegetation on the real night pole.
-8. **Abandoned wire** cannot be learned from 27 labels.
-9. **Street-level false wires:** road traces are removed; fence and railing traces in front of facades remain, and the
-   ground gate has no labelled street-level measurement.
-10. **Glare and motion blur** are turned into "retake", not results; the glare gate and motion threshold are calibrated
-    on synthetic conditions.
-11. **Service drops** are scored as spans; separating them needs 3-D cues or a labelled class.
-12. **Compute.** The more accurate fusion is blocked only by latency on an 8 GB M1; the v2.13+ quiet latency run is
-    outstanding (the v2.16 test run was performed).
-13. **Label completeness:** validation labels omit many wires in dense bundles and low isolated wires, so "no true
-    positive removed" is weak evidence for any suppression rule. In v2.16, 82% of the "unsupported" strands lie on open
-    sky and 8 of 11 "unsupported" vegetation regions lie on scene-parser vegetation: most are unlabelled real objects.
-14. **Fragmentation (v2.16).** About 3.7 predicted pieces cover each labelled wire, and no span-assembly setting moves
-    this by more than ±0.3: it is in WireNet's probability map. Needs better pixel recall on thin wires (more and
-    re-traced training data; high-resolution labelled photos to evaluate tiled inference).
-15. **Wrong association in dense crossings (v2.16).** A strand can still be joined through a crossing onto a
-    neighbouring cable (`street1`: a 941 px strand at 9.7% sag). The joins are collinear within 35°; a per-pixel
-    instance embedding or labelled crossings would be needed to resolve dense bundles.
-16. **Scene gates without street-level labels (v2.16).** The structure-edge and vegetation gates are checked on
-    validation for *not removing* labelled wires and vegetation, and shown to remove the false traces on the three
-    unlabelled field photos; their precision on overpass scenes has no labelled measurement.
-17. **Pole detector domain (v2.16).** Trained on Brazilian sidewalk Street View frames where the camera looks along
-    the street; WIREFRAME photos look up at the wires. Its "pole" class includes lamp and sign posts. Context only.
-18. **Pole detection (v2.18).** On public LVIS photos the selected YOLO11n reaches test P 0.620 / F1 0.564 on
-    medium and large poles (all boxes 0.505 / 0.437), below the 75 % target; most false detections are box-extent
-    disagreements on thin shafts. There is no pole label on any WIREFRAME photo, so its accuracy on the team's
-    photographs is unknown; detection stays off until the CVAT pack (`runs/v218/pole_annotation/`) is labelled and
-    a separate pole test on team photos meets the gate. OHL-UK (CC BY 4.0, 4,570 Street View photos) and the two
-    Roboflow sets were not used: download refused to automated clients / account required.
+1. **Sag reference not calibrated.** delta_lim = 0.040 and all conductor values are development placeholders. No
+   result has been compared with an engineer's rating, and sag accuracy on real spans has no ground truth (no
+   field-measured sag exists for the photos).
+2. **Power distribution lines are not assessed.** They have no configured reference; they are measured and shown only.
+3. **Perspective.** Sag is measured in the image plane. A span receding in depth, or seen from a steep angle, does not
+   show its true sag ratio; there is no camera-pose correction.
+4. **Partial spans.** Many spans leave the frame in ground-level photos and are not assessed, so many poles are
+   INCONCLUSIVE.
+5. **Telecom detection** reaches test centerline F1 0.710. Dense bundles are not separated into individual cables,
+   and some labelled telecom is never predicted. Three different backbones agree, so more labelled telecom data, not
+   another model, is the next step.
+6. **Small dataset.** 145 photos (21 test, 22 validation) from one labelling effort; differences of a few thousandths
+   are noise.
+7. **Abandoned wire** is not detected (27 labels in total).
+8. **Capture conditions.** Glare and motion blur reduce detection strongly; night results rely on synthetic night
+   images.
+9. **Merged neighbours.** In dense crossings a strand can still be joined onto a neighbouring cable.
+10. **Pole detection** is evaluated only on public photos (test F1 0.564 on medium and large poles) and is used as
+    context only.
+11. **Scene gates** were checked for not removing labelled wires on validation and for removing false traces on field
+    photos; their precision on street-level scenes has no labelled measurement.
+12. **Compute.** About 6.4 s median per 1024 px photo on an 8 GB M1, up to 17 s on dense or dark field photos; one
+    worker processes inspections in order.
+13. **Single-node deployment.** SQLite and one worker suit one office; a larger deployment needs a server database
+    and a job queue.
+14. **Dependency maintenance.** transformers 4.57.6 carries advisories on code paths WIREFRAME does not use
+    (Section 16).
 
-**Recommended next steps:** engineer reference ratings and δ_lim calibration; several hundred tightly traced
-abandoned-wire instances and re-traced dense bundles; labelled street-level and night photos of the team's own poles;
-retrain on the larger set and report on a test split of ≥ 100 photos; agree a tolerance-aware instance metric for thin
-structures with the panel; test the fusion on faster hardware after re-checking p0 and the grade on validation.
+Readiness: suitable for screening support with manual review. It is not suitable for operational safety decisions
+without the engineering calibration in item 1 and labelled local data for items 3, 5 and 7.
 
 ---
 
-## 13. Reproduction
+## 18. Reproducibility
+
+### 18.1 Environment
 
 ```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements-dev.txt -r requirements-ml.txt
-python -m scripts.create_admin <username>                 # password prompted; no default account
-uvicorn app.main:app --port 8000                          # / landing · /workspace screener · /admin
-python -m pytest && ruff check app ml scripts tests
-
-# training
-python -m ml.wirenet train --out models/wirenet-r34.pt                       # WireNet-R34 (v2.7 recipe)
-python -m ml.wirenet train --encoder mit_b1 --batch 2 --epochs 40 --out models/v212_mitb1.pt
-python -m ml.train --data datasets/wireframe_seg/data.yaml                   # YOLO detector
-
-# cached probabilities and span experiments (validation)
-python -m ml.experiments.cache --split val
-python -m ml.experiments.sweep_spans --out docs/thesis/results/v28_span_sweep.jsonl
-python -m ml.experiments.ablation_final --out docs/thesis/results/v28_span_ablation_final.jsonl
-python -m ml.experiments.v214_bridge_evidence --out docs/thesis/results/v214_bridge_evidence_val.json
-
-# v2.16: strands, joining, scene gates, full pipeline, stress, field photos, poles
-python -m ml.experiments.cache --split val --tag=-v216                       # + --condition <c> for each stress condition
-python -m ml.experiments.v216_strands --out docs/thesis/results/v216_strands_val.json
-python -m ml.experiments.v216_join_sweep --out docs/thesis/results/v216_join_sweep_val.jsonl
-python -m ml.experiments.v216_context                                        # scene-parser study -> v216_context_val.json
-python -m ml.experiments.v216_stress_spans --out docs/thesis/results/v216_stress_spans_val.json
-python -m ml.experiments.v216_pipeline_eval --split val                      # v2.15 vs v2.16, full pipeline
-python -m ml.experiments.v216_regression                                     # field photos in runs/v216/regression/
-python -m ml.experiments.v216_tiled street1 street2                          # experimental tiled inference (visual)
-python -m ml.poles.prepare && python -m ml.poles.train                       # pole dataset (Zenodo 20091961) + YOLO11n
-
-# v2.17: centerline metrics, fusion, strand head, full pipeline, guardrail, poles
-python -m ml.experiments.v217_cached && python -m ml.experiments.v217_fusion && python -m ml.experiments.v217_scales
-python -m ml.experiments.v217_telecom_loss && python -m ml.experiments.v217_strand_loss
-python -m ml.experiments.cache --split train --tag=-v216      # + --wirenet models/v212_mitb1.pt --tag=-mitb1, ConvNeXt
-python -m ml.strand_classifier features --cache runs/cache/train-fuse3 --split train --tau 0.4 --tag _f3t04
-python -m ml.strand_classifier features --cache runs/cache/val-fuse3 --split val --tau 0.4 --tag _f3t04
-python -m ml.strand_classifier stack --cache runs/cache/val-fuse3 --tag _f3t04 --tau 0.4 --train-weight 1 --save \
-    --head models/strand_head_v217.pt                         # leave-one-photo-out numbers + final head
-python -m ml.experiments.v217_eval dump --split val --variant v217 && python -m ml.experiments.v217_eval score ...
-python -m ml.experiments.v217_guardrail --variant v217
-python -m ml.poles.lvis_prepare --download && python -m ml.poles.eval_detectors --split val --detector <spec>
-
-# v2.18: poles
-python -m ml.poles.build_v218 --download
-python -m ml.poles.train --data datasets/external/poles_v218/data.yaml --name yolo11n-v218 --epochs 50 --patience 15 --set degrees=5
-python -m ml.poles.train --data datasets/external/poles_v218/data.yaml --model runs/detect/runs/poles/yolo11n/weights/best.pt \
-    --name yolo11n-v218-gsvinit --epochs 50 --patience 15 --set degrees=5
-D=runs/detect/runs/poles/yolo11n-v218-gsvinit/weights/best.pt
-python -m ml.poles.eval_detectors --data datasets/external/poles_v218/data.yaml --split val --detector $D --tag _r2 --save-dets runs/v218/dets
-python -m ml.poles.eval_detectors --data datasets/external/poles_v218/data.yaml --split test --detector $D --tag _r2 \
-    --threshold-from docs/thesis/results/v218_poles_poles_v218_val_r2.json --save-dets runs/v218/dets   # once
-python -m ml.poles.v218_analysis --dets runs/v218/dets/yolo11n-v218-gsvinit_val.json --threshold 0.25
-python -m ml.poles.annotation_pack export --detector $D
-
-# stress benchmark, verdicts, golden checks
-python -m scripts.stress_test_all_conditions --split test --configs v2.12 --conditions clean lowlight night \
-    --out docs/thesis/results/v212_spans_test.jsonl
-python -m ml.experiments.verdict_dist --splits test --out docs/thesis/results/v29_verdicts_pipeline_test.json
-python -m ml.experiments.pipeline_golden --check docs/thesis/results/v210_pipeline_golden_v29_val.json
-
-# glare, polarity, fusion, depth
-python -m ml.experiments.glare_gate_eval --diag docs/thesis/results/v210_glare_diag_val.jsonl \
-    --out docs/thesis/results/v210_glare_gates_val.json
-python -m ml.experiments.polarity_eval --out docs/thesis/results/v211_polarity_val.jsonl
-python -m ml.experiments.ensemble_eval --caches r34=runs/cache/val-v28 mitb1=runs/cache/val-mitb1 \
-    cnx=runs/cache/val-cnx --out docs/thesis/results/v212_ensemble_val.jsonl
-python -m ml.experiments.depth_sag --out docs/thesis/results/v212_depth_sag_val.json
-
-# browser checks
-python -m scripts.ui_check --mock --base http://127.0.0.1:8000 --out docs/thesis/results/v215_ui_check_mock.json
-python -m scripts.ui_check --base http://127.0.0.1:8000 photo1.jpg photo2.jpg \
-    --out docs/thesis/results/v215_ui_check_real.json
+python3 -m venv .venv
+.venv/bin/pip install -r requirements-dev.txt          # runtime + tests
+.venv/bin/pip install -r requirements-ml.txt           # training and dataset tools (optional)
+.venv/bin/python -m playwright install chrome          # end-to-end check (optional)
 ```
+
+Model weights download automatically on first start (Section 5.3). The dataset is not in the repository;
+`python -m ml.curate --download` fetches and curates it with a Roboflow key in `.env`.
+
+### 18.2 Commands
+
+| Purpose | Command | Output |
+|---|---|---|
+| Tests | `.venv/bin/python -m pytest` | 717 passed |
+| Lint | `.venv/bin/ruff check app tests scripts ml` | No findings |
+| Release evaluation | `python -m ml.experiments.v217_eval dump --split test --variant v221`, then `score --split test --variant v221` | `results/v217_eval_v221_test.json` |
+| Robustness | `python -m ml.experiments.v217_eval dump --split val --variant v217 --condition lowlight` (and the other conditions), then `score` | `results/v217_eval_v217_val-<condition>.json` |
+| Benchmark | `python -m ml.benchmark --images datasets/wireframe_seg/images/test/*.jpg <field photos> --reps 1 --field-reps 3 --out docs/thesis/results/benchmark_v223.json` | `results/benchmark_v223.json` |
+| Geometry check | `python -m ml.evaluate geometry` | Synthetic recovery statistics |
+| Pole detector test | `python -m ml.poles.eval_detectors --split test ...` (see the module docstring) | `results/v218_poles_*` |
+| End-to-end | `WIREFRAME_E2E_USER=... WIREFRAME_E2E_PASSWORD=... python -m scripts.e2e_check --base http://127.0.0.1:8001 --photo <photo>` | PASS or FAIL per check |
+| Training (not needed to reproduce the results) | `python -m ml.wirenet train ...`, `python -m ml.train ...`, `python -m ml.strand_classifier fit`, `python -m ml.poles.train` | Checkpoints under `runs/` |
+
+`ml/experiments/` keeps the scripts behind every measured design decision (span sweeps, fusion, polarity, glare,
+guardrail, strand head studies); their outputs are the files in `docs/thesis/results/`. Result files replaced by
+later runs are kept in `docs/thesis/results/superseded/`.
+
+### 18.3 Determinism
+
+Inference is deterministic for a given photo, configuration and model set; the configuration fingerprint is stored
+with each analysis and report. Runtime varies with machine load, so the benchmark reports its dispersion.
 
 ---
 
-## 14. Evidence files
+## 19. References
 
-Every number above traces to one of these (`docs/thesis/results/` unless stated).
+1. Zhang, T. Y., and Suen, C. Y. (1984). A fast parallel algorithm for thinning digital patterns. *Communications of
+   the ACM*, 27(3), 236-239.
+2. Levenberg, K. (1944). A method for the solution of certain non-linear problems in least squares. *Quarterly of
+   Applied Mathematics*, 2(2), 164-168.
+3. Marquardt, D. W. (1963). An algorithm for least-squares estimation of nonlinear parameters. *Journal of the
+   Society for Industrial and Applied Mathematics*, 11(2), 431-441.
+4. Brent, R. P. (1973). *Algorithms for Minimization without Derivatives*. Prentice-Hall.
+5. Irvine, H. M. (1981). *Cable Structures*. MIT Press.
+6. Ronneberger, O., Fischer, P., and Brox, T. (2015). U-Net: Convolutional networks for biomedical image
+   segmentation. *MICCAI 2015*, LNCS 9351, 234-241.
+7. He, K., Zhang, X., Ren, S., and Sun, J. (2016). Deep residual learning for image recognition. *CVPR 2016*,
+   770-778.
+8. Xie, E., Wang, W., Yu, Z., Anandkumar, A., Alvarez, J. M., and Luo, P. (2021). SegFormer: Simple and efficient
+   design for semantic segmentation with transformers. *NeurIPS 2021*.
+9. Liu, Z., Mao, H., Wu, C.-Y., Feichtenhofer, C., Darrell, T., and Xie, S. (2022). A ConvNet for the 2020s.
+   *CVPR 2022*, 11976-11986.
+10. Xiao, T., Liu, Y., Zhou, B., Jiang, Y., and Sun, J. (2018). Unified perceptual parsing for scene understanding.
+    *ECCV 2018*, 418-434.
+11. Zhou, B., Zhao, H., Puig, X., Fidler, S., Barriuso, A., and Torralba, A. (2017). Scene parsing through ADE20K
+    dataset. *CVPR 2017*, 633-641.
+12. Oquab, M., Darcet, T., Moutakanni, T., et al. (2024). DINOv2: Learning robust visual features without
+    supervision. *Transactions on Machine Learning Research*.
+13. Jocher, G., and Qiu, J. (2024). *Ultralytics YOLO11* (software, version 11). https://github.com/ultralytics/ultralytics
+14. Iakubovskii, P. (2019). *Segmentation Models PyTorch* (software). https://github.com/qubvel-org/segmentation_models.pytorch
+15. Shit, S., Paetzold, J. C., Sekuboyina, A., et al. (2021). clDice: A novel topology-preserving loss function for
+    tubular structure segmentation. *CVPR 2021*, 16560-16569.
+16. Milletari, F., Navab, N., and Ahmadi, S.-A. (2016). V-Net: Fully convolutional neural networks for volumetric
+    medical image segmentation. *3DV 2016*, 565-571.
+17. Loshchilov, I., and Hutter, F. (2019). Decoupled weight decay regularization. *ICLR 2019*.
+18. Smith, L. N., and Topin, N. (2019). Super-convergence: Very fast training of neural networks using large learning
+    rates. *Proc. SPIE 11006*.
+19. Buslaev, A., Iglovikov, V. I., Khvedchenya, E., Parinov, A., Druzhinin, M., and Kalinin, A. A. (2020).
+    Albumentations: Fast and flexible image augmentations. *Information*, 11(2), 125.
+20. Lin, T.-Y., Maire, M., Belongie, S., et al. (2014). Microsoft COCO: Common objects in context. *ECCV 2014*,
+    740-755.
+21. Gupta, A., Dollar, P., and Girshick, R. (2019). LVIS: A dataset for large vocabulary instance segmentation.
+    *CVPR 2019*, 5356-5364.
+22. Zuiderveld, K. (1994). Contrast limited adaptive histogram equalization. In *Graphics Gems IV*, Academic Press,
+    474-485.
+23. Tomasi, C., and Manduchi, R. (1998). Bilateral filtering for gray and color images. *ICCV 1998*, 839-846.
+24. Immerkaer, J. (1996). Fast noise variance estimation. *Computer Vision and Image Understanding*, 64(2), 300-302.
+25. Harris, F. J. (1978). On the use of windows for harmonic analysis with the discrete Fourier transform.
+    *Proceedings of the IEEE*, 66(1), 51-83.
+26. Felzenszwalb, P. F., and Huttenlocher, D. P. (2012). Distance transforms of sampled functions. *Theory of
+    Computing*, 8, 415-428.
+27. Tarjan, R. E. (1975). Efficiency of a good but not linear set union algorithm. *Journal of the ACM*, 22(2),
+    215-225.
+28. Efron, B., and Tibshirani, R. J. (1993). *An Introduction to the Bootstrap*. Chapman and Hall.
+29. Spearman, C. (1904). The proof and measurement of association between two things. *American Journal of
+    Psychology*, 15(1), 72-101.
+30. Percival, C., and Josefsson, S. (2016). *The scrypt Password-Based Key Derivation Function*. RFC 7914, IETF.
+31. Philippine Statistics Authority. *Philippine Standard Geographic Code (PSGC)*. https://psa.gov.ph/classification/psgc
+32. OpenStreetMap contributors. *OpenStreetMap*. https://www.openstreetmap.org (map data under the ODbL).
 
-| Topic | Files |
+---
+
+## 20. Appendix: endpoint, schema and configuration inventory
+
+### 20.1 Endpoints (37 operations)
+
+Access: P = public, I = inspector or administrator session, A = administrator session.
+
+| Method | Path | Access | Purpose |
+|---|---|---|---|
+| GET | `/api/health` | P | Model readiness, downloads, queue |
+| GET | `/api/config` | P | Public configuration for the pages |
+| POST | `/api/analysis/upload` | P | Upload a photo (rate-limited) |
+| GET | `/api/analysis/{id}` | P | Status |
+| GET | `/api/analysis/{id}/result` | P | Full result (technical fields for staff only) |
+| GET | `/api/analysis/{id}/image` | P | Stored photo |
+| GET | `/api/analysis/{id}/wiremask.png` | P | WireNet class map (Mask view) |
+| POST | `/api/analysis/{id}/guardrail` | P | Record the retake prompt choice |
+| POST | `/api/analysis/{id}/retry` | I | Re-run one failed inspection |
+| DELETE | `/api/analysis/{id}` | I | Delete an inspection and its files |
+| GET | `/api/reports/{id}/pdf` | P | Inspection report (`technical=true` for staff) |
+| POST | `/api/auth/login` | P | Sign in (throttled) |
+| POST | `/api/auth/logout` | I | Sign out |
+| GET | `/api/auth/me` | I | Current user |
+| GET | `/api/dashboard/priority` | I | MSPI ranking (custom weights for administrators) |
+| GET | `/api/admin/dashboard` | I | Dashboard data |
+| GET | `/api/admin/inspections` | I | Filtered inspections list |
+| POST | `/api/admin/inspections/bulk` | I | Bulk review actions |
+| GET | `/api/admin/inspections/{id}/context` | I | Inspection page data and pole history |
+| GET | `/api/admin/inspections/{id}/findings.csv` | I | Findings of one inspection |
+| PUT | `/api/admin/inspections/{id}/record-kind` | A | Operational or test record |
+| POST | `/api/admin/analyses/{id}/reviews` | I | Add a review |
+| GET | `/api/admin/barangays` | I | PSGC barangay search |
+| PUT | `/api/admin/poles/{code}/barangay` | I | Assign a validated barangay |
+| PUT | `/api/admin/poles/{code}/location` | A | Set coordinates |
+| GET | `/api/admin/audit` | I | Audit log |
+| GET | `/api/admin/exports/inspections.csv` | I | Inspections export |
+| GET | `/api/admin/exports/sites.pdf` | I | Priority report (`technical=true` for administrators) |
+| GET | `/api/admin/routes/pdf` | I | Dispatch route report |
+| GET | `/api/admin/exports/manifest.csv` | A | Analysis manifest |
+| GET | `/api/admin/exports/wires.csv` | A | Per-wire export |
+| GET | `/api/admin/queue` | A | Queue state |
+| GET | `/api/admin/models` | A | Installed models |
+| POST | `/api/admin/models/active` | A | Activate a model set |
+| PUT | `/api/admin/settings` | A | Settings (priority weights) |
+| GET | `/api/admin/system/status` | A | System status |
+| POST | `/api/assistant/ask` | I | Ask the assistant |
+| GET | `/api/assistant/status` | I | Assistant provider status |
+
+Removed in v2.23 because nothing consumed them (they were superseded by the dashboard, the inspections list and the
+inspection context): `GET /api/analysis` (list), `/api/admin/overview`, `/api/admin/poles`, `/api/admin/poles/{code}`,
+`/api/admin/records`, `GET /api/admin/analyses/{id}/reviews`, `/api/admin/analyses/{id}/spectrum.png`,
+`/api/dashboard/map`, `/api/dashboard/summary`, `/api/dashboard/sensitivity` and `/api/evaluation/metrics`. A test
+keeps them removed.
+
+### 20.2 Database columns
+
+| Table | Columns |
 |---|---|
-| Dataset | `dataset_audit_v27.json` |
-| v2.7 models | `v27_comparison.json`, `v27_val_span_modes.json`, `wirenet_stage1_training_log.json`, `wirenet_stage2_attempt4_log.json`, `yolo1024_run1_results.csv`, `yolo1024_run2_results.csv`, `server_check_v27.json` |
-| Span assembly | `v28_span_sweep.jsonl`, `v28_span_ablation_final.jsonl`, `v28_span_confirm_val.json` |
-| Stress benchmark | `v28_stress_pixel_val.jsonl`, `v28_stress_spans_test.jsonl`, `v29_stress_pixel_val.jsonl`, `v29_stress_pixel_val_r2.jsonl`, `v29_stress_spans_val.jsonl`, `v29_stress_spans_test.jsonl`, `v211_spans_val.jsonl`, `v211_spans_test.jsonl`, `v212_spans_test.jsonl` |
-| Verdicts and p0 | `v28_verdicts.json`, `v28_sag_ratio_distribution_val.json`, `v29_span_geometry_val.json`, `v29_span_geometry_summary_val.json`, `v29_span_geometry_summary_all_val.json`, `v29_verdicts_val.json`, `v29_verdicts_pipeline_val.json`, `v29_verdicts_pipeline_test.json`, `superseded/*` |
-| Reliability, failure audit, loose ends | `v28_quality_val.jsonl`, `v28_failure_audit_val.json`, `v28_loose_end_sweep_val.json` |
-| Motion, crossings | `v29_motion_calib_val.json`, `v29_xjunction_val.jsonl` |
-| Glare and latency | `v210_glare_diag_val.jsonl`, `v210_glare_gates_val.json`, `v210_glare_after_val.jsonl`, `v210_glare_test_gate_off.jsonl`, `v210_glare_test_gate_config.jsonl`, `v210_latency_paired.json`, `v210_span_golden_val.json`, `v210_pipeline_golden_v29_val.json`, `server_check_v28.json`, `server_check_v29.json`, `server_check_v210.json`, `live_upload_check_v210.json` |
-| Night, hysteresis | `v211_polarity_val.jsonl`, `v211_hysteresis_val.jsonl`, `ui_check_v211.json` |
-| Fusion, depth | `v212_ensemble_val.jsonl`, `v212_ensemble2_val.jsonl`, `v212_ensemble3_val.jsonl`, `v212_ensemble3_notta_val.jsonl`, `v212_ensemble_bootstrap_val.json`, `v212_latency_val.json`, `v212_veg_guard_val.json`, `v212_veg_darkness_val.json`, `v212_depth_sag_val.json`; training logs `models/v212_*.log.json` |
-| Ground gate, pre-processing, bridging | `v213_filters_val.json`, `v213_span_features_val.jsonl`, `v213_enhance_val.jsonl`, `v213_bridging_val.json`, `ui_check_v213.json` |
-| Provenance, ownership | `v214_bridge_evidence_val.json`, `v214_bridge_lateral_val.json`, `v214_own_component_val.json`, `v214_ui_check_mock.json`, `v214_ui_check_real.json` |
-| Website | `v215_ui_check_mock.json`, `v215_ui_check_real.json` |
-| v2.16 strands, joining, scene gates, pipeline | `v216_strands_val.json`, `v216_join_sweep_val.jsonl`, `v216_context_val.json`, `v216_stress_spans_val.json`, `v216_pipeline_val.json`, `v216_pipeline_test.json`; field photos (local only, contain people and plates): `runs/v216/regression/summary.json` |
-| v2.16 poles | `v216_poles_val.json`, `v216_poles_test.json`, `v216_pole_bridging_val.json`; dataset split `datasets/external/poles_yolo/split.json` (local) |
-| v2.18 poles | `v218_poles_poles_v218_val_r1.json`, `v218_poles_poles_v218_val_r2.json`, `v218_poles_poles_v218_test_r2.json`, `v218_poles_analysis_yolo11n-v218_val.json`, `v218_poles_analysis_yolo11n-v218-gsvinit_{val,test}.json`; set manifest `datasets/external/poles_v218/manifest.json` (local); CVAT pack `runs/v218/pole_annotation/summary.json` (local) |
+| `poles` | id, pole_code, barangay, label, created_at |
+| `pole_locations` | pole_id, latitude, longitude, source, updated_at |
+| `analyses` | id, pole_id, original_filename, inspection_name, city, stored_name, label_name, status, error_code, error_message, segmentation_source, width, height, vni_raw, vni, vni_band, metadata_json, envelope_json, context_json, flags_json, timings_json, vegetation_json, config_fingerprint, submitted_via, record_kind, record_kind_reason, created_at, completed_at |
+| `detections` | id, analysis_id, wire_index, wire_class, confidence, status, fail_reason, bbox_json, polygons_json, centerline_json, curve_json, fit_json, chord_px, sag_px, sag_ratio, delta_lim, delta_lim0, crs, level, flags_json |
+| `reviews` | id, analysis_id, reviewer_id, reviewer_name, decision, override_level, note, created_at |
+| `reports` | id, analysis_id, file_name, sha256, config_fingerprint, created_at |
+| `admin_users` | id, username, display_name, password_hash, active, role, created_at, last_login_at |
+| `admin_sessions` | token_sha256, user_id, created_at, expires_at, user_agent |
+| `audit_events` | id, at, actor, action, target, analysis_id, detail |
+| `app_settings` | key, value, updated_at, updated_by |
 
-**Figures** (`docs/thesis/figures/`): `stress_conditions.jpg` (the eight capture conditions); `high_crs_spans_val.jpg`
-(visual audit of high-CRS spans); `loose_end_candidates_val.jpg`; `failure_hard_*.jpg` / `failure_easy_*.jpg` (green
-matched, red predicted only, blue labelled only); `v29_diagnostic_example.jpg` (the PDF diagnostic figure);
-`v29_drop_audit_val.jpg`; `v29_inclination_val.png`; `v29_motion_router_val.png`; `v29_verdicts.png`;
-`v212_night_veg_guard.jpg`; `v213_ui_hazard_dark_desktop.jpg`, `v213_ui_not_at_risk_light_desktop.jpg`,
-`v213_ui_loader_dark_desktop.jpg` (v2.13 interface).
+### 20.3 Key configuration values (`config/wireframe.yaml`)
+
+| Key | Value | Meaning |
+|---|---|---|
+| `segmentation.wirenet_weights` | `models/v217_ensemble.json` | Three-member WireNet ensemble |
+| `segmentation.wirenet_tta` | flip | Mirrored pass averaged |
+| `segmentation.dual_polarity_max_mean_l`, `dual_polarity_ratio` | 40, 1.2 | Inverted-lightness pass for dark photos |
+| `segmentation.span_wire_tau` | 0.4 | Wire mask threshold on P(wire) |
+| `segmentation.span_max_gap`, `span_gap_angle_deg`, `span_max_lateral_px` | 70, 35, 15 | Gap bridging |
+| `segmentation.span_min_stitched_len` | 90 | Minimum span length (px) |
+| `segmentation.strand_head`, `strand_head_min_conf` | `models/strand_head_v217.pt`, 0.5 | Strand type head |
+| `segmentation.pole_conf`, `pole_occluder_gap` | 0.25, 0 | Pole detector; never joins wires |
+| `centerline.l_min_px`, `n_min_points` | 30, 20 | Spur pruning, minimum points |
+| `catenary.max_rel_residual`, `border_margin_frac` | 0.02, 0.01 | Fit acceptance, truncation |
+| `crs.delta_lim0` | 0.040 (all classes) | Reference sag ratio (placeholder) |
+| `crs.levels.minor_from`, `critical_from` | 6.0, 10.0 | Inclusive level bounds (2.4 % and 4.0 % sag) |
+| `crs.assessed_classes` | telecom-cable, abandoned-wire | Classes with a reference |
+| `crs.require_both_endpoints` | true | Partial spans not assessed |
+| `crs.min_chord_px` | 100 | Precision gate |
+| `hazard.p0_high`, `p0_medium`, `alpha` | 0.050, 0.090, 0.05 | Corroborated verdict |
+| `hazard.min_assessed_share` | 0.5 | INCONCLUSIVE coverage rule |
+| `quality.grade_a`, `grade_b`, `grade_c` | 0.78, 0.66, 0.64 | Reliability grades |
+| `vni.radius_factor`, `q01`, `q99` | 0.15, 0.034, 0.243 | VNI |
+| `mspi.alpha`, `beta`, `gamma` | 1/3 each | Priority weights |
+
+### 20.4 Evidence files
+
+| Topic | Files in `docs/thesis/results/` |
+|---|---|
+| Release evaluation | `v217_eval_v221_val.json`, `v217_eval_v221_test.json` |
+| Configuration selection | `v217_eval_v216_*.json`, `v217_eval_v217_*.json`, `v217_fusion_val.json`, `v217_strand_head_*.json`, `v217_scales_val.json`, `v217_telecom_loss_val.json`, `v217_strand_loss_val.json` |
+| Strand extraction | `v216_strands_val.json`, `v216_join_sweep_val.jsonl`, `v28_span_sweep.jsonl`, `v214_own_component_val.json` |
+| Scene gates | `v216_context_val.json` |
+| Verdict noise (p0) | `v29_span_geometry_summary_all_val.json` |
+| Reliability, glare, polarity, guardrail | `v210_glare_*`, `v211_polarity_val.jsonl`, `v217_guardrail_val_v217.json` |
+| Pole detector | `v218_poles_*`, `v218_poles_analysis_*` |
+| Runtime | `benchmark_v223.json`, `v222_latency_before.json`, `v222_latency_after.json` |
+| Dataset audit | `dataset_audit_v27.json` |
+| Figures | `docs/thesis/figures/`: failure cases (`failure_*.jpg`), stress conditions (`stress_conditions.jpg`), high-CRS spans and loose-end candidates on validation, night vegetation guard, verdict distribution and diagnostics (`v29_*`) |
