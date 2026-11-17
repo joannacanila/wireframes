@@ -12,11 +12,13 @@ routes in an admin portal.
 > regulatory action. The sag reference values in `config/wireframe.yaml` are development placeholders until they are
 > calibrated with a licensed engineer, and every result carries flags that say so.
 
-**How sag is assessed.** Sag ratio = sag / chord length of the fitted catenary. With the configured 4.0 % telecom
-reference: below 2.4 % *Within reference*, 2.4 % to under 4.0 % *Minor sag*, 4.0 % and above *Critical*. A wire is
-*Not assessed* when an endpoint is outside the photo, its type is uncertain, or its class has no reference (power
-distribution lines). A pole is INCONCLUSIVE rather than NOT AT RISK when fewer than half of its measured spans could
-be assessed.
+**How sag is assessed.** Sag ratio = sag / chord length of the fitted catenary, measured in the image (it is an
+image-derived estimate, not a physical sag measurement). With the provisional 4.0 % telecom reference (a development
+value, not a regulatory standard): below 2.4 % *Within reference*, 2.4 % to under 4.0 % *Minor sag*, 4.0 % and above
+*Critical*. A wire is *Not assessed* when an endpoint is outside the photo, its type is uncertain, or its class has no
+reference (power distribution lines and abandoned wires). A pole is INCONCLUSIVE rather than NOT AT RISK when fewer
+than half of its measured spans could be assessed. Applicable engineering and regulatory limits are pending
+validation by a licensed engineer (thesis reference Sections 7.5 and 7.8).
 
 ## Quick start: run WIREFRAME on a new computer (step by step)
 
@@ -164,7 +166,7 @@ Copy `.env.example` to `.env` to change deployment settings. Never commit `.env`
 
 ```bash
 pip install -r requirements-dev.txt                # tests and lint
-python -m pytest                                   # 717 tests, no model weights needed
+python -m pytest                                   # 719 tests, no model weights needed
 ruff check app tests scripts ml
 ```
 

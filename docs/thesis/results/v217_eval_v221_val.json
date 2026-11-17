@@ -263,7 +263,8 @@
   }
  ],
  "verdicts": {
-  "AT RISK - MODERATE": 9,
-  "NOT AT RISK": 13
+  "INCONCLUSIVE - RETAKE PHOTO": 10,
+  "NOT AT RISK": 3,
+  "AT RISK - MODERATE": 9
  }
 }

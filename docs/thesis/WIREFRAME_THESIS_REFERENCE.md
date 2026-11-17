@@ -48,6 +48,16 @@ ground-level photograph of a utility pole. For each photo it:
 and its sag reference values are development placeholders until calibrated with a licensed engineer
 (Section 17). Every result page and report states that field verification by qualified personnel is required.
 
+**Status of the evidence** (detail in the sections named):
+
+| Category | Items |
+|---|---|
+| Implemented and tested | Pipeline, assessment rules and INCONCLUSIVE handling (8), API, reports, roles and security controls (16), database backup and restore (9.2), 719 automated tests and a 16-check browser test (15) |
+| Measured on labelled photos | Wire detection and typing on 22 validation and 21 test photos (14); assessment coverage (14.5) |
+| Documented but not independently validated | Image-derived sag ratio as a measure of physical sag (7.8); scene gates on street scenes; pole detector on WIREFRAME photos |
+| Pending engineering decisions | Every sag reference value; applicability of the 3 % provision of ERB Resolution No. 95-21 to power lines (7.5); criteria for abandoned wires |
+| Future validation | Physical sag validation protocol (7.8); engineer ratings (H1, H3, H4); larger labelled telecom set (14.2); usability acceptance (15.4) |
+
 **Deployment target.** A desktop or laptop browser (window width at least 1024 px); there is no mobile application.
 The server runs on one machine (developed and measured on an Apple M1 with 8 GB of unified memory).
 
@@ -136,7 +146,9 @@ flowchart TD
 
 ## 3. Technology stack and versions
 
-Versions installed in the measurement environment (`.venv`, 18 Nov 2026). Minimum versions are declared in
+Versions installed in the measurement environment (`.venv`, 18 Nov 2026). The runtime benchmark (Section 13) and the
+release evaluation dumps were produced with transformers 4.57.6; Section 16 shows the evaluation is identical under
+5.17.0. Minimum versions are declared in
 `requirements.txt` (runtime), `requirements-dev.txt` (tests and lint) and `requirements-ml.txt` (training).
 
 | Component | Version | Role |
@@ -153,7 +165,7 @@ Versions installed in the measurement environment (`.venv`, 18 Nov 2026). Minimu
 | PyTorch | 2.15.0 (MPS backend) | Neural network inference |
 | segmentation-models-pytorch | 0.6.0 | WireNet U-Nets |
 | Ultralytics | 8.4.210 | YOLO11 segmentation and detection |
-| transformers | 4.57.6 | DINOv2-small, UperNet-ConvNeXt-T |
+| transformers | 5.17.0 (with huggingface-hub 1.33.0, tokenizers 0.23.3; 4.57.6 until v2.23) | DINOv2-small, UperNet-ConvNeXt-T |
 | ReportLab | 5.1.0 | PDF reports |
 | Pillow | 11 or later | Image I/O, badge rendering |
 | Leaflet, Leaflet.markercluster | browser libraries | Map and clustering |
@@ -421,6 +433,27 @@ Lower bounds are inclusive (`crs.levels.minor_from: 6.0`, `critical_from: 10.0`)
 decimals, so a sag of exactly 2.4 % lies on its boundary as configured. Tests cover each boundary value
 (`tests/test_v221.py`).
 
+**Status of the reference values.** No reference value in the configuration is a validated engineering or regulatory
+limit.
+
+| Class | Configured behaviour | Status |
+|---|---|---|
+| Telecom cable | Assessed against delta_lim,0 = 0.040 (bands at 2.4 % and 4.0 %) | Provisional development value chosen by the project; not a regulatory standard and not engineer-approved |
+| Power distribution line | Measured, not assessed (`no_reference_for_class`) | No reference configured; see the regulatory note below |
+| Abandoned wire | Measured, not assessed (`no_reference_for_class`; since v2.23) | No criteria configured: the hazard of an abandoned wire depends on attachment integrity, clearance and physical condition, not on an operating sag limit |
+
+**Philippine regulatory reference for power lines.** ERB Resolution No. 95-21 (Standard Rules and Regulations
+Governing the Operation of Electrical Power Services, 3 Aug 1995), Section 19, requires that horizontal wires attached
+to poles located in or near a public place be pulled up so that their sag is not greater than allowed by the
+Philippine Electrical Code, "three percent (3%) of the distance between poles". The provision governs electric
+power utilities within its scope; it is not a rule for telecom cables or abandoned conductors, and its applicability to
+a given conductor and installation, and whether it is still the controlling requirement, are engineering
+determinations. Its measurement (sag relative to the distance between poles) is also not the same quantity as
+WIREFRAME's image-derived ratio (Section 7.8). The power-line configuration is therefore unchanged.
+
+> **PENDING ENGINEERING VALIDATION:** The 3% provision identified in ERB Resolution No. 95-21 has not yet been
+> confirmed as directly applicable to the specific conductors and image-derived measurement method used by WIREFRAME.
+
 ### 7.6 Multi-pole priority index
 
     MSPI = alpha * VNI + beta * mean(CRS) / 10 + gamma * max(CRS) / 10,     alpha + beta + gamma = 1
@@ -435,6 +468,52 @@ Vegetation masks are never skeletonised or scored. A wire is in contact when at 
 of the longer image side of a vegetation mask. Clearance in pixels comes from the distance transform of the vegetation
 union; metre values are labelled approximate (scale from the median power-wire width and a 10.1 mm conductor
 diameter).
+
+
+### 7.8 Image-derived sag, physical sag and engineering compliance
+
+These are three different quantities and are never interchangeable:
+
+| Quantity | Definition | Established by WIREFRAME? |
+|---|---|---|
+| Image-derived sag ratio | delta / L of Section 7.2: the largest perpendicular distance from the fitted curve to its **inclined** chord, divided by the **Euclidean chord length**, both in image pixels; stored as a fraction (`sag_ratio`) and shown as a percentage | Yes, for every scored span |
+| Physical sag | The conductor's actual displacement relative to its support geometry, in metres, under the prevailing temperature, wind and load | No |
+| Engineering compliance | Whether the installation meets the applicable clearance, sag, tension and construction requirements | No |
+
+Why the image-derived ratio can differ from physical or regulatory sag:
+
+- **Denominator.** Regulatory sag is stated relative to the distance between poles (the span); WIREFRAME divides by the
+  image-plane chord between the visible end points. For an inclined span the chord is longer than the horizontal span,
+  and the perpendicular sag differs from the vertical sag.
+- **Projection.** The photo is a perspective projection. A span receding in depth or photographed from below is
+  foreshortened, and the ratio is not invariant to camera pose. There is no camera-pose correction and no 3-D
+  reconstruction (single-image photogrammetry with known camera attitude, e.g. Safdarinezhad et al., 2022, is one way
+  to recover it).
+- **End points.** The chord runs between the visible ends of the traced wire, which are the attachment points only when
+  both ends are in the frame (enforced by `require_both_endpoints`) and are traced to the attachment.
+- **Conditions.** Physical sag changes with conductor temperature, wind and electrical loading (Kampik et al., 2024;
+  Chen and Ding, 2023); a photo records one moment without these data.
+
+**Physical validation has not been performed.** The geometry benchmark (Section 14.7) shows that the code recovers
+the sag of exactly known synthetic curves; it says nothing about agreement with physical sag. The planned procedure
+(future work; no measurement of this kind exists yet):
+
+1. Photograph the span with the established WIREFRAME capture procedure.
+2. Record the actual span length.
+3. Record support-point heights where available.
+4. Record conductor type and material where available.
+5. Obtain an independent physical sag reference with a calibrated method (total station or other survey, laser
+   rangefinder, calibrated photogrammetry, or another qualified measurement).
+6. Record conductor temperature, wind and electrical loading where available.
+7. Run WIREFRAME on the same photograph.
+8. Compare the image-derived sag ratio with the physically measured sag ratio (sag / span).
+9. Report mean absolute error, root mean square error, mean signed error (bias), relative percentage error, and
+   agreement broken down by span length and camera orientation (inclination and viewing angle).
+
+**Expert visual rating.** The study design (hypothesis H3) compares CRS with a consulting engineer's severity rating
+of the same photographs. Such a rating is an expert assessment: it can show whether WIREFRAME ranks and flags spans as
+a qualified person would from the same image. It cannot establish physical sag or compliance, because the expert sees
+the same projected image. The ratings have not been collected.
 
 ---
 
@@ -451,11 +530,13 @@ The checks run in this order; the first that applies decides the status.
 | 3 | Chord below the precision gate (100 px at 1024) | `too_short` | `chord_below_precision_gate` | none |
 | 4 | An endpoint is at the photo border | `not_assessed` | `endpoint_unavailable` | none (the visible sag is kept as `unverified_level`, a review cue) |
 | 5 | Strand type uncertain | `not_assessed` | `class_uncertain` | none |
-| 6 | Class has no configured reference (power distribution lines) | `not_assessed` | `no_reference_for_class` | none |
+| 6 | Class has no configured reference (power distribution lines, abandoned wires) | `not_assessed` | `no_reference_for_class` | none |
 | 7 | Otherwise | `scored` | none | CRS and level (Section 7.5) |
 
-`crs.assessed_classes: [telecom-cable, abandoned-wire]`: the 4.0 % telecom reference is never applied to power
-distribution lines; they are measured and shown, but not assessed. A severity label is never shown on a wire that was
+`crs.assessed_classes: [telecom-cable]`: the provisional 4.0 % telecom reference is never applied to power
+distribution lines or, since v2.23, to abandoned wires; both are measured and shown, but not assessed. Before v2.23
+abandoned wires were compared with the telecom value; no abandoned strand reached the assessment step on validation or
+test, so no reported metric, coverage figure or verdict changes, and stored inspections are not reprocessed. A severity label is never shown on a wire that was
 not scored; the end-to-end check verifies this on a live server (Section 15.3).
 
 ### 8.2 Pole verdict (`app/pipeline/hazard.py`)
@@ -525,6 +606,19 @@ inspection page and printed in the PDF, and every review is written to the audit
 
 SQLite with foreign keys enforced and CHECK constraints (`app/models/orm.py`). Missing columns are added at startup; a
 table-rebuild migration first writes a timestamped backup to `var/backups/`.
+
+**Backup scope and restore test (v2.23).** `backup_before_migration` (`app/core/database.py`) copies the database with
+the SQLite online backup API, and only before a schema migration; there is no scheduled backup. It covers the database
+file only: uploaded photos (`var/uploads/`), renders and generated PDFs (`var/reports/`) are separate files and need
+their own copy for a full recovery. Restore test on 18 Nov 2026, in an isolated directory (production opened
+read-only): a snapshot of the 98-inspection database was backed up with `backup_before_migration`, the backup restored
+into a new data directory, and both checked. `PRAGMA integrity_check`: ok; `PRAGMA foreign_key_check`: 0 rows; all 10
+tables have identical row counts (analyses 98, detections 3,926, poles 74, reports 51, ...) and an identical detection
+digest; no orphaned detections, analyses or reviews. With the asset folders copied alongside, the application started
+on the restored directory listed all 98 inspections and served three historical inspections (11, 15 and 17 Nov) with
+the same wires as the database, their photos, inspection pages and a regenerated two-page PDF. The six existing
+backups in `var/` also pass both checks. `tests/test_v221.py::test_migration_backup_restores_to_an_identical_database`
+repeats the backup-restore-compare cycle on every test run.
 
 | Table | Purpose |
 |---|---|
@@ -711,18 +805,44 @@ The released configuration was scored with the frozen models; no threshold was c
 scores of the configuration that introduced the current models and strand head (`v217_eval_v217_{val,test}.json`),
 because the assessment rules added since then change neither detection nor typing.
 
+Correction (v2.23): the validation score file had been scored from an earlier dump, before the coverage rule, so its
+verdict counts read 9 MODERATE / 13 NOT AT RISK. It was re-scored from the release dump (`runs/v217/dump/v221-val.json`)
+with the same scoring code; only the `verdicts` field changed (now 9 / 3 / 10 INCONCLUSIVE, as reported below), every
+detection metric and interval is byte-identical. The earlier file is kept as
+`results/superseded/v217_eval_v221_val.scored-before-dump.json`.
+
 ### 14.1 Metrics
 
-- **Centerline precision, recall and F1** (the thin-structure standard; `app/pipeline/centerline_eval.py`).
-  Precision = share of predicted centerline within tol of a labelled wire of that class; recall = share of labelled
-  centerline within tol of a predicted wire of that class; tol = 3 px per 1024 px of the long side. Micro-averaged over
-  photos; 95 % intervals by resampling whole photos (2,000 bootstrap draws). Every predicted pixel stays in the
-  precision denominator; because the labels omit real wires, precision is a lower bound.
-- **Strand type accuracy.** Each reported wire whose skeleton lies 50 % or more on one labelled class is a case;
-  accuracy = correct / all cases, with "uncertain" counted as wrong.
-- **Mask mAP50** (strict IoU 0.5, and tolerant with both masks widened by 2 px) is reported for continuity. A 1 px
-  offset on a 2 px wire caps strict IoU near 0.33, so mask mAP50 stays between 0.02 and 0.05 for any screener of
-  this kind.
+**Centerline precision, recall and F1** (`app/pipeline/centerline_eval.py`, scored by `ml/experiments/v217_eval.py`):
+
+- Ground-truth centerline: the labelled polygons of a class are rasterised and skeletonised (Zhang-Suen).
+- Predicted centerline: the reported wire masks of that class are rasterised and skeletonised. "Wire" uses every
+  reported wire; a class uses only wires whose type is confident, so a wire of uncertain type costs recall.
+- Matching: a predicted skeleton pixel is a hit when it lies within tol of the labelled **mask** (Euclidean distance
+  transform); a labelled skeleton pixel is a hit when it lies within tol of the predicted mask. No one-to-one instance
+  matching is done.
+- Tolerance: tol = 3 px x (long side / 1024), i.e. normalised to image size; 3 px for the 1024 x 1024 evaluation
+  photos.
+- Counts: TP_pred = predicted skeleton pixels that hit; FP = predicted skeleton pixels that miss; TP_label = labelled
+  skeleton pixels that hit; FN = labelled skeleton pixels that miss. Precision = TP_pred / (TP_pred + FP); recall =
+  TP_label / (TP_label + FN); F1 = 2PR / (P + R). Counts are summed over all photos (micro average).
+- Uncertainty: 95 % intervals from 2,000 bootstrap resamples of whole photos (seed 0).
+- Limitations: it is a pixel-length measure, not an instance count, so a wire found in pieces scores as well as one
+  found whole (fragmentation is reported separately); two cables within tol of each other are not distinguished; the
+  labels omit real wires, so precision is a lower bound; tol is a choice tied to the labelling accuracy (about 1-2 px).
+
+**Why centerline metrics.** A labelled wire is about 2 px wide. A prediction offset by 1 px from the label already caps
+mask IoU near 0.33, below the 0.5 needed for an instance match, so mask-level instance metrics measure sub-pixel
+alignment with hand-drawn polygons rather than whether the wire was found. Centerline metrics with a tolerance are the
+usual measure for thin structures (roads, vessels; Shit et al., 2021).
+
+**Mask-level metrics (as planned in the study design).** The planned evaluation (Table 3.10) used instance-level mask
+metrics: mAP@50 and per-class precision, recall and F1 at mask IoU >= 0.5. These are still computed and reported, not
+replaced: strict mask mAP50 (IoU 0.5) and a tolerant variant with both masks widened by 2 px, plus tolerant pixel IoU
+and Dice per class. They stay between 0.02 and 0.05 (mAP50), for the reason above.
+
+**Strand type accuracy.** Each reported wire whose skeleton lies 50 % or more on one labelled class is a case;
+accuracy = correct / all cases, with "uncertain" counted as wrong.
 
 ### 14.2 Results
 
@@ -734,9 +854,22 @@ because the assessment rules added since then change neither detection nor typin
 | Abandoned wire | not detected | not detected |
 | Strand type accuracy (power vs telecom) | 0.980 | 0.936 |
 | Labelled wires shown in two classes | 2.1 % | 5.0 % |
-| Mask mAP50 strict / tolerant | n/a | 0.0199 / 0.0485 |
+| Mask mAP50 strict / tolerant | 0.0065 / 0.0463 | 0.0199 / 0.0485 |
+| Telecom cable tolerant pixel IoU / Dice | 0.617 / 0.763 | 0.545 / 0.705 |
 
-Test 95 % intervals: wire precision [0.773, 0.872], power precision [0.777, 0.916], telecom precision [0.665, 0.768].
+
+Test 95 % intervals (photo bootstrap): wire precision [0.773, 0.872], power precision [0.777, 0.916]; telecom
+precision [0.665, 0.768], recall [0.645, 0.759], F1 [0.669, 0.745]. The test split holds 361 labelled telecom
+instances in 21 photos (174,670 labelled and 141,955 predicted telecom centerline pixels).
+
+**Telecom against the study's targets.** The per-class targets of Table 3.10 are precision >= 0.70, recall >= 0.65 and
+F1 >= 0.67 (`app/pipeline/evaluation.py`). They were defined for instance-level mask detection, which remains far below
+them (strict test mAP50 0.0199). The telecom **centerline** point estimates (0.713 / 0.706 / 0.710) are numerically
+above those values, but this is a different metric, so it cannot be counted as meeting the planned target. Even on the
+centerline metric the result is not conclusive: the lower ends of the intervals (precision 0.665, recall 0.645,
+F1 0.669) fall below the target values, the evaluation has only 21 photos, and the validation split was used for many
+design decisions. The next step is more independently labelled telecom data and a larger test set, not a model
+change.
 The validation figures for the strand head are partly in-sample (it was stacked on validation strands); its
 leave-one-photo-out validation telecom F1 is 0.753. A drop of the same size from validation to test was seen for the
 previous configuration, so the test photos are harder and the 22-photo validation estimate is optimistic.
@@ -769,17 +902,35 @@ Source: `results/v217_eval_v217_val-<condition>.json` (conditions defined in `ml
 the weak conditions. The guardrail holds most glare photos behind the retake prompt: held photos have mean wire F1
 0.27, the rest 0.80 (`results/v217_guardrail_val_v217.json`).
 
-### 14.5 Effect of the assessment rules (Section 8)
+### 14.5 Assessment coverage and inconclusive results
 
-| | Validation | Test |
+A span that passes the fit and the precision gate is a **candidate** for assessment; it is then either scored or not
+assessed for a stated reason (Section 8.1).
+
+    Assessment coverage = scored candidate spans / total candidate spans x 100
+
+Coverage is the share of measurable spans for which the system could produce a sag assessment. It is not detection
+recall: it says nothing about wires that were never detected, and every scored span is a telecom span.
+
+| | Validation (22 photos) | Test (21 photos) |
 |---|---|---|
-| Scored spans without / with the validity rules | 629 / 256 | 658 / 320 |
+| Reported spans (all statuses) | 755 | 787 |
+| Not measurable: fit failed / too short | 77 / 49 | 66 / 63 |
+| Candidate spans | 629 | 658 |
+| Scored | 256 | 320 |
 | Not assessed: endpoint off the photo | 235 | 176 |
-| Not assessed: power distribution line | 138 | 162 |
-| Verdicts HIGH / MODERATE / NOT AT RISK / INCONCLUSIVE | 0 / 9 / 3 / 10 | 3 / 7 / 3 / 8 |
+| Not assessed: no reference for the class (power lines) | 138 | 162 |
+| Not assessed: uncertain type | 0 | 0 |
+| **Assessment coverage** | **40.70 %** | **48.63 %** |
+| Scored share of all reported spans | 33.91 % | 40.66 % |
+| Pole verdicts HIGH / MODERATE / NOT AT RISK | 0 / 9 / 3 | 3 / 7 / 3 |
+| Pole verdicts INCONCLUSIVE | 10 | 8 |
+| Conclusive / inconclusive poles | 12 / 10 | 13 / 8 |
 
-Many spans in ground-level photos leave the frame, so many poles are INCONCLUSIVE rather than NOT AT RISK: the system
-states that it cannot assess them instead of reporting them as safe.
+Source: the release dumps `runs/v217/dump/v221-{val,test}.json` (per-span status and flags), recounted for v2.23; the
+verdicts match the score files. INCONCLUSIVE is returned when fewer than half of the candidate spans are scored, when a
+partial span already sags into a band, or when the photo grades Retake (Section 8.2). The system therefore never treats
+an unassessed span or an unmeasurable photo as evidence that a pole is safe; these rules were not relaxed.
 
 ### 14.6 Pole detector (public photos only)
 
@@ -806,7 +957,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 ### 15.1 Automated tests
 
-`python -m pytest`: 717 tests, all passing (18 Nov 2026, 62 s). The suite uses synthetic scenes with known geometry
+`python -m pytest`: 719 tests, all passing (18 Nov 2026, with transformers 5.17.0). The suite uses synthetic scenes with known geometry
 (`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
 | Area | Examples |
@@ -818,6 +969,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 | Security | Anonymous access refused on portal routes, inspector and administrator roles, session expiry and revocation, CSRF origin check, login throttling, rate limits |
 | Frontend contracts | No automatic re-run of failed inspections; removed endpoints and the System page stay removed; list views do not decode geometry |
 | Weights | Download, part joining, SHA-256 verification, no overwrite |
+| Database | Migration backup restored into a new file and compared table by table (integrity, foreign keys, every row) |
 
 ### 15.2 Lint
 
@@ -829,7 +981,23 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 processing, result summary, page counts against the API, no severity on unassessed wires, Mask view, PDF download with
 counts against the API and the verification footer, admin sign-in, no System menu entry, Failed tab, technical
 exports, inspection diagnostics, map with three base layers, `/admin/system` answering 404. The uploaded photo is then
-marked as a test record. Result on the release build: 16 of 16 checks passed, 0 page errors.
+marked as a test record. Result on the release build (18 Nov 2026, transformers 5.17.0): 16 of 16 checks passed, 0
+page errors.
+
+### 15.4 Manual review (limited)
+
+Automated checks show that the workflows run; they do not establish visual quality, usability or accessibility. A
+limited review on 18 Nov 2026 covered: an INCONCLUSIVE result (Field Screener page, two-page PDF, admin inspection
+page), the Field Screener upload form, a missing result id, the Dashboard, Inspections and Map & Dispatch. Counts and
+the stated reason matched between page and PDF, and no page errors occurred. Two labels described every INCONCLUSIVE
+result as "Photo not clear enough" although since v2.21 it can also follow from low coverage or a sagging partial
+span; they now read "Assessment incomplete" and give the system's reason, as the result page and PDF already did.
+One end-to-end run (1 of 5) logged a page error, a canvas arc with radius -74.67: the result viewer fitted the photo
+while its container still had zero size, giving the scale (0 - 48) / 1024 and an inverted drawing for that frame. The
+viewer now waits for a laid-out container (`app/web/assets/viewer.js: fit`); three further runs had 0 page errors.
+Open observation: the admin inspection header shows a pole-level "Not assessed" for an INCONCLUSIVE pole whose spans
+were partly assessed. A full usability and accessibility acceptance by people who will use the system is still
+**pending human acceptance**.
 
 ---
 
@@ -849,13 +1017,29 @@ marked as a test record. Result on the release build: 16 of 16 checks passed, 0 
 | Secrets | None in the repository; `.env` is git-ignored; the assistant's Claude key is read only from the server environment, and the assistant works without it |
 | Audit | Reviews, record-kind changes, location and barangay edits, retries, deletions, model and settings changes are logged with actor and time |
 
-**Dependency audit** (`pip-audit -r requirements.txt`, 18 Nov 2026): no known vulnerability in the runtime
-dependencies except transformers 4.57.6, which has advisories for checkpoint conversion, `Trainer` RNG-state loading,
-crafted remote `config.json` files, custom-code and LightGlue loading, tokenizer `save_pretrained` path traversal and
-custom generation code. WIREFRAME uses none of these paths: it loads two fixed models (DINOv2-small,
-UperNet-ConvNeXt-T) from local copies under `models/hf/`, without `trust_remote_code`, and never trains or saves with
-transformers. Moving to transformers 5 requires re-verifying both models and is left as a maintenance item.
+**Transformers advisory (CERT/CC VU#456290, CVE-2026-80047).** In affected releases (4.49.0 to 5.8.1 per the CERT/CC
+note) `GenerativePreTrainedModel.load_custom_generate()` writes a repository's custom generation code to the module
+cache before the `trust_remote_code` consent check. Assessment of WIREFRAME's code paths (v2.23):
 
+- The application loads exactly two models through transformers: DINOv2-small (`AutoModel`,
+  `app/pipeline/strand_head.py`) and UperNet-ConvNeXt-T (`AutoImageProcessor`, `AutoModelForSemanticSegmentation`,
+  `app/pipeline/scene.py`). No code uses `trust_remote_code`, `custom_generate`, `generate()` or tokenizers.
+  (`ml/experiments/` holds two research scripts that load other models from the hub; they are not part of the
+  application.)
+- `from_pretrained` calls `load_custom_generate` only for models where `can_generate()` is true. Both loaded classes
+  (`Dinov2Model`, `UperNetForSemanticSegmentation`) return False and have no such method, so the vulnerable path is not
+  reached.
+- Both models load from local copies (`models/hf/`, SHA-256 verified by `app/core/weights.py`) that contain only
+  `config.json`, `preprocessor_config.json` and safetensors weights, with no Python files. Only if a local copy is
+  incomplete does `hf_source` fall back to the hub id.
+
+Remediation: transformers was raised to 5.17.0 (`requirements.txt: transformers>=5.17,<6`), which requires
+huggingface-hub 1.x and tokenizers 0.23. Compatibility evidence before adoption: DINOv2 patch features bit-identical on
+six test photos; scene-parser labels differing on at most 0.009 % of pixels; the full release evaluation re-run under
+5.17.0 identical in every field on validation (22 photos) and test (21 photos), including per-photo rows and verdicts;
+719 of 719 tests passed; the browser end-to-end check passed 16 of 16; model files byte-identical (SHA-256 of all 23
+files). `pip-audit` (18 Nov 2026) reports no known vulnerability for the installed environment or `requirements.txt`.
+Rollback: transformers 4.57.6, huggingface-hub 0.36.2, tokenizers 0.22.2.
 ---
 
 ## 17. Limitations
@@ -885,8 +1069,8 @@ transformers. Moving to transformers 5 requires re-verifying both models and is 
     worker processes inspections in order.
 13. **Single-node deployment.** SQLite and one worker suit one office; a larger deployment needs a server database
     and a job queue.
-14. **Dependency maintenance.** transformers 4.57.6 carries advisories on code paths WIREFRAME does not use
-    (Section 16).
+14. **Runtime figures predate the dependency upgrade.** The benchmark of Section 13 was measured with transformers
+    4.57.6; outputs are identical under 5.17.0 but its runtime has not been re-benchmarked.
 
 Readiness: suitable for screening support with manual review. It is not suitable for operational safety decisions
 without the engineering calibration in item 1 and labelled local data for items 3, 5 and 7.
@@ -911,7 +1095,7 @@ Model weights download automatically on first start (Section 5.3). The dataset i
 
 | Purpose | Command | Output |
 |---|---|---|
-| Tests | `.venv/bin/python -m pytest` | 717 passed |
+| Tests | `.venv/bin/python -m pytest` | 719 passed |
 | Lint | `.venv/bin/ruff check app tests scripts ml` | No findings |
 | Release evaluation | `python -m ml.experiments.v217_eval dump --split test --variant v221`, then `score --split test --variant v221` | `results/v217_eval_v221_test.json` |
 | Robustness | `python -m ml.experiments.v217_eval dump --split val --variant v217 --condition lowlight` (and the other conditions), then `score` | `results/v217_eval_v217_val-<condition>.json` |
@@ -925,7 +1109,25 @@ Model weights download automatically on first start (Section 5.3). The dataset i
 guardrail, strand head studies); their outputs are the files in `docs/thesis/results/`. Result files replaced by
 later runs are kept in `docs/thesis/results/superseded/`.
 
-### 18.3 Determinism
+### 18.3 Manuscript alignment
+
+The manuscript drafts in `docs/thesis/` (`Chapter4_5_v218.docx`, Chapters IV and V as of v2.18; `Chapter5.docx`, an
+earlier Chapter V) describe earlier versions. They are the authors' documents and were not edited by the tooling; the
+statements below differ from the current implementation and should be revised against this reference:
+
+| Manuscript statement (v2.18 or earlier) | Current implementation (v2.23) | Section here |
+|---|---|---|
+| CRS levels Low < 3.0, Medium 3.0 to 6.0, High > 6.0 (Table 1.2) for every span | Within reference < 6.0, Minor sag 6.0 to < 10.0, Critical >= 10.0 (2.4 % / 4.0 % sag), telecom only; power and abandoned wires not assessed | 7.5, 8.1 |
+| Verdicts reported as High / Moderate / Not at risk only | INCONCLUSIVE when coverage < 50 % or a partial span sags; validation 0 / 9 / 3 / 10, test 3 / 7 / 3 / 8 | 8.2, 14.5 |
+| No assessment coverage reported | Coverage 40.70 % (validation), 48.63 % (test) with reasons | 14.5 |
+| δlim = 0.040 described as a placeholder awaiting the engineer, without a regulatory note | Same placeholder for telecom; ERB Resolution No. 95-21 Section 19 recorded as a potential power-line reference, pending engineering validation | 7.5 |
+| CRS against the engineer's severity rating (H3) presented as the sag validation | Expert rating is a qualitative assessment; physical sag validation needs field measurement (protocol given) | 7.8 |
+| Telecom F1 described against a "75 percent target" | Centerline metric defined and contrasted with the planned mask metrics; intervals and sample size discussed against the Table 3.10 targets | 14.1, 14.2 |
+| API list with `/api/dashboard/map`, `/sensitivity`, `/summary` and an admin "overview" | Those endpoints were removed; current list in 20.1 | 20.1 |
+| Upload latency 1.3 to 3.5 s (earlier single-model configuration) | 6.4 s median on 1024 px photos, 8.8 s on field photos (three-model ensemble and strand head) | 13 |
+| Transformers 4.57.6 | 5.17.0 (security advisory) | 3, 16 |
+
+### 18.4 Determinism
 
 Inference is deterministic for a given photo, configuration and model set; the configuration fingerprint is stored
 with each analysis and report. Runtime varies with machine load, so the benchmark reports its dispersion.
@@ -987,6 +1189,19 @@ with each analysis and report. Runtime varies with machine load, so the benchmar
 30. Percival, C., and Josefsson, S. (2016). *The scrypt Password-Based Key Derivation Function*. RFC 7914, IETF.
 31. Philippine Statistics Authority. *Philippine Standard Geographic Code (PSGC)*. https://psa.gov.ph/classification/psgc
 32. OpenStreetMap contributors. *OpenStreetMap*. https://www.openstreetmap.org (map data under the ODbL).
+33. Energy Regulatory Board (1995). *ERB Resolution No. 95-21: Standard Rules and Regulations Governing the Operation of
+    Electrical Power Services*, Section 19 (Poles, Sag of Wires), 3 August 1995. Supreme Court E-Library:
+    https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/10/72764
+34. Chen and Ding (2023). A survey of sag monitoring methods for power grid transmission lines. *IET
+    Generation, Transmission & Distribution*, 17(7), 1419-1441. https://doi.org/10.1049/gtd2.12778
+35. Kampik, Kubek, Krupanek and Bogacz (2024). Sag and tension calculations for high-voltage overhead
+    line conductors. *Energies*, 17(12), 2967. https://www.mdpi.com/1996-1073/17/12/2967
+36. Safdarinezhad et al. (2022). A photogrammetric solution for measurement of power lines sag via integration of
+    image and accelerometer data of a smartphone. *Measurement*, 199, 111493.
+37. CERT Coordination Center (2026). *VU#456290: Hugging Face Transformers library writes remote code to disk prior to
+    consent check* (CVE-2026-80047). https://kb.cert.org/vuls/id/456290
+38. SQLite. *SQLite Online Backup API* (https://www.sqlite.org/backup.html) and *PRAGMA integrity_check,
+    foreign_key_check* (https://www.sqlite.org/pragma.html).
 
 ---
 
@@ -1074,7 +1289,7 @@ keeps them removed.
 | `catenary.max_rel_residual`, `border_margin_frac` | 0.02, 0.01 | Fit acceptance, truncation |
 | `crs.delta_lim0` | 0.040 (all classes) | Reference sag ratio (placeholder) |
 | `crs.levels.minor_from`, `critical_from` | 6.0, 10.0 | Inclusive level bounds (2.4 % and 4.0 % sag) |
-| `crs.assessed_classes` | telecom-cable, abandoned-wire | Classes with a reference |
+| `crs.assessed_classes` | telecom-cable | Classes with a (provisional) reference |
 | `crs.require_both_endpoints` | true | Partial spans not assessed |
 | `crs.min_chord_px` | 100 | Precision gate |
 | `hazard.p0_high`, `p0_medium`, `alpha` | 0.050, 0.090, 0.05 | Corroborated verdict |
