@@ -136,7 +136,14 @@ def summary(r: dict[str, Any]) -> dict[str, Any]:
         if why:
             lines.insert(0, why.split(":", 1)[1].strip().capitalize() + ".")
         no_ref = any(w.get("reason_code") in ("no_validated_reference", "withdrawn_reference") for w in wires)
+        # S6: a retake helps only wires that were not (fully) measured (diagnosis.retake_helps); it never supplies
+        # the missing reference. Previously this said "a retake will not complete the assessment" even when the
+        # same report asked for a new photo of the wires that ran off the frame.
+        retake = (r.get("diagnosis") or {}).get("retake_helps")
         lines.append("This is not a low-risk result. " + (
+            "No validated sag reference exists for these wires. A new photo can complete the measurement of wires "
+            "that run off the photo or could not be traced, but it cannot supply a sag reference; arrange a field "
+            "inspection by a qualified person." if no_ref and retake else
             "No validated sag reference exists for these wires, so a retake will not complete the assessment; "
             "arrange a field inspection by a qualified person." if no_ref else
             "Retake the photo with both poles in the frame, or arrange a field check."))

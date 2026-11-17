@@ -718,8 +718,9 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
         ("Figure 1. Flagged wires only. Red: Critical; amber: Minor sag. The number on each wire is its span ID in "
          "section 4.0 (wire 58 = SP-058). Wires within reference and wires not assessed are not drawn.") if sm["flagged"] else
         ("Figure 1. Measured wires (not assessed): the fitted curve, the dashed chord between the visible ends and the "
-         "point of largest sag. The number on each wire is its span ID in section 4.0. Colours are not severities; no "
-         "wire was assessed.") if measured_fig else
+         "point of largest sag. The number on each wire is its span ID in section 4.0. Colour shows wire type (blue: "
+         "power line; violet: telecom / fibre; orange: abandoned; grey: type uncertain or not measured), not severity; "
+         "no wire was assessed.") if measured_fig else
         "Figure 1. Site photograph. No wire was measured, so none is drawn.", st["small"]))
     story.append(KeepTogether(fig_block))
 

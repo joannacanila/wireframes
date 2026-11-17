@@ -11,6 +11,20 @@ import numpy as np
 
 # RGB; same tokens as the web UI (app/web/styles.css)
 LEVEL_RGB = {"low": (46, 189, 115), "medium": (240, 192, 48), "high": (229, 72, 77), None: (138, 143, 152)}
+# S6: wire-type colours (app/web/assets/styles.css --cls-*) for measured wires that carry no assessed level. With no
+# validated sag reference there is no severity to colour by; the page and the PDF colour by type (never a severity).
+CLASS_RGB = {"power-distribution-lines": (106, 161, 255), "telecom-cable": (180, 140, 255), "abandoned-wire": (255, 145, 87)}
+UNCERTAIN_RGB = (154, 160, 166)
+
+
+def wire_rgb(wire: dict) -> tuple:
+    if wire.get("level") in ("low", "medium", "high") and wire.get("status") == "scored":
+        return LEVEL_RGB[wire["level"]]
+    if wire.get("sag_ratio") is not None and wire.get("status") in ("scored", "not_assessed"):
+        if wire.get("class_status") == "uncertain":
+            return UNCERTAIN_RGB
+        return CLASS_RGB.get(wire.get("class"), UNCERTAIN_RGB)
+    return LEVEL_RGB[None]
 
 
 def _pts(points, scale: float) -> np.ndarray:
@@ -24,7 +38,7 @@ def render_overlay(rgb: np.ndarray, wires: list[dict], max_side: int = 1600) -> 
     fill = base.copy()
     lw = max(2, round(max(base.shape[:2]) / 500))
     for wire in wires:
-        col = LEVEL_RGB.get(wire.get("level"), LEVEL_RGB[None])
+        col = wire_rgb(wire)
         polys = [_pts(p, s) for p in wire.get("mask_polygons") or [] if len(p) >= 3]
         if polys:
             cv2.fillPoly(fill, polys, col, cv2.LINE_AA, shift=4)
@@ -32,7 +46,7 @@ def render_overlay(rgb: np.ndarray, wires: list[dict], max_side: int = 1600) -> 
     badges: list[tuple[int, int, str, tuple]] = []
 
     for wire in wires:
-        col = LEVEL_RGB.get(wire.get("level"), LEVEL_RGB[None])
+        col = wire_rgb(wire)
         curve = wire.get("catenary_curve") or []
         if len(curve) > 1:
             cv2.polylines(out, [_pts(curve, s)], False, (255, 255, 255), lw + 2, cv2.LINE_AA, shift=4)

@@ -200,13 +200,14 @@ def test_overlay_draws_the_chord_of_a_measured_unassessed_wire():
 
 
 def test_result_page_scripts_draw_and_list_measured_wires():
-    """The page logic that hid every measurement after S4 (attention-only view, scored-only drawing)."""
+    """The page logic that hid every measurement after S4 (attention-only view, scored-only drawing). S6 restored the
+    v2.18 page: the Wires view draws every wire (no visibility filter) and the table lists every wire section."""
     from app.core.config import ROOT_DIR
     viewer = (ROOT_DIR / "app/web/assets/viewer.js").read_text()
     field = (ROOT_DIR / "app/web/assets/field.js").read_text()
     assert "export const isMeasured" in viewer and "const scored = isMeasured(w);" in viewer
     assert "L.sag && isMeasured(w) && f.sag_point" in viewer
-    assert "const focus = attention.length ? attention : diagMode ? measuredWs : [];" in field
-    assert 'viewer.setVisible(name === "problem" ? focus.map((w) => w.index) : null);' in field
+    assert "setVisible(" not in field  # nothing is hidden by severity or assessment
+    assert "const first = tbl.rows.find((w) => (w.status === \"scored\" ? w.level !== \"low\" : isMeasured(w)));" in field
     assert "These wires were not measured, so nothing is known about their sag" not in field
     assert "${diagHtml(r)}" in field

@@ -44,6 +44,14 @@ export function finding(w, short = false) {
   if (short && w.status === "scored") {
     return `${{ high: "Hangs low", medium: "Some sag", low: "Normal sag" }[w.level]} (${pc(w.sag_ratio)})${vegTxt}${edge}`;
   }
+  // S6: a measured wire is described by its measurement in the short (table) form too; checked before the
+  // not-measured reasons, which previously caught it first and read "Could not be measured"
+  if (w.status === "not_assessed" && w.sag_ratio != null && w.reason_code === "endpoint_unavailable") {
+    return `${short ? "Visible part" : "Not assessed (runs off the photo); visible part measured"}: image-derived sag ratio ${measuredText(w)}` + vegTxt;
+  }
+  if (w.status === "not_assessed" && w.sag_ratio != null && (MEASURED_ONLY.has(w.reason_code) || w.reason_code === "class_uncertain")) {
+    return `${short ? "Measured" : "Measured, not assessed"}: image-derived sag ratio ${measuredText(w)}${short ? "" : "; no validated sag reference"}` + vegTxt + edge;
+  }
   if (short && w.status !== "scored") {
     const why = { chord_below_precision_gate: "Too small or far to measure", too_short: "Too small or far to measure",
       residual_too_large: "Overlaps other wires", non_positive_a: "Overlaps other wires", empty_mask: "Too faint to trace" }[w.reason_code];
@@ -57,12 +65,6 @@ export function finding(w, short = false) {
     return base + vegTxt + edge;
   }
   if (w.status === "service_drop") return "Runs steeply down, likely a drop wire to a building; drop wires are not checked for sag" + vegTxt;
-  if (w.status === "not_assessed" && w.sag_ratio != null && w.reason_code === "endpoint_unavailable") {
-    return `${short ? "Visible part" : "Not assessed (runs off the photo); visible part measured"}: image-derived sag ratio ${measuredText(w)}` + vegTxt;
-  }
-  if (w.status === "not_assessed" && w.sag_ratio != null && (MEASURED_ONLY.has(w.reason_code) || w.reason_code === "class_uncertain")) {
-    return `${short ? "Measured" : "Measured, not assessed"}: image-derived sag ratio ${measuredText(w)}${short ? "" : "; no validated sag reference"}` + vegTxt + edge;
-  }
   const why = {
     chord_below_precision_gate: "Too small or too far away in the photo to measure",
     too_short: "Too small or too far away in the photo to measure",
