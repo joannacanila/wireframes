@@ -155,6 +155,22 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
         ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
     ]))
     story += [disc, Spacer(1, 10)]
+    g = result.get("guardrail") or {}
+    if g.get("requires_retake"):  # v2.17: the warning shown in the app travels with the report
+        choice = (g.get("choice") or {}).get("action")
+        text = ("<b>Assessment may be inaccurate.</b> Some wires could not be identified reliably from this photo; "
+                "review the findings carefully. A retake was recommended"
+                + {"proceed": " and the user chose to proceed with this photo.",
+                   "retake": " and the photo was retaken (see the linked analysis)."}.get(choice, ".")
+                + "".join(f"<br/>&bull; {_esc(x)}" for x in g.get("quality_reasons") or []))
+        warn = Table([[Paragraph(text, st["disc"])]], colWidths=[width])
+        warn.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FDF0E6")),
+            ("LINEBEFORE", (0, 0), (0, -1), 2.2, colors.HexColor("#B7791F")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 9), ("RIGHTPADDING", (0, 0), (-1, -1), 9),
+            ("TOPPADDING", (0, 0), (-1, -1), 7), ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ]))
+        story += [warn, Spacer(1, 10)]
 
     level = s.get("level")
     kv = [

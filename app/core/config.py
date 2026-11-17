@@ -229,6 +229,9 @@ class SegmentationConfig(_Strict):
     span_max_lateral_px: float = Field(0.0, ge=0)     # v2.14 option: reject a bridge offset sideways by more (0 = off)
     span_strand_classes: bool = False                  # v2.16: geometry on the union wire mask, one class per strand
     span_class_min_share: float = Field(0.0, ge=0, le=1)  # v2.16: below this class-evidence share: type uncertain
+    span_wire_tau: float | None = Field(None, gt=0, lt=1)  # v2.17: wire mask = P(any wire) >= tau (None: argmax)
+    strand_head: str | None = None                     # v2.17: strand type head (models/strand_head_v217.pt)
+    strand_head_min_conf: float = Field(0.55, ge=0.5, le=1)  # v2.17: head top-class probability below: uncertain
 
 
 class CenterlineConfig(_Strict):
@@ -348,6 +351,21 @@ class QualityConfig(_Strict):
     min_contrast: float = Field(1.0, ge=0)
 
 
+class GuardrailConfig(_Strict):
+    """v2.17 retake guardrail (app/pipeline/guardrail.py). Reads the finished analysis; never changes a wire, class,
+    CRS or verdict. Thresholds chosen on validation + its eight capture conditions (ml/experiments/v217_guardrail.py)."""
+    enabled: bool = False
+    min_wires: int = Field(4, ge=1)                       # share-based checks need at least this many wires
+    conflict_min_share: float = Field(0.3, ge=0, le=0.5)  # second wire type's evidence share that makes a conflict
+    conflict_retake_n: int = Field(2, ge=1)
+    uncertain_attention: float = Field(0.25, ge=0, le=1)
+    uncertain_retake: float = Field(0.5, ge=0, le=1)
+    fragment_attention: float = Field(0.5, ge=0, le=1)
+    fragment_retake: float = Field(0.75, ge=0, le=1)
+    structure_attention: float = Field(0.25, ge=0, le=1)
+    structure_retake: float = Field(0.5, ge=0, le=1)
+
+
 class VegetationConfig(_Strict):
     """Vegetation contact (revised taxonomy). Not part of Chapter III's equations: Vegetation
     masks never enter Algorithms 3-5, CRS or MSPI. A wire whose mask lies within the margin of a
@@ -386,6 +404,7 @@ class AnalysisConfig(_Strict):
     vegetation: VegetationConfig = VegetationConfig()
     hazard: HazardConfig = HazardConfig()
     quality: QualityConfig = QualityConfig()
+    guardrail: GuardrailConfig = GuardrailConfig()
 
     @property
     def fingerprint(self) -> str:

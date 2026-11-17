@@ -343,3 +343,25 @@ html.fs-root { height: auto; min-height: 100%; }
 .fx-spans td.find { color: var(--text-2); font-size: 13px; line-height: 1.4; }
 .fx-spans td.risk { white-space: nowrap; }
 .fx-drawer h4 { margin: 14px 0 6px; font-size: 12.5px; font-weight: 600; color: var(--text-2); }
+
+/* ------------------------------------------------------------------ v2.17 retake guardrail */
+.fx-guard { max-width: min(520px, calc(100vw - 32px)); padding: 22px 22px 18px; border: 1px solid var(--line-strong); border-radius: 8px;
+  background: var(--surface); color: var(--text); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35); }
+.fx-guard::backdrop { background: rgba(0, 0, 0, 0.55); }
+.fx-guard[open] { animation: fx-guard-in 180ms var(--ease-out) both; }
+@keyframes fx-guard-in { from { opacity: 0; transform: scale(0.97); } }
+.fx-guard h2 { margin: 0 0 8px; font-size: 18px; line-height: 1.3; }
+.fx-guard p, .fx-guard li { color: var(--text-2); font-size: 14px; line-height: 1.5; }
+.fx-guard ul { margin: 10px 0 0; padding-left: 18px; }
+.fx-guard-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+.fx-guard-banner { display: flex; gap: 16px; align-items: flex-start; justify-content: space-between; margin: 0 0 12px; padding: 14px 16px;
+  border: 1px solid var(--risk-med); border-left-width: 4px; border-radius: 6px; background: var(--surface); }
+.fx-guard-banner h2 { margin: 0 0 4px; font-size: 15px; }
+.fx-guard-banner p, .fx-guard-banner li { margin: 4px 0 0; color: var(--text-2); font-size: 13px; line-height: 1.5; }
+.fx-guard-banner ul { margin: 6px 0 0; padding-left: 18px; }
+.fx-guard-banner .btn { flex: none; }
+.fx-guard-note { margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--line); border-left: 4px solid var(--risk-med); border-radius: 6px;
+  background: var(--surface); color: var(--text-2); font-size: 13px; }
+.fx-retake-note { margin: 0 0 12px; padding: 10px 14px; border: 1px solid var(--sel); border-radius: 6px; background: var(--sel-soft); font-size: 13px; }
+@media (max-width: 640px) { .fx-guard-banner { flex-direction: column; } }
+@media (prefers-reduced-motion: reduce) { .fx-guard[open] { animation: none; } }

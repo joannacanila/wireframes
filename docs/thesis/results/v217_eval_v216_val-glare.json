@@ -1,0 +1,267 @@
+{
+ "images": 22,
+ "centerline": {
+  "wire": {
+   "precision": 0.8050490656475694,
+   "recall": 0.17593767712363537,
+   "f1": 0.2887673327377895,
+   "iou": 0.21583854107321807,
+   "dice": 0.3550447428368208,
+   "pred_px": 61754,
+   "label_px": 324632,
+   "precision_ci95": [
+    0.7513227238581952,
+    0.8448339338065177
+   ],
+   "recall_ci95": [
+    0.09815279561253813,
+    0.2626803257995491
+   ],
+   "f1_ci95": [
+    0.17407830483228212,
+    0.4000234875447681
+   ]
+  },
+  "power-distribution-lines": {
+   "precision": 0.6680599950823704,
+   "recall": 0.07298877940978962,
+   "f1": 0.13159966062149703,
+   "iou": 0.09323944470298197,
+   "dice": 0.17057460770328103,
+   "pred_px": 16268,
+   "label_px": 163806,
+   "precision_ci95": [
+    0.48268473785152166,
+    0.9055332955351397
+   ],
+   "recall_ci95": [
+    0.04045351509302575,
+    0.12339232940076224
+   ],
+   "f1_ci95": [
+    0.07675190811819615,
+    0.2082823995829268
+   ]
+  },
+  "telecom-cable": {
+   "precision": 0.6541621904125896,
+   "recall": 0.16588500199044587,
+   "f1": 0.2646571984245847,
+   "iou": 0.196588523347566,
+   "dice": 0.3285816628051748,
+   "pred_px": 34441,
+   "label_px": 160768,
+   "precision_ci95": [
+    0.5125923501919012,
+    0.7237662138785425
+   ],
+   "recall_ci95": [
+    0.08287596674608909,
+    0.2455853977762478
+   ],
+   "f1_ci95": [
+    0.1430306883235421,
+    0.3626371381456218
+   ]
+  },
+  "abandoned-wire": {
+   "precision": null,
+   "recall": 0.0,
+   "f1": null,
+   "iou": 0.0,
+   "dice": 0.0,
+   "pred_px": 0,
+   "label_px": 983,
+   "precision_ci95": null,
+   "recall_ci95": [
+    0.0,
+    0.0
+   ],
+   "f1_ci95": null
+  },
+  "images": 22
+ },
+ "strand_class": {
+  "matched": 205,
+  "unmatched": 58,
+  "confusion": {
+   "power-distribution-lines -> power-distribution-lines": 54,
+   "power-distribution-lines -> telecom-cable": 7,
+   "power-distribution-lines -> uncertain": 5,
+   "telecom-cable -> power-distribution-lines": 13,
+   "telecom-cable -> telecom-cable": 97,
+   "telecom-cable -> uncertain": 29
+  },
+  "accuracy": 0.7365853658536585,
+  "uncertain_rate": 0.16585365853658537,
+  "power-distribution-lines": {
+   "precision": 0.8059701492537313,
+   "recall": 0.8181818181818182,
+   "f1": 0.8120300751879699,
+   "n_pred": 67,
+   "n_true": 66
+  },
+  "telecom-cable": {
+   "precision": 0.9326923076923077,
+   "recall": 0.697841726618705,
+   "f1": 0.7983539094650207,
+   "n_pred": 104,
+   "n_true": 139
+  },
+  "abandoned-wire": {
+   "precision": null,
+   "recall": null,
+   "f1": null,
+   "n_pred": 0,
+   "n_true": 0
+  }
+ },
+ "mask_map50": {
+  "strict": 0.0027502750275027505,
+  "tolerant": 0.003983601485148515
+ },
+ "fragments": 1.9051383399209487,
+ "mixed_rate": 0.039525691699604744,
+ "labelled_wires": 651,
+ "covered": 253,
+ "per_image": [
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145351_jpg.rf.nrAwawkRkLwjZmwXqWJr",
+   "wire_precision": 0.7205596579867859,
+   "wire_recall": 0.34907379289401763,
+   "wire_f1": 0.47030782856078246
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "wire_precision": 0.7367832167832168,
+   "wire_recall": 0.21059636225362824,
+   "wire_f1": 0.32756430190699154
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192415_jpg.rf.nFpvkUvh70nbyayD4RcB",
+   "wire_precision": 0.8505430242272347,
+   "wire_recall": 0.6583909676656617,
+   "wire_f1": 0.7422323942212513
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "wire_precision": 0.9223012281835812,
+   "wire_recall": 0.40558292282430214,
+   "wire_f1": 0.5634070224683625
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "wire_precision": 0.8155985489721886,
+   "wire_recall": 0.40505876036508975,
+   "wire_f1": 0.5412908843049542
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "wire_precision": 0.8334866605335787,
+   "wire_recall": 0.05888229091514512,
+   "wire_f1": 0.10999397489066724
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "wire_precision": 0.0,
+   "wire_recall": 0.0,
+   "wire_f1": 0.0
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213830_jpg.rf.bil70Pu4NM8qLD53bQiC",
+   "wire_precision": 0.9307851239669421,
+   "wire_recall": 0.1220206952679921,
+   "wire_f1": 0.215756877282621
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "wire_precision": 0.0,
+   "wire_recall": 0.0,
+   "wire_f1": 0.0
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213933_jpg.rf.8lXdtO9tPgQXJeW2GhE7",
+   "wire_precision": 0.6953605366126328,
+   "wire_recall": 0.13071371291098638,
+   "wire_f1": 0.22006050328969684
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "wire_precision": 0.9192921881743634,
+   "wire_recall": 0.11793489529338586,
+   "wire_f1": 0.20905090058756096
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221452_jpg.rf.oqqpYyP8Uap8GcvU12bd",
+   "wire_precision": 0.9801876955161627,
+   "wire_recall": 0.060234569866794034,
+   "wire_f1": 0.11349465729937715
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "wire_precision": 0.8787384448069603,
+   "wire_recall": 0.1036036036036036,
+   "wire_f1": 0.18535390937267018
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224354_jpg.rf.ttP3yEJGSe9xm1FCJKcL",
+   "wire_precision": 0.8759342301943199,
+   "wire_recall": 0.06585303839308417,
+   "wire_f1": 0.12249673023786437
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "wire_precision": 0.4212290502793296,
+   "wire_recall": 0.017932774623772192,
+   "wire_f1": 0.034401012088477956
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224842_jpg.rf.XodH52iN1EfvcNCLQY6Q",
+   "wire_precision": 0.8426150121065376,
+   "wire_recall": 0.06499723807770208,
+   "wire_f1": 0.12068512415652598
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__dataset_177_jpg.rf.7qcdqnjcCucxS6kr2XhH",
+   "wire_precision": 0.740364400840925,
+   "wire_recall": 0.5381334671349725,
+   "wire_f1": 0.6232546364720953
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__dataset_181_jpg.rf.ZfhiIlnaSY7I955h1i8U",
+   "wire_precision": 0.8488857938718662,
+   "wire_recall": 0.32603222557905337,
+   "wire_f1": 0.4711207421396561
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__dataset_182_jpg.rf.g5CExk8W07QgQYnEr7Kx",
+   "wire_precision": 0.5091743119266054,
+   "wire_recall": 0.010684647302904565,
+   "wire_f1": 0.020930092064578843
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__dataset_185_jpg.rf.wenMSLl68hcbI4CBYSAV",
+   "wire_precision": 0.0,
+   "wire_recall": 0.0,
+   "wire_f1": 0.0
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "wire_precision": 0.7323187108325873,
+   "wire_recall": 0.06669498725573492,
+   "wire_f1": 0.12225569399616647
+  },
+  {
+   "stem": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "wire_precision": 0.7870635941054297,
+   "wire_recall": 0.4736432384341637,
+   "wire_f1": 0.591394192438503
+  }
+ ],
+ "verdicts": {
+  "AT RISK - MODERATE": 1,
+  "NOT AT RISK": 2,
+  "INCONCLUSIVE - RETAKE PHOTO": 15,
+  "AT RISK - HIGH": 4
+ }
+}

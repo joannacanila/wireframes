@@ -88,6 +88,7 @@ class AnalysisOutcome:
     clearance: dict | None = None  # v2.11: {span index: {"gap_px", "gap_m_approx"}} to the nearest vegetation
     suppressed: list[dict] = field(default_factory=list)  # v2.13: spans removed by the ground gate, with reasons
     scene: dict | None = None  # v2.16: scene-parser context (pole regions); never creates or joins a wire
+    guardrail: dict | None = None  # v2.17: retake guardrail (app/pipeline/guardrail.py); never changes a result
 
     @property
     def valid_crs(self) -> list[float]:
@@ -463,7 +464,7 @@ def run_analysis(
     else:
         status = "complete"
     wire_mask, mask_stats = _mask_summary(class_masks, dets, rgb.shape[:2])
-    return AnalysisOutcome(
+    outcome = AnalysisOutcome(
         wire_mask=wire_mask, mask_stats=mask_stats, clearance=clearance, suppressed=suppressed,
         scene=None if detections is not None else (
             {**(getattr(segmenter, "last_scene", None) or {}), **({"poles_detected": poles} if poles is not None else {})}
@@ -474,3 +475,7 @@ def run_analysis(
         input_quality=pre.quality, enhancement=pre.enhancement, vegetation=regions,
         hazard=_reliable(hazard, quality := _quality(cfg, segmenter, pre, detections)), quality=quality,
     )
+    if cfg.guardrail.enabled and detections is None:
+        from app.pipeline.guardrail import assess as guard
+        outcome.guardrail = guard(outcome, cfg.guardrail)
+    return outcome

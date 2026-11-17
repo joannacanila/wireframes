@@ -1,0 +1,16 @@
+{
+ "dets": "runs/v218/dets/yolo11n-v218_val.json",
+ "threshold": 0.25,
+ "false_detections": {
+  "localisation": 51,
+  "background": 17
+ },
+ "axis_localisation_medium_large": {
+  "precision": 0.8571428571428571,
+  "recall": 0.6779661016949152,
+  "f1": 0.7570977917981072,
+  "tp": 120,
+  "fp": 20,
+  "fn": 57
+ }
+}

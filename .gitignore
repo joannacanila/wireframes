@@ -37,3 +37,7 @@ archive/
 _quarantine/
 /audit_*
 /scratch_*.txt
+
+# v2.18: trained-head parameters (derived from team photos) and Ultralytics base weights stay local
+models/strand_head_v217.json
+/yolo11*.pt

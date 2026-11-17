@@ -148,9 +148,9 @@ licence; classes that map to the four WIREFRAME classes. **None passed** (regist
 | Name | Source | Licence | Task / labels | Perspective | Decision |
 |---|---|---|---|---|---|
 | Annotated Google Street View dataset for pole and tree detection | Zenodo 20091961 | CC BY 4.0 as published; images are Google Street View captures | 3,103 images (640 × 640), YOLO boxes: `poste` 5,969 (utility, lamp and sign posts), `arvore` 3,047 | Street level, Curitiba (Brazil), concrete distribution poles similar to Philippine ones | **Used** (poles only), research use; neither images nor trained weights are redistributed by this repository |
-| Utility Poles (Zac) | Roboflow Universe `zac-ogogt/utility-poles-kcumt` | CC BY 4.0 | ~380 images, boxes | Street level | Evaluate further: needs `ROBOFLOW_API_KEY` (not set on the development machine) |
-| Utility Pole v7 (Yue-Hung) | Roboflow Universe `yue-hung/utility-pole-5j6dp` | CC0 (page metadata) | 511 images, boxes | Street level | Evaluate further: API key / possible subscription |
-| OHL-UK wooden pole and sign corpus | arXiv 2608.04061 | CC BY 4.0 (stated) | 4,570 images, boxes, masks, lean angle | Street View (UK wooden poles) | Not yet released ("upon acceptance") |
+| Utility Poles (Zac) | Roboflow Universe `zac-ogogt/utility-poles-kcumt` | CC BY 4.0 (v2.16 reading; not re-verified in v2.18: the page refuses automated access, HTTP 403) | ~380 images, boxes | Street level | Not used: needs a Roboflow account / API key; licence to be re-checked in a browser before use |
+| Utility Pole v7 (Yue-Hung) | Roboflow Universe `yue-hung/utility-pole-5j6dp` | CC0 (v2.16 page metadata; not re-verified in v2.18, HTTP 403) | 511 images, boxes | Street level | Not used: needs a Roboflow account / API key |
+| OHL-UK wooden pole and sign corpus | arXiv 2608.04061; University of Strathclyde, DOI 10.15129/df7cc895-1091-4cd6-bf2c-7b5ebd203e55 | CC BY 4.0 (dataset page, checked 2026-11-17); images are Google Street View captures | 4,570 images (640 × 640; 2,920 / 730 / 920), 6,773 wooden-pole and 1,805 warning-sign boxes, masks, lean angle, COCO JSON | Street View, UK suburban / rural | Released (`OHL-UK.zip`, 3.41 GB) but the file server refuses automated download (HTTP 403); not used in v2.18. Paper: YOLOv8 test F1 0.93 on its own Street View test split (not comparable to kerbside photos) |
 | Mapillary Vistas | Mapillary research | Research licence agreement | 25,000 images, 66+ classes incl. `object--support--utility-pole` | Street level, worldwide | Evaluate further: licence terms and size (≈ 25 GB) |
 | TTPLA | github.com/r3ab/ttpla_dataset | Unconfirmed (Apache 2.0 per a third-party catalogue) | 1,100 aerial images, towers + lines | UAV / aerial | Rejected: transmission towers seen from the air |
 | ADE20K scene parser (UperNet-ConvNeXt-T) | Hugging Face `openmmlab/upernet-convnext-tiny` | MIT | 150 classes incl. pole, streetlight, bridge, tree | Street level | **Used** (already loaded for the ground gate): structure-edge and vegetation gates, pole regions |
@@ -748,6 +748,207 @@ redistributed): boxes in the result's `scene.poles_detected` and `fit.pole_ends`
 * *Pole-anchored span endpoints for sag.* Reported (`fit.pole_ends`) but not used to gate CRS: there is no labelled
   evidence about which spans end at poles.
 
+### 5.11 Results of v2.17: centerline metrics, wire-type head, fusion, retake guardrail
+
+v2.17 set a 75 % target for precision and F1 on wire detection, Power, Telecom, strand classification and pole
+detection, each class judged on its own, "type uncertain" never counted as correct. This section reports what was
+measured, how, and which targets were and were not met. **Telecom and pole detection did not reach 75 % on the
+held-out test.**
+
+**Why a new metric.** Mask-IoU mAP@50 asks a 2–4 px predicted mask to overlap a hand-drawn polygon by 50 %; a wire
+found 1–2 px off-centre is a miss, so mAP50 stays at 0.02–0.05 whatever the screener does (§5.10). It is still
+reported, unchanged. v2.17 adds the thin-structure standard (road and vessel extraction; clDice, Shit et al. 2021):
+`app/pipeline/centerline_eval.py`.
+
+* precision = share of predicted centerline within tol of a labelled wire of that class; recall = share of labelled
+  centerline within tol of a predicted wire of that class; tol = 3 px per 1024 px of the long side
+* "wire" uses every reported wire; a class uses only confident wires of that class (an uncertain wire costs recall)
+* every predicted pixel stays in the precision denominator; because the labels omit real wires (Part 12, item 13),
+  **precision is a lower bound**
+* micro-averaged over photos; 95 % intervals by resampling whole photos (2 000 bootstrap draws)
+* strand classification: each reported wire whose skeleton lies ≥ 50 % on one labelled class is a case; accuracy =
+  correct / all cases (uncertain = not correct)
+* tolerant IoU / Dice are symmetric relaxed overlaps (matched pixels on both sides / all pixels). A first version
+  counted only the prediction side and could exceed 1; it was corrected before any table here was produced.
+
+**Where Telecom was lost (validation, v2.16 model).** Of the labelled telecom centerline, 70.7 % was found as
+telecom pixels, 6.0 % only as power, 12.2 % had weak wire probability nearby (below the argmax), 11.2 % nothing
+(`v217_telecom_loss_val.json`). Strand assembly then lost 4.6 points of telecom recall to the length gates, 1.7 to
+power strands and 0.7 to uncertain strands; 19 % of telecom strand centerline lay on no label
+(`v217_strand_loss_val.json`).
+
+**What was tried (validation, centerline F1 on strands; selection only on validation)**
+
+| Change | Telecom F1 | Power F1 | Decision |
+|---|---|---|---|
+| v2.16 as shipped (R34, argmax, share 0.9) | 0.695 | 0.823 | baseline |
+| class share 0.6 instead of 0.9 | 0.719 | 0.844 | superseded by the head |
+| telecom logit bias ×1.3–2.0 | ≤ 0.744 | – | rejected: telecom precision < 0.75 |
+| min span length 60 / 40 px | +0.00–0.01 | – | rejected: fragments 3.69 → 4.0 / 4.2 |
+| multi-scale TTA (0.85×, 1.15×) | 0.700 | 0.855 | rejected (`v217_scales_val.json`) |
+| 2× upsampled tiled inference | 0.635 | 0.801 | rejected |
+| MiT-B1 alone / ConvNeXt-T alone | 0.706 / 0.712 | 0.854 / 0.833 | members only |
+| fusion R34 + MiT-B1 + ConvNeXt-T, equal (v2.12 weights 0.25/0.5/0.25: 0.716) | 0.727 | 0.871 | **adopted** (`v217_fusion_val.json`) |
+| wire mask P(wire) ≥ τ, τ ∈ {0.3, 0.35, 0.4, 0.45} (R34) | 0.726–0.728 | 0.853–0.857 | τ = 0.4 adopted with the head |
+| fine-tune R34 with per-class clDice, chosen on strand F1 (7 of 10 epochs) | 0.694–0.719 | 0.817–0.851 | rejected, stopped (`runs/wirenet/wirenet-r34-v217.log.json`) |
+| **strand type head** + fusion + τ = 0.4 (leave-one-photo-out) | **0.753** [0.715, 0.788] | **0.875** | **adopted** |
+| + continuation grouping of collinear pieces (gap 40 / 80 / 150 px) | 0.755 / 0.752 / 0.748 | 0.876–0.875 | rejected: no gain, mixed rate 2.2 → 2.4 % |
+
+**Strand type head** (`app/pipeline/strand_head.py`, `ml/strand_classifier.py`). WireNet decides the type per pixel
+from a ~200 px receptive field and v2.16 summed those votes. The head looks at each reported strand as a whole:
+summed fused class evidence, mean P(wire) and entropy, length, straightness, sag ratio, orientation, width, height in
+the photo and share of strands above it, darkness against a local ring, colour, local texture, and frozen
+DINOv2-small (Apache-2.0) patch features pooled along the skeleton (PCA 32), into a 2-layer MLP (power vs telecom).
+Data hygiene: only strands lying ≥ 50 % on a labelled power or telecom wire are training cases, with that label as
+the target; strands on no label are never negatives (the labels omit wires), and the head never removes a strand.
+A head fitted on train strands alone gained little (0.743), because the WireNet members were trained on those photos
+and their train-split output is unrealistically clean; it is therefore fitted by **stacking** on validation strands
+(+ train strands), and every validation number for it is leave-one-photo-out. Abandoned-wire strands keep the
+pixel rule. The head's 0.5 abstention threshold (no "uncertain" strands) gave the highest validation F1
+(0.55: 0.749, 0.6: 0.746).
+
+**Full pipeline, validation (22 photos, all scene gates; `v217_eval_v21{6,7}_val.json`).** The v2.17 row is partly
+in-sample for the head (it was fitted on these strands); the leave-one-photo-out figure above is the honest
+validation estimate.
+
+| | Wire P / R / F1 | Power P / R / F1 | Telecom P / R / F1 | Strand class acc. | Uncertain | Wires in 2 classes |
+|---|---|---|---|---|---|---|
+| v2.16 | 0.882 / 0.775 / 0.825 | 0.932 / 0.738 / 0.824 | 0.801 / 0.613 / 0.694 | 0.867 | 11.8 % | 3.4 % |
+| v2.17 | 0.875 / 0.825 / 0.849 | 0.927 / 0.861 / 0.893 | 0.785 / 0.749 / 0.767 | 0.980 | 0 % | 2.1 % |
+
+**Held-out test (21 photos, run once after freezing, 17 Nov 2026; `v217_eval_v21{6,7}_test.json`)**
+
+| | Wire P / R / F1 | Power P / R / F1 | Telecom P / R / F1 | Strand class acc. | Wires in 2 classes | mAP50 strict / tolerant |
+|---|---|---|---|---|---|---|
+| v2.16 | 0.821 / 0.747 / 0.783 | 0.897 / 0.670 / 0.767 | 0.731 / 0.602 / 0.660 | 0.846 (11.9 % uncertain) | 4.5 % | 0.0203 / 0.0496 |
+| v2.17 | 0.823 / 0.792 / **0.807** | 0.852 / 0.804 / **0.828** | 0.713 / 0.706 / **0.710** | **0.936** (0 % uncertain) | 5.0 % | 0.0199 / 0.0485 |
+
+95 % intervals (test, v2.17): wire precision [0.773, 0.872], power precision [0.777, 0.916], telecom precision
+[0.665, 0.768]. The validation-to-test drop is the same for both versions (v2.16 telecom 0.694 → 0.660), i.e. the
+test photos are harder, and the 22-photo validation estimate was optimistic after many comparisons on it.
+
+**Gate status against the 75 % target (test, the only unbiased figures)**
+
+| Target | Precision | F1 | Met? |
+|---|---|---|---|
+| Wire detection | 0.823 | 0.807 | yes |
+| Power | 0.852 | 0.828 | yes |
+| Telecom | 0.713 | 0.710 | **no** (validation leave-one-photo-out 0.776 / 0.753) |
+| Strand classification (Power and Telecom; per class P/F1 0.962/0.916 and 0.921/0.948) | – | accuracy 0.936 | yes |
+| Pole detection | LVIS val: Grounding DINO-tiny 0.418 / 0.435; Street View YOLO11n 0.242 / 0.187 | – | **no** |
+
+Abandoned-wire is not detected at all (0 strands on validation or test).
+
+**Robustness (validation, seven synthetic conditions, F1 v2.16 → v2.17; `v217_eval_v21{6,7}_val-<condition>.json`)**
+
+| Condition | Wire | Power | Telecom |
+|---|---|---|---|
+| low light | 0.775 → 0.814 | 0.755 → 0.866 | 0.616 → 0.706 |
+| glare | 0.289 → 0.330 | 0.132 → 0.193 | 0.265 → 0.377 |
+| motion | 0.632 → 0.637 | 0.525 → 0.645 | 0.506 → 0.540 |
+| defocus | 0.703 → 0.776 | 0.660 → 0.738 | 0.585 → 0.672 |
+| JPEG | 0.783 → 0.822 | 0.745 → 0.858 | 0.658 → 0.749 |
+| low resolution | 0.809 → 0.842 | 0.774 → 0.885 | 0.680 → 0.761 |
+| rain / haze | 0.812 → 0.838 | 0.833 → 0.876 | 0.649 → 0.739 |
+
+**Retake guardrail** (`app/pipeline/guardrail.py`; API `POST /api/analysis/{id}/guardrail`; modal, banner and PDF
+warning in the screener). Checks: v2.8 reliability grade, capture envelope, class conflicts, uncertain-type share,
+fragmentation, structure edges, poles (information only). On validation × 8 conditions (176 photos,
+`v217_guardrail_val_v217.json`): photos held behind the retake prompt have mean wire F1 0.27, the rest 0.80; 91 % of
+glare photos and 0 % of clean, low-light, JPEG, low-resolution and rain photos are flagged; of the worst quartile of
+photos by F1, 52 % are flagged (specificity 98 %). Motion blur is the gap: 23 % of motion photos are flagged
+because the v2.8 grade rates most of them B. With the head's 0.5 abstention threshold the class-conflict and
+uncertain-type checks no longer fire; they stay in place for a stricter threshold.
+
+**Poles.** Root causes of "no poles": detection disabled in config, no frontend drawing, and the Zenodo Street View
+YOLO11n (resumed to 30 epochs, its own val mAP50 0.718) finds 0 poles on the upward-looking field photos at any
+size or threshold. A public, licence-checked pole set was built from LVIS v1 `telephone_pole` (CC BY 4.0
+annotations, COCO images under their Flickr licences, not redistributed): 1 018 images, 3 336 boxes, lamp posts,
+street lights, flag poles and generic poles as verified negatives (`ml/poles/lvis_prepare.py`). On its validation
+split (130 photos, 408 boxes, IoU ≥ 0.5): Grounding DINO-tiny zero-shot P 0.418 / R 0.453 / F1 0.435 (AP50 0.242,
+5.7 s per photo); the Street View model P 0.242 / R 0.152 / F1 0.187 (AP50 0.073). A YOLO11n trained on the LVIS
+train split was stopped at epoch 6 (val mAP50 0.226) to give the M1 to the wire work. Poles are drawn as dashed
+boxes when a detector is configured; `pole_weights` stays off, and pole-assisted joining stays off.
+
+**Cost.** Median segmentation time per 1024 px photo on the M1 rises from 1.9 s to 5.6 s (three WireNets + DINOv2).
+
+**Field photos (street1–3, `runs/v217/regression/`).** Wire counts 116 / 135 / 128 (v2.16: 108 / 146 / 147), the
+same class split (dense telecom; power only on the transmission tower), 0 uncertain strands (v2.16: 23 / 14 / 10),
+verdicts unchanged (AT RISK – HIGH, field sag unaffected: δ_lim stays the 0.040 placeholder).
+
+### 5.12 Results of v2.18: pole detection (public photos only)
+
+**Scope.** No WIREFRAME photo has a pole label, so **nothing below is accuracy on WIREFRAME photographs**. All
+numbers are on public LVIS v1 `telephone_pole` photos (COCO images). Pole detection stays **off** in the
+application (`pole_weights: null`) and pole-assisted wire joining stays off (`pole_occluder_gap: 0`).
+
+**Audit of v2.17** (`ml/poles/`): (1) 29 % of LVIS pole boxes are under 6 px wide (median width 11 px, 640 px
+images): distant poles on which a box IoU of 0.5 is nearly unreachable and which WIREFRAME photos, taken next to
+the pole, do not contain; (2) the v2.17 training set had 16 negative images; (3) the v2.17 YOLO11n was stopped
+at epoch 6; (4) Zenodo 20091961 labels every post (`poste`: utility, lamp and sign posts), which contradicts the
+LVIS definition, so it is used only as a starting point, never mixed as labels.
+
+**Data (v2.18, `ml/poles/build_v218.py`, `datasets/external/poles_v218`, local only).** The v2.17 positives with
+unchanged split membership plus 283 LVIS images whose annotators confirmed that no telephone pole is present
+(`neg_category_ids`): 43 contain a confusable structure (lamp post, street light, generic pole, flag pole, mast,
+antenna, traffic light, street / sign board, billboard, parking meter, hydrant, water tower, windmill), 240 are
+generic. Train 938 images (721 with poles, 2,412 boxes), val 166 (128, 408), test 197 (147, 516); LVIS train
+images → train/val, LVIS val images → test. Images stay local (COCO Flickr licences).
+
+**Protocols** (`ml/poles/eval_detectors.py`, box IoU ≥ 0.5, one-to-one, greedy by score; threshold chosen on val by
+maximum F1 and reused unchanged on test): *all boxes*, and *medium + large* (COCO convention: ground-truth boxes
+under 32² px are ignore regions; a prediction matched to one, or an unmatched prediction under 32² px, counts
+neither way). Also reported: photos with ≥ 1 false detection and photos with ≥ 1 missed pole.
+
+**Training changes.** More verified negatives (above); rotation augmentation ±5° (hand-held, tilted photos); a
+start from the Street View detector instead of COCO; 50 epochs (`ml/poles/train.py --set`). YOLO11s (9.4 M) was
+started and stopped at epoch 2 by the operating system's memory-pressure guard (4.4 GB MPS on the 8 GB M1);
+it is not reported.
+
+**Validation (166 photos, 408 poles; 177 medium/large)**
+
+| Detector | All: P / R / F1 | Medium+large: P / R / F1 [95 % CI] | AP50 all / m+l | Latency |
+|---|---|---|---|---|
+| v2.17 Grounding DINO-tiny, zero-shot (v2.17 val, 130 photos) | 0.418 / 0.453 / 0.435 | – | 0.242 / – | 5.7 s |
+| v2.17 Street View YOLO11n (v2.17 val) | 0.242 / 0.152 / 0.187 | – | 0.073 / – | 0.03 s |
+| Run 1: YOLO11n, COCO start, v2.18 data | 0.589 / 0.404 / 0.480 | 0.602 / 0.582 / 0.592 [0.527, 0.654] | 0.406 / 0.582 | 0.03 s |
+| **Run 2: YOLO11n, Street View start, v2.18 data (selected)** | 0.559 / 0.439 / 0.492 | 0.616 / 0.599 / **0.607** [0.551, 0.658] | 0.413 / 0.593 | 0.03 s |
+
+Run 2 was selected on validation medium+large F1 (the two runs are within each other's intervals). Thresholds 0.20
+(all) and 0.25 (medium+large).
+
+**Held-out test (197 photos, 516 poles; 224 medium/large), run once on 17 Nov 2026, Run 2, val thresholds**
+
+| Protocol | P | R | F1 [95 % CI] | AP50 | Photos with a false detection | Photos with a missed pole |
+|---|---|---|---|---|---|---|
+| All boxes | 0.505 | 0.386 | 0.437 [0.384, 0.491] | 0.386 | 97 | 111 |
+| Medium + large | 0.620 | 0.518 | **0.564** [0.507, 0.619] | 0.545 | 57 | 73 |
+
+**Gate: not met.** Precision 0.620 and F1 0.564 on medium/large poles are below 75 %.
+
+**Error analysis** (`ml/poles/v218_analysis.py`, diagnostic only). Of the test false detections on medium/large
+poles, 49 overlap a labelled pole at 0.1 ≤ IoU < 0.5 (right pole, box extent disagrees: crossarms included or
+not on a 5–15 px wide shaft, inconsistently across LVIS annotators) and 22 are on something else (validation 46 /
+20). A *pole-axis* match, defined before looking at results as the quantity the wire pipeline would use (centre
+x within max(half the labelled width, 2 % of image width), vertical-extent IoU ≥ 0.5), gives P 0.855 / R 0.634 /
+F1 0.728 on test (val 0.842 / 0.661 / 0.741). This is not the acceptance metric and is not claimed as one.
+
+**Can poles feed the wire pipeline?** Not yet. (1) No pole accuracy exists on WIREFRAME photos; (2) one medium/large
+pole in three to four is missed on public photos; (3) pole-assisted bridging gave no measurable gain in v2.16
+(`v216_pole_bridging_val.json`). Pole joining therefore stays off.
+
+**Own-photo labels (future work).** `python -m ml.poles.annotation_pack export --detector
+runs/detect/runs/poles/yolo11n-v218-gsvinit/weights/best.pt` wrote `runs/v218/pole_annotation/` (CVAT 1.1; train
+102, val 22, test 21, field 3 photos; 214 detector boxes as unverified `pole_candidate`). Annotators confirm or
+reject each candidate (`utility-pole` / `not-utility-pole` = hard negative), draw missed poles, record occlusion
+(wires / vegetation / other), sky background, attached equipment and material, and tag the photo
+`poles_complete`; only complete, fully verified photos are imported (`ml.poles.annotation_pack import`), into a new
+folder, keeping the team-set splits. The pole gate can be judged only after that.
+
+**Wires, unchanged in v2.18.** The v2.17 configuration was re-run on test on 17 Nov 2026 as a reproduction check
+(no selection): `v217_eval_v217_test.json` is byte-identical to the first run (wire 0.823 / 0.792 / 0.807, power
+0.852 / 0.804 / 0.828, telecom 0.713 / 0.706 / 0.710, strand class accuracy 0.936, mixed 5.0 %).
+
 ---
 
 ## 6. Version history
@@ -772,6 +973,8 @@ redistributed): boxes in the result's `scene.poles_detected` and `fit.pole_ends`
 | v2.14 | Provenance of span pixels (observed vs inferred); span ownership within blob; console redesign; website only | 0 verdict changes; honest rendering of bridged gaps |
 | v2.15 | Single-screen landing page; centred upload card with inspection name and city; plain-language results page; diagnostics grouped and collapsed | 16/16 mocked and 3/3 real-photo browser checks |
 | v2.16 | One class per physical strand (union geometry, evidence-weighted class, "type uncertain"); structure-edge and vegetation scene gates; chord gate in model pixels; capture envelope applied to sag; bridge angle 35° + 15 px lateral limit; YOLO11n pole detector (context) | Validation tolerant mAP50 0.0382 → 0.0456; wires in two colours 5.9% → 3.4%; ultra-wide field photo HIGH → INCONCLUSIVE; false vegetation contact removed |
+| v2.17 | Centerline P/R/F1 per class with bootstrap intervals; equal-weight three-WireNet fusion; P(wire) ≥ 0.4 strand mask; strand type head (DINOv2 + geometry + scene position, stacked on validation); retake guardrail (modal, banner, PDF, recorded choice); LVIS pole set and detector comparison; poles drawn | Test centerline F1 wire 0.783 → 0.807, power 0.767 → 0.828, telecom 0.660 → 0.710; strand class accuracy 0.846 → 0.936 |
+| v2.18 | Pole audit; LVIS pole set with 283 verified negatives; COCO medium+large protocol, false-detection / missed-pole counts, error analysis; YOLO11n fine-tune from the Street View detector; CVAT pole annotation pack for the team photos; pole detection still off | LVIS test (public photos only) medium+large pole F1 0.564 (P 0.620), all boxes 0.437; v2.17 best on val was 0.435 (all boxes); gate not met |
 
 ---
 
@@ -814,6 +1017,9 @@ redistributed): boxes in the result's `scene.poles_detected` and `fit.pole_ends`
 | v2.16 | "Share on structure classes" wire gate | Not measurable on validation (no flyovers); removes wires in front of decks | Not adopted (side contrast used) |
 | v2.16 | Tiled full-resolution inference | Visually thinner, separated strokes; no high-resolution labels to measure it | Experimental, off |
 | v2.16 | Hard-negative WireNet re-training | Validation labels omit many real wires: mining would suppress them | Not attempted (annotation gap) |
+| v2.18 | YOLO11n pole detector from COCO weights (v2.18 data) | Val medium+large F1 0.592 vs 0.607 from Street View weights | Not selected (within interval) |
+| v2.18 | YOLO11s pole detector | Stopped at epoch 2 by memory pressure on the 8 GB M1 (4.4 GB MPS) | Not measured |
+| v2.18 | Mixing Zenodo `poste` boxes into the LVIS labels | Definition conflict (lamp and sign posts labelled as poles) | Not attempted; used as starting weights only |
 
 **A recurring finding.** Pixel accuracy and span accuracy disagreed four times (YOLO masks, the motion router,
 hysteresis, single v2.12 backbones). The screener needs continuous, separated spans, so span-level validation
@@ -841,6 +1047,16 @@ decides, with pixel F1 as a guard. The three-model fusion is the only change tha
   share 0.4, pole bridging off) decided on validation; the field photos only illustrate. The single test run
   (`python -m ml.experiments.v216_pipeline_eval --split test`) was performed once, after freezing, on 16 Nov 2026
   (`v216_pipeline_test.json`, §5.10); no setting was changed after it.
+- **v2.17:** fusion members and weights, τ, the head's features, its training data and abstention threshold, and
+  the guardrail thresholds were all decided on validation (head numbers leave-one-photo-out). Many candidates were
+  compared on the same 22 photos, so the validation figures are optimistic. The frozen configuration was run once on
+  test on 17 Nov 2026 (`v217_eval_v217_test.json`, with v2.16 alongside); Telecom missed the 75 % target there and
+  no setting was changed after it. Pole detectors were compared only on the LVIS validation split; the LVIS test
+  split was not used.
+- **v2.18:** pole data, augmentation, starting weights and both thresholds chosen on the LVIS validation split; the
+  LVIS test split was used once, on 17 Nov 2026, for the selected detector (`v218_poles_poles_v218_test_r2.json`);
+  nothing was changed after it. The wire test was re-run once on the frozen v2.17 configuration as a reproduction
+  check; the output is identical to the first run.
 - **Guard rules.** v2.8: tolerant pixel IoU must stay ≥ 97% of v2.7's. v2.9 onward: validation tolerant mAP50 ≥ 0.0397,
   pixel IoU ≥ 0.525 / 0.418, 8-condition mean ≥ 0.3872. Output-identical changes are proven with golden checks.
 
@@ -986,7 +1202,9 @@ stylesheet with new markup (v2.15: assets now revalidated on every load).
 2. **Verdict instability.** The pole verdict changes in 41% of mildly degraded photos whose wires survive. A steadier
    per-span sag estimate is needed (e.g. averaged over variants, or from the probability map).
 3. **Perspective.** Spans receding in depth read high 3.3× more often; image-space sag is perspective-sensitive.
-4. **Telecom recall** is 0.05 on test (0.025 at night); dense bundles are not separated.
+4. **Telecom** (v2.17 test, centerline): precision 0.713, recall 0.706, F1 0.710, below the 75 % target. Dense
+   bundles are not separated and ~23 % of labelled telecom is never or only weakly predicted; three backbones agree,
+   so more labelled telecom (the verification pack, `ml/annotation_pack.py`) is the next step, not another model.
 5. **Merged neighbouring cables** in very dense tangles (e.g. P-B1D137 span 14 carries a fragment of the cable below
    it, connected through the tangle in the model's own mask).
 6. **Small dataset:** 145 photos, 21 test photos, 22 validation photos; differences below ~0.002 are noise; the test
@@ -1015,6 +1233,12 @@ stylesheet with new markup (v2.15: assets now revalidated on every load).
     unlabelled field photos; their precision on overpass scenes has no labelled measurement.
 17. **Pole detector domain (v2.16).** Trained on Brazilian sidewalk Street View frames where the camera looks along
     the street; WIREFRAME photos look up at the wires. Its "pole" class includes lamp and sign posts. Context only.
+18. **Pole detection (v2.18).** On public LVIS photos the selected YOLO11n reaches test P 0.620 / F1 0.564 on
+    medium and large poles (all boxes 0.505 / 0.437), below the 75 % target; most false detections are box-extent
+    disagreements on thin shafts. There is no pole label on any WIREFRAME photo, so its accuracy on the team's
+    photographs is unknown; detection stays off until the CVAT pack (`runs/v218/pole_annotation/`) is labelled and
+    a separate pole test on team photos meets the gate. OHL-UK (CC BY 4.0, 4,570 Street View photos) and the two
+    Roboflow sets were not used: download refused to automated clients / account required.
 
 **Recommended next steps:** engineer reference ratings and δ_lim calibration; several hundred tightly traced
 abandoned-wire instances and re-traced dense bundles; labelled street-level and night photos of the team's own poles;
@@ -1053,6 +1277,30 @@ python -m ml.experiments.v216_pipeline_eval --split val                      # v
 python -m ml.experiments.v216_regression                                     # field photos in runs/v216/regression/
 python -m ml.experiments.v216_tiled street1 street2                          # experimental tiled inference (visual)
 python -m ml.poles.prepare && python -m ml.poles.train                       # pole dataset (Zenodo 20091961) + YOLO11n
+
+# v2.17: centerline metrics, fusion, strand head, full pipeline, guardrail, poles
+python -m ml.experiments.v217_cached && python -m ml.experiments.v217_fusion && python -m ml.experiments.v217_scales
+python -m ml.experiments.v217_telecom_loss && python -m ml.experiments.v217_strand_loss
+python -m ml.experiments.cache --split train --tag=-v216      # + --wirenet models/v212_mitb1.pt --tag=-mitb1, ConvNeXt
+python -m ml.strand_classifier features --cache runs/cache/train-fuse3 --split train --tau 0.4 --tag _f3t04
+python -m ml.strand_classifier features --cache runs/cache/val-fuse3 --split val --tau 0.4 --tag _f3t04
+python -m ml.strand_classifier stack --cache runs/cache/val-fuse3 --tag _f3t04 --tau 0.4 --train-weight 1 --save \
+    --head models/strand_head_v217.pt                         # leave-one-photo-out numbers + final head
+python -m ml.experiments.v217_eval dump --split val --variant v217 && python -m ml.experiments.v217_eval score ...
+python -m ml.experiments.v217_guardrail --variant v217
+python -m ml.poles.lvis_prepare --download && python -m ml.poles.eval_detectors --split val --detector <spec>
+
+# v2.18: poles
+python -m ml.poles.build_v218 --download
+python -m ml.poles.train --data datasets/external/poles_v218/data.yaml --name yolo11n-v218 --epochs 50 --patience 15 --set degrees=5
+python -m ml.poles.train --data datasets/external/poles_v218/data.yaml --model runs/detect/runs/poles/yolo11n/weights/best.pt \
+    --name yolo11n-v218-gsvinit --epochs 50 --patience 15 --set degrees=5
+D=runs/detect/runs/poles/yolo11n-v218-gsvinit/weights/best.pt
+python -m ml.poles.eval_detectors --data datasets/external/poles_v218/data.yaml --split val --detector $D --tag _r2 --save-dets runs/v218/dets
+python -m ml.poles.eval_detectors --data datasets/external/poles_v218/data.yaml --split test --detector $D --tag _r2 \
+    --threshold-from docs/thesis/results/v218_poles_poles_v218_val_r2.json --save-dets runs/v218/dets   # once
+python -m ml.poles.v218_analysis --dets runs/v218/dets/yolo11n-v218-gsvinit_val.json --threshold 0.25
+python -m ml.poles.annotation_pack export --detector $D
 
 # stress benchmark, verdicts, golden checks
 python -m scripts.stress_test_all_conditions --split test --configs v2.12 --conditions clean lowlight night \
@@ -1097,6 +1345,7 @@ Every number above traces to one of these (`docs/thesis/results/` unless stated)
 | Website | `v215_ui_check_mock.json`, `v215_ui_check_real.json` |
 | v2.16 strands, joining, scene gates, pipeline | `v216_strands_val.json`, `v216_join_sweep_val.jsonl`, `v216_context_val.json`, `v216_stress_spans_val.json`, `v216_pipeline_val.json`, `v216_pipeline_test.json`; field photos (local only, contain people and plates): `runs/v216/regression/summary.json` |
 | v2.16 poles | `v216_poles_val.json`, `v216_poles_test.json`, `v216_pole_bridging_val.json`; dataset split `datasets/external/poles_yolo/split.json` (local) |
+| v2.18 poles | `v218_poles_poles_v218_val_r1.json`, `v218_poles_poles_v218_val_r2.json`, `v218_poles_poles_v218_test_r2.json`, `v218_poles_analysis_yolo11n-v218_val.json`, `v218_poles_analysis_yolo11n-v218-gsvinit_{val,test}.json`; set manifest `datasets/external/poles_v218/manifest.json` (local); CVAT pack `runs/v218/pole_annotation/summary.json` (local) |
 
 **Figures** (`docs/thesis/figures/`): `stress_conditions.jpg` (the eight capture conditions); `high_crs_spans_val.jpg`
 (visual audit of high-CRS spans); `loose_end_candidates_val.jpg`; `failure_hard_*.jpg` / `failure_easy_*.jpg` (green

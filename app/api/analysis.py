@@ -58,6 +58,7 @@ async def upload(
     latitude: Annotated[float | None, Form()] = None,
     longitude: Annotated[float | None, Form()] = None,
     labels: Annotated[UploadFile | None, File(description="Optional YOLO-seg reference polygons")] = None,
+    retake_of: Annotated[str | None, Form(max_length=64, description="v2.17: id of the analysis this photo replaces")] = None,
 ) -> dict:
     """Validate the image, strip GPS, store it, and enqueue the analysis."""
     admin = current_admin(request)
@@ -86,6 +87,8 @@ async def upload(
         raise HTTPException(exc.status, detail) from exc
     if admin is None:
         st.upload_limiter.hit(client_key(request))
+    if retake_of:  # v2.17 guardrail: the user retook the photo; both analyses are kept and linked
+        svc.link_retake(st.db, aid, retake_of)
     st.queue.submit(aid)
     return {"id": aid, "status": "processing", "status_url": f"/api/analysis/{aid}",
             "result_url": f"/api/analysis/{aid}/result"}
@@ -165,6 +168,19 @@ def get_result(analysis_id: str, st: State) -> dict:
             raise HTTPException(409, {"code": "processing", "message": "Analysis is still processing."})
         rank = sites.rank_of(s, st.config, a.pole.pole_code) if a.status != "error" else None
         return svc.serialize_result(a, st.config, rank, st.settings)
+
+
+@router.post("/{analysis_id}/guardrail")
+def guardrail_choice(analysis_id: str, st: State, body: dict) -> dict:
+    """v2.17: record the answer to the retake prompt ("proceed" or "retake"). Same capability rule as the result:
+    whoever holds the analysis id. The choice is recorded; it never changes the analysis."""
+    action = (body or {}).get("action")
+    if action not in svc.GUARDRAIL_ACTIONS:
+        raise HTTPException(422, {"code": "bad_action", "message": "action must be 'proceed' or 'retake'."})
+    choice = svc.record_guardrail_choice(st.db, analysis_id, action)
+    if choice is None:
+        raise HTTPException(404, {"code": "not_found", "message": "Analysis not found."})
+    return {"id": analysis_id, "choice": choice}
 
 
 @router.get("/{analysis_id}/image")

@@ -1,0 +1,8 @@
+{
+ "split": "val",
+ "weights": "runs/detect/runs/poles/yolo11n-v218/weights/best.pt",
+ "map50": 0.3946983382049243,
+ "map50_95": 0.19156942259922374,
+ "precision": 0.49143220423831546,
+ "recall": 0.43137254901960786
+}

@@ -4,7 +4,7 @@
 //   offline     the API is unreachable
 // When the model appears, the admin portal can re-queue analyses that failed for want of it.
 
-import { toast, update } from "./toast.js?v=2.16";
+import { toast, update } from "./toast.js?v=2.17";
 
 const POLL_MS = 20_000;
 const OFFLINE_MS = 4_000;

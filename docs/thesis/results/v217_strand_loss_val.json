@@ -1,0 +1,84 @@
+{
+ "recall_loss": {
+  "power-distribution-lines": {
+   "pixel_hit": 139898,
+   "strand_hit": 132564,
+   "strand_other": 425,
+   "strand_unc": 465,
+   "no_strand": 8769
+  },
+  "telecom-cable": {
+   "pixel_hit": 113593,
+   "strand_hit": 104842,
+   "strand_other": 2724,
+   "strand_unc": 1116,
+   "no_strand": 7480
+  }
+ },
+ "precision_loss": {
+  "power-distribution-lines": {
+   "hit": 112486,
+   "near_other": 7784,
+   "unlabelled": 7418
+  },
+  "telecom-cable": {
+   "hit": 88151,
+   "near_other": 1279,
+   "unlabelled": 20640
+  }
+ },
+ "strand_precision_by_length": {
+  "power-distribution-lines": [
+   {
+    "len": "0-150",
+    "n": 58,
+    "px_share": 0.05343157699615367,
+    "on_label": 0.7772477594680544
+   },
+   {
+    "len": "150-300",
+    "n": 119,
+    "px_share": 0.20280519641009007,
+    "on_label": 0.8280524030771574
+   },
+   {
+    "len": "300-600",
+    "n": 143,
+    "px_share": 0.4652208165345938,
+    "on_label": 0.885895009463094
+   },
+   {
+    "len": "600-10000",
+    "n": 43,
+    "px_share": 0.27854241005916247,
+    "on_label": 0.9213065661047027
+   }
+  ],
+  "telecom-cable": [
+   {
+    "len": "0-150",
+    "n": 117,
+    "px_share": 0.12083976098019399,
+    "on_label": 0.614013206162876
+   },
+   {
+    "len": "150-300",
+    "n": 150,
+    "px_share": 0.280866003510825,
+    "on_label": 0.7236742424242424
+   },
+   {
+    "len": "300-600",
+    "n": 128,
+    "px_share": 0.4739170523254783,
+    "on_label": 0.8581236554110935
+   },
+   {
+    "len": "600-10000",
+    "n": 17,
+    "px_share": 0.12437718318350267,
+    "on_label": 0.8900135433744386
+   }
+  ]
+ }
+}

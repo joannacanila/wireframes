@@ -11,7 +11,7 @@
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
 
   --risk-low: #2fbf71;  --risk-med: #e6b422;  --risk-high: #e5484d;  --risk-none: #8a919c;
-  --cls-power: #6aa1ff; --cls-telecom: #b48cff; --cls-dead: #ff9157; --cls-unknown: #9aa0a6; --cls-veg: #5fbf6a;
+  --cls-power: #6aa1ff; --cls-telecom: #b48cff; --cls-dead: #ff9157; --cls-unknown: #9aa0a6; --cls-pole: #e8d27a; --cls-veg: #5fbf6a;
 }
 :root[data-theme="dark"] {
   --bg: #0c0d0f; --surface: #121417; --surface-2: #171a1e; --surface-3: #1e2227;

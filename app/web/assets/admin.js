@@ -1,12 +1,12 @@
 // Side B: admin command centre. Signed-in engineers and administrators only; every API it
 // calls is guarded server-side, so this file decides presentation, never access.
 
-import { api, json, esc, fmt, pct, ago, levelChip, LEVEL_LABEL, STATUS_LABEL, waitForAnalysis } from "./lib.js?v=2.16";
-import { OverlayViewer, CLASS_LABEL, wireColor } from "./viewer.js?v=2.16";
-import { mountSites } from "./sites.js?v=2.16";
-import { mountEvaluation } from "./evaluation.js?v=2.16";
-import { onStatus, startStatus } from "./status.js?v=2.16";
-import { toast, update } from "./toast.js?v=2.16";
+import { api, json, esc, fmt, pct, ago, levelChip, LEVEL_LABEL, STATUS_LABEL, waitForAnalysis } from "./lib.js?v=2.17";
+import { OverlayViewer, CLASS_LABEL, wireColor } from "./viewer.js?v=2.17";
+import { mountSites } from "./sites.js?v=2.17";
+import { mountEvaluation } from "./evaluation.js?v=2.17";
+import { onStatus, startStatus } from "./status.js?v=2.17";
+import { toast, update } from "./toast.js?v=2.17";
 
 const view = document.getElementById("view");
 const $ = (s, r = document) => r.querySelector(s);

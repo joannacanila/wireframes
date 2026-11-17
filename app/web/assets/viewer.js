@@ -57,10 +57,11 @@ export class OverlayViewer {
     wrap.append(this.tip);
     this.onHover = onHover;
     this.onSelect = onSelect;
-    this.layers = { masks: true, inferred: true, vegetation: true, catenary: true, skeleton: false, sag: true, ends: true, labels: true, wiremask: false, overlays: true };
+    this.layers = { masks: true, inferred: true, vegetation: true, catenary: true, skeleton: false, sag: true, ends: true, labels: true, wiremask: false, overlays: true, poles: true };
     this._off = document.createElement("canvas");
     this.wireMask = null;
     this.vegetation = [];
+    this.poles = []; // v2.17: utility-pole boxes in photo pixels (context only)
     this.mode = "risk";
     this.view = { s: 1, x: 0, y: 0 };
     this.wires = [];
@@ -108,6 +109,7 @@ export class OverlayViewer {
   }
 
   set(layer, on) { this.layers[layer] = on; this.draw(); }
+  setPoles(poles) { this.poles = poles || []; this.draw(); }
 
   /** v2.11: load WireNet's full class mask (indexed PNG, transparent background). */
   async setWireMask(url) {
@@ -336,6 +338,14 @@ export class OverlayViewer {
     }
 
     const px = 1 / view.s; // one CSS pixel in image units
+    if (L.poles && this.poles.length) {
+      // v2.17: detected utility poles, outlined only (never hit-tested; a pole never creates or joins a wire)
+      ctx.save();
+      ctx.strokeStyle = css("--cls-pole") || "#e8d27a";
+      ctx.lineWidth = 2 * px; ctx.setLineDash([6 * px, 4 * px]);
+      for (const p of this.poles) { const [x0, y0, x1, y1] = p.bbox; ctx.strokeRect(x0, y0, x1 - x0, y1 - y0); }
+      ctx.restore();
+    }
     const focus = this.selected ?? this.hover;
     const dim = (w) => focus != null && w.index !== focus;
     const fw = focus != null ? this.wires.find((x) => x.index === focus) : null;

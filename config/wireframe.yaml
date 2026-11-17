@@ -87,7 +87,10 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   device: auto
   # Full-resolution wire refinement (v2.7): YOLO picks the spans, WireNet (U-Net) supplies the
   # pixels; YOLO's 1/4-resolution masks cannot represent a 2 px wire. null = YOLO masks only.
-  wirenet_weights: models/wirenet-r34.pt
+  # v2.17: equal-weight probability fusion of R34 + MiT-B1 + ConvNeXt-T (v2.16: models/wirenet-r34.pt alone).
+  # Validation centerline F1 with the strand head (docs/thesis/results/v217_strand_head_stack_val_f3t04_tw1.0.json):
+  # telecom 0.719 -> 0.753, power 0.844 -> 0.875, any wire 0.825 -> 0.849. About 3x the WireNet time.
+  wirenet_weights: models/v217_ensemble.json
   wirenet_dilate_frac: 0.006      # coarse-mask dilation x longer image side (6 px at 1024)
   wirenet_instances: skeleton     # spans from WireNet's class map (YOLO proposes too few wires)
   wirenet_tta: flip               # mirrored pass, probabilities averaged (+0.3 s; multi-scale rejected: 2-3 s, +0.001)
@@ -145,7 +148,17 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   span_strand_classes: true
   # a strand whose top class holds < 90% of its class evidence is shown as "type uncertain": on validation those
   # classes are right 62% of the time (86 strands) against 97.9% at >= 0.9 (669 strands)
-  span_class_min_share: 0.9
+  span_class_min_share: 0.9         # v2.17: used only for strands whose top evidence is abandoned-wire (head off)
+  # v2.17 wire mask = P(any wire class) >= 0.4 instead of the argmax: thin, faint cables whose wire probability is
+  # split between power and telecom were background under argmax (validation sweep 0.3 / 0.35 / 0.4 / 0.45:
+  # v217_telecom_loss_val.json, v217_strand_head_stack_val_f3t0*.json; 0.4 best for telecom)
+  span_wire_tau: 0.4
+  # v2.17 strand type head (app/pipeline/strand_head.py, ml/strand_classifier.py): each strand's type is decided
+  # from the whole strand - fused class evidence, geometry, height in the scene, appearance and frozen DINOv2-small
+  # features along it - instead of the pixel vote. Fitted by stacking on validation strands (+ train strands);
+  # numbers are leave-one-photo-out. Below min_conf the type is shown as uncertain (0.5 = never; best on val).
+  strand_head: models/strand_head_v217.pt
+  strand_head_min_conf: 0.5
 
 centerline:                       # Section 3.6.4, Algorithm 4
   provisional: true
@@ -256,6 +269,18 @@ quality:                          # v2.8 reliability grade (app/pipeline/quality
   glare_gate: true
   glare_bright_min: 0.6
   glare_line_contrast_max: 15.0
+
+guardrail:                        # v2.17 retake guardrail (app/pipeline/guardrail.py): reads the finished analysis,
+  enabled: true                   # never changes a wire, class, CRS or verdict; decides whether the result is held
+  min_wires: 4                    # behind "Retake photo / Proceed anyway". Thresholds chosen on validation and its
+  conflict_min_share: 0.3         # eight capture conditions (ml/experiments/v217_guardrail.py, thesis ref. 5.11)
+  conflict_retake_n: 2
+  uncertain_attention: 0.25
+  uncertain_retake: 0.5
+  fragment_attention: 0.5
+  fragment_retake: 0.75
+  structure_attention: 0.25
+  structure_retake: 0.5
 
 mspi:                             # Section 3.6.6, Equation 11, Algorithm 6
   provisional: true

@@ -74,10 +74,15 @@ def test_fused_module_works_with_predict_probs():
     assert np.allclose(p[1], p[2], atol=1e-6)
 
 
-def test_shipped_config_still_single_r34():
+def test_shipped_config_is_the_v217_fusion():
+    """v2.17 ships the equal-weight R34 + MiT-B1 + ConvNeXt-T fusion (v2.12-v2.16: R34 alone)."""
     cfg = load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
-    assert cfg.segmentation.wirenet_weights == "models/wirenet-r34.pt"
+    assert cfg.segmentation.wirenet_weights == "models/v217_ensemble.json"
     assert cfg.segmentation.wirenet_tta == "flip"
+    spec = ROOT_DIR / "models" / "v217_ensemble.json"
+    if spec.exists():
+        from app.pipeline.wirenet import ensemble_members
+        assert [round(w, 3) for _, w in ensemble_members(spec)] == [0.333, 0.333, 0.333]
 
 
 def test_repo_ensemble_spec_is_valid():

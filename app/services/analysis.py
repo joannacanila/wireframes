@@ -228,7 +228,7 @@ def persist(db: Database, analysis_id: str, o: AnalysisOutcome) -> None:
         if o.clearance is not None:
             a.metadata_json = {**a.metadata_json, "clearance": _jsonable({str(k): v for k, v in o.clearance.items()})}
         a.metadata_json = {**a.metadata_json, "suppressed_spans": _jsonable(o.suppressed),  # always: re-analysis
-                           "scene": _jsonable(o.scene)}
+                           "scene": _jsonable(o.scene), "guardrail": _jsonable(o.guardrail)}
         if o.input_quality is not None or o.enhancement:
             a.metadata_json = {**a.metadata_json, "segmentation_input": _jsonable({
                 "quality": o.input_quality, "enhancement": o.enhancement or []})}
@@ -387,8 +387,47 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
         "segmentation_input": (a.metadata_json or {}).get("segmentation_input"),
         "suppressed_spans": (a.metadata_json or {}).get("suppressed_spans") or [],
         "scene": (a.metadata_json or {}).get("scene"),
+        "guardrail": guardrail_view(a.metadata_json or {}),
     }
 
 
 def outcome_dict(o: AnalysisOutcome) -> dict[str, Any]:
     return _jsonable(asdict(o))
+
+
+GUARDRAIL_ACTIONS = ("proceed", "retake")
+
+
+def guardrail_view(md: dict) -> dict | None:
+    """v2.17: the stored guardrail assessment plus what the user chose (proceed / retake) and retake links."""
+    g = md.get("guardrail")
+    if g is None and not md.get("retake_of") and not md.get("guardrail_choice"):
+        return None
+    return {**(g or {}), "choice": md.get("guardrail_choice"), "retake_of": md.get("retake_of")}
+
+
+def record_guardrail_choice(db: Database, analysis_id: str, action: str, replaced_by: str | None = None) -> dict | None:
+    """Record the user's answer to the retake prompt. A choice never changes the result; "retake" may be followed
+    by a new upload carrying ``retake_of`` (linked both ways)."""
+    if action not in GUARDRAIL_ACTIONS:
+        raise ValueError(action)
+    with db.session() as s:
+        a = s.get(Analysis, analysis_id)
+        if a is None:
+            return None
+        md = dict(a.metadata_json or {})
+        md["guardrail_choice"] = {"action": action, "at": datetime.now(UTC).isoformat(),
+                                  **({"replaced_by": replaced_by} if replaced_by else {})}
+        a.metadata_json = md
+        return md["guardrail_choice"]
+
+
+def link_retake(db: Database, new_id: str, retake_of: str) -> bool:
+    with db.session() as s:
+        old = s.get(Analysis, retake_of)
+        new = s.get(Analysis, new_id)
+        if old is None or new is None:
+            return False
+        new.metadata_json = {**(new.metadata_json or {}), "retake_of": retake_of}
+    record_guardrail_choice(db, retake_of, "retake", replaced_by=new_id)
+    return True

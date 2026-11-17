@@ -7,16 +7,17 @@
 //   5. inspection quality for the field; technical diagnostics for engineers, collapsed
 // Screenings are remembered on this device only; the server never lists them publicly.
 
-import { api, esc, fmt, pct, ago, waitForAnalysis } from "./lib.js?v=2.16";
-import { OverlayViewer, wireColor, classLabel } from "./viewer.js?v=2.16";
-import { onStatus, startStatus } from "./status.js?v=2.16";
-import { toast } from "./toast.js?v=2.16";
+import { api, esc, fmt, pct, ago, waitForAnalysis } from "./lib.js?v=2.17";
+import { OverlayViewer, wireColor, classLabel } from "./viewer.js?v=2.17";
+import { onStatus, startStatus } from "./status.js?v=2.17";
+import { toast } from "./toast.js?v=2.17";
 
 const $ = (s, r = document) => r.querySelector(s);
 const form = $("#form");
 const stages = { idle: $("#idle"), working: $("#working"), result: $("#result") };
 const RECENT_KEY = "wf-field-recent";
 let viewer = null, map = null, coords = null, previewUrl = null, mode = "checking", chosen = null, maxMb = 64;
+let retakeOf = null; // v2.17: id of the analysis the next upload replaces (set by "Retake photo")
 
 const CLASS_SHORT = { "power-distribution-lines": "Power line", "telecom-cable": "Telecom cable", "abandoned-wire": "Abandoned wire" };
 const CLASS_VAR = { "power-distribution-lines": "--cls-power", "telecom-cable": "--cls-telecom", "abandoned-wire": "--cls-dead" };
@@ -163,6 +164,8 @@ form.addEventListener("submit", (e) => {
   const labels = form.elements.labels.files[0];
   if (labels) fd.append("labels", labels);
   if (coords) { fd.append("latitude", coords.lat.toFixed(7)); fd.append("longitude", coords.lon.toFixed(7)); }
+  if (retakeOf) fd.append("retake_of", retakeOf);
+  retakeOf = null; $("#retake-note")?.remove();
   run(fd, previewUrl);
 });
 
@@ -220,8 +223,80 @@ async function openResult(id, push) {
   }
   remember({ id, pole: r.pole.code, name: r.inspection?.name, file: r.image.original_filename,
     place: [r.inspection?.barangay, r.inspection?.city].filter(Boolean).join(", "), verdict: r.hazard?.verdict, status: r.status, at: r.created_at });
+  if (r.guardrail?.requires_retake && !r.guardrail.choice) {  // v2.17: ask before showing a doubtful result
+    const choice = await retakePrompt(r);
+    if (choice === "retake") { startRetake(r); return; }
+  }
   show("result");  // visible first: Leaflet and the canvas measure their containers on creation
   renderResult(r);
+}
+
+// ------------------------------------------------------------------ v2.17 retake guardrail
+const GUARD_TITLE = { retake_recommended: "This photo may not give a reliable assessment",
+  highly_uncertain: "This photo is very unlikely to give a reliable assessment" };
+
+/** Modal shown before the results when the backend sets requires_retake. Resolves "retake" or "proceed"; the
+ *  choice is recorded on the analysis (it never changes the result). Escape / backdrop = proceed with the warning. */
+function retakePrompt(r) {
+  const g = r.guardrail;
+  const dlg = document.createElement("dialog");
+  dlg.className = "fx-guard";
+  dlg.setAttribute("aria-labelledby", "guard-title");
+  dlg.innerHTML = `
+    <h2 id="guard-title">${esc(GUARD_TITLE[g.quality_status] || GUARD_TITLE.retake_recommended)}</h2>
+    <p>Some wires may be hard to tell apart, or the system found conflicting wire types or problems with the photo.
+      For a more reliable result, take another photo.</p>
+    ${g.quality_reasons?.length ? `<ul>${g.quality_reasons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+    <div class="fx-guard-actions">
+      <button class="btn" type="button" value="proceed">Proceed anyway</button>
+      <button class="btn primary" type="button" value="retake" autofocus>Retake photo</button>
+    </div>`;
+  document.body.append(dlg);
+  return new Promise((resolve) => {
+    const done = async (action) => {
+      dlg.close(); dlg.remove();
+      try { await api(`/api/analysis/${r.id}/guardrail`, { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }) }); } catch { /* recording the choice must never block the user */ }
+      r.guardrail.choice = { action };
+      resolve(action);
+    };
+    dlg.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => done(b.value)));
+    dlg.addEventListener("cancel", (e) => { e.preventDefault(); done("proceed"); });
+    dlg.showModal();
+  });
+}
+
+/** Back to the upload form, keeping the inspection's name and place; the next upload is linked as its retake. */
+function startRetake(r) {
+  reset();
+  retakeOf = r.id;
+  const insp = r.inspection || {};
+  for (const k of ["inspection_name", "city", "barangay"]) {
+    const v = k === "inspection_name" ? insp.name : insp[k];
+    if (v && form.elements[k]) form.elements[k].value = v;
+  }
+  const note = document.createElement("p");
+  note.id = "retake-note"; note.className = "fx-retake-note";
+  note.textContent = "Retaking the photo. The earlier result is kept and will be linked to the new one.";
+  form.prepend(note);
+}
+
+function guardBanner(r) {
+  const g = r.guardrail;
+  if (!g) return "";
+  if (g.requires_retake) {
+    return `<section class="fx-guard-banner" role="alert" aria-label="Assessment warning">
+      <div><h2>Assessment may be inaccurate</h2>
+      <p>Some wires could not be identified reliably from this photo. Review the findings carefully. This automated
+        screening is not a safety certification.</p>
+      ${g.quality_reasons?.length ? `<ul>${g.quality_reasons.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : ""}
+      ${g.uncertain_strand_count ? `<p>Wires whose type could not be told apart are shown in grey.</p>` : ""}</div>
+      <button class="btn" type="button" id="guard-retake">${ICON.plus}Retake photo</button></section>`;
+  }
+  if (g.quality_status === "needs_attention" && g.quality_reasons?.length) {
+    return `<p class="fx-guard-note"><b>Check before relying on this result.</b> ${g.quality_reasons.map(esc).join(" ")}</p>`;
+  }
+  return "";
 }
 
 // ------------------------------------------------------------------ result model (v2.15: written for non-specialists)
@@ -452,7 +527,7 @@ function diagnostics(r) {
       ["Abandoned px", wm.pixels?.["abandoned-wire"]?.toLocaleString()], ["Vegetation px", wm.pixels?.Vegetation?.toLocaleString()]]) : "<p>No model mask (reference polygons).</p>"}
       <h4>Ignored as not wires / not vegetation</h4>${sup.length ? `<ul class="fx-suppressed">${sup.map((s) => `<li>${esc(s.wire_class === "Vegetation" ? "Vegetation" : (CLASS_SHORT[s.wire_class] || s.wire_class))} · ${esc(s.reason_code === "structure_edge" ? "structure outline" : s.reason_code === "not_vegetation" ? "not vegetation" : `${pct(s.ground_share, 0)} on road / pavement`)} · x ${Math.round(s.bbox[0])}–${Math.round(s.bbox[2])}, y ${Math.round(s.bbox[1])}–${Math.round(s.bbox[3])}</li>`).join("")}</ul>
       ${[...new Set(sup.map((s) => s.reason))].map((t) => `<p>${esc(t)}.</p>`).join("")}<p>These are never scored.</p>` : "<p>None: no trace lay on the road or along a structure outline, and every vegetation region was confirmed.</p>"}
-      ${r.scene?.poles_detected ? `<h4>Poles</h4><p>${r.scene.poles_detected.length} pole-like structure${r.scene.poles_detected.length === 1 ? "" : "s"} found (context only: a pole never creates or joins a wire).</p>` : ""}</section>
+      ${r.scene?.poles_detected ? `<h4>Poles</h4><p>${r.scene.poles_detected.length} utility pole${r.scene.poles_detected.length === 1 ? "" : "s"} found, outlined with dashed boxes on the photo (context only: a pole never creates or joins a wire).</p>` : ""}</section>
     <section><h3>Statistical analysis</h3>${rule.sag_rule === "corroborated" && sag.scored_spans != null ? `
       <p>High band: <b class="fx-num">${(sag.high || []).length}</b> of <b class="fx-num">${sag.scored_spans}</b> measured spans; <b class="fx-num">${sag.k_high}</b> needed above the ${(rule.p0_high * 100).toFixed(1)}% per-span noise floor (one-sided binomial, α = ${rule.alpha}).</p>
       <p>Medium or above: <b class="fx-num">${(sag.high || []).length + (sag.medium || []).length}</b>; <b class="fx-num">${sag.k_medium}</b> needed (noise floor ${(rule.p0_medium * 100).toFixed(1)}%).</p>`
@@ -481,9 +556,9 @@ const ICON = {
 // view presets; every layer can also be switched on its own in the Layers menu
 const PRESETS = {
   photo: {},
-  spans: { masks: 1, inferred: 1, catenary: 1, sag: 1, ends: 1, labels: 1 },
+  spans: { masks: 1, inferred: 1, catenary: 1, sag: 1, ends: 1, labels: 1, poles: 1 },
   mask: { wiremask: 1 },
-  overlay: { wiremask: 1, masks: 1, inferred: 1, catenary: 1, sag: 1, ends: 1, labels: 1 },
+  overlay: { wiremask: 1, masks: 1, inferred: 1, catenary: 1, sag: 1, ends: 1, labels: 1, poles: 1 },
 };
 const LAYERS = [
   ["wiremask", "Model mask", "Every pixel the model marked as wire, including small pieces that are not part of any wire section"],
@@ -494,6 +569,7 @@ const LAYERS = [
   ["sag", "Sag measurement", "For the selected section: the straight line between its ends and how far the wire hangs below it"],
   ["ends", "Section ends", "Where each traced wire section starts and ends in the photo (not where it is attached to a pole)"],
   ["labels", "Section numbers", ""],
+  ["poles", "Utility poles", "Poles found by the pole detector (dashed boxes); context only, they never create or join a wire"],
 ];
 
 function renderResult(r) {
@@ -525,6 +601,7 @@ function renderResult(r) {
       </div>
     </header>
 
+    ${guardBanner(r)}
     <section class="fx-summary ${a.cls}" aria-label="Overall assessment">
       <div class="fx-outcome">
         <span class="fx-pill ${a.cls}" id="verdict-pill">${esc(a.pill)}</span>
@@ -617,6 +694,7 @@ function renderResult(r) {
   viewer.load(r.image.url, r.wires, r.vegetation || []).then(() => {
     if (worst && worst.level !== "low") { viewer.selected = worst.index; viewer.draw(); mark(worst.index, false); }
     if (hasMask) viewer.setWireMask(r.wire_mask.url);
+    viewer.setPoles(r.scene?.poles_detected || []);
   }).catch(() => toast.error("Photo could not be displayed"));
 
   const mark = (i, scroll) => {
@@ -739,6 +817,11 @@ function renderResult(r) {
     dbtn.setAttribute("aria-expanded", String(open));
   });
   $("#again").addEventListener("click", reset);
+  $("#guard-retake")?.addEventListener("click", async () => {
+    try { await api(`/api/analysis/${r.id}/guardrail`, { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "retake" }) }); } catch { /* never blocks */ }
+    startRetake(r);
+  });
 
   // ---------------- map
   map?.remove(); map = null;

@@ -1,0 +1,946 @@
+{
+ "v216_rule": {
+  "0.5": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.8594610432051928,
+     "recall": 0.8349327863448225,
+     "f1": 0.8470193777189479,
+     "iou": 1.3592620227583694,
+     "dice": 1.1522772881065293,
+     "pred_px": 133109,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8217040144816097,
+      0.8934750820860274
+     ],
+     "recall_ci95": [
+      0.7904355375792683,
+      0.8785254479704144
+     ],
+     "f1_ci95": [
+      0.811001474415826,
+      0.8774190677728358
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.7670695905990024,
+     "recall": 0.697999601910828,
+     "f1": 0.7309064604092587,
+     "iou": 1.0079313923448985,
+     "dice": 1.0039500315474603,
+     "pred_px": 118881,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.7125722824128113,
+      0.8150223826963799
+     ],
+     "recall_ci95": [
+      0.6393738662695838,
+      0.7486721466247561
+     ],
+     "f1_ci95": [
+      0.6902483959232263,
+      0.7674239746914827
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 326,
+     "power-distribution-lines -> telecom-cable": 9,
+     "telecom-cable -> power-distribution-lines": 33,
+     "telecom-cable -> telecom-cable": 335
+    },
+    "accuracy": 0.9402560455192034,
+    "uncertain_rate": 0.0,
+    "power-distribution-lines": {
+     "precision": 0.9080779944289693,
+     "recall": 0.9731343283582089,
+     "f1": 0.9394812680115273,
+     "n_pred": 359,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.9738372093023255,
+     "recall": 0.9103260869565217,
+     "f1": 0.9410112359550561,
+     "n_pred": 344,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  },
+  "0.6": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.8747098876439034,
+     "recall": 0.8314103268500543,
+     "f1": 0.8525106582840591,
+     "iou": 1.3851127690257428,
+     "dice": 1.161465224632985,
+     "pred_px": 130122,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8387344910488537,
+      0.9077470135515757
+     ],
+     "recall_ci95": [
+      0.7873381645073395,
+      0.8753316101176833
+     ],
+     "f1_ci95": [
+      0.8168971180031166,
+      0.883743901913348
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.7685735766523136,
+     "recall": 0.6899693968949044,
+     "f1": 0.7271534082571055,
+     "iou": 1.0045620689180446,
+     "dice": 1.0022758431823,
+     "pred_px": 117048,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.7126243464144356,
+      0.8166114123430257
+     ],
+     "recall_ci95": [
+      0.6266019789144289,
+      0.7418366456005873
+     ],
+     "f1_ci95": [
+      0.6853124723647928,
+      0.7658770133961944
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 324,
+     "power-distribution-lines -> telecom-cable": 7,
+     "power-distribution-lines -> uncertain": 4,
+     "telecom-cable -> power-distribution-lines": 28,
+     "telecom-cable -> telecom-cable": 330,
+     "telecom-cable -> uncertain": 10
+    },
+    "accuracy": 0.930298719772404,
+    "uncertain_rate": 0.01991465149359886,
+    "power-distribution-lines": {
+     "precision": 0.9204545454545454,
+     "recall": 0.9671641791044776,
+     "f1": 0.9432314410480349,
+     "n_pred": 352,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.9792284866468842,
+     "recall": 0.8967391304347826,
+     "f1": 0.9361702127659574,
+     "n_pred": 337,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  },
+  "0.9": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.9150308519467398,
+     "recall": 0.7527196805977803,
+     "f1": 0.8259769278125876,
+     "iou": 1.3621849128746726,
+     "dice": 1.1533262323794584,
+     "pred_px": 110852,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8915575111193864,
+      0.9351252343740274
+     ],
+     "recall_ci95": [
+      0.7004190575858784,
+      0.7935765139550998
+     ],
+     "f1_ci95": [
+      0.7922617870624834,
+      0.8535971015642833
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.770804936283882,
+     "recall": 0.6497748308121019,
+     "f1": 0.7051341412342551,
+     "iou": 0.9686601147376336,
+     "dice": 0.984080601304536,
+     "pred_px": 109313,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.715198422931408,
+      0.8198565340891613
+     ],
+     "recall_ci95": [
+      0.5713098366566698,
+      0.7135395443073586
+     ],
+     "f1_ci95": [
+      0.6504340550152808,
+      0.7492820038390301
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 291,
+     "power-distribution-lines -> telecom-cable": 5,
+     "power-distribution-lines -> uncertain": 39,
+     "telecom-cable -> power-distribution-lines": 7,
+     "telecom-cable -> telecom-cable": 315,
+     "telecom-cable -> uncertain": 46
+    },
+    "accuracy": 0.8620199146514936,
+    "uncertain_rate": 0.12091038406827881,
+    "power-distribution-lines": {
+     "precision": 0.9765100671140939,
+     "recall": 0.8686567164179104,
+     "f1": 0.919431279620853,
+     "n_pred": 298,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.984375,
+     "recall": 0.8559782608695652,
+     "f1": 0.9156976744186047,
+     "n_pred": 320,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  }
+ },
+ "head": {
+  "0.5": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.8883503245953484,
+     "recall": 0.8193716957864792,
+     "f1": 0.852467911321319,
+     "iou": 1.3884126444392744,
+     "dice": 1.16262375990329,
+     "pred_px": 125849,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8503051129319201,
+      0.9183297912721279
+     ],
+     "recall_ci95": [
+      0.7779196131630379,
+      0.8617654913143904
+     ],
+     "f1_ci95": [
+      0.8176337895021321,
+      0.88378931436686
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.753438650671101,
+     "recall": 0.7231849621815286,
+     "f1": 0.7380018812499675,
+     "iou": 1.007526844251074,
+     "dice": 1.0037493118822438,
+     "pred_px": 126285,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.7014565303360613,
+      0.797136042149542
+     ],
+     "recall_ci95": [
+      0.672586196214384,
+      0.7696219085941048
+     ],
+     "f1_ci95": [
+      0.7035600153534013,
+      0.7691046483033509
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 318,
+     "power-distribution-lines -> telecom-cable": 17,
+     "telecom-cable -> power-distribution-lines": 19,
+     "telecom-cable -> telecom-cable": 349
+    },
+    "accuracy": 0.9487908961593172,
+    "uncertain_rate": 0.0,
+    "power-distribution-lines": {
+     "precision": 0.9436201780415431,
+     "recall": 0.9492537313432836,
+     "f1": 0.9464285714285714,
+     "n_pred": 337,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.953551912568306,
+     "recall": 0.9483695652173914,
+     "f1": 0.9509536784741144,
+     "n_pred": 366,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  },
+  "0.55": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.8888995360499565,
+     "recall": 0.8163620380205854,
+     "f1": 0.8510880065315735,
+     "iou": 1.3853390007664972,
+     "dice": 1.161544753447067,
+     "pred_px": 125229,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8510621566828034,
+      0.9203469635172085
+     ],
+     "recall_ci95": [
+      0.774366227461042,
+      0.8594145670016257
+     ],
+     "f1_ci95": [
+      0.8163962385570697,
+      0.8828664235140725
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.7530495058928033,
+     "recall": 0.7219409335191083,
+     "f1": 0.7371671690117712,
+     "iou": 1.0057015986379882,
+     "dice": 1.0028426953649836,
+     "pred_px": 126086,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.7011212789169678,
+      0.7961908909329797
+     ],
+     "recall_ci95": [
+      0.670649876426132,
+      0.768952037326341
+     ],
+     "f1_ci95": [
+      0.7027530524768704,
+      0.7689276687659301
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 316,
+     "power-distribution-lines -> telecom-cable": 17,
+     "power-distribution-lines -> uncertain": 2,
+     "telecom-cable -> power-distribution-lines": 18,
+     "telecom-cable -> telecom-cable": 348,
+     "telecom-cable -> uncertain": 2
+    },
+    "accuracy": 0.9445234708392604,
+    "uncertain_rate": 0.005689900426742532,
+    "power-distribution-lines": {
+     "precision": 0.9461077844311377,
+     "recall": 0.9432835820895522,
+     "f1": 0.944693572496263,
+     "n_pred": 334,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.9534246575342465,
+     "recall": 0.9456521739130435,
+     "f1": 0.9495225102319235,
+     "n_pred": 365,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  },
+  "0.6": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.89233939510568,
+     "recall": 0.8163193045431791,
+     "f1": 0.8526382414215875,
+     "iou": 1.3913779932246233,
+     "dice": 1.163662120473424,
+     "pred_px": 124716,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8565935874564465,
+      0.9226943109956669
+     ],
+     "recall_ci95": [
+      0.7743143890792137,
+      0.8593544468385023
+     ],
+     "f1_ci95": [
+      0.8190750583022285,
+      0.8836813206299035
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.7542172699291355,
+     "recall": 0.7213002587579618,
+     "f1": 0.7373915949933455,
+     "iou": 1.0067834145514218,
+     "dice": 1.0033802424826888,
+     "pred_px": 125733,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.7020677603446757,
+      0.7965611661833786
+     ],
+     "recall_ci95": [
+      0.669598114506285,
+      0.7683414749646879
+     ],
+     "f1_ci95": [
+      0.7027919363630586,
+      0.768945189926828
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 316,
+     "power-distribution-lines -> telecom-cable": 16,
+     "power-distribution-lines -> uncertain": 3,
+     "telecom-cable -> power-distribution-lines": 15,
+     "telecom-cable -> telecom-cable": 347,
+     "telecom-cable -> uncertain": 6
+    },
+    "accuracy": 0.9431009957325747,
+    "uncertain_rate": 0.012802275960170697,
+    "power-distribution-lines": {
+     "precision": 0.9546827794561934,
+     "recall": 0.9432835820895522,
+     "f1": 0.948948948948949,
+     "n_pred": 331,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.9559228650137741,
+     "recall": 0.9429347826086957,
+     "f1": 0.9493844049247606,
+     "n_pred": 363,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  },
+  "0.65": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.9003166098392597,
+     "recall": 0.8136942480739411,
+     "f1": 0.8548165765572238,
+     "iou": 1.4009522712437124,
+     "dice": 1.166997185261003,
+     "pred_px": 123180,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8644955705679267,
+      0.9282338600125932
+     ],
+     "recall_ci95": [
+      0.7723020686286032,
+      0.8576339509042145
+     ],
+     "f1_ci95": [
+      0.819975110617421,
+      0.887636671513924
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.7578823321923025,
+     "recall": 0.719421775477707,
+     "f1": 0.7381514072805423,
+     "iou": 1.011921722781858,
+     "dice": 1.005925540067918,
+     "pred_px": 124741,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.7057958685772048,
+      0.8012273601431411
+     ],
+     "recall_ci95": [
+      0.6669697087089368,
+      0.7658347339307464
+     ],
+     "f1_ci95": [
+      0.702523800170872,
+      0.7709370151459017
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 315,
+     "power-distribution-lines -> telecom-cable": 14,
+     "power-distribution-lines -> uncertain": 6,
+     "telecom-cable -> power-distribution-lines": 13,
+     "telecom-cable -> telecom-cable": 345,
+     "telecom-cable -> uncertain": 10
+    },
+    "accuracy": 0.9388335704125178,
+    "uncertain_rate": 0.02275960170697013,
+    "power-distribution-lines": {
+     "precision": 0.9603658536585366,
+     "recall": 0.9402985074626866,
+     "f1": 0.9502262443438915,
+     "n_pred": 328,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.9610027855153204,
+     "recall": 0.9375,
+     "f1": 0.9491059147180192,
+     "n_pred": 359,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  },
+  "0.7": {
+   "centerline": {
+    "wire": {
+     "precision": 0.8619041185166346,
+     "recall": 0.8102220360284876,
+     "f1": 0.8352643822569215,
+     "iou": 1.2818754716981131,
+     "dice": 1.1235279817826118,
+     "pred_px": 251644,
+     "label_px": 324632,
+     "precision_ci95": [
+      0.8259363936852755,
+      0.8902793937372824
+     ],
+     "recall_ci95": [
+      0.7753862724771882,
+      0.8438658906337346
+     ],
+     "f1_ci95": [
+      0.8065460959142052,
+      0.8596046945712248
+     ]
+    },
+    "power-distribution-lines": {
+     "precision": 0.9006160869885373,
+     "recall": 0.8086578025224961,
+     "f1": 0.8521632844094981,
+     "iou": 1.393543059426441,
+     "dice": 1.1644186252996613,
+     "pred_px": 122223,
+     "label_px": 163806,
+     "precision_ci95": [
+      0.8637528233763433,
+      0.9298669605078087
+     ],
+     "recall_ci95": [
+      0.7692462745285777,
+      0.8513712367032755
+     ],
+     "f1_ci95": [
+      0.8184284778467473,
+      0.8839245043757169
+     ]
+    },
+    "telecom-cable": {
+     "precision": 0.7595035661038804,
+     "recall": 0.7174873109076433,
+     "f1": 0.7378978160938051,
+     "iou": 1.0119389507218257,
+     "dice": 1.0059340521826183,
+     "pred_px": 124085,
+     "label_px": 160768,
+     "precision_ci95": [
+      0.7077356810949887,
+      0.8029491058844173
+     ],
+     "recall_ci95": [
+      0.6646630893551001,
+      0.7645797349363286
+     ],
+     "f1_ci95": [
+      0.7020660961488573,
+      0.7708350129089885
+     ]
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": 0.0,
+     "f1": null,
+     "iou": 0.0,
+     "dice": 0.0,
+     "pred_px": 0,
+     "label_px": 983,
+     "precision_ci95": null,
+     "recall_ci95": [
+      0.0,
+      0.0
+     ],
+     "f1_ci95": null
+    },
+    "images": 22
+   },
+   "strand_class": {
+    "matched": 703,
+    "unmatched": 132,
+    "confusion": {
+     "power-distribution-lines -> power-distribution-lines": 312,
+     "power-distribution-lines -> telecom-cable": 12,
+     "power-distribution-lines -> uncertain": 11,
+     "telecom-cable -> power-distribution-lines": 13,
+     "telecom-cable -> telecom-cable": 344,
+     "telecom-cable -> uncertain": 11
+    },
+    "accuracy": 0.9331436699857752,
+    "uncertain_rate": 0.031294452347083924,
+    "power-distribution-lines": {
+     "precision": 0.96,
+     "recall": 0.9313432835820895,
+     "f1": 0.9454545454545455,
+     "n_pred": 325,
+     "n_true": 335
+    },
+    "telecom-cable": {
+     "precision": 0.9662921348314607,
+     "recall": 0.9347826086956522,
+     "f1": 0.9502762430939227,
+     "n_pred": 356,
+     "n_true": 368
+    },
+    "abandoned-wire": {
+     "precision": null,
+     "recall": null,
+     "f1": null,
+     "n_pred": 0,
+     "n_true": 0
+    }
+   }
+  }
+ }
+}

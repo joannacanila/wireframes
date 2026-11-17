@@ -26,7 +26,8 @@ VARIANTS = {
     "v215": {"segmentation": {"span_strand_classes": False, "span_class_min_share": 0.0, "structure_gate": False,
                               "vegetation_gate": False, "span_gap_angle_deg": 25, "span_max_lateral_px": 0.0},
              "_envelope": False},
-    "v216": {},
+    "v216": {"segmentation": {"wirenet_weights": "models/wirenet-r34.pt", "span_wire_tau": None, "strand_head": None}},
+    "v217": {},  # v2.17 as shipped (config/wireframe.yaml)
 }
 
 

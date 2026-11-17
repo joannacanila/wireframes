@@ -1,0 +1,71 @@
+{
+ "variant": "v217",
+ "photos": 176,
+ "worst_quartile_f1": 0.718635526701549,
+ "sensitivity": 0.5227272727272727,
+ "specificity": 0.9772727272727273,
+ "by_status": {
+  "acceptable": {
+   "n": 150,
+   "mean_f1": 0.8038663885269884,
+   "median_f1": 0.8287897949566034
+  },
+  "retake_recommended": {
+   "n": 26,
+   "mean_f1": 0.3296588621579221,
+   "median_f1": 0.24130786970488688
+  }
+ },
+ "by_condition": {
+  "clean": {
+   "n": 22,
+   "retake_share": 0.0,
+   "mean_f1": 0.8515024327166756
+  },
+  "lowlight": {
+   "n": 22,
+   "retake_share": 0.0,
+   "mean_f1": 0.8131338325177061
+  },
+  "glare": {
+   "n": 22,
+   "retake_share": 0.9090909090909091,
+   "mean_f1": 0.305935721512302
+  },
+  "motion": {
+   "n": 22,
+   "retake_share": 0.22727272727272727,
+   "mean_f1": 0.6122031405987896
+  },
+  "defocus": {
+   "n": 22,
+   "retake_share": 0.045454545454545456,
+   "mean_f1": 0.7796419866400299
+  },
+  "jpeg": {
+   "n": 22,
+   "retake_share": 0.0,
+   "mean_f1": 0.8248731824959324
+  },
+  "lowres": {
+   "n": 22,
+   "retake_share": 0.0,
+   "mean_f1": 0.8417050682047962
+  },
+  "rainhaze": {
+   "n": 22,
+   "retake_share": 0.0,
+   "mean_f1": 0.8415086669116881
+  }
+ },
+ "by_issue": {
+  "image_quality": {
+   "n": 26,
+   "mean_f1": 0.3296588621579221
+  },
+  "structure": {
+   "n": 2,
+   "mean_f1": 0.5354963590742327
+  }
+ }
+}

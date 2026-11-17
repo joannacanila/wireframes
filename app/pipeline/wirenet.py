@@ -171,9 +171,10 @@ def prob_to_original(prob: np.ndarray, lb: Letterbox) -> np.ndarray:
 
 def skeleton_instances(probs: np.ndarray, class_masks: dict[int, np.ndarray], lb: Letterbox, conf_min: float,
                        span_params: dict | None = None, strands: bool = False,
-                       min_class_share: float = 0.0) -> list[WireDetection]:
+                       min_class_share: float = 0.0, tau: float | None = None, head=None,
+                       rgb: np.ndarray | None = None) -> list[WireDetection]:
     if strands:
-        return strand_instances(probs, lb, conf_min, span_params or {}, min_class_share)
+        return strand_instances(probs, lb, conf_min, span_params or {}, min_class_share, tau=tau, head=head, rgb=rgb)
     out = []
     for name in CLASSES:
         if name == VEGETATION:
@@ -189,21 +190,29 @@ def skeleton_instances(probs: np.ndarray, class_masks: dict[int, np.ndarray], lb
 
 
 def strand_instances(probs: np.ndarray, lb: Letterbox, conf_min: float, params: dict,
-                     min_class_share: float) -> list[WireDetection]:
-    """v2.16: one class per physical strand (``wire_instances.strand_spans``), in original image coordinates."""
+                     min_class_share: float, tau: float | None = None, head=None,
+                     rgb: np.ndarray | None = None) -> list[WireDetection]:
+    """v2.16: one class per physical strand (``wire_instances.strand_spans``), in original image coordinates.
+    v2.17: ``tau`` sets the wire mask to P(any wire) >= tau instead of the argmax; ``head`` (a StrandHead) then
+    names each strand's type from the whole strand and the photo ``rgb`` (original size)."""
     wire_ids = [CLASSES.index(c) + 1 for c in CLASSES if c != VEGETATION]
     orig = np.stack([prob_to_original(probs[c], lb) for c in range(N_CLASSES)])
     # the wire mask is the argmax in original space, matching class_masks_to_original's resampling: area-weighted
     # with a low threshold when the photo is smaller than the model input (keeps 1-2 px wires)
     cls = probs.argmax(0)
-    union = np.isin(cls, wire_ids)[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w].astype(np.float32)
+    wire = probs[wire_ids].sum(0) >= tau if tau is not None else np.isin(cls, wire_ids)
+    union = wire[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w].astype(np.float32)
     down = lb.orig_w < lb.new_w
     union = cv2.resize(union, (lb.orig_w, lb.orig_h), interpolation=cv2.INTER_AREA if down else cv2.INTER_LINEAR) \
         >= (0.25 if down else 0.5)
+    strands = [s for s in strand_spans(orig, wire_ids, params, min_class_share=min_class_share, mask=union)
+               if s.confidence >= conf_min]
+    if head is not None and rgb is not None and strands:
+        if not head.classify(strands, orig, rgb):
+            log.warning(head.error)
     out = []
-    for s in strand_spans(orig, wire_ids, params, min_class_share=min_class_share, mask=union):
-        if s.confidence >= conf_min:
-            out.append(WireDetection(s.wire_class, s.confidence, s.mask, _bbox(s.mask), s.class_share, s.class_status))
+    for s in strands:
+        out.append(WireDetection(s.wire_class, s.confidence, s.mask, _bbox(s.mask), s.class_share, s.class_status))
     return out
 
 
@@ -320,14 +329,32 @@ class HybridSegmenter:
             if self.last_poles and getattr(cfg, "pole_occluder_gap", 0.0) > 0:
                 sp = {**sp, "occluders": [p["bbox"] for p in self.last_poles],
                       "occluder_max_gap": cfg.pole_occluder_gap * max(lb.orig_w, lb.orig_h) / cfg.imgsz}
+            head, rgb = self._strand_head(), None
+            if head is not None:
+                content = x[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w]
+                rgb = cv2.resize(content, (lb.orig_w, lb.orig_h), interpolation=cv2.INTER_LINEAR)
             spans = skeleton_instances(probs, masks, lb, self.yolo.cfg.conf_min, sp,
                                        strands=getattr(cfg, "span_strand_classes", False),
-                                       min_class_share=getattr(cfg, "span_class_min_share", 0.0))
+                                       min_class_share=getattr(cfg, "span_class_min_share", 0.0),
+                                       tau=getattr(cfg, "span_wire_tau", None), head=head, rgb=rgb)
             veg, spans = self._scene_gate(spans, veg, x, lb)
             return veg + spans
         dilate = max(2, int(round(self.dilate_frac * max(lb.orig_w, lb.orig_h))))
         return assemble_instances(masks, dets, dilate)
 
+
+    def _strand_head(self):
+        """v2.17: the strand type head named by ``segmentation.strand_head`` (loaded once, on first use)."""
+        path = getattr(self.yolo.cfg, "strand_head", None)
+        if not path:
+            return None
+        if getattr(self, "_head", None) is None:
+            from app.core.config import ROOT_DIR
+            from app.pipeline.strand_head import StrandHead
+            p = Path(path)
+            self._head = StrandHead(p if p.is_absolute() else ROOT_DIR / p, self.yolo.cfg.strand_head_min_conf,
+                                    device=self._device)
+        return self._head
 
     def _poles(self, x: np.ndarray, lb: Letterbox) -> list[dict] | None:
         """v2.16: pole boxes in photo coordinates from the optional YOLO pole detector (context only)."""
@@ -337,9 +364,8 @@ class HybridSegmenter:
             return None
         if self._pole_det is None:
             from app.core.config import ROOT_DIR
-            from app.pipeline.poles import PoleDetector
-            p = Path(w)
-            self._pole_det = PoleDetector(p if p.is_absolute() else ROOT_DIR / p, cfg.pole_conf, device=self._device)
+            from app.pipeline.poles import make_pole_detector
+            self._pole_det = make_pole_detector(str(w), cfg.pole_conf, ROOT_DIR, device=self._device)
         content = np.ascontiguousarray(x[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w])
         found = self._pole_det.detect(content)
         if found is None:
