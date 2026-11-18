@@ -1,5 +1,9 @@
 # Session Log
 
+## S11 (18 Nov 2026)
+- Handoff version `0916fd2` identified from the first-session transcript; its interface restored with the engineering
+  corrections on `recovery/handoff-0916fd2-engineering`, deployed on port 8000. `main` unchanged.
+
 ## S9 / S10 (18 Nov 2026)
 - S9 (`25bb9b5`, `recovery/s9-ux`): system-wide restructuring; rejected by the owner, not deployed beyond a test.
 - S10: S8 version (`52baa3c`) restored with D-27 (3 % for power lines only) and targeted decluttering, branch

@@ -80,7 +80,7 @@ def test_reference_status_must_be_a_known_kind(shipped_cfg):
         type(shipped_cfg.comparison_reference)(classes=["fence"])
 
 
-# ----------------------------------------------------------------------------- the page's meter, run in Node
+# ---------------------------------------------------------- the S8 page meter tests moved to test_s7_sag_meter.py (S10)
 def _run(cases: list[dict]) -> list[str]:
     node = shutil.which("node")
     if not node:
@@ -102,58 +102,6 @@ def _left(html: str, cls: str) -> float:
 
 def _zones(html: str) -> list[str]:
     return re.findall(r'class="z (z-low|z-medium|z-high)"', html)
-
-
-def test_meter_draws_three_coloured_zones_the_reference_tick_and_the_selected_wire(shipped_cfg):
-    a, b = _w(index=24, sag_ratio=0.058), _w(index=12, sag_ratio=0.013, sag_ratio_resolution=0.006)
-    for w in (a, b):
-        w["comparison"] = compare_wire(w, shipped_cfg)
-    ha, hb = _run([a, b])
-    for h, w in ((ha, a), (hb, b)):
-        assert _zones(h) == ["z-low", "z-medium", "z-high"] and "rx-meter-ref" in h and "rx-meter-dot" in h
-        z = w["comparison"]["zones"]
-        max_ = max(w["sag_ratio"] + w["sag_ratio_resolution"], z["above_from"]) * 1.3
-        assert _left(h, "rx-meter-ref") == pytest.approx(0.03 / max_ * 100, abs=0.01)   # the configured reference
-        assert _left(h, "rx-meter-dot") == pytest.approx(w["sag_ratio"] / max_ * 100, abs=0.01)  # this wire
-        assert "Reference 3.0%" in h and "provisional" in h and "not physical sag" in h and "not an assessment" in h
-        assert not re.search(r"\b(Critical|Minor sag|compliant|safe)\b", h)
-    assert 'rx-meter cmp above' in ha and "This wire 5.8% ±0.3" in ha
-    assert 'rx-meter cmp below' in hb and "This wire 1.3% ±0.6" in hb
-
-
-def test_meter_follows_the_configured_reference_not_a_constant(shipped_cfg):
-    five = shipped_cfg.model_copy(update={"comparison_reference": shipped_cfg.comparison_reference.model_copy(
-        update={"sag_ratio": 0.05, "label": "5% test reference (provisional)"})})
-    w = _w(sag_ratio=0.04)
-    w["comparison"] = compare_wire(w, five)
-    (h,) = _run([w])
-    assert "Reference 5.0%" in h and "rx-meter cmp below" in h and "5% test reference" in h
-    assert not re.search(r"0\.03\b|\b3 ?%", "\n".join(re.findall(r"`[^`]*`", FIELD.read_text())))  # no literal in the page
-
-
-def test_partial_and_unmeasured_meters(shipped_cfg):
-    p = _w(reason_code="endpoint_unavailable", sag_ratio=0.024, sag_ratio_resolution=0.004)
-    n = _w(status="fit_failed", reason_code="residual_too_large", sag_ratio=None)
-    for w in (p, n):
-        w["comparison"] = compare_wire(w, shipped_cfg)
-    hp, hn = _run([p, n])
-    assert "rx-meter-dot below partial" in hp and "(visible part)" in hp and _zones(hp) == ["z-low", "z-medium", "z-high"]
-    assert "rx-meter cmp empty" in hn and "rx-meter-dot" not in hn and _zones(hn) == ["z-low", "z-high"] and "not measured" in hn
-
-
-def test_an_assessed_wire_keeps_the_original_v221_meter():
-    w = _w(status="scored", level="high", delta_lim=0.04, sag_bands={"minor_from": 0.02, "critical_from": 0.04})
-    (h,) = _run([w])
-    assert _zones(h) == ["z-low", "z-medium", "z-high"] and "Within reference" in h and "Critical" in h and "cmp" not in h
-
-
-def test_page_keeps_the_full_v218_controls_and_shows_the_meter_in_the_selected_wire_panel():
-    js = FIELD.read_text()
-    detail = js[js.index("function spanDetail(r, w, mode)"):js.index("function diagHtml(r)")]
-    assert "${sagMeter(w, wireColor(w, \"class\"))}" in detail
-    for needle in ("const PRESETS = {", "const LAYERS = [", "function spansTable(r, mode)", "viewer.setOpacity(",
-                   'setView("spans")', "data-filter-go", "function diagnostics(r)", "w.comparison?.position", "function typeMeter(w, color)"):
-        assert needle in js, needle
 
 
 # ----------------------------------------------------------------------------- every consumer, one value

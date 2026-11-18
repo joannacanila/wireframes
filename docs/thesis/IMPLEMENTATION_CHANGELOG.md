@@ -2,6 +2,24 @@
 
 Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
 
+## 2026-11-18, session S11: handoff interface (0916fd2) restored with the engineering corrections (register D-27)
+- **Baseline:** `0916fd2` ("docs: verify ERB 95-21 status; add handoff package", 18 Nov 2026 02:39 +0800), HEAD
+  when this account's first session began (transcript 17 Nov 18:51 UTC; working tree clean apart from the owner's
+  untracked thesis files). Its result page is the v2.23 page with the v2.21 meter (`7c5a716`).
+- **Branch:** `recovery/handoff-0916fd2-engineering` (worktree `/Users/joannacanila/WIREFRAME-handoff`) from S10
+  `0bf4299` (backend); page files `field.js` / `field.css` taken from S7 `a02fb97` (= handoff page plus the S4/S5
+  data changes; `field.html`, `findings.js`, `viewer.js` already identical). Admin portal unchanged from S10, which is
+  within about 50 lines of the handoff (S4/S5 fixes and the comparison column).
+- **Meter:** the original markup and colours; lit from the power-line comparison (zones from the 3 % reference and
+  the wire's resolution, legend Below / At / Above). Non-power, abandoned and uncertain-type wires: the same meter in
+  the wire-type colour, no zones, no tick, "Comparison unavailable". The S7 grey meter is removed.
+- **Page changes to the handoff page:** the S4/S5 measured-wire states (kept from S7), the comparison sentence in the
+  summary, the card rows Reference / Difference, "What the analysis found" placed after "What to do" instead of above
+  the photo. Nothing else.
+- **Tests:** pytest 815 passed; ruff clean; E2E 29/29 on P-B1D137 (telecom only) and 29/29 on a power + telecom
+  photo, 0 page errors; PDF, admin sheet and findings CSV agree with the page.
+- S10 (`0bf4299`, S8 page) and S9 (`25bb9b5`) are kept on their branches and not carried forward.
+
 ## 2026-11-18, session S10: S8 colourful-meter version restored; 3 % reference for power lines only (register D-27)
 - **Baseline:** `52baa3c` (`recovery/s8-colour-meter`, 18 Nov 2026 11:10 +0800): v2.18 result page with the v2.21
   green / amber / red meter in the selected-wire panel, the version the owner asked to have back. The S9 overhaul
