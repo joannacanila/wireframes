@@ -2,6 +2,28 @@
 
 Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
 
+## 2026-11-18, session S9: interface restructuring; 3 % reference for power lines only (register D-27)
+- **Branch:** `recovery/s9-ux` (worktree `/Users/joannacanila/WIREFRAME-ux`) from S8 `52baa3c`. `main` unchanged.
+- **Audit:** eight pages at 1920 / 1440 / 1280 / 768 / 390 px before and after (`results/s9_ux_audit.json`, page
+  inventory and metrics; screenshots `results/s9_before_*.png`, `s9_after_*.png`). Result page at 1440 px: 2638 to
+  1004 visible words, 233 to 25 badges, 116 to 4 targets under 24 px; page-level horizontal overflow at 768 px removed
+  on dashboard, inspections, sheet and map; result and upload pages now render at 390 px (were blocked).
+- **Change:** reference `classes` = power lines only (telecom and abandoned wires measured, not compared, neutral
+  measurement-only bar, "n/a" in the table, PDF and sheet; counts sentence says when no wire is covered). Result page
+  reordered: breadcrumb and header; outcome with Detected / Fully / Partially / Not measured / Assessed counts; photo
+  (all controls kept) beside the selected wire (ratio, reference status, comparison, meter, what would help; observations
+  and measurement details folded); full-width inventory with filter, sort and 25 / 50 / All pages; "What to do next"
+  split into photo limitations and field / engineering information; "How this result was reached" folded; one notice.
+  Admin: one Export menu (technical exports still administrators only), the sheet uses the same words, counts and
+  next-step split, notice moved to the end, compact KPI cards and header below 900 px. `field.css` rewritten (dead
+  v2.20 rules removed).
+- **Not changed:** models, inference, measurement, thresholds, severity logic, stored records, routes, API contracts,
+  roles and permissions.
+- **Tests / results:** pytest 817 passed (8 new in `tests/test_s9_ux.py`); ruff clean; E2E 48/48 (telecom-only photo)
+  and 49/49 (power and telecom photo), 0 page errors, including a 390 px phone check.
+- **Limits:** small targets remain on the admin sheet (section links) and map; inner tables scroll at 390 px; the
+  viewer has no pinch zoom; live admin pages need the owner's sign-in and were checked on the isolated copy only.
+
 ## 2026-11-18, session S8: full-colour sag meter, configured provisional 3 % reference (register D-26)
 - **Branch:** `recovery/s8-colour-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`) from S7 `a02fb97`; S7 and S6
   branches unchanged. Port 8000 runs this branch on the live `var/` (backup `wireframe-backup-20261118-105442` first).

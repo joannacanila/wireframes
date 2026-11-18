@@ -228,12 +228,15 @@ comparison_reference:             # S8 (register D-26); a comparison for the sag
   # the Philippine Electrical Code; ERC Res. 02 s.2010 recites that the DSOAR superseded ERB 95-21, and the DSOAR
   # text was not obtained. Manufacturer data for ADSS fibre cable (Prysmian TLS-DS-A-517) gives 1.5 % installation
   # sag and more than 3 % under its loading cases, so 3 % is not a limit for telecom cable.
+  # S9 (register D-27): applied to power lines only. ERB 95-21 s.19 covers wires on electric utility poles; no source
+  # gives a 3 % limit for telecom / fibre cable (the Prysmian data above exceeds it), and an abandoned wire's type is
+  # unknown. Telecom and abandoned wires keep their image sag ratio and resolution, with no reference comparison.
   enabled: true
   sag_ratio: 0.03
   status: provisional
-  label: "3% sag-to-span reference (provisional)"
-  source: "ERB Res. 95-21 s.19 (1995, superseded by the DSOAR); owner-selected; not validated for image sag ratios or telecom cable"
-  classes: [power-distribution-lines, telecom-cable, abandoned-wire]
+  label: "3% sag-to-span reference for power lines (provisional)"
+  source: "ERB Res. 95-21 s.19 (1995, superseded by the DSOAR); owner-selected; power lines only; not validated for image sag ratios"
+  classes: [power-distribution-lines]
 
 hazard:                           # v2.8 explainable verdict on top of CRS (app/pipeline/hazard.py)
   enabled: true

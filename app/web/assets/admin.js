@@ -198,7 +198,7 @@ const issue = (r) => {
   if (r.risk === "processing") return "Still processing";
   if (w.high) return `${w.high} wire section${w.high === 1 ? "" : "s"} at high risk`;
   if (w.medium) return `${w.medium} wire section${w.medium === 1 ? "" : "s"} at moderate risk`;
-  if (r.risk === "unassessed") return r.wires_total ? "Assessment incomplete: no wire section could be assessed" : "Assessment incomplete: no wire detected";
+  if (r.risk === "unassessed") return r.wires_total ? "No wire section could be assessed" : "No wire detected";
   return "";
 };
 const shortDay = (iso) => new Date(iso).toLocaleDateString(undefined, { day: "2-digit", month: "short", year: "numeric" });
@@ -431,13 +431,14 @@ function mountInspections() {
   view.innerHTML = `<section class="page page-wide">
     <header class="pg-head pg-head-line"><div class="pg-title-line"><h1 class="pg-title">Inspections</h1><span class="pg-count num" id="count"></span></div>
       <div class="pg-actions btn-group">
-        <a class="btn" id="csv" href="/api/admin/exports/inspections.csv">Download CSV</a>
-        ${isAdmin() ? `<div class="more"><button class="btn" type="button" id="tx-btn" aria-expanded="false" aria-controls="tx-pop">Technical exports</button>
+        <div class="more"><button class="btn" type="button" id="tx-btn" aria-expanded="false" aria-controls="tx-pop">Export<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
           <div class="adm-pop tx-pop" id="tx-pop" hidden>
+            <a id="csv" href="/api/admin/exports/inspections.csv"><b>Inspection list (CSV)</b><span>The inspections that match the current filters, one row each.</span></a>
+            ${isAdmin() ? `<p class="tx-sep">Technical exports</p>
             <a href="/api/admin/exports/wires.csv"><b>Wire measurements (CSV)</b><span>Every wire of every inspection: fitted curve, residuals, sag, reference, score.</span></a>
             <a href="/api/admin/exports/manifest.csv"><b>Site manifest (CSV)</b><span>One row per pole: rank, priority score, level, clutter, review, location.</span></a>
-            <a href="/api/admin/exports/sites.pdf?technical=true" target="_blank" rel="noopener"><b>Technical priority report (PDF)</b><span>The ranking with priority scores, weights and their sensitivity.</span></a>
-          </div></div>` : ""}
+            <a href="/api/admin/exports/sites.pdf?technical=true" target="_blank" rel="noopener"><b>Technical priority report (PDF)</b><span>The ranking with priority scores, weights and their sensitivity.</span></a>` : ""}
+          </div></div>
         <button class="btn" type="button" id="batch-btn" aria-expanded="false" aria-controls="batch">Upload photos</button>
         <a class="btn primary" href="/workspace" target="_blank" rel="noopener">New inspection</a></div></header>
     <section class="batch" id="batch" hidden aria-label="Upload several photos"></section>
@@ -491,7 +492,7 @@ function mountInspections() {
     $("#list").innerHTML = d.items.length ? `<div class="tbl-scroll"><table class="tbl tbl-dense tbl-insp">
       <thead><tr><th class="cb"><input type="checkbox" data-all ${all ? "checked" : ""} aria-label="Select all on this page"></th>
         ${sortHead("pole", "Pole ID", st.sort)}${sortHead("location", "Location", st.sort)}${sortHead("risk", "Risk", st.sort)}${sortHead("inspected", "Inspected", st.sort)}
-        <th>Assessment</th>${sortHead("review", "Review", st.sort)}<th class="act">Action</th></tr></thead>
+        <th title="Wire sections assessed against a validated sag reference, of those detected">Assessed</th>${sortHead("review", "Review", st.sort)}<th class="act">Action</th></tr></thead>
       <tbody>${d.items.map((r) => `<tr data-href="/admin/inspections/${r.id}" tabindex="0" ${st.sel.has(r.id) ? 'aria-selected="true"' : ""}>
         ${checkboxCell(r.id, st.sel.has(r.id))}
         <td data-label="Pole ID">${poleName(r)}${r.record_kind === "test" ? '<span class="tag">Test</span>' : ""}${r.same_day > 1 ? `<span class="tag tag-dup" title="${r.same_day} inspections of this pole on the same day">Duplicate</span>` : ""}</td>
@@ -739,7 +740,7 @@ function mountInspection(id) {
       || (isMeasured(y) - isMeasured(x)) || (y.sag_ratio ?? -1) - (x.sag_ratio ?? -1) || x.index - y.index);
     const dg = r.diagnosis, dgOn = dg && !dg.counts.assessed && dg.counts.measured + dg.counts.measured_partial > 0;
     // S6: with no assessed span, a wire's condition is its measurement state (same as the result page), never a severity
-    const MST = { measured: "Measured", partial: "Visible part", unmeasured: "Not measured", drop: "Drop wire" };
+    const MST = { measured: "Fully measured", partial: "Partially measured", unmeasured: "Not measured", drop: "Drop wire" };
     const mst = (w) => (!dgOn ? group(w) : w.status === "service_drop" ? "drop" : !isMeasured(w) ? "unmeasured"
       : w.reason_code === "endpoint_unavailable" ? "partial" : "measured");
     const mcounts = Object.fromEntries(Object.keys(MST).map((k) => [k, r.wires.filter((w) => mst(w) === k).length]));
@@ -747,8 +748,13 @@ function mountInspection(id) {
       : `<span class="risk risk-${group(w) === "none" ? "unassessed" : group(w)}"><i></i>${CONDITION[group(w)]}</span>`);
     const chips = dgOn ? [["all", "All"], ...Object.entries(MST)] : [["all", "All"], ["high", CONDITION.high], ["medium", CONDITION.medium], ["low", CONDITION.low], ["none", CONDITION.none]];
     const ccount = dgOn ? mcounts : counts;
-    const coverage = dgOn ? `${dg.counts.measured + dg.counts.measured_partial} of ${r.wires.length} wire sections were measured in the image${dg.counts.measured_partial ? ` (${dg.counts.measured_partial} visible part only)` : ""}; ${dg.counts.assessed} assessed for severity (no validated sag reference).` : a.coverage;
+    const coverage = dgOn ? `${dg.counts.measured + dg.counts.measured_partial} of ${r.wires.length} wire sections were measured in the image${dg.counts.measured_partial ? ` (${dg.counts.measured_partial} partially)` : ""}; ${dg.counts.assessed} assessed for severity (no validated sag reference).` : a.coverage;
     const hasWires = r.wires.length > 0, hasMask = !!r.wire_mask, hasVeg = (r.vegetation || []).length > 0;
+    // S9: the result page's split of next steps: a new photo (the lead and the photo limitations) apart from what
+    // only the field or an engineer can supply
+    const lead = a.cls === "none" ? recs[0] : null;
+    const fieldSteps = !dgOn ? recs.filter((x) => x !== lead)
+      : [...dg.needed.filter((x) => !/^A (new )?photo/i.test(x)).map((x) => `${esc(x)}.`), ...recs.filter((x) => x !== lead)];
     const loc = r.pole.location;
     const lastRev = r.reviews.at(-1);
     const done = c.can.review;
@@ -763,7 +769,6 @@ function mountInspection(id) {
         <div><span class="k">Review</span>${reviewText(row.review, row)}</div>
         <div><span class="k">Inspection order</span><b>${c.priority ? `${c.priority.position} of ${c.priority.of}` : '<span class="muted">Not ranked</span>'}</b></div>
       </section>
-      <wf-notice variant="full" class="sheet-notice"></wf-notice>
 
       <div class="sheet-grid">
         <section class="viewer-card" aria-label="Visual inspection">
@@ -792,15 +797,21 @@ function mountInspection(id) {
           <h2 id="fd-h">Findings</h2>
           <p class="fd-title">${esc(a.title)}</p>
           ${a.lines.map((l) => `<p class="fd-line">${l}</p>`).join("")}
-          ${hasWires && dgOn ? `<dl class="fd-counts">${[["Measured", dg.counts.measured], ["Visible part only", dg.counts.measured_partial], ["Not measured", dg.counts.not_measured], ["Assessed", dg.counts.assessed]].map(([t, n]) => `<div><dt><i class="l-none"></i>${t}</dt><dd class="num">${n}</dd></div>`).join("")}</dl>`
+          ${hasWires && dgOn ? `<dl class="fd-counts">${[["Detected", r.wires.length], ["Fully measured", dg.counts.measured], ["Partially measured", dg.counts.measured_partial], ["Not measured", dg.counts.not_measured], ...(dg.counts.not_applicable ? [["Drop wires", dg.counts.not_applicable]] : []), ["Assessed", dg.counts.assessed]].map(([t, n]) => `<div><dt>${t}</dt><dd class="num">${n}</dd></div>`).join("")}</dl>`
             : hasWires ? `<dl class="fd-counts">${["high", "medium", "low", "none"].map((g) => [g, CONDITION[g]]).map(([g, t]) => `<div><dt><i class="l-${g}"></i>${t}</dt><dd class="num">${counts[g]}</dd></div>`).join("")}</dl>` : ""}
           ${coverage ? `<p class="hint">${esc(coverage)}</p>` : ""}
-          ${lims.length ? `<h3>Photo limitations</h3><ul class="fd-list">${lims.map((l) => `<li>${esc(l.text)}${l.ids.length ? ` <span class="muted">(${SECTION(l.ids)})</span>` : ""}${l.help ? `<span class="help">${esc(l.help)}</span>` : ""}</li>`).join("")}</ul>` : ""}
-          ${dg && hasWires ? `${dg.observations.length ? `<h3>Observed in the image</h3><ul class="fd-list">${dg.observations.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}
-            ${dg.unavailable.length ? `<h3>Not available from one photo</h3><ul class="fd-list">${dg.unavailable.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}
-            ${dg.needed.length ? `<h3>What would complete the assessment</h3><ul class="fd-list">${dg.needed.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}` : ""}
-          <h3>Recommended next steps</h3>
-          <ol class="fd-list">${recs.map((x) => `<li>${x}</li>`).join("")}</ol>
+          ${r.comparison && hasWires ? `<p class="hint">${(() => { const k = r.comparison.counts, n = k.above + k.at + k.below + k.not_measured;
+            return n ? `Compared with the ${esc(r.comparison.label)}: ${k.above} above, ${k.at} at (within resolution), ${k.below} below${k.not_measured ? `, ${k.not_measured} not measured` : ""}. Image sag ratio, not physical sag; a comparison, not an assessment.`
+              : `No wire in this photo is covered by the ${esc(r.comparison.label)}, so none is compared.`; })()}</p>` : ""}
+          <h3>What to do next</h3>
+          ${lead ? `<p class="fd-lead">${lead}</p>` : ""}
+          ${lims.length ? `<p class="fd-k">Photo limitations</p><ul class="fd-list">${lims.map((l) => `<li>${esc(l.text)}${l.ids.length ? ` <span class="muted">(${SECTION(l.ids)})</span>` : ""}${l.help ? `<span class="help">${esc(l.help)}</span>` : ""}</li>`).join("")}</ul>` : ""}
+          <p class="fd-k">${dgOn ? "Field and engineering information" : "Next steps"}</p>
+          <ol class="fd-list">${fieldSteps.map((x) => `<li>${x}</li>`).join("")}</ol>
+          ${dg && hasWires ? `<details class="fd-more"><summary>How this result was reached</summary>
+            ${dg.observations.length ? `<h4>Observed in the image</h4><ul class="fd-list">${dg.observations.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}
+            ${dg.unavailable.length ? `<h4>Not available from one photo</h4><ul class="fd-list">${dg.unavailable.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}
+            ${dg.needed.length ? `<h4>What would complete the assessment</h4><ul class="fd-list">${dg.needed.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>` : ""}</details>` : ""}
         </section>
       </div>
 
@@ -811,7 +822,7 @@ function mountInspection(id) {
           ${wires.map((w) => `<tr data-wire="${w.index}" data-group="${mst(w)}" tabindex="0" aria-selected="false">
             <td><span class="wno" style="--wc:${wireColor(w, dgOn ? "class" : "risk")}">${w.index}</span></td><td>${esc(classLabel(w, true))}</td>
             <td>${cond(w)}</td>
-            <td>${w.comparison?.position ? `<span class="cmp ${w.comparison.position}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} ${w.comparison.difference_pp > 0 ? "+" : ""}${w.comparison.difference_pp.toFixed(1)}</span>` : "—"}</td>
+            <td>${w.comparison?.position ? `<span class="cmp ${w.comparison.position}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} ${w.comparison.difference_pp > 0 ? "+" : ""}${w.comparison.difference_pp.toFixed(1)}</span>` : w.comparison ? '<span class="muted">—</span>' : '<span class="muted" title="No applicable sag reference for this wire type">n/a</span>'}</td>
             <td>${esc(finding(w))}</td></tr>`).join("")}</tbody></table></div>
       </section>` : `<section class="block nowire"><p><b>No wire was detected in this photo.</b> The photo was processed, but the model found no wire it could trace. That does not mean there are no wires or no hazard: wires can blend into the sky or background. See the recommended next steps.</p></section>`}
 
@@ -852,7 +863,8 @@ function mountInspection(id) {
       ${historyHtml(r, c)}
 
       ${c.can.diagnostics ? `<details class="diag" id="diag"><summary><b>Technical diagnostics</b><span>Administrators: metrics, fit parameters and acquisition checks</span></summary>
-        <div class="diag-body">${diagnosticsHtml(r)}</div></details>` : ""}`;
+        <div class="diag-body">${diagnosticsHtml(r)}</div></details>` : ""}
+      <wf-notice variant="full" class="sheet-notice"></wf-notice>`;
 
     // ---- viewer
     viewer?.destroy();

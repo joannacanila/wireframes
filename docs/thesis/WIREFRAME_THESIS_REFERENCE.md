@@ -65,7 +65,7 @@ and its sag reference values are development placeholders until calibrated with 
 | Pending engineering decisions | Every sag reference value; applicability of the 3 % provision of ERB Resolution No. 95-21 to power lines (7.5); criteria for abandoned wires |
 | Future validation | Physical sag validation protocol (7.8); engineer ratings (H1, H3, H4); larger labelled telecom set (14.2); usability acceptance (15.4) |
 
-**Deployment target.** A desktop or laptop browser (window width at least 1024 px); there is no mobile application.
+**Deployment target.** A web browser. Designed for desktop and laptop screens; since S9 (D-27) the Field Screener and admin pages also lay out at phone width (390 px), with the photo viewer's pan and buttons usable by touch (no pinch zoom). There is no mobile application.
 The server runs on one machine (developed and measured on an Apple M1 with 8 GB of unified memory).
 
 **Users.**
@@ -747,7 +747,15 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 
 - Upload card: photo, inspection name, city, barangay (validated suggestions), optional coordinates and span data.
 - Processing state with the queue position.
-- Result page (`/workspace/result/{id}`), S8 (register D-26): the v2.18 layout restored in S6 (header, summary with
+- Result page (`/workspace/result/{id}`), S9 (register D-27): reading order breadcrumb and header (file name, date,
+  status, PDF report, New inspection); outcome with Detected / Fully measured / Partially measured / Not measured /
+  Assessed counts, coverage and comparison lines and a short retake prompt; photo (all controls below) beside the
+  selected wire (type, state, image sag ratio ± resolution, reference status, comparison, meter, what would help;
+  observations and measurement details folded); full-width wire inventory (filter, sortable columns, 25 / 50 / All
+  rows, a missing value shown as a dash, never 0); "What to do next" in two parts (photo limitations; field and
+  engineering information); location; "How this result was reached" and the staff drawer folded; one notice. Telecom,
+  fibre and abandoned wires are not compared with the power-line reference: their panel shows "Not applicable" and a
+  neutral measurement-only bar (ratio and resolution, no zones, no tick). Earlier layout, S8 (register D-26): the v2.18 layout restored in S6 (header, summary with
   coverage line, measurement-state counts and the reference comparison counts; photo with Original / Wires / Mask /
   Both, overlay opacity, Vegetation, Layers, zoom readout, Fit, Reset; wire table with Wire, Type, Condition, "vs 3.0%"
   and Finding, filter chips and keyboard navigation; selected-wire panel; what to do next; photo limitations with the
@@ -765,7 +773,7 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
   validated reference (none is configured) uses the original v2.21 `meter()` unchanged. Records made before S4 get
   their resolution derived on read with the S4 formula (flagged, not stored).
 - Configured reference: `config/wireframe.yaml` `comparison_reference` (sag_ratio 0.03, status provisional, label,
-  source, classes) is read by `app/services/comparison.py` and served with every result; the page, PDF (summary cell,
+  source, classes = power distribution lines only since S9) is read by `app/services/comparison.py` and served with every result; the page, PDF (summary cell,
   "vs 3.0% reference" column, method note and counts), admin inspection sheet (column), findings CSV (three columns),
   technical wires CSV (`level_withdrawn` and four reference columns) and assistant (counts sentence) all use it.
   Changing the value changes every view; no client holds a copy.
@@ -776,7 +784,7 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 | Page | Functions |
 |---|---|
 | Dashboard | Counts by pole verdict over the latest operational inspection per pole; triage list; pending reviews; alerts |
-| Inspections | Filters (search, risk, review, barangay, date range, completeness, latest only), tabs (All, Needs review, Failed), bulk actions, CSV export, technical exports menu (administrators) |
+| Inspections | Filters (search, risk, review, barangay, date range, completeness, latest only), tabs (All, Needs review, Failed), bulk actions, one Export menu: inspection list CSV, and technical exports for administrators |
 | Inspection page | Result viewer (opens on the measured wire with the largest ratio when none is assessed), findings with the Section 8.6 diagnosis (observed in the image, not available from one photo, what would complete the assessment), findings table, review panel, pole history, findings CSV (measured ratio ± resolution, visible-part note), technical diagnostics (collapsed) |
 | Map & Dispatch | Leaflet map with clustered pole markers coloured by verdict; Light, Dark and Satellite base maps; drop-pin location editing (administrators); route builder with ordered stops, route PDF and a shareable map link |
 | Assistant | Answers questions about the documentation and live inspection data, with navigation actions |
@@ -1057,7 +1065,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 ### 15.1 Automated tests
 
-`python -m pytest`: 809 tests, all passing (18 Nov 2026, S8, with transformers 5.17.0; S7 794, S6 788, S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
+`python -m pytest`: 817 tests, all passing (18 Nov 2026, S9, with transformers 5.17.0; S8 809, S7 794, S6 788, S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
 (`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
 | Area | Examples |

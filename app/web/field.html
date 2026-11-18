@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>WIREFRAME Field Screener</title>
-  <meta name="description" content="Screen a utility pole from one photograph: field verdict, worst sag score, every detected span and what to do next.">
+  <meta name="description" content="Screen a utility pole from one photograph: every detected wire, what could be measured in the image, and what to do next.">
   <meta name="theme-color" content="#0c0d0f">
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,13 +26,11 @@
     <a class="fx-admin" href="/admin/login">Admin</a>
   </header>
 
-  <p class="fx-unsupported" role="alert"><b>Desktop browser required</b>WIREFRAME is a website for laptop and desktop browsers.
-    It does not run on phones. Open this page on a computer with a window at least 1024 px wide.</p>
-
   <main class="fx-main" id="main" tabindex="-1">
     <!-- idle: the upload card is the page -->
     <section class="fs-stage fx-idle" data-state="idle" id="idle">
-      <h1 class="sr-only">Field Screener: upload a photo of a utility pole</h1>
+      <header class="fx-idle-head"><h1>New inspection</h1>
+        <p>Upload one photo of a utility pole and its wires. WIREFRAME traces the wires and measures what the photo shows.</p></header>
       <form class="fx-panel fx-upload" id="form" novalidate>
         <div class="fx-drop" id="drop">
           <input type="file" id="file" name="file" accept="image/jpeg,image/png,image/webp,image/tiff,image/bmp,image/gif" aria-describedby="file-hint file-error">

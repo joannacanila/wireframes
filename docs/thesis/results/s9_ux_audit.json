@@ -1,0 +1,897 @@
+{
+ "description": "S9 (18 Nov 2026, register D-27): system-wide UI/UX restructuring and power-line scope of the provisional 3% comparison. Headless Chrome (Playwright, system Chrome) on an isolated restored copy of var/ (backup wireframe-backup-20261118-112629), port 8011. Metrics from scripts in the session scratchpad: words = visible words, badges = pill/badge elements, small_targets = interactive elements under 24 px, overflow_x = page wider than the viewport. Inner tables that scroll in their own container are not page overflow.",
+ "record": "671503ca (128 telecom wires, 0 assessed) for the result page and sheet",
+ "roles": "admin and inspector unchanged; no route, endpoint or permission changed",
+ "page_inventory": [
+  {
+   "route": "/",
+   "audience": "everyone",
+   "purpose": "choose Field Screener or Admin",
+   "problems": "none found",
+   "prominent": "two entry points",
+   "change": "none"
+  },
+  {
+   "route": "/workspace",
+   "audience": "field users (public)",
+   "purpose": "upload one pole photo",
+   "problems": "phones blocked with 'Desktop browser required'; the only h1 was screen-reader only",
+   "prominent": "photo picker, name, barangay",
+   "secondary": "coordinates, span data (optional)",
+   "change": "visible 'New inspection' heading and one-line purpose; phone layout instead of the block"
+  },
+  {
+   "route": "/workspace/result/{id}",
+   "audience": "field users, engineers",
+   "purpose": "read one inspection",
+   "problems": "2638 words and 233 badges at 1440 px; notice text three times; counts without a 'detected' total; telecom wires compared with a power-line reference; raw diagnosis lists open by default; table of 128 rows unpaged; phones blocked",
+   "prominent": "breadcrumb, file name, date, status, PDF, New inspection; outcome sentence; Detected / Fully / Partially / Not measured / Assessed counts; photo with every control; selected wire (type, state, ratio ± resolution, reference status, short finding)",
+   "secondary": "meter, what would help, wire inventory (filter, sort, 25/50/All pages), what to do next (photo limitations vs field/engineering information)",
+   "moved": "per-wire observations and measurement details into folded sections; 'How this result was reached' folded; staff drawer and location after it; one full notice at the end",
+   "change": "restructured (field.js renderResult, spanDetail, field.css rewritten)"
+  },
+  {
+   "route": "/admin/login",
+   "audience": "admins, inspectors",
+   "purpose": "sign in",
+   "problems": "none found",
+   "change": "none"
+  },
+  {
+   "route": "/admin (dashboard)",
+   "audience": "admins, inspectors",
+   "purpose": "triage",
+   "problems": "header overflow at 768 px; large KPI cards",
+   "change": "compact KPI cards; header compacts below 900 px"
+  },
+  {
+   "route": "/admin/inspections",
+   "audience": "admins, inspectors",
+   "purpose": "find and act on inspections",
+   "problems": "two export buttons ('Download CSV' and a technical menu); header overflow at 768 px; pole codes broke mid-code",
+   "change": "one Export menu (inspection list CSV for everyone, technical exports for administrators only, as before); codes do not wrap; 'Assessed' column header with an explanation"
+  },
+  {
+   "route": "/admin/inspections/{id}",
+   "audience": "admins, inspectors, engineers",
+   "purpose": "review one inspection",
+   "problems": "notice at the top before the finding; different state words from the result page; next steps mixed with photo limitations",
+   "change": "same state words and counts as the result page; 'What to do next' split into photo limitations and field/engineering information; reasoning folded; notice once at the end"
+  },
+  {
+   "route": "/admin/map",
+   "audience": "admins, inspectors",
+   "purpose": "locations and dispatch",
+   "problems": "header overflow at 768 px",
+   "change": "shared header fix only"
+  }
+ ],
+ "metrics": {
+  "dashboard@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 339,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 1539,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 323,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 1451,
+    "errors": []
+   }
+  },
+  "dashboard@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 339,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 1539,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 323,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 1451,
+    "errors": []
+   }
+  },
+  "dashboard@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 339,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 1539,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 323,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 1451,
+    "errors": []
+   }
+  },
+  "dashboard@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 318,
+    "badges": 11,
+    "small_targets": 13,
+    "buttons": 20,
+    "docH": 2745,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 302,
+    "badges": 11,
+    "small_targets": 13,
+    "buttons": 20,
+    "docH": 2588,
+    "errors": []
+   }
+  },
+  "dashboard@768": {
+   "before": {
+    "overflow_x": true,
+    "words": 335,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 2184,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 317,
+    "badges": 11,
+    "small_targets": 28,
+    "buttons": 24,
+    "docH": 2177,
+    "errors": []
+   }
+  },
+  "inspections@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 378,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 31,
+    "docH": 1619,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 375,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 30,
+    "docH": 1619,
+    "errors": []
+   }
+  },
+  "inspections@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 378,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 31,
+    "docH": 1619,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 375,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 30,
+    "docH": 1619,
+    "errors": []
+   }
+  },
+  "inspections@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 378,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 31,
+    "docH": 1619,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 375,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 30,
+    "docH": 1619,
+    "errors": []
+   }
+  },
+  "inspections@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 339,
+    "badges": 27,
+    "small_targets": 26,
+    "buttons": 26,
+    "docH": 4325,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 336,
+    "badges": 27,
+    "small_targets": 26,
+    "buttons": 25,
+    "docH": 4283,
+    "errors": []
+   }
+  },
+  "inspections@768": {
+   "before": {
+    "overflow_x": true,
+    "words": 374,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 31,
+    "docH": 3231,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 369,
+    "badges": 27,
+    "small_targets": 57,
+    "buttons": 30,
+    "docH": 3189,
+    "errors": []
+   }
+  },
+  "landing@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "landing@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "landing@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "landing@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "landing@768": {
+   "before": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 57,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "login@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "login@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "login@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "login@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "login@768": {
+   "before": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 25,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 1,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "map@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 252,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 252,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "map@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 252,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 252,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "map@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 252,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 252,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "map@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 241,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 2452,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 241,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 2452,
+    "errors": []
+   }
+  },
+  "map@768": {
+   "before": {
+    "overflow_x": true,
+    "words": 248,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 246,
+    "badges": 28,
+    "small_targets": 57,
+    "buttons": 15,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "result@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 2638,
+    "badges": 233,
+    "small_targets": 116,
+    "buttons": 132,
+    "docH": 3604,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 1004,
+    "badges": 25,
+    "small_targets": 4,
+    "buttons": 140,
+    "docH": 3591,
+    "errors": []
+   }
+  },
+  "result@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 2638,
+    "badges": 233,
+    "small_targets": 116,
+    "buttons": 132,
+    "docH": 3483,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 1004,
+    "badges": 25,
+    "small_targets": 4,
+    "buttons": 140,
+    "docH": 3467,
+    "errors": []
+   }
+  },
+  "result@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 2638,
+    "badges": 233,
+    "small_targets": 116,
+    "buttons": 132,
+    "docH": 3398,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 1004,
+    "badges": 25,
+    "small_targets": 4,
+    "buttons": 140,
+    "docH": 3403,
+    "errors": []
+   }
+  },
+  "result@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 33,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 0,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 914,
+    "badges": 25,
+    "small_targets": 4,
+    "buttons": 139,
+    "docH": 5172,
+    "errors": []
+   }
+  },
+  "result@768": {
+   "before": {
+    "overflow_x": false,
+    "words": 2635,
+    "badges": 233,
+    "small_targets": 115,
+    "buttons": 132,
+    "docH": 9181,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 1004,
+    "badges": 25,
+    "small_targets": 4,
+    "buttons": 140,
+    "docH": 4289,
+    "errors": []
+   }
+  },
+  "sheet@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 3431,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 3655,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 3266,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 3240,
+    "errors": []
+   }
+  },
+  "sheet@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 3431,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 3636,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 3266,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 3221,
+    "errors": []
+   }
+  },
+  "sheet@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 3431,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 3636,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 3266,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 3221,
+    "errors": []
+   }
+  },
+  "sheet@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 3425,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 5142,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 3260,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 4687,
+    "errors": []
+   }
+  },
+  "sheet@768": {
+   "before": {
+    "overflow_x": true,
+    "words": 3427,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 4197,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 3260,
+    "badges": 130,
+    "small_targets": 119,
+    "buttons": 131,
+    "docH": 3927,
+    "errors": []
+   }
+  },
+  "workspace@1280": {
+   "before": {
+    "overflow_x": false,
+    "words": 100,
+    "badges": 0,
+    "small_targets": 4,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 113,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "workspace@1440": {
+   "before": {
+    "overflow_x": false,
+    "words": 100,
+    "badges": 0,
+    "small_targets": 4,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 113,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "workspace@1920": {
+   "before": {
+    "overflow_x": false,
+    "words": 100,
+    "badges": 0,
+    "small_targets": 4,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 113,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "workspace@390": {
+   "before": {
+    "overflow_x": false,
+    "words": 33,
+    "badges": 0,
+    "small_targets": 1,
+    "buttons": 0,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 111,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   }
+  },
+  "workspace@768": {
+   "before": {
+    "overflow_x": false,
+    "words": 97,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   },
+   "after": {
+    "overflow_x": false,
+    "words": 113,
+    "badges": 0,
+    "small_targets": 3,
+    "buttons": 4,
+    "docH": 1000,
+    "errors": []
+   }
+  }
+ },
+ "tests": {
+  "pytest": "817 passed",
+  "ruff": "clean",
+  "e2e_check": {
+   "P-B1D137_dense_night.jpg (telecom only)": "48 passed, 0 failed, 0 page errors",
+   "1_clean_not_at_risk.jpg (power lines and telecom)": "49 passed, 0 failed, 0 page errors"
+  }
+ },
+ "screenshots": [
+  "s9_after_inspections_768.png",
+  "s9_after_power_line_meter.png",
+  "s9_after_result_1440.png",
+  "s9_after_result_390.png",
+  "s9_after_sheet_1440.png",
+  "s9_after_telecom_measure_only.png",
+  "s9_before_inspections_768.png",
+  "s9_before_result_1440.png",
+  "s9_before_result_390.png",
+  "s9_before_sheet_1440.png"
+ ],
+ "not_done": [
+  "admin pages keep small targets (section-number links in the sheet, map markers)",
+  "inner tables scroll horizontally at 390 px",
+  "no pinch zoom in the photo viewer (pan and buttons work on touch)",
+  "live admin pages not checked (owner's sign-in)"
+ ]
+}

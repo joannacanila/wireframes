@@ -73,6 +73,7 @@ def test_admin_sheet_uses_measurement_states_when_nothing_is_assessed():
     coverage line blaming the photo for a missing reference."""
     from app.core.config import ROOT_DIR
     js = (ROOT_DIR / "app/web/assets/admin.js").read_text()
-    assert 'const MST = { measured: "Measured", partial: "Visible part", unmeasured: "Not measured", drop: "Drop wire" };' in js
+    # S9: the result page's words (fully / partially / not measured); the states are unchanged
+    assert 'const MST = { measured: "Fully measured", partial: "Partially measured", unmeasured: "Not measured", drop: "Drop wire" };' in js
     assert 'data-group="${mst(w)}"' in js and "Colour shows wire type, not severity" in js
     assert "assessed for severity (no validated sag reference)." in js

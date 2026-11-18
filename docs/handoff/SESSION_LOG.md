@@ -1,5 +1,13 @@
 # Session Log
 
+## S9 (18 Nov 2026), interface restructuring; reference for power lines only
+- Branch `recovery/s9-ux` (worktree `/Users/joannacanila/WIREFRAME-ux`) from S8 `52baa3c`. `main` unchanged (a727bb9). Not merged.
+- D-27: telecom / abandoned wires measured but not compared; result page reordered (counts with Detected total, paged
+  sortable inventory, split next steps, folded reasoning, one notice); admin Export menu; phone layout.
+- Validation: pytest 817; ruff clean; E2E 48/48 and 49/49 on the isolated copy (port 8011, backup
+  `wireframe-backup-20261118-112629` restored); audit `docs/thesis/results/s9_ux_audit.json`.
+- Port 8000 not switched (still S8).
+
 ## S8 (18 Nov 2026), full-colour meter and provisional 3 % reference
 - Branch `recovery/s8-colour-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`); port 8000 runs it on the live
   `var/` (backup `wireframe-backup-20261118-105442`). `main` unchanged (a727bb9, S5). Not merged.

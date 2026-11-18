@@ -20,7 +20,7 @@ commit listed in `docs/handoff/SESSION_LOG.md`). S5 was committed locally; check
 ```bash
 cd /Users/joannacanila/WIREFRAME
 git fetch origin && git status --short && git log -5 --oneline && git rev-parse HEAD origin/main
-.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 809 passed (pyproject adds -q; with
+.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 817 passed on recovery/s9-ux (pyproject adds -q; with
                                                                    # the default -q -q the count line is hidden)
 .venv/bin/ruff check app tests scripts ml                          # expect clean
 lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's server; check before stopping it

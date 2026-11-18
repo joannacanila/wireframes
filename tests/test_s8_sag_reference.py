@@ -26,7 +26,7 @@ FIELD = ROOT_DIR / "app/web/assets/field.js"
 
 
 def _w(**kw):
-    base = {"index": 1, "class": "telecom-cable", "status": "not_assessed", "reason_code": "no_validated_reference",
+    base = {"index": 1, "class": "power-distribution-lines", "status": "not_assessed", "reason_code": "no_validated_reference",
             "sag_ratio": 0.05, "sag_ratio_resolution": 0.003}
     return {**base, **kw}
 
@@ -62,9 +62,13 @@ def test_partial_unmeasured_drop_and_uncovered_wires(shipped_cfg):
     none = compare_wire(_w(status="fit_failed", reason_code="residual_too_large", sag_ratio=None), shipped_cfg)
     assert none["state"] == "not_measured" and none["position"] is None and none["zones"] is None
     assert compare_wire(_w(status="service_drop", sag_ratio=None), shipped_cfg) is None
-    only_power = shipped_cfg.model_copy(update={"comparison_reference": shipped_cfg.comparison_reference.model_copy(
-        update={"classes": ["power-distribution-lines"]})})
-    assert compare_wire(_w(), only_power) is None
+    # S9 (register D-27): the shipped reference covers power lines only; telecom and abandoned wires are not compared
+    assert shipped_cfg.comparison_reference.classes == ["power-distribution-lines"]
+    for cls in ("telecom-cable", "abandoned-wire"):
+        assert compare_wire(_w(**{"class": cls}), shipped_cfg) is None
+    only_telecom = shipped_cfg.model_copy(update={"comparison_reference": shipped_cfg.comparison_reference.model_copy(
+        update={"classes": ["telecom-cable"]})})
+    assert compare_wire(_w(), only_telecom) is None
     off = shipped_cfg.model_copy(update={"comparison_reference": shipped_cfg.comparison_reference.model_copy(update={"enabled": False})})
     assert compare_wire(_w(), off) is None
 
@@ -148,7 +152,7 @@ def test_page_keeps_the_full_v218_controls_and_shows_the_meter_in_the_selected_w
     detail = js[js.index("function spanDetail(r, w, mode)"):js.index("function diagHtml(r)")]
     assert "${sagMeter(w)}" in detail
     for needle in ("const PRESETS = {", "const LAYERS = [", "function spansTable(r, mode)", "viewer.setOpacity(",
-                   'setView("spans")', "data-filter-go", "function diagnostics(r)", "w.comparison?.position"):
+                   'setView("spans")', "data-filter-go", "function diagnostics(r)", "c?.position", "function measureOnly(w)"):
         assert needle in js, needle
 
 

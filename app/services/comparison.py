@@ -62,6 +62,8 @@ def counts_text(pc: dict | None) -> str:
     if not pc:
         return ""
     n = pc["counts"]
+    if not sum(n.values()):  # S9 (D-27): no wire of a covered type in this photo
+        return f"No wire in this photo is covered by the {pc['label']}, so none is compared"
     return (f"Compared with the {pc['label']}: {n['above']} above, {n['at']} at the reference within the measurement "
             f"resolution, {n['below']} below, {n['not_measured']} not measured (image sag ratio, not physical sag; "
             f"a comparison, not an assessment)")

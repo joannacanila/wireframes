@@ -68,8 +68,9 @@ def main() -> int:
                   and counts.get("Within reference") == n["low"], f"page counts {counts} match API {n}")
         else:  # S4: no validated reference -> no severity anywhere, measurements only
             dc = (api.get("diagnosis") or {}).get("counts") or {}
-            check(dc and counts.get("Measured") == dc["measured"] and counts.get("Visible part only") == dc["measured_partial"]
-                  and counts.get("Not measured") == dc["not_measured"] and dc["assessed"] == 0
+            check(dc and counts.get("Fully measured") == dc["measured"] and counts.get("Partially measured") == dc["measured_partial"]
+                  and counts.get("Not measured") == dc["not_measured"] and dc["assessed"] == 0 and counts.get("Assessed") == 0
+                  and counts.get("Detected") == len(wires)
                   and not {"Critical", "Minor sag", "Within reference"} & set(counts), f"page counts {counts} match diagnosis (S5)")
             check(f"{dc['assessed']} assessed for severity" in pg.inner_text(".fx-coverage"), "coverage line states 0 assessed")
             check(api["hazard"]["verdict"] != "NOT AT RISK" and not api["hazard"]["verdict"].startswith("AT RISK"),
@@ -85,7 +86,10 @@ def main() -> int:
         check(len(shown) == len(wires) and all(w["index"] in shown for w in measured), f"every wire drawn ({len(shown)} of {len(wires)})")
         check(js("() => { const L = window.wfViewer.layers; return L.overlays && L.masks && L.catenary && L.sag; }"),
               "Wires view draws masks, fitted curves and the sag measurement")
-        check(pg.locator("tr[data-wire]").count() == len(wires), "every wire section in the table")
+        # S9: the inventory is paged (25 by default); "All" lists every wire section
+        check(pg.locator("#inv-body tr[data-wire]").count() == min(25, len(wires)), "inventory opens on its first page")
+        pg.select_option("#inv-per", "0"); pg.wait_for_timeout(200)
+        check(pg.locator("tr[data-wire]").count() == len(wires), "every wire section in the table (Rows: All)")
         rows = {int(r.get_attribute("data-wire")): r.inner_text() for r in pg.locator("tr[data-wire]").all()}
         check(all("Could not be measured" not in rows[w["index"]] for w in measured), "measured rows never say 'Could not be measured'")
         if measured:
@@ -94,9 +98,10 @@ def main() -> int:
             if not assessed:
                 check(pg.locator("#span-detail .fx-diag-wire li").count() >= 3 and "Image sag ratio" in pg.inner_text("#span-detail"),
                       "selected wire shows its measurement and diagnosis")
+                pg.click("#rx-diag summary")
                 check(pg.locator(".rx-diag").count() == 1 and "What would complete" in pg.inner_text(".rx-diag"),
-                      "'What the analysis found' section present")
-            pg.click("#span-detail .fx-more summary")
+                      "'How this result was reached' opens with the analysis")
+            pg.locator("#span-detail .fx-more summary").last.click()
             check(pg.locator("#span-detail .fx-more[open] .fx-dl div").count() >= 3, "Measurement details expands")
             other = next((w["index"] for w in measured if w["index"] != sel), None)
             if other is not None:
@@ -108,7 +113,8 @@ def main() -> int:
         cmpd = api.get("comparison")
         if cmpd:
             def meter_of(i):
-                pg.click(f'tr[data-wire="{i}"]'); pg.wait_for_timeout(250)
+                if js("() => window.wfViewer.selected") != i:  # a click on the selected row clears the selection
+                    pg.click(f'tr[data-wire="{i}"]'); pg.wait_for_timeout(250)
                 return js("""() => { const m = document.querySelector('#span-detail .rx-meter'); if (!m) return null;
                   const d = m.querySelector('.rx-meter-dot'), t = m.querySelector('.rx-meter-ref');
                   return { cls: m.className, zones: [...m.querySelectorAll('.rx-meter-track .z')].map(z => [z.classList[1],
@@ -129,14 +135,21 @@ def main() -> int:
                       and f"Reference {c['reference'] * 100:.1f}%" in m["key"] and f"{w['sag_ratio'] * 100:.1f}%" in m["key"])
                 dots.append(m and m["dot"])
                 check(ok, f"colour meter for wire {w['index']} ({pos}): green/amber/red zones, reference tick, dot at its ratio")
-            check(len(by_pos) >= 1 and len(set(dots)) == len(dots), f"meter follows the selected wire ({sorted(by_pos)})")
+            if by_pos:  # S9: only power lines are compared; a photo of telecom cable alone has no coloured meter
+                check(len(set(dots)) == len(dots), f"meter follows the selected wire ({sorted(by_pos)})")
             un = next((w for w in wires if (w.get("comparison") or {}).get("state") == "not_measured"), None)
             if un:
                 m = meter_of(un["index"])
                 check(bool(m) and "empty" in m["cls"] and m["dot"] is None and m["ref"] is not None,
                       f"unmeasured wire {un['index']}: reference shown, no dot")
+            tel = next((w for w in measured if w.get("comparison") is None and w.get("status") != "scored"), None)
+            if tel:  # S9 (D-27): a wire type the reference does not cover: measurement only, no zones, no comparison
+                m = meter_of(tel["index"])
+                check(bool(m) and "solo" in m["cls"] and not m["zones"] and m["ref"] is None and m["dot"] is not None
+                      and "Not applicable" in pg.inner_text("#span-detail"), f"{tel['class']} wire {tel['index']}: measurement only, not compared")
             cnt = pg.inner_text(".fx-cmp-line")
-            check(all(f"{cmpd['counts'][k]} {t}" in cnt for k, t in (("above", "above"), ("at", "at"), ("below", "below"))),
+            check(not sum(cmpd["counts"].values()) and "none is compared" in cnt
+                  or all(f"{cmpd['counts'][k]} {t}" in cnt for k, t in (("above", "above"), ("at", "at"), ("below", "below"))),
                   f"summary comparison counts match the API {cmpd['counts']}")
         check(pg.locator("[data-view=mask]").count() == 1 and pg.locator("[data-view=overlay]").count() == 1, "Mask and Both views present")
         if api.get("wire_mask"):
@@ -163,7 +176,14 @@ def main() -> int:
                 check(vis == want and vis == int(b.inner_text().split()[-1]), f"filter '{f}' shows its {want} rows")
         pg.click('[data-filter="all"]')
         lim = pg.inner_text("#limits")
-        check("Photo limitations" in lim and pg.locator("#next-action li").count() >= 1, "photo limitations and next steps present")
+        check("photo limitations" in lim.lower() and pg.locator("#next-action li").count() >= 1, "photo limitations and next steps present")
+
+        # S9: the Field Screener lays out at phone width (it used to refuse it): no page overflow, photo and table shown
+        ph = br.new_page(viewport={"width": 390, "height": 844}, has_touch=True, is_mobile=True)
+        ph.goto(f"{a.base}/workspace/result/{aid}", wait_until="networkidle"); ph.wait_for_selector(".fx-summary"); ph.wait_for_timeout(1500)
+        m = ph.evaluate("() => ({sw: document.documentElement.scrollWidth, vw: innerWidth, rows: document.querySelectorAll('#inv-body tr').length, canvas: document.querySelector('#fs-canvas').getBoundingClientRect().height})")
+        check(m["sw"] <= m["vw"] and m["rows"] >= 1 and m["canvas"] > 150, f"phone layout (390 px): {m}")
+        ph.screenshot(path=str(a.out / "result_phone.png"), full_page=True); ph.close()
 
         # PDF: same counts as the API
         r = pg.request.get(f"{a.base}/api/reports/{aid}/pdf")
@@ -180,7 +200,8 @@ def main() -> int:
                 check(ref_txt in text and "Measured Spans (not assessed)" in text, f"PDF shows measurements, no severity (S4), reference '{ref_txt}'")
                 if api.get("comparison"):
                     k = api["comparison"]["counts"]
-                    check(f"{k['above']} above, {k['at']} at the reference" in " ".join(text.split()), "PDF comparison counts match the page")
+                    check((f"{k['above']} above, {k['at']} at the reference" if sum(k.values()) else "so none is compared") in " ".join(text.split()),
+                          "PDF comparison counts match the page")
                 check("Figure 1. Measured wires (not assessed)" in text and "4.1 What the Analysis Found" in text,
                       "PDF draws measured wires and explains the analysis (S5)")
             check("preliminary visual screening" in text.lower(), "PDF carries the decision-support notice")
@@ -213,7 +234,8 @@ def main() -> int:
         pg.wait_for_selector(".findings, .fail-card", timeout=60_000)
         if api.get("comparison"):  # S8: the admin sheet shows the same comparison as the workspace
             adm = {int(r.get_attribute("data-wire")): r.locator("td").nth(3).inner_text() for r in pg.locator(".tbl-wires tr[data-wire]").all()}
-            want = {w["index"]: {"below": "Below", "at": "At", "above": "Above"}.get((w.get("comparison") or {}).get("position"), "—") for w in wires}
+            want = {w["index"]: {"below": "Below", "at": "At", "above": "Above"}.get((w.get("comparison") or {}).get("position"),
+                                                                                       "—" if w.get("comparison") else "n/a") for w in wires}
             check(adm and all(adm[i].startswith(want[i]) for i in want if i in adm) and len(adm) == len(wires),
                   "admin sheet comparison column matches the workspace")
         if pg.locator("#diag summary").count():
