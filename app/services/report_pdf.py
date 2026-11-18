@@ -666,7 +666,7 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     # S4: severity counts only when a validated reference produced severities; otherwise measurements only
     sev = (("Critical", c["critical"]), ("Minor sag", c["minor_sag"]), ("Within reference", c["within_reference"])) \
         if sm["assessed"] else (("Sag ratio measured", len(measured)), ("Severity", "none"),
-                                ("Sag reference", f"{cmp_['sag_ratio'] * 100:.1f}% {cmp_['status']}" if cmp_ else "none validated"))
+                                ("Sag reference", f"{cmp_['sag_ratio'] * 100:.1f}% {cmp_['status']}, power lines" if cmp_ else "none validated"))
     cells = [[Paragraph(f"<b>{v}</b><br/><font size='7.6' color='{hexc(F_MUTED)}'>{k}</font>", st["cell"]) for k, v in (
         ("Wires detected", sm["total"]), ("Assessed", sm["assessed"]), ("Not assessed", c["not_assessed"]), *sev)]]
     ct = Table(cells, colWidths=[width / 6] * 6)
@@ -788,6 +788,7 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
                          Paragraph(f"{w['sag_ratio'] * 100:.1f}%" + (f" &#177; {r * 100:.1f}" if r else ""), st["cell"]),
                          Paragraph(_esc(f"{pos[c['position']]}, {c['difference_pp']:+.1f} points"
                                         if (c := w.get("comparison")) and c.get("position")
+                                        else "Not applicable (no reference for this wire type)" if cmp_ and not w.get("comparison")
                                         else (w.get("reason_short") or "Not assessed")), st["cell"]),
                          Paragraph(_esc(_wire_observations(w)), st["cell"])])
         t = Table(rows, colWidths=[width * x for x in (0.10, 0.16, 0.18, 0.24, 0.32)], repeatRows=1)

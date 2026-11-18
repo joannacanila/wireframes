@@ -575,3 +575,30 @@ html.fs-root { height: auto; min-height: 100%; }
 .fx-dl small { font-size: 12px; color: var(--text-3); }
 .fx-dl dd small { display: block; }
 .fx-dl dd .fx-cmp { white-space: normal; }
+
+/* S10 tidy: the S8 page with less on screen at once */
+body:has(#result:not([hidden])) .fx-foot { display: none; }
+.fx-quiet { color: var(--text-3); }
+.fx-side .fx-scroll { max-height: 520px; }
+.fx-spans td.find { white-space: nowrap; }
+.fx-spans td.find small { color: var(--text-3); font-size: 11.5px; margin-left: 4px; }
+.fx-why { margin-top: 10px; }
+.fx-why summary, .fx-lim-ids summary { cursor: pointer; color: var(--text-2); font-size: 13px; }
+.fx-lim-ids { margin: 2px 0 4px; font-size: 12.5px; color: var(--text-3); }
+.fx-lim-ids[open] summary { margin-bottom: 4px; }
+details.rx-diag > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+details.rx-diag > summary::-webkit-details-marker { display: none; }
+details.rx-diag > summary h2 { margin: 0; }
+details.rx-diag > summary h2::before { content: "▸ "; color: var(--text-3); }
+details.rx-diag[open] > summary h2::before { content: "▾ "; }
+details.rx-diag > summary span { color: var(--text-3); font-size: 13px; }
+details.rx-diag[open] > summary { margin-bottom: 12px; }
+.fx-guide { align-items: start; }
+
+/* D-27: measured wire with no applicable reference: the meter in the wire's type colour, a measurement only */
+.rx-meter.type .rx-meter-track { background: color-mix(in srgb, var(--wc) 22%, var(--surface-3)); }
+.rx-meter-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 6px; background: var(--wc); opacity: .85; }
+.rx-meter.type .rx-meter-dot { background: var(--wc); box-shadow: 0 0 0 1px var(--wc); }
+.rx-meter.type .rx-meter-dot.partial { background: var(--surface); }
+.rx-meter.type .rx-meter-key span.ref { font-weight: 400; color: var(--text-3); }
+.fx-na { color: var(--text-3); font-size: 12.5px; }

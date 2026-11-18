@@ -1,5 +1,10 @@
 # Session Log
 
+## S9 / S10 (18 Nov 2026)
+- S9 (`25bb9b5`, `recovery/s9-ux`): system-wide restructuring; rejected by the owner, not deployed beyond a test.
+- S10: S8 version (`52baa3c`) restored with D-27 (3 % for power lines only) and targeted decluttering, branch
+  `recovery/original-colour-meter-engineering-corrections`, deployed on port 8000 for review. `main` unchanged.
+
 ## S8 (18 Nov 2026), full-colour meter and provisional 3 % reference
 - Branch `recovery/s8-colour-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`); port 8000 runs it on the live
   `var/` (backup `wireframe-backup-20261118-105442`). `main` unchanged (a727bb9, S5). Not merged.

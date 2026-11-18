@@ -2,6 +2,20 @@
 
 Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
 
+## 2026-11-18, session S10: S8 colourful-meter version restored; 3 % reference for power lines only (register D-27)
+- **Baseline:** `52baa3c` (`recovery/s8-colour-meter`, 18 Nov 2026 11:10 +0800): v2.18 result page with the v2.21
+  green / amber / red meter in the selected-wire panel, the version the owner asked to have back. The S9 overhaul
+  (`25bb9b5`, branch `recovery/s9-ux`) is kept in history and not carried forward.
+- **Branch:** `recovery/original-colour-meter-engineering-corrections` (worktree `/Users/joannacanila/WIREFRAME-tidy`).
+- **Engineering:** reference applies to power lines only; wires of uncertain type are never compared; telecom /
+  abandoned / uncertain wires keep their measurement on the meter in their type colour, marked "Comparison
+  unavailable"; panel, table, admin sheet, PDF and CSV say not applicable; counts sentence states when no wire is covered.
+- **Presentation (targeted):** notice once (short line and footer removed on the result), duplicate screening line
+  removed, table note removed, table shows the ratio, per-wire reasoning / section-number lists / "What the analysis
+  found" folded; nothing removed.
+- **Not changed:** models, measurement, thresholds, severity logic, stored records, routes, API, roles.
+- **Tests:** pytest 815 passed; ruff clean; E2E 45/45 (telecom-only photo) and 46/46 (power and telecom), 0 page errors.
+
 ## 2026-11-18, session S8: full-colour sag meter, configured provisional 3 % reference (register D-26)
 - **Branch:** `recovery/s8-colour-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`) from S7 `a02fb97`; S7 and S6
   branches unchanged. Port 8000 runs this branch on the live `var/` (backup `wireframe-backup-20261118-105442` first).

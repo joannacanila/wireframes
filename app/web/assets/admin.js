@@ -811,7 +811,7 @@ function mountInspection(id) {
           ${wires.map((w) => `<tr data-wire="${w.index}" data-group="${mst(w)}" tabindex="0" aria-selected="false">
             <td><span class="wno" style="--wc:${wireColor(w, dgOn ? "class" : "risk")}">${w.index}</span></td><td>${esc(classLabel(w, true))}</td>
             <td>${cond(w)}</td>
-            <td>${w.comparison?.position ? `<span class="cmp ${w.comparison.position}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} ${w.comparison.difference_pp > 0 ? "+" : ""}${w.comparison.difference_pp.toFixed(1)}</span>` : "—"}</td>
+            <td>${w.comparison?.position ? `<span class="cmp ${w.comparison.position}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} ${w.comparison.difference_pp > 0 ? "+" : ""}${w.comparison.difference_pp.toFixed(1)}</span>` : w.comparison || w.sag_ratio == null || w.status === "service_drop" ? "—" : '<span class="muted" title="No applicable reference for this wire type">n/a</span>'}</td>
             <td>${esc(finding(w))}</td></tr>`).join("")}</tbody></table></div>
       </section>` : `<section class="block nowire"><p><b>No wire was detected in this photo.</b> The photo was processed, but the model found no wire it could trace. That does not mean there are no wires or no hazard: wires can blend into the sky or background. See the recommended next steps.</p></section>`}
 

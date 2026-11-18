@@ -765,10 +765,15 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
   validated reference (none is configured) uses the original v2.21 `meter()` unchanged. Records made before S4 get
   their resolution derived on read with the S4 formula (flagged, not stored).
 - Configured reference: `config/wireframe.yaml` `comparison_reference` (sag_ratio 0.03, status provisional, label,
-  source, classes) is read by `app/services/comparison.py` and served with every result; the page, PDF (summary cell,
+  source, classes = power lines only since S10, D-27) is read by `app/services/comparison.py` and served with every result; the page, PDF (summary cell,
   "vs 3.0% reference" column, method note and counts), admin inspection sheet (column), findings CSV (three columns),
   technical wires CSV (`level_withdrawn` and four reference columns) and assistant (counts sentence) all use it.
   Changing the value changes every view; no client holds a copy.
+- S10 (register D-27): telecom / fibre, abandoned and uncertain-type wires are not compared with the power-line
+  reference. Their meter is filled in the wire-type colour up to the image sag ratio, with the resolution band and no
+  zones or reference tick, labelled "Comparison unavailable"; panel, table, admin sheet, PDF and findings CSV say not
+  applicable. Repetition reduced: one notice; per-wire reasoning, section-number lists and "What the analysis found"
+  folded.
 - A retake prompt when the guardrail holds the result.
 
 ### 10.2 Admin portal (`/admin`, signed in)
@@ -1057,7 +1062,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 ### 15.1 Automated tests
 
-`python -m pytest`: 809 tests, all passing (18 Nov 2026, S8, with transformers 5.17.0; S7 794, S6 788, S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
+`python -m pytest`: 815 tests, all passing (18 Nov 2026, S10; S8 809, with transformers 5.17.0; S7 794, S6 788, S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
 (`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
 | Area | Examples |

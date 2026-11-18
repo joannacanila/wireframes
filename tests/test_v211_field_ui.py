@@ -216,8 +216,8 @@ def test_field_page_and_assets_are_the_v215_screener(client):
     for needle in ('data-view="photo"', 'data-view="spans"', 'data-view="mask"', 'data-view="overlay"', 'id="opacity"',
                    'data-layer="vegetation"', 'id="layers-btn"', 'data-zoom="fit"', 'data-zoom="reset"', 'id="zoom-pct"',
                    'id="span-detail"', 'class="fx-spans"', 'data-filter="all"', "Measurement details", "Photo limitations",
-                   "What to do next", "They have not passed any check", "not a safety inspection", 'wf-notice variant="full"',
-                   "inspection_name", "Do not touch", "Technical diagnostics", "None validated", "Colour shows wire type, not severity"):
+                   "What to do next", "Why this result", "What the analysis found", 'wf-notice variant="full"',
+                   "inspection_name", "Do not touch", "Technical diagnostics", "Not applicable", "Colour shows wire type, not severity"):
         assert needle in js, needle
     # the technical drawer is rendered only for signed-in staff (the public record carries no internals, v2.20)
     assert '${r.public ? "" : `<section class="fx-drawer" id="diag">' in js

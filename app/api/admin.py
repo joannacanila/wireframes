@@ -481,8 +481,8 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
                 finding += "; vegetation overlaps the wire in the photo (check on site)"
             c = compare_detection(d, st.config)  # S8: the configured reference, compared (not an assessment)
             out.append([d.wire_index, cls.get(d.wire_class, d.wire_class), condition, finding,
-                        f"{c['reference'] * 100:.1f}% ({c['status']})" if c else "",
-                        POSITION_TEXT.get(c["position"], "Not measured") if c else "",
+                        f"{c['reference'] * 100:.1f}% ({c['status']})" if c else "Not applicable",
+                        POSITION_TEXT.get(c["position"], "Not measured") if c else "Not compared (no applicable reference)",
                         f"{c['difference_pp']:+.1f}" if c and c["position"] else ""])
         name = f"wireframe-{a.pole.pole_code}-{a.id[:8]}-findings.csv"
         head = [[f"Pole {a.pole.pole_code}", a.inspection_name or "", a.created_at.isoformat()[:19]]]
@@ -603,7 +603,7 @@ def wires(st: State) -> StreamingResponse:
                              # comparison is computed now from the stored ratio and is not an assessment
                              level_withdrawn(d.level, d.wire_class, st.config, a.metadata_json or {}),
                              *((c["reference"], c["status"], c["position"] or "not_measured", c["difference_pp"])
-                               if (c := compare_detection(d, st.config)) else ("", "", "", ""))])
+                               if (c := compare_detection(d, st.config)) else ("", "", "not_applicable", ""))])
     return _csv(rows, ["analysis_id", "pole_code", "analyzed_at", "wire", "class", "confidence", "status",
                        "fail_reason", "a_px", "b_px", "c_px", "rms_residual_px", "rel_residual", "chord_px", "sag_px",
                        "sag_ratio", "delta_lim", "crs", "level", "pruned_px", "points", "flags", "level_withdrawn",

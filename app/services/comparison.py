@@ -27,10 +27,16 @@ def reference_info(cfg) -> dict[str, Any] | None:
     return {"sag_ratio": c.sag_ratio, "status": c.status, "label": c.label, "source": c.source, "classes": list(c.classes)}
 
 
+def type_uncertain(w: dict) -> bool:
+    """D-27: a wire whose type the photo does not show clearly is never assumed to be a covered type."""
+    return (w.get("class_status") == "uncertain" or w.get("reason_code") == "class_uncertain"
+            or "class_uncertain" in (w.get("flags") or []))
+
+
 def compare_wire(w: dict, cfg) -> dict[str, Any] | None:
-    """The comparison for one wire, or None (reference off, drop wire, class not covered)."""
+    """The comparison for one wire, or None (reference off, drop wire, class not covered, or type uncertain)."""
     ref = reference_info(cfg)
-    if ref is None or w.get("status") == "service_drop" or w.get("class") not in ref["classes"]:
+    if ref is None or w.get("status") == "service_drop" or w.get("class") not in ref["classes"] or type_uncertain(w):
         return None
     state = measurement_state(w)
     out = {"reference": ref["sag_ratio"], "status": ref["status"], "label": ref["label"], "state": state,
@@ -62,6 +68,8 @@ def counts_text(pc: dict | None) -> str:
     if not pc:
         return ""
     n = pc["counts"]
+    if not sum(n.values()):  # D-27: no wire of a covered type in this photo
+        return f"No wire in this photo is covered by the {pc['label']}, so none is compared"
     return (f"Compared with the {pc['label']}: {n['above']} above, {n['at']} at the reference within the measurement "
             f"resolution, {n['below']} below, {n['not_measured']} not measured (image sag ratio, not physical sag; "
             f"a comparison, not an assessment)")
@@ -71,7 +79,7 @@ def compare_detection(d, cfg) -> dict[str, Any] | None:
     """The same comparison for a stored detection (exports, assistant), from the stored measurement only."""
     f = d.fit_json or {}
     ratio = d.sag_ratio if d.sag_ratio is not None else f.get("sag_ratio")
-    w = {"status": d.status, "class": d.wire_class, "reason_code": d.fail_reason,
+    w = {"status": d.status, "class": d.wire_class, "reason_code": d.fail_reason, "flags": d.flags_json or [],
          "sag_ratio": ratio if d.status in ("scored", "not_assessed") else None, "sag_ratio_resolution": f.get("sag_ratio_resolution")}
     return compare_wire(w, cfg)
 
