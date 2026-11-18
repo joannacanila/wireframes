@@ -57,8 +57,8 @@ NEEDED_NOT_MEASURED = {
     "degenerate": "Another photo of this span, or a field check",
 }
 UNAVAILABLE = (
-    ("sag_severity", "Sag severity: no validated sag reference exists for any wire type, so no image ratio is "
-                     "compared with a limit"),
+    ("sag_severity", "Sag severity: no validated sag reference exists for any wire type, so no wire is given a "
+                     "severity; image ratios are only compared with the configured provisional reference"),
     ("physical_sag", "Physical sag in metres: one photo has no scale, range or camera pose"),
     ("clearance", "Vegetation and ground clearance: pixel gaps in one perspective photo are not physical distances"),
     ("pole_verdict", "A pole-level safety verdict: it would need assessed spans, so none is made"),
