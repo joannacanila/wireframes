@@ -52,82 +52,118 @@ def main() -> int:
         pg.click("#submit")
         pg.wait_for_url("**/workspace/result/*", timeout=180_000)
         aid = pg.url.rstrip("/").split("/")[-1]
-        pg.wait_for_selector(".rx-summary", timeout=180_000)
-        pg.wait_for_timeout(1500)
+        pg.wait_for_selector(".fx-summary", timeout=180_000)
+        pg.wait_for_timeout(2000)
         pg.screenshot(path=str(a.out / "result.png"), full_page=True)
         title = pg.inner_text("#rx-title")
-        check(title.startswith("Inspection summary"), f"result summary header: {title!r}")
+        check(bool(title.strip()) and bool(pg.inner_text("#verdict-pill").strip()), f"result summary header: {title!r}")
         api = pg.request.get(f"{a.base}/api/analysis/{aid}/result").json()
         wires = api.get("wires") or []
         n = {k: sum(1 for w in wires if w.get("level") == k) for k in ("high", "medium", "low")}
-        counts = {t: int(v) for t, v in zip(pg.locator(".rx-counts dt").all_inner_texts(), pg.locator(".rx-counts dd").all_inner_texts(), strict=False)}
+        counts = {t.strip(): int(v) for t, v in zip(pg.locator(".fx-counts dt").all_inner_texts(), pg.locator(".fx-counts dd").all_inner_texts(), strict=False)}
         assessed = sum(1 for w in wires if w.get("status") == "scored")
+        measured = [w for w in wires if w.get("sag_ratio") is not None and w.get("status") in ("scored", "not_assessed")]
         if assessed:
             check(counts.get("Critical") == n["high"] and counts.get("Minor sag") == n["medium"]
                   and counts.get("Within reference") == n["low"], f"page counts {counts} match API {n}")
         else:  # S4: no validated reference -> no severity anywhere, measurements only
             dc = (api.get("diagnosis") or {}).get("counts") or {}
             check(dc and counts.get("Measured") == dc["measured"] and counts.get("Visible part only") == dc["measured_partial"]
-                  and counts.get("Not measured") == dc["not_measured"] and counts.get("Assessed") == 0
+                  and counts.get("Not measured") == dc["not_measured"] and dc["assessed"] == 0
                   and not {"Critical", "Minor sag", "Within reference"} & set(counts), f"page counts {counts} match diagnosis (S5)")
-            # S5: the diagnostic view: measured wires drawn, one selected with its explanation
-            if dc.get("measured", 0) + dc.get("measured_partial", 0):
-                shown = pg.evaluate("() => window.wfViewer ? window.wfViewer._shown().length : -1")
-                check(shown == dc["measured"] + dc["measured_partial"], f"measured wires drawn on the photo ({shown})")
-                check(pg.locator("#span-detail .rx-diag-wire li").count() >= 3, "selected wire shows its diagnosis")
-                check(pg.locator(".rx-diag").count() == 1 and "What would complete" in pg.inner_text(".rx-diag"),
-                      "'What the analysis found' section present")
+            check(f"{dc['assessed']} assessed for severity" in pg.inner_text(".fx-coverage"), "coverage line states 0 assessed")
             check(api["hazard"]["verdict"] != "NOT AT RISK" and not api["hazard"]["verdict"].startswith("AT RISK"),
                   f"no unsupported pole verdict: {api['hazard']['verdict']}")
             check(all(w.get("reason_code") in ("no_validated_reference", "endpoint_unavailable", "class_uncertain")
                       for w in wires if w.get("status") == "not_assessed"), "not-assessed reasons are S4 codes")
         check(not any(w.get("status") != "scored" and w.get("level") for w in wires), "no severity on an unassessed wire")
-        check(pg.locator("[data-view=mask]").count() == 1, "Mask view present")
 
-        # S7: the v2.21 sag meter (register D-25). Without a validated reference it is unlit: no zones, the dot at the
-        # wire's image ratio on one scale per photo; an unmeasured wire gets an empty track; it follows the selection.
-        meas = [w for w in wires if w.get("sag_ratio") is not None and w.get("status") in ("scored", "not_assessed")
-                and (w.get("fit") or {}).get("endpoints")]
-        unmeas = [w for w in wires if w.get("sag_ratio") is None and w.get("status") not in ("service_drop", "scored")]
-        if meas and not assessed:
-            scale = max(w["sag_ratio"] + (w.get("sag_ratio_resolution") or 0) for w in meas) * 1.3
+        # S6 (register D-24): the restored v2.18 result page. Every measured wire is drawn and listed whether or not a
+        # severity exists, one is selected with its measurement and diagnosis, and every control does what it says.
+        js = lambda e: pg.evaluate(e)  # noqa: E731
+        shown = js("() => window.wfViewer._shown().map(w => w.index)")
+        check(len(shown) == len(wires) and all(w["index"] in shown for w in measured), f"every wire drawn ({len(shown)} of {len(wires)})")
+        check(js("() => { const L = window.wfViewer.layers; return L.overlays && L.masks && L.catenary && L.sag; }"),
+              "Wires view draws masks, fitted curves and the sag measurement")
+        check(pg.locator("tr[data-wire]").count() == len(wires), "every wire section in the table")
+        rows = {int(r.get_attribute("data-wire")): r.inner_text() for r in pg.locator("tr[data-wire]").all()}
+        check(all("Could not be measured" not in rows[w["index"]] for w in measured), "measured rows never say 'Could not be measured'")
+        if measured:
+            sel = js("() => window.wfViewer.selected")
+            check(sel is not None, f"a wire is selected on opening ({sel})")
+            if not assessed:
+                check(pg.locator("#span-detail .fx-diag-wire li").count() >= 3 and "Image sag ratio" in pg.inner_text("#span-detail"),
+                      "selected wire shows its measurement and diagnosis")
+                check(pg.locator(".rx-diag").count() == 1 and "What would complete" in pg.inner_text(".rx-diag"),
+                      "'What the analysis found' section present")
+            pg.click("#span-detail .fx-more summary")
+            check(pg.locator("#span-detail .fx-more[open] .fx-dl div").count() >= 3, "Measurement details expands")
+            other = next((w["index"] for w in measured if w["index"] != sel), None)
+            if other is not None:
+                pg.click(f'tr[data-wire="{other}"]'); pg.wait_for_timeout(300)
+                check(js("() => window.wfViewer.selected") == other and f">{other}<" in pg.inner_html("#span-detail header"),
+                      "clicking a table row selects that wire")
 
-            def meter_of(w):
-                pg.evaluate(f"() => document.querySelector('li[data-wire=\"{w['index']}\"]').click()")
-                pg.wait_for_timeout(250)
-                return pg.evaluate("""() => { const m = document.querySelector('#span-detail .rx-meter'); if (!m) return null;
-                  const d = m.querySelector('.rx-meter-dot'); return { cls: m.className, zones: m.querySelectorAll('.rx-meter-track .z').length,
-                  ref: !!m.querySelector('.rx-meter-ref'), dot: d ? parseFloat(d.style.left) : null,
-                  key: m.querySelector('.rx-meter-key').innerText, legend: m.querySelector('.rx-zones')?.innerText || '' }; }""")
-            seen = []
-            for w in sorted(meas, key=lambda w: -w["sag_ratio"])[:2]:
-                m = meter_of(w)
-                want = min(100, w["sag_ratio"] / scale * 100)
-                seen.append(m and m["dot"])
-                check(bool(m) and "unlit" in m["cls"] and m["zones"] == 0 and not m["ref"] and abs(m["dot"] - want) < 0.5
-                      and f"{w['sag_ratio'] * 100:.1f}%" in m["key"] and "Zones not defined" in m["legend"],
-                      f"sag meter unlit for wire {w['index']}: dot {m and m['dot']:.1f}% (expected {want:.1f}%), no zones, no reference")
-            check(len(set(seen)) == 2, f"sag meter follows the selected wire ({seen})")
-            if unmeas:
-                m = meter_of(unmeas[0])
-                check(bool(m) and "empty" in m["cls"] and m["dot"] is None and "Not measured" in m["key"],
-                      f"sag meter empty for unmeasured wire {unmeas[0]['index']}")
-            # the lit three-zone state, as drawn when the server sends a reference: a synthetic response for this page
-            # only (rendering check, not a reference; nothing is stored)
-            w0 = max(meas, key=lambda w: w["sag_ratio"]); lim = w0["sag_ratio"] * 0.8
-            fake = {**api, "wires": [{**w, "status": "scored", "level": "high", "delta_lim": lim, "crs": 10.0,
-                                      "sag_bands": {"minor_from": lim * 0.5, "critical_from": lim, "critical_inclusive": True}}
-                                     if w is w0 else w for w in wires]}
-            lit = ctx.new_page()
-            lit.route(f"**/api/analysis/{aid}/result", lambda route: route.fulfill(json=fake))
-            lit.goto(f"{a.base}/workspace/result/{aid}"); lit.wait_for_selector("#span-detail .rx-meter", timeout=30_000)
-            z = lit.evaluate("""() => [...document.querySelectorAll('#span-detail .rx-meter-track .z')].map(e => [e.className, e.getBoundingClientRect().width])""")
-            check([c for c, _ in z] == ["z z-low", "z z-medium", "z z-high"] and all(wd > 0 for _, wd in z)
-                  and lit.locator("#span-detail .rx-meter-ref").count() == 1 and lit.locator("#span-detail .rx-zones.unlit").count() == 0 and lit.locator("#span-detail .rx-zones").count() == 1,
-                  f"sag meter draws its three zones when a reference is supplied ({[round(wd) for _, wd in z]} px)")
-            lit.screenshot(path=str(a.out / "meter_lit_synthetic.png"), full_page=False)
-            lit.close()
-            meter_of(max(meas, key=lambda w: w["sag_ratio"]))
+        # S8 (register D-26): the full-colour sag meter in the selected-wire panel, against the configured reference
+        cmpd = api.get("comparison")
+        if cmpd:
+            def meter_of(i):
+                pg.click(f'tr[data-wire="{i}"]'); pg.wait_for_timeout(250)
+                return js("""() => { const m = document.querySelector('#span-detail .rx-meter'); if (!m) return null;
+                  const d = m.querySelector('.rx-meter-dot'), t = m.querySelector('.rx-meter-ref');
+                  return { cls: m.className, zones: [...m.querySelectorAll('.rx-meter-track .z')].map(z => [z.classList[1],
+                    z.getBoundingClientRect().width, getComputedStyle(z).backgroundColor]), ref: t ? parseFloat(t.style.left) : null,
+                    dot: d ? parseFloat(d.style.left) : null, key: m.querySelector('.rx-meter-key').innerText }; }""")
+            by_pos = {}
+            for w in sorted(measured, key=lambda w: -w["sag_ratio"]):
+                c = w.get("comparison") or {}
+                if c.get("position") and c["position"] not in by_pos:
+                    by_pos[c["position"]] = w
+            dots = []
+            for pos, w in by_pos.items():
+                m, c = meter_of(w["index"]), w["comparison"]
+                z = c["zones"]; mx = max(w["sag_ratio"] + (w.get("sag_ratio_resolution") or 0), z["above_from"]) * 1.3
+                ok = (bool(m) and [x[0] for x in m["zones"]] == ["z-low", "z-medium", "z-high"]
+                      and all(x[1] > 0 and "0 0 0" not in x[2] for x in m["zones"]) and f"cmp {pos}" in m["cls"]
+                      and abs(m["ref"] - c["reference"] / mx * 100) < 0.5 and abs(m["dot"] - w["sag_ratio"] / mx * 100) < 0.5
+                      and f"Reference {c['reference'] * 100:.1f}%" in m["key"] and f"{w['sag_ratio'] * 100:.1f}%" in m["key"])
+                dots.append(m and m["dot"])
+                check(ok, f"colour meter for wire {w['index']} ({pos}): green/amber/red zones, reference tick, dot at its ratio")
+            check(len(by_pos) >= 1 and len(set(dots)) == len(dots), f"meter follows the selected wire ({sorted(by_pos)})")
+            un = next((w for w in wires if (w.get("comparison") or {}).get("state") == "not_measured"), None)
+            if un:
+                m = meter_of(un["index"])
+                check(bool(m) and "empty" in m["cls"] and m["dot"] is None and m["ref"] is not None,
+                      f"unmeasured wire {un['index']}: reference shown, no dot")
+            cnt = pg.inner_text(".fx-cmp-line")
+            check(all(f"{cmpd['counts'][k]} {t}" in cnt for k, t in (("above", "above"), ("at", "at"), ("below", "below"))),
+                  f"summary comparison counts match the API {cmpd['counts']}")
+        check(pg.locator("[data-view=mask]").count() == 1 and pg.locator("[data-view=overlay]").count() == 1, "Mask and Both views present")
+        if api.get("wire_mask"):
+            pg.click("[data-view=overlay]")
+            check(js("() => window.wfViewer.layers.wiremask && window.wfViewer.layers.masks"), "Both view shows mask and wires")
+        pg.click("[data-view=photo]")
+        check(js("() => !window.wfViewer.layers.overlays"), "Original view hides the overlay")
+        pg.click("#layers-btn"); pg.check('#layers-menu [data-l="skeleton"]')
+        check(js("() => window.wfViewer.layers.skeleton && window.wfViewer.layers.overlays"), "Layers menu switches a layer")
+        pg.keyboard.press("Escape")
+        pg.locator("#opacity").fill("40")
+        check(pg.inner_text("#opacity-wrap output") == "40%", "overlay opacity slider")
+        before = pg.inner_text("#zoom-pct"); pg.click('[data-zoom="in"]'); pg.wait_for_timeout(200)
+        check(pg.inner_text("#zoom-pct") != before, "zoom in changes the zoom level")
+        pg.click('[data-zoom="reset"]'); pg.wait_for_timeout(200)
+        check(js("() => window.wfViewer.layers.masks && !window.wfViewer.layers.skeleton && window.wfViewer.selected == null")
+              and pg.inner_text("#opacity-wrap output") == "100%", "Reset restores the default view")
+        for f in ("measured", "partial", "unmeasured", "high", "medium", "low"):
+            b = pg.locator(f'[data-filter="{f}"]')
+            if b.count() and not b.is_disabled():
+                b.click()
+                vis = pg.locator("tr[data-wire]:not([hidden])").count()
+                want = pg.locator(f'tr[data-group="{f}"]').count()
+                check(vis == want and vis == int(b.inner_text().split()[-1]), f"filter '{f}' shows its {want} rows")
+        pg.click('[data-filter="all"]')
+        lim = pg.inner_text("#limits")
+        check("Photo limitations" in lim and pg.locator("#next-action li").count() >= 1, "photo limitations and next steps present")
 
         # PDF: same counts as the API
         r = pg.request.get(f"{a.base}/api/reports/{aid}/pdf")
@@ -140,7 +176,11 @@ def main() -> int:
             if assessed:
                 check(f"{n['high']} Critical" in text and f"{n['medium']} Minor sag" in text, "PDF summary counts match the API")
             else:
-                check("none validated" in text and "Measured Spans (not assessed)" in text, "PDF shows measurements, no severity (S4)")
+                ref_txt = f"{api['comparison']['sag_ratio'] * 100:.1f}% provisional" if api.get("comparison") else "none validated"
+                check(ref_txt in text and "Measured Spans (not assessed)" in text, f"PDF shows measurements, no severity (S4), reference '{ref_txt}'")
+                if api.get("comparison"):
+                    k = api["comparison"]["counts"]
+                    check(f"{k['above']} above, {k['at']} at the reference" in " ".join(text.split()), "PDF comparison counts match the page")
                 check("Figure 1. Measured wires (not assessed)" in text and "4.1 What the Analysis Found" in text,
                       "PDF draws measured wires and explains the analysis (S5)")
             check("preliminary visual screening" in text.lower(), "PDF carries the decision-support notice")
@@ -171,6 +211,11 @@ def main() -> int:
                 check(pg.request.get(a.base + href).status == 200, f"technical export {href}")
         pg.goto(f"{a.base}/admin/inspections/{aid}")
         pg.wait_for_selector(".findings, .fail-card", timeout=60_000)
+        if api.get("comparison"):  # S8: the admin sheet shows the same comparison as the workspace
+            adm = {int(r.get_attribute("data-wire")): r.locator("td").nth(3).inner_text() for r in pg.locator(".tbl-wires tr[data-wire]").all()}
+            want = {w["index"]: {"below": "Below", "at": "At", "above": "Above"}.get((w.get("comparison") or {}).get("position"), "—") for w in wires}
+            check(adm and all(adm[i].startswith(want[i]) for i in want if i in adm) and len(adm) == len(wires),
+                  "admin sheet comparison column matches the workspace")
         if pg.locator("#diag summary").count():
             pg.click("#diag summary")
             check(pg.locator(".mcard").count() >= 1 or "No metric" in pg.inner_text("#diag"), "technical diagnostics open")

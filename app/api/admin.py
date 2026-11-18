@@ -458,6 +458,7 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
         cond = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk"}
         out = []
         from app.services.basis import level_withdrawn
+        from app.services.comparison import POSITION_TEXT, compare_detection
         for d in a.detections:
             # S4: a level from a withdrawn criterion is not a finding (app/services/basis.py)
             withdrawn = level_withdrawn(d.level, d.wire_class, st.config, a.metadata_json or {})
@@ -478,10 +479,15 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
                                 + " (measurement only)")
             if "vegetation_contact" in (d.flags_json or []):
                 finding += "; vegetation overlaps the wire in the photo (check on site)"
-            out.append([d.wire_index, cls.get(d.wire_class, d.wire_class), condition, finding])
+            c = compare_detection(d, st.config)  # S8: the configured reference, compared (not an assessment)
+            out.append([d.wire_index, cls.get(d.wire_class, d.wire_class), condition, finding,
+                        f"{c['reference'] * 100:.1f}% ({c['status']})" if c else "",
+                        POSITION_TEXT.get(c["position"], "Not measured") if c else "",
+                        f"{c['difference_pp']:+.1f}" if c and c["position"] else ""])
         name = f"wireframe-{a.pole.pole_code}-{a.id[:8]}-findings.csv"
         head = [[f"Pole {a.pole.pole_code}", a.inspection_name or "", a.created_at.isoformat()[:19]]]
-    return _csv_notice(head + [[]] + [["Wire", "Type", "Condition", "Finding"]] + out, [], name)
+    return _csv_notice(head + [[]] + [["Wire", "Type", "Condition", "Finding", "Sag reference", "Compared with reference (image ratio)",
+                                           "Difference (percentage points)"]] + out, [], name)
 
 
 @router.get("/inspections/{analysis_id}/context")
@@ -580,6 +586,8 @@ def manifest(st: State) -> StreamingResponse:
 @system.get("/exports/wires.csv")
 def wires(st: State) -> StreamingResponse:
     """One row per detected wire across all analyses, with the fit and score inputs."""
+    from app.services.basis import level_withdrawn
+    from app.services.comparison import compare_detection
     with st.db.session() as s:
         rows = []
         for a in s.scalars(select(Analysis).options(selectinload(Analysis.detections), selectinload(Analysis.pole))
@@ -590,10 +598,16 @@ def wires(st: State) -> StreamingResponse:
                              f"{d.confidence:.4f}", d.status, d.fail_reason or "", f.get("a"), f.get("b"), f.get("c"),
                              f.get("rms_residual_px"), f.get("rel_residual"), d.chord_px, d.sag_px, d.sag_ratio,
                              d.delta_lim, d.crs, d.level or "", f.get("pruned_px"), f.get("n_points"),
-                             ";".join(d.flags_json)])
+                             ";".join(d.flags_json),
+                             # S4/S8: stored levels from the withdrawn placeholder are marked; the configured reference
+                             # comparison is computed now from the stored ratio and is not an assessment
+                             level_withdrawn(d.level, d.wire_class, st.config, a.metadata_json or {}),
+                             *((c["reference"], c["status"], c["position"] or "not_measured", c["difference_pp"])
+                               if (c := compare_detection(d, st.config)) else ("", "", "", ""))])
     return _csv(rows, ["analysis_id", "pole_code", "analyzed_at", "wire", "class", "confidence", "status",
                        "fail_reason", "a_px", "b_px", "c_px", "rms_residual_px", "rel_residual", "chord_px", "sag_px",
-                       "sag_ratio", "delta_lim", "crs", "level", "pruned_px", "points", "flags"],
+                       "sag_ratio", "delta_lim", "crs", "level", "pruned_px", "points", "flags", "level_withdrawn",
+                       "sag_reference", "sag_reference_status", "sag_reference_position", "sag_reference_difference_pp"],
                 f"wireframe-wires-{_stamp()}.csv")
 
 

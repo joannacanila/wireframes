@@ -210,19 +210,20 @@ def test_field_page_and_assets_are_the_v215_screener(client):
     for field in ('name="inspection_name"', 'name="city"', 'name="barangay"', 'id="locate"', 'id="clear-file"'):
         assert field in html, field
     js = client.get("/assets/field.js").text + client.get("/assets/findings.js").text  # v2.19: shared wording
-    # v2.20 result page: problem wires by default, three views, sag against the reference, wires grouped with
-    # "needs attention" first, three-step guidance, short photo limitations, the notice; no technical drawer
-    for needle in ('data-view="problem"', 'data-view="photo"', 'data-view="all"', "View options", 'id="opacity"',
-                   'id="span-detail"', "Reference limit", "percentage points", 'data-tab="att"', "Needs attention",
-                   "Not assessed", "They have not passed any check", "Keep your distance", "Report the findings",
-                   "Arrange field verification", "Photo limitations", "Overlapping wires can prevent reliable separation",
-                   "Inspection summary", "not a safety inspection", 'wf-notice variant="full"', "inspection_name",
-                   'data-zoom="fit"', "Do not touch"):
+    # S6 (register D-24): the v2.18 result page is restored (photo and wire table side by side, four views, overlay
+    # opacity, vegetation, layers, zoom with reset, filterable table, measurement details, specific limitations and
+    # next steps, staff-only technical drawer) with the S4/S5 corrections (no severity without a validated reference)
+    for needle in ('data-view="photo"', 'data-view="spans"', 'data-view="mask"', 'data-view="overlay"', 'id="opacity"',
+                   'data-layer="vegetation"', 'id="layers-btn"', 'data-zoom="fit"', 'data-zoom="reset"', 'id="zoom-pct"',
+                   'id="span-detail"', 'class="fx-spans"', 'data-filter="all"', "Measurement details", "Photo limitations",
+                   "What to do next", "They have not passed any check", "not a safety inspection", 'wf-notice variant="full"',
+                   "inspection_name", "Do not touch", "Technical diagnostics", "None validated", "Colour shows wire type, not severity"):
         assert needle in js, needle
-    for gone in ("Model ready", "Inspection quality", "#sample", 'id="diag"', "Sag score", "Fit residual",
-                 "HIGH RISK FOUND"):
+    # the technical drawer is rendered only for signed-in staff (the public record carries no internals, v2.20)
+    assert '${r.public ? "" : `<section class="fx-drawer" id="diag">' in js
+    for gone in ("Model ready", "Inspection quality", "#sample", "HIGH RISK FOUND", "Overlapping wires can prevent reliable separation"):
         assert gone not in client.get("/assets/field.js").text.split("// --------------------------------------------------------------"
                                                                      "---- result view")[-1], gone
     css = client.get("/assets/field.css").text
-    assert "fx-shimmer" in css and ".rx-summary" in css and "backdrop-filter" not in css
+    assert "fx-shimmer" in css and ".fx-summary" in css and ".fx-spans" in css and ".fx-drawer" in css and "backdrop-filter" not in css
     assert "gradient(" not in css.replace("linear-gradient(90deg, transparent", "")

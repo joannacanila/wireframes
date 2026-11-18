@@ -59,5 +59,5 @@ def ask(body: Ask, st: State, user: User) -> dict:
         if lv is not None:
             return {"answer": lv.text, "sources": [], "mode": lv.kind, "inspection": None, "notice": None,
                     "poles": lv.poles, "action": lv.action, "nav": [], "suggest": [], "intent": "live"}
-        out = service.answer(st.settings, body.question, body.page, [t.model_dump() for t in body.history], a)
+        out = service.answer(st.settings, body.question, body.page, [t.model_dump() for t in body.history], a, st.config)
         return {**out.as_dict(), "poles": [], "action": None}

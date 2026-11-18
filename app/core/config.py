@@ -356,6 +356,28 @@ class EngineeringConfig(_Strict):
     _v = field_validator("conductors")(_known_classes)
 
 
+class ComparisonReference(_Strict):
+    """S8 (register D-26): the owner-selected sag-to-span reference that the sag meter, the PDF, the admin sheet, the
+    CSV export and the assistant compare every measured wire with. It is a COMPARISON, never an assessment: it sets no
+    wire level, no CRS and no pole verdict (those still need a validated reference, ``crs.delta_lim0``).
+    ``status`` says what the value is; only a value backed by a cited, applicable source may be called ``validated``.
+    The three meter zones come from the reference and each wire's own measurement resolution (1 px / chord):
+    below = ratio + resolution < reference; at = the reference lies within ratio ± resolution; above = ratio -
+    resolution > reference. No other boundary is configured."""
+    enabled: bool = True
+    sag_ratio: float = Field(0.03, gt=0, lt=0.5)
+    status: Literal["provisional", "manufacturer", "regulatory-superseded", "validated"] = "provisional"
+    label: str = "3% sag-to-span reference (provisional)"
+    source: str = ""
+    classes: list[str] = Field(default_factory=lambda: list(WIRE_CLASSES))
+
+    @field_validator("classes")
+    @classmethod
+    def _classes(cls, v: list[str]) -> list[str]:
+        _known_classes(dict.fromkeys(v, 0))
+        return v
+
+
 class HazardConfig(_Strict):
     """Explainable verdict layer (app/pipeline/hazard.py). Rules, not learned thresholds."""
     enabled: bool = False
@@ -459,6 +481,7 @@ class AnalysisConfig(_Strict):
     mspi: MSPIConfig
     vegetation: VegetationConfig = VegetationConfig()
     hazard: HazardConfig = HazardConfig()
+    comparison_reference: ComparisonReference = ComparisonReference()
     quality: QualityConfig = QualityConfig()
     guardrail: GuardrailConfig = GuardrailConfig()
 

@@ -662,9 +662,11 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
         story.append(Paragraph(_esc(line), st["body"]))
     types = ", ".join(f"{k}: {v}" for k, v in sorted(sm["types"].items())) or "none detected"
     measured = [w for w in result.get("wires") or [] if w.get("sag_ratio") is not None]
+    cmp_ = result.get("comparison")  # S8: the configured reference (app/services/comparison.py), same as the page
     # S4: severity counts only when a validated reference produced severities; otherwise measurements only
     sev = (("Critical", c["critical"]), ("Minor sag", c["minor_sag"]), ("Within reference", c["within_reference"])) \
-        if sm["assessed"] else (("Sag ratio measured", len(measured)), ("Severity", "none"), ("Sag reference", "none validated"))
+        if sm["assessed"] else (("Sag ratio measured", len(measured)), ("Severity", "none"),
+                                ("Sag reference", f"{cmp_['sag_ratio'] * 100:.1f}% {cmp_['status']}" if cmp_ else "none validated"))
     cells = [[Paragraph(f"<b>{v}</b><br/><font size='7.6' color='{hexc(F_MUTED)}'>{k}</font>", st["cell"]) for k, v in (
         ("Wires detected", sm["total"]), ("Assessed", sm["assessed"]), ("Not assessed", c["not_assessed"]), *sev)]]
     ct = Table(cells, colWidths=[width / 6] * 6)
@@ -776,13 +778,17 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     elif measured:
         # S4: the measurements, never a severity (no validated reference)
         story[-1] = Paragraph("4.0 Measured Spans (not assessed)", st["h"])
-        rows = [[Paragraph(h, st["th"]) for h in ("Span ID", "Type", "Image-derived sag ratio", "Status", "Observations")]]
+        rows = [[Paragraph(h, st["th"]) for h in ("Span ID", "Type", "Image-derived sag ratio",
+                                                  f"vs {cmp_['sag_ratio'] * 100:.1f}% reference" if cmp_ else "Status", "Observations")]]
+        pos = {"below": "Below", "at": "At (within resolution)", "above": "Above"}
         for w in sorted(measured, key=lambda x: x["index"]):
             r = w.get("sag_ratio_resolution")
             rows.append([Paragraph(f"<b>{plain.span_id(w['index'])}</b>", st["cell"]),
                          Paragraph(_esc(plain.wire_type(w)), st["cell"]),
                          Paragraph(f"{w['sag_ratio'] * 100:.1f}%" + (f" &#177; {r * 100:.1f}" if r else ""), st["cell"]),
-                         Paragraph(_esc(w.get("reason_short") or "Not assessed"), st["cell"]),
+                         Paragraph(_esc(f"{pos[c['position']]}, {c['difference_pp']:+.1f} points"
+                                        if (c := w.get("comparison")) and c.get("position")
+                                        else (w.get("reason_short") or "Not assessed")), st["cell"]),
                          Paragraph(_esc(_wire_observations(w)), st["cell"])])
         t = Table(rows, colWidths=[width * x for x in (0.10, 0.16, 0.18, 0.24, 0.32)], repeatRows=1)
         t.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, 0), 0.8, F_INK), ("LINEBELOW", (0, 1), (-1, -1), 0.4, F_RULE),
@@ -792,9 +798,15 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
         story.append(Paragraph(
             "Image-derived sag ratio: the largest perpendicular distance from the fitted curve to the straight line "
             "between the traced ends, divided by that line's length, both in image pixels. It is not physical sag "
-            "(no camera-pose correction, no field calibration) and is not compared with any limit. The +/- value is "
-            "the 1 pixel resolution over the chord; a ratio smaller than it is straight within the resolution (no sag "
-            "resolvable at this image scale).", st["small"]))
+            "(no camera-pose correction, no field calibration). The +/- value is the 1 pixel resolution over the chord; a "
+            "ratio smaller than it is straight within the resolution (no sag resolvable at this image scale)."
+            + (f" Each ratio is compared with the {_esc(cmp_['label'])} ({_esc(cmp_['source'])}): below, at the "
+               "reference within the +/- resolution, or above. It is an owner-selected provisional reference, not a "
+               "validated limit, and the comparison is not an assessment: no wire level or pole verdict comes from it."
+               if cmp_ else " It is not compared with any limit."), st["small"]))
+        if cmp_:
+            from app.services.comparison import counts_text
+            story.append(Paragraph(_esc(counts_text(cmp_) + "."), st["small"]))
         story += _diagnosis_block(result.get("diagnosis") or {}, st)
     else:
         story.append(Paragraph("No span was flagged in the assessed sections of this photograph.", st["body"]))

@@ -66,7 +66,7 @@ class Answer:
 
 
 # --------------------------------------------------------------------------- inspection facts
-def inspection_facts(a) -> dict[str, Any]:
+def inspection_facts(a, cfg=None) -> dict[str, Any]:
     """Plain facts about one inspection, from the stored result. ``public`` is the anonymised part."""
     from app.services import records
     from app.services.reasons import wire_reason_short
@@ -97,6 +97,10 @@ def inspection_facts(a) -> dict[str, Any]:
         "review_status": records.REVIEW_LABEL[rv],
         "status": a.status,
     }
+    # S8 (register D-26): the configured sag reference, compared with the stored image ratios (not an assessment)
+    from app.core.config import get_analysis_config
+    from app.services.comparison import detection_counts
+    public["sag_reference_comparison"] = detection_counts(a, cfg or get_analysis_config())
     return {"public": public, "pole_code": a.pole.pole_code, "inspection_name": a.inspection_name, "id": a.id}
 
 
@@ -115,6 +119,9 @@ def facts_summary(f: dict[str, Any]) -> str:
     if w.get("measured_in_image"):
         lines.append(f"{w['measured_in_image']} wire section(s) were measured in the image (image-derived sag ratio, "
                      "not physical sag); a measurement is not a severity.")
+    if p.get("sag_reference_comparison"):
+        from app.services.comparison import counts_text
+        lines.append(counts_text(p["sag_reference_comparison"]) + ".")
     if p["not_assessed_reasons"]:
         lines.append("Not assessed because: " + "; ".join(f"{k.lower()} ({v})" for k, v in
                                                           p["not_assessed_reasons"].items()) + ".")
@@ -203,9 +210,9 @@ def _call_claude(settings, question: str, history: list[dict], hits, facts: dict
 
 
 def answer(settings, question: str, page: str | None = None, history: list[dict] | None = None,
-           analysis=None) -> Answer:
+           analysis=None, cfg=None) -> Answer:
     question = question.strip()[:1000]
-    facts = inspection_facts(analysis) if analysis is not None else None
+    facts = inspection_facts(analysis, cfg) if analysis is not None else None
     # v2.21: intent first. Navigation, workflow, identity and assistant questions are answered from their guide
     # sections as written (numbered steps that match the real controls), not from whichever section shares a word.
     route = intent.classify(question, page)

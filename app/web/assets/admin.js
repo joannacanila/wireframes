@@ -807,10 +807,11 @@ function mountInspection(id) {
       ${hasWires ? `<section class="block" aria-labelledby="wf-h">
         <header class="block-head"><h2 id="wf-h">Wire findings</h2><span class="count num">${r.wires.length}</span>
           <div class="chips" role="group" aria-label="Show">${chips.filter(([k]) => k === "all" || ccount[k]).map(([k, t]) => `<button type="button" data-filter="${k}" aria-pressed="${k === "all"}">${t}${k !== "all" ? ` <b class="num">${ccount[k]}</b>` : ""}</button>`).join("")}</div></header>
-        <div class="tbl-scroll"><table class="tbl tbl-wires"><thead><tr><th>Wire</th><th>Type</th><th>Condition</th><th>Finding</th></tr></thead><tbody>
+        <div class="tbl-scroll"><table class="tbl tbl-wires"><thead><tr><th>Wire</th><th>Type</th><th>Condition</th><th title="Image sag ratio compared with the configured reference (provisional; not an assessment)">${r.comparison ? `vs ${(r.comparison.sag_ratio * 100).toFixed(1)}% (${esc(r.comparison.status)})` : "vs reference"}</th><th>Finding</th></tr></thead><tbody>
           ${wires.map((w) => `<tr data-wire="${w.index}" data-group="${mst(w)}" tabindex="0" aria-selected="false">
             <td><span class="wno" style="--wc:${wireColor(w, dgOn ? "class" : "risk")}">${w.index}</span></td><td>${esc(classLabel(w, true))}</td>
             <td>${cond(w)}</td>
+            <td>${w.comparison?.position ? `<span class="cmp ${w.comparison.position}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} ${w.comparison.difference_pp > 0 ? "+" : ""}${w.comparison.difference_pp.toFixed(1)}</span>` : "—"}</td>
             <td>${esc(finding(w))}</td></tr>`).join("")}</tbody></table></div>
       </section>` : `<section class="block nowire"><p><b>No wire was detected in this photo.</b> The photo was processed, but the model found no wire it could trace. That does not mean there are no wires or no hazard: wires can blend into the sky or background. See the recommended next steps.</p></section>`}
 

@@ -650,3 +650,9 @@ tr:hover .assign, tr:focus-within .assign, .assign:focus-visible { opacity: 1; }
 /* S6: measurement states on the inspection sheet (neutral, never a severity colour) */
 .risk.m-measured i { background: var(--text); } .risk.m-partial i { background: transparent; border: 1.5px solid var(--text); }
 .risk.m-unmeasured i, .risk.m-drop i { background: var(--text-3, #8a8f98); }
+
+/* S8 (register D-26): image sag ratio compared with the configured reference, same colours as the workspace meter */
+.tbl-wires .cmp { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.tbl-wires .cmp.below { color: var(--risk-low); background: color-mix(in srgb, var(--risk-low) 14%, transparent); }
+.tbl-wires .cmp.at { color: #1a1408; background: var(--risk-med); }
+.tbl-wires .cmp.above { color: #fff; background: var(--risk-high); }

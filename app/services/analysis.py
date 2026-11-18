@@ -316,6 +316,11 @@ def serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] |
     for w in r.get("wires") or []:
         w["diagnosis"] = wire_diagnosis(w, cfg)
     r["diagnosis"] = pole_diagnosis(r, cfg)
+    # S8: the configured sag reference, compared on read (never stored, never a level)
+    from app.services.comparison import compare_wire, pole_comparison
+    for w in r.get("wires") or []:
+        w["comparison"] = compare_wire(w, cfg)
+    r["comparison"] = pole_comparison(r, cfg)
     return _jsonable(r)
 
 
@@ -475,7 +480,7 @@ def public_error(code: str | None, message: str | None) -> str:
 _PUBLIC_WIRE = ("index", "class", "status", "bbox", "mask_polygons", "centerline", "catenary_curve", "sag_ratio",
                 "sag_ratio_resolution",
                 "delta_lim", "sag_bands", "level", "flags", "class_status", "reason_code", "reason_short", "notes", "action",
-                "veg_clearance", "provenance", "diagnosis")
+                "veg_clearance", "provenance", "diagnosis", "comparison")
 
 
 def public_view(r: dict[str, Any]) -> dict[str, Any]:
@@ -483,7 +488,7 @@ def public_view(r: dict[str, Any]) -> dict[str, Any]:
     hashes, timings, EXIF metadata and the priority ranking are removed server-side; signed-in staff get the full
     record. Drawing geometry and the measured sag / reference limit stay (the page shows them)."""
     out = {k: r.get(k) for k in ("id", "status", "created_at", "completed_at", "inspection", "pole", "submitted_via",
-                                 "image", "vegetation", "wire_mask", "guardrail", "flags", "diagnosis")}
+                                 "image", "vegetation", "wire_mask", "guardrail", "flags", "diagnosis", "comparison")}
     out["reviews"] = [{"decision": x["decision"], "by": x["by"], "at": x["at"]} for x in r.get("reviews") or []]
     if r.get("error"):
         out["error"] = {"code": r["error"]["code"], "message": public_error(r["error"]["code"], r["error"]["message"])}

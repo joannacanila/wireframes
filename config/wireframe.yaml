@@ -220,6 +220,21 @@ vegetation:                       # revised taxonomy (2026-11-14); not a Chapter
   contact_margin_frac: 0.01
   min_contact_share: 0.02
 
+comparison_reference:             # S8 (register D-26); a comparison for the sag meter, PDF, admin, CSV, assistant
+  # Owner-selected working reference, status PROVISIONAL. It is not an assessment: no wire level, no CRS, no pole
+  # verdict comes from it, and it is compared with the IMAGE sag ratio, which is not physical sag.
+  # Evidence (docs/thesis/RESEARCH_AND_DECISION_REGISTER.md, S8): ERB Res. 95-21 (1995) s.19 says the sag of wires on
+  # electric utility poles "shall not be greater than ... three percent (3%) of the distance between poles", citing
+  # the Philippine Electrical Code; ERC Res. 02 s.2010 recites that the DSOAR superseded ERB 95-21, and the DSOAR
+  # text was not obtained. Manufacturer data for ADSS fibre cable (Prysmian TLS-DS-A-517) gives 1.5 % installation
+  # sag and more than 3 % under its loading cases, so 3 % is not a limit for telecom cable.
+  enabled: true
+  sag_ratio: 0.03
+  status: provisional
+  label: "3% sag-to-span reference (provisional)"
+  source: "ERB Res. 95-21 s.19 (1995, superseded by the DSOAR); owner-selected; not validated for image sag ratios or telecom cable"
+  classes: [power-distribution-lines, telecom-cable, abandoned-wire]
+
 hazard:                           # v2.8 explainable verdict on top of CRS (app/pipeline/hazard.py)
   enabled: true
   # S4 (register D-15): pixel distances in one perspective photo are not clearances and a 2-D overlap is not
