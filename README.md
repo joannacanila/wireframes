@@ -190,7 +190,7 @@ Copy `.env.example` to `.env` to change deployment settings. Never commit `.env`
 
 ```bash
 pip install -r requirements-dev.txt                # tests and lint
-python -m pytest                                   # 794 tests, no model weights needed
+python -m pytest                                   # 809 tests, no model weights needed
 ruff check app tests scripts ml
 ```
 

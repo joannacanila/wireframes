@@ -1,5 +1,11 @@
 # Session Log
 
+## S8 (18 Nov 2026), full-colour meter and provisional 3 % reference
+- Branch `recovery/s8-colour-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`); port 8000 runs it on the live
+  `var/` (backup `wireframe-backup-20261118-105442`). `main` unchanged (a727bb9, S5). Not merged.
+- 3 % configured as a provisional comparison (D-26); v2.18 page + v2.21 meter; PDF / admin / CSV / assistant aligned.
+- Validation: pytest 809; ruff clean; E2E 49/49; live port 8000 verified on P-B1D137 and the newest upload.
+
 ## S7 (18 Nov 2026), three-zone sag meter
 - Branch `recovery/s7-sag-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`) from `recovery/s6-restore`; `main`,
   `recovery/s6-restore` and port 8000 untouched. Bookmark `recovery/meter-reference-0916fd2` = `0916fd2`.

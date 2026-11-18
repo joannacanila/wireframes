@@ -2,6 +2,23 @@
 
 Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
 
+## 2026-11-18, session S8: full-colour sag meter, configured provisional 3 % reference (register D-26)
+- **Branch:** `recovery/s8-colour-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`) from S7 `a02fb97`; S7 and S6
+  branches unchanged. Port 8000 runs this branch on the live `var/` (backup `wireframe-backup-20261118-105442` first).
+- **Root cause of the grey meter (S7):** with no validated reference the server sent no `sag_bands`, so S7 drew the
+  meter unlit by design; the owner asked for the coloured meter with a 3 % reference.
+- **Change:** `comparison_reference` in the configuration and `app/services/comparison.py` (one rule, every view);
+  result page = S6 v2.18 page + v2.21 meter in the selected-wire panel, comparison column and counts; PDF, admin sheet,
+  findings CSV, wires CSV (adds `level_withdrawn`), assistant; resolution derived on read for pre-S4 records; diagnosis
+  and assistant wording updated (the assistant text no longer cites ITU-T L.102 content that could not be read).
+- **Not changed:** models, measurement code, assessment (no wire is scored, no verdict changes), stored records
+  (detection fingerprint before and after deployment identical, excluding a new inspection uploaded during the session).
+- **Tests / results:** pytest 809 passed; ruff clean; E2E 49/49, 0 page errors; live port 8000: four P-B1D137
+  inspections and the newest upload show the coloured meter for above / at / below / not-measured wires, 0 console
+  errors (`results/s8_colour_meter.json`).
+- **Limits:** the admin sheet was checked on the isolated copy only (the live admin needs the owner's sign-in); the live
+  PDF was built from a snapshot of the live database, because requesting it on the server rewrites the stored report.
+
 ## 2026-11-18, session S7: the v2.23 result page with the three-zone sag meter (register D-25)
 - **Branch:** `recovery/s7-sag-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`), from `recovery/s6-restore`;
   bookmark `recovery/meter-reference-0916fd2` = `0916fd2` (last commit that displayed the meter).

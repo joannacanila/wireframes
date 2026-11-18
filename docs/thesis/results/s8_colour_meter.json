@@ -1,0 +1,20 @@
+{
+  "description": "S8 (18 Nov 2026): full-colour three-zone sag meter with a configured provisional 3 % comparison reference, on the S6 v2.18 result page. Verified on the live server (port 8000, live var/, read-only use) and on the isolated copy (port 8011).",
+  "reference": {"config": "config/wireframe.yaml comparison_reference", "sag_ratio": 0.03, "status": "provisional", "label": "3% sag-to-span reference (provisional)", "assessment": "none (comparison only)"},
+  "zones": {"green": "ratio + resolution < reference", "amber": "reference within ratio +/- resolution", "red": "ratio - resolution > reference", "other_boundaries": "none"},
+  "live_port_8000": {
+    "process_cwd": "/Users/joannacanila/WIREFRAME-meter", "branch": "recovery/s8-colour-meter", "data_dir": "/Users/joannacanila/WIREFRAME/var",
+    "backup_before": "/Users/joannacanila/WIREFRAME-backups/wireframe-backup-20261118-105442",
+    "P-B1D137_records": ["b8eb1c9b", "59a94aff", "62386196", "d77a9cf3"],
+    "wires": {"26": "above, 5.74% +/-0.37 (resolution derived on read)", "6": "at, 3.78% +/-0.84", "24": "below, 2.36% +/-0.47", "5": "not measured"},
+    "counts": {"above": 3, "at": 2, "below": 13, "not_measured": 9},
+    "controls": {"Both": true, "Original": true, "Layers": true, "opacity": "40%", "zoom": "143% -> 201%", "Reset": true, "filters": 4, "table_rows": "27 of 27"},
+    "newest_upload_671503ca": {"wires": 128, "counts": {"above": 4, "at": 11, "below": 85, "not_measured": 28}},
+    "console_errors": 0,
+    "pdf_from_live_snapshot": "3 pages; summary '3.0% provisional', column 'vs 3.0% reference', counts 3 above / 2 at / 13 below",
+    "stored_records_unchanged": "detections fingerprint E4C1120D... before and after (excluding the inspection uploaded during the session)"
+  },
+  "e2e_isolated": "49 of 49 passed, 0 page errors",
+  "pytest": "809 passed", "ruff": "no findings",
+  "screenshots": ["results/s8_live_meter_cards.png", "results/s8_live_pdf_page2.png"]
+}

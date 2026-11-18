@@ -20,7 +20,7 @@ commit listed in `docs/handoff/SESSION_LOG.md`). S5 was committed locally; check
 ```bash
 cd /Users/joannacanila/WIREFRAME
 git fetch origin && git status --short && git log -5 --oneline && git rev-parse HEAD origin/main
-.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 794 passed (pyproject adds -q; with
+.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 809 passed (pyproject adds -q; with
                                                                    # the default -q -q the count line is hidden)
 .venv/bin/ruff check app tests scripts ml                          # expect clean
 lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's server; check before stopping it
@@ -74,6 +74,10 @@ lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's ser
   now in `docs/thesis/`. Research: DSOAR s.1.7.12 "Poles, Sag of Wires" lead (S16), text NOT read (TLS error).
 
 ## Outstanding tasks (priority order)
+S8 status: port 8000 runs `recovery/s8-colour-meter` from `/Users/joannacanila/WIREFRAME-meter` on the live data
+(started with WIREFRAME_DATA_DIR=/Users/joannacanila/WIREFRAME/var). It contains S6 and S7. Merge it (not the S6 or S7
+branches) into `main` only with the owner's authorisation. Expected: 809 passed, E2E 49 checks. To change the
+reference, edit `comparison_reference` in config/wireframe.yaml and restart.
 S7 status: the owner's chosen page (v2.23 layout with the three-zone sag meter, D-25) is on branch
 `recovery/s7-sag-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`), pushed, NOT merged. It supersedes the S6
 v2.18 page; merge `recovery/s7-sag-meter` (it contains all of S6) after the owner's review, not `recovery/s6-restore`.

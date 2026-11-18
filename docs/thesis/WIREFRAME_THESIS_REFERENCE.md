@@ -747,26 +747,28 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 
 - Upload card: photo, inspection name, city, barangay (validated suggestions), optional coordinates and span data.
 - Processing state with the queue position.
-- Result page (`/workspace/result/{id}`): the v2.21-v2.23 layout with its three-zone sag meter, chosen by the owner in
-  S7 (register D-25; S6 had restored the v2.18 layout, D-24, which has no meter). Header, photography tip, retake banner
-  (only when more than half of the wires were not measured or only partly measured), summary with counts (Measured /
-  Visible part only / Not measured / Assessed while no span is assessed; severity counts only for spans assessed
-  against a validated reference), "What the analysis found", the photo (Measured wires / Original photo / All traced
-  wires / Mask, view options, zoom, Fit; wires coloured by type when nothing is assessed) beside the selected-wire card
-  and the wire list (Measured / Not measured tabs, listed by image-derived ratio), what to do, photo limitations, the
-  location block and the notice. Selected-wire card: type, measurement state, finding, image sag ratio ± 1 px
-  resolution, "Reference limit: None validated", "Difference: Not computed", the sag meter, the Section 8.6 diagnosis
-  and what would complete the assessment.
-- Sag meter (v2.21, `7c5a716`; restored S7): one 12 px track, a dot for the selected wire, a key and a three-chip legend
-  (Within reference, Minor sag, Critical). The three zones and the reference tick are drawn only from `sag_bands`,
-  which the server sends only for a wire assessed against a configured reference; no validated reference exists, so in
-  the shipped configuration every meter is unlit: no zones, no tick, the dot at the wire's image sag ratio with its
-  ± 1 px resolution band on a scale shared by every measured wire on the photo (largest ratio plus resolution, x 1.3),
-  hollow legend chips and the sentence "Zones not defined: no validated sag reference exists for ...". A partly
-  measured wire has a hollow dot ("visible part"); an unmeasured wire has an empty dashed track ("Not measured").
-  Historically the zones were at 2.4 % and 4.0 % image sag (CRS 6 and 10 at the withdrawn 4.0 % placeholder); those
-  values have no engineering basis (S4) and are not restored. Below 700 px the workspace shows its unsupported-screen
-  message, as it has since v2.13.
+- Result page (`/workspace/result/{id}`), S8 (register D-26): the v2.18 layout restored in S6 (header, summary with
+  coverage line, measurement-state counts and the reference comparison counts; photo with Original / Wires / Mask /
+  Both, overlay opacity, Vegetation, Layers, zoom readout, Fit, Reset; wire table with Wire, Type, Condition, "vs 3.0%"
+  and Finding, filter chips and keyboard navigation; selected-wire panel; what to do next; photo limitations with the
+  affected sections; "What the analysis found"; staff-only technical drawer; location; notice) with the v2.21 sag meter
+  in the selected-wire panel. Panel rows: image sag ratio ± 1 px resolution, Reference 3.0% (provisional),
+  Difference (percentage points, image ratio), Compared (Below / At / Above), Vegetation; then the meter, the per-wire
+  diagnosis, what would complete the assessment and Measurement details.
+- Sag meter (v2.21 `7c5a716`, colours, track, tick, dot, key and legend as originally designed): green, amber and red
+  zones, the reference tick and the wire's dot with its resolution band, from the server's `comparison` for that
+  wire. Zones: green below (reference - resolution), amber from there to (reference + resolution), red above; scale
+  max(ratio + resolution, reference + resolution) x 1.3 as in v2.21. Legend: Below reference / At reference
+  (±resolution) / Above reference, and the note that the reference is owner-selected and provisional, the ratio is
+  not physical sag, and the comparison is not an assessment. Partly measured wire: hollow dot, "(visible part)".
+  Unmeasured wire: green and red split at the reference, tick, no dot, "not measured". A wire assessed against a
+  validated reference (none is configured) uses the original v2.21 `meter()` unchanged. Records made before S4 get
+  their resolution derived on read with the S4 formula (flagged, not stored).
+- Configured reference: `config/wireframe.yaml` `comparison_reference` (sag_ratio 0.03, status provisional, label,
+  source, classes) is read by `app/services/comparison.py` and served with every result; the page, PDF (summary cell,
+  "vs 3.0% reference" column, method note and counts), admin inspection sheet (column), findings CSV (three columns),
+  technical wires CSV (`level_withdrawn` and four reference columns) and assistant (counts sentence) all use it.
+  Changing the value changes every view; no client holds a copy.
 - A retake prompt when the guardrail holds the result.
 
 ### 10.2 Admin portal (`/admin`, signed in)
@@ -1055,7 +1057,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 ### 15.1 Automated tests
 
-`python -m pytest`: 794 tests, all passing (18 Nov 2026, S7, with transformers 5.17.0; S6 788, S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
+`python -m pytest`: 809 tests, all passing (18 Nov 2026, S8, with transformers 5.17.0; S7 794, S6 788, S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
 (`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
 | Area | Examples |
@@ -1084,11 +1086,11 @@ page counts match the API diagnosis, every measured wire is drawn on the photo, 
 the "What the analysis found" section is present, and the PDF draws the measured wires and contains section 4.1. The
 uploaded photo is then marked as a test record. S6 adds the restored page: every wire drawn and listed, measured rows
 state their measurement, a wire selected with its diagnosis, Measurement details, row selection, Both and Original
-views, the Layers menu, opacity, zoom, Reset and every filter (S6 checks retired in S7 with the v2.18 layout). S7 adds the
-sag meter: unlit for the two most-sagging measured wires with the dot at the expected position and no zone or tick,
-moving with the selection, empty for an unmeasured wire, and the three zones drawn when a reference is supplied (a
-synthetic response in the browser only; nothing stored). Result (18 Nov 2026, S7, isolated copy of `var/`): 29 of 29
-checks passed, 0 page errors (S6: 41 of 41; S5: 24 of 24; S4: 20 of 20; those checks asserted only the absence of severity and passed while the
+views, the Layers menu, opacity, zoom, Reset and every filter. S8 adds the colour meter for one wire above, one at and
+one below the configured reference (three coloured zones, tick at the configured value, dot at the wire's ratio),
+the meter following the selection, an unmeasured wire, the summary comparison counts against the API, the PDF
+reference and counts, and the admin sheet comparison column against the workspace. Result (18 Nov 2026, S8, isolated
+copy of `var/`): 49 of 49 checks passed, 0 page errors (S7: 29 of 29; S6: 41 of 41; S5: 24 of 24; S4: 20 of 20; those checks asserted only the absence of severity and passed while the
 measurements were hidden, `results/s5_diagnostic_restoration.json`).
 
 ### 15.4 Manual review (limited)

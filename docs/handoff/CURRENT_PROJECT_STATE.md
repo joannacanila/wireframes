@@ -1,6 +1,6 @@
 # Current Project State
 
-Last updated: 18 Nov 2026, end of session S7 (branch `recovery/s7-sag-meter`: v2.23 page with the sag meter, D-25). Before: end of session S6 (recovery branch `recovery/s6-restore`; `main` unchanged since S5). Continuity notes only. The authoritative technical record is
+Last updated: 18 Nov 2026, end of session S8 (branch `recovery/s8-colour-meter` running on port 8000: v2.18 page, colour sag meter, provisional 3 % reference, D-26). Before: end of session S7 (branch `recovery/s7-sag-meter`: v2.23 page with the sag meter, D-25). Before: end of session S6 (recovery branch `recovery/s6-restore`; `main` unchanged since S5). Continuity notes only. The authoritative technical record is
 `docs/thesis/` (`WIREFRAME_THESIS_REFERENCE.md`, `RESEARCH_AND_DECISION_REGISTER.md`, `IMPLEMENTATION_CHANGELOG.md`,
 `results/`). Read with `SESSION_LOG.md` and `NEXT_SESSION_PROMPT.md`.
 
