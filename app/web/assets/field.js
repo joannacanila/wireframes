@@ -412,53 +412,76 @@ function meter(w, g) {
     ${b ? `<p class="rx-zones"><span><i class="z-low"></i>Within reference</span><span><i class="z-medium"></i>Minor sag</span><span><i class="z-high"></i>Critical</span></p>` : ""}</div>`;
 }
 
-let photoScale = 0; // S7: one meter scale per photo, shared by the measurement-only meters
-// a key label is centred on its mark unless it would run past either end of the track (long labels need ~30 %)
-const keyAt = (v) => (v < 30 ? "at-start" : v > 70 ? "at-end" : "");
-/** D-26 / D-27: the original v2.21 meter (track, green / amber / red zones, reference tick, dot, key, legend) for a
- * power line compared with the configured provisional 3 % reference. Zones come from the reference and this wire's
- * own ±1 px resolution (below / at within resolution / above), never from the withdrawn 2.4 % / 4.0 % boundaries.
- * A comparison, not an assessment: the wire gets no severity from it. */
-const DOT = { below: "low", at: "medium", above: "high" };
-function meterRef(w) {
-  const c = w.comparison, ref = c.reference, z = c.zones, res = w.sag_ratio_resolution || 0, part = c.state === "measured_partial";
-  const max = Math.max(w.sag_ratio + res, z.above_from) * 1.3;
-  const v = (q) => Math.min(100, Math.max(0, (q / max) * 100)), x = (q) => `${v(q)}%`, at = v(w.sag_ratio);
-  return `<div class="rx-meter cmp ${c.position}" role="img" aria-label="Image sag ratio ${measuredText(w)}${part ? ", visible part only" : ""}; ${esc(c.label)}; ${{ below: "below", at: "at the reference within the measurement resolution", above: "above" }[c.position]}">
-    <div class="rx-meter-track"><i class="z z-low" style="left:0;width:${x(z.at_from)}"></i><i class="z z-medium" style="left:${x(z.at_from)};width:calc(${x(z.above_from)} - ${x(z.at_from)})"></i><i class="z z-high" style="left:${x(z.above_from)};right:0"></i>
-      ${res ? `<i class="rx-meter-res" style="left:${v(Math.max(0, w.sag_ratio - res))}%;width:${Math.max(v(w.sag_ratio + res) - v(Math.max(0, w.sag_ratio - res)), 0.6)}%"></i>` : ""}
-      <i class="rx-meter-ref" style="left:${x(ref)}"></i><i class="rx-meter-dot ${DOT[c.position]}${part ? " partial" : ""}" style="left:${at}%" title="This wire: image sag ratio ${measuredText(w)}"></i></div>
-    <div class="rx-meter-key"><span class="ref-k ${keyAt(v(ref))}" style="left:${x(ref)}">Reference ${pp(ref)}</span><span class="ref ${keyAt(at)}" style="left:${at}%">This wire ${measuredText(w)}${part ? " (visible part)" : ""}</span></div>
-    <p class="rx-zones"><span><i class="z-low"></i>Below reference</span><span><i class="z-medium"></i>At reference (±resolution)</span><span><i class="z-high"></i>Above reference</span></p></div>
-    <p class="rx-note">${esc(c.label)}: not a validated limit (ERB Res. 95-21, since superseded). The image sag ratio is not physical sag, and this comparison is not an assessment.</p>`;
+/** S12 meters (register D-28). The three-zone sag meter for a wire covered by the configured reference. Every boundary
+ * comes from the configuration through the server (comparison.zones, one source): green below the lower boundary, amber
+ * the reference-tolerance region, red above the upper boundary, each widened by the wire's own measurement uncertainty.
+ * No engineering tolerance is validated, so both boundaries are the 3 % reference and the amber region is the
+ * uncertainty alone; it is drawn at its true width with a hairline minimum so it stays visible. The scale is fixed by
+ * the configuration (meter_scale_max) and a ratio beyond it is drawn as overflow at the end of the track. */
+const ZONE = { below: "Below reference", at: "Reference-tolerance region", above: "Above reference" };
+const ZONE_MARK = { below: "↓", at: "≈", above: "↑" };
+const ZDOT = { below: "low", at: "medium", above: "high" };
+const keyAt = (v) => (v < 22 ? "at-start" : v > 78 ? "at-end" : "");
+const scaleOf = (pc) => pc?.meter_scale_max || 0.1;
+const onScale = (max) => (q) => Math.min(100, Math.max(0, (q / max) * 100));
+const pp2 = (x) => `${(x * 100).toFixed(2)}%`;
+const resBand = (w, v) => {
+  const res = w.sag_ratio_resolution || 0;
+  if (!res) return "";
+  const lo = v(Math.max(0, w.sag_ratio - res)), hi = v(w.sag_ratio + res);
+  return `<i class="rx-meter-res" style="left:${lo}%;width:${Math.max(hi - lo, 0.6)}%"></i>`;
+};
+
+/** Why no reference applies to this wire, from the server's states (the same words as the admin sheet and the CSV). */
+function refWhy(w) {
+  const k = w.states?.reference_unavailable_reason
+    || (w.class_status === "uncertain" ? "type_uncertain" : w.class === "telecom-cable" ? "no_reference_for_telecom" : w.class === "abandoned-wire" ? "no_reference_for_abandoned" : "no_reference_for_class");
+  return { no_reference_for_telecom: "No validated sag reference exists for telecom / fibre cable; manufacturer data for fibre cable allow more than 3% sag under load.",
+    no_reference_for_abandoned: "An abandoned wire's type and owner are not established, so no sag reference applies.",
+    type_uncertain: "The photo does not show clearly whether this is a power line or a telecom cable, so no reference is assumed.",
+    no_reference_for_class: "No validated sag reference exists for this wire type.",
+    drop_wire: "Drop wire to a building: not checked for sag.",
+    reference_disabled: "No sag reference is configured." }[k] || "No applicable sag reference.";
 }
 
-/** D-27: a measured wire with no applicable reference (telecom / fibre, abandoned, type uncertain). The same meter on
- * the photo's shared scale, filled in the wire's type colour up to its image sag ratio: a measurement only, with no
- * zones and no reference tick. */
-function meterType(w) {
-  const res = w.sag_ratio_resolution || 0, part = w.reason_code === "endpoint_unavailable";
-  const max = photoScale || (w.sag_ratio + res) * 1.3 || 0.01;
-  const v = (x) => Math.min(100, Math.max(0, (x / max) * 100));
-  const at = v(w.sag_ratio), lo = v(Math.max(0, w.sag_ratio - res)), hi = v(w.sag_ratio + res);
-  const why = w.class_status === "uncertain" ? "the photo does not show this wire's type clearly"
-    : `no validated sag reference exists for ${w.class === "telecom-cable" ? "telecom / fibre cable" : w.class === "abandoned-wire" ? "an abandoned wire" : "this wire type"}`;
-  return `<div class="rx-meter type" style="--wc:${wireColor(w, "class")}" role="img" aria-label="Image sag ratio ${measuredText(w)}${part ? ", visible part only" : ""}, on a scale from 0 to ${pp(max)} shared by the wires on this photo; comparison unavailable">
-    <div class="rx-meter-track"><i class="rx-meter-fill" style="width:${at}%"></i>${res ? `<i class="rx-meter-res" style="left:${lo}%;width:${Math.max(hi - lo, 0.6)}%"></i>` : ""}<i class="rx-meter-dot${part ? " partial" : ""}" style="left:${at}%" title="This wire: image sag ratio ${measuredText(w)}"></i></div>
-    <div class="rx-meter-key"><span class="at-start" style="left:0">0%</span><span class="at-end" style="left:100%">${pp(max)}</span><span class="ref ${keyAt(at)}" style="left:${at}%">This wire ${measuredText(w)}${part ? " (visible part)" : ""}</span></div></div>
-    <p class="rx-note"><b>Comparison unavailable:</b> ${why}, so this is an image measurement only, with no condition. Colour shows the wire type; the scale is shared by the wires on this photo.</p>`;
+function meterRef(w, pc) {
+  const c = w.comparison, z = c.zones, part = c.state === "measured_partial";
+  const max = scaleOf(pc), v = onScale(max), at = v(w.sag_ratio), over = w.sag_ratio > max;
+  const a = v(z.at_from), b = Math.min(100, Math.max(v(z.above_from), a + 0.8));
+  const validated = pc?.classification_enabled;
+  return `<figure class="rx-meter cmp ${c.position}${over ? " overflow" : ""}" role="img" aria-label="Image sag ratio ${measuredText(w)}${part ? ", visible part only" : ""}: ${ZONE[c.position].toLowerCase()} (${esc(c.label)})${c.uncertainty_overlaps ? "; the uncertainty overlaps the reference" : ""}">
+    <div class="rx-meter-read"><b class="n">${measuredText(w)}</b>${part ? "<small>visible part</small>" : ""}
+      <span class="rx-zone ${c.position}"><i aria-hidden="true">${ZONE_MARK[c.position]}</i>${ZONE[c.position]}</span>
+      ${c.uncertainty_overlaps ? `<span class="rx-amb" title="The ± uncertainty band crosses a zone boundary, so the photo cannot place this wire on one side of it">Uncertainty overlaps the reference</span>` : ""}</div>
+    <div class="rx-meter-track"><i class="z z-low" style="left:0;width:${a}%"></i><i class="z z-medium" style="left:${a}%;width:${b - a}%"></i><i class="z z-high" style="left:${b}%;right:0"></i>
+      ${resBand(w, v)}<i class="rx-meter-ref" style="left:${v(c.reference)}%"></i><i class="rx-meter-dot ${ZDOT[c.position]}${part ? " partial" : ""}" style="left:${at}%" title="This wire: ${measuredText(w)}"></i>${over ? `<i class="rx-meter-over" aria-hidden="true"></i>` : ""}</div>
+    <div class="rx-meter-key"><span class="at-start" style="left:0">0%</span><span class="ref-k ${keyAt(v(c.reference))}" style="left:${v(c.reference)}%">Reference ${pp(c.reference)}</span><span class="at-end" style="left:100%">${pp(max)}${over ? "+" : ""}</span></div>
+    <figcaption class="rx-zones"><span><i class="z-low"></i>${ZONE.below} <small>under ${pp2(z.at_from)}</small></span><span><i class="z-medium"></i>${ZONE.at} <small>${pp2(z.at_from)} to ${pp2(z.above_from)}</small></span><span><i class="z-high"></i>${ZONE.above} <small>over ${pp2(z.above_from)}</small></span>
+      <span class="rx-zones-note">${validated ? "Validated reference: the zones are severity classes." : `Provisional comparison: the zones are not severity classes.`}${over ? ` This wire is beyond the ${pp(max)} scale.` : ""}</span></figcaption></figure>`;
 }
 
-/** D-27: the power-line comparison counts in one sentence, or that no wire in the photo is covered. */
+/** D-27: a measured wire with no applicable reference keeps the colourful meter in its wire-type colour, with its raw
+ * image sag ratio on the same configured scale, and says that no comparison applies. No zones, no reference tick. */
+function meterType(w, pc) {
+  const part = w.reason_code === "endpoint_unavailable";
+  const max = scaleOf(pc), v = onScale(max), at = v(w.sag_ratio), over = w.sag_ratio > max;
+  return `<figure class="rx-meter type${over ? " overflow" : ""}" style="--wc:${wireColor(w, "class")}" role="img" aria-label="Image sag ratio ${measuredText(w)}${part ? ", visible part only" : ""}; no applicable comparison">
+    <div class="rx-meter-read"><b class="n">${measuredText(w)}</b>${part ? "<small>visible part</small>" : ""}<span class="rx-zone none"><i aria-hidden="true">○</i>No applicable comparison</span></div>
+    <div class="rx-meter-track"><i class="rx-meter-fill" style="width:${at}%"></i>${resBand(w, v)}<i class="rx-meter-dot${part ? " partial" : ""}" style="left:${at}%" title="This wire: ${measuredText(w)}"></i>${over ? `<i class="rx-meter-over" aria-hidden="true"></i>` : ""}</div>
+    <div class="rx-meter-key"><span class="at-start" style="left:0">0%</span><span class="at-end" style="left:100%">${pp(max)}${over ? "+" : ""}</span></div>
+    <figcaption class="rx-zones"><span class="rx-zones-note">${esc(refWhy(w))} The colour shows the wire type.</span></figcaption></figure>`;
+}
+
+/** The comparison counts in one line, or that no wire in the photo is covered by the reference. */
 function cmpLine(r) {
   const c = r.comparison;
   if (!c || !r.wires.length) return "";
   const n = c.counts;
-  if (!Object.values(n).some(Boolean)) return `<p class="rx-coverage rx-cmp-line">No wire in this photo is covered by the ${esc(c.label)}; the image sag ratios are measurements only.</p>`;
-  return `<p class="rx-coverage rx-cmp-line">Power lines compared with the ${esc(c.label)}: <span class="rx-cmp above">${n.above} above</span> <span class="rx-cmp at">${n.at} at (within resolution)</span> <span class="rx-cmp below">${n.below} below</span>${n.not_measured ? ` · ${n.not_measured} not measured` : ""}. A comparison, not an assessment.</p>`;
+  if (!Object.values(n).some(Boolean)) return `<p class="rx-cmp-line">No wire in this photo is covered by the ${esc(c.label)}.</p>`;
+  return `<p class="rx-cmp-line"><span>Compared with the ${esc(c.label)}:</span> <span class="rx-zone above"><i aria-hidden="true">↑</i>${n.above} above</span> <span class="rx-zone at"><i aria-hidden="true">≈</i>${n.at} in the tolerance region</span> <span class="rx-zone below"><i aria-hidden="true">↓</i>${n.below} below</span>${n.not_measured ? ` <span class="rx-zone none">${n.not_measured} not measured</span>` : ""}</p>`;
 }
 
-function meterEmpty(w) {
+function meterEmpty() {
   return `<div class="rx-meter empty" role="img" aria-label="Not measured: this wire has no image sag ratio.">
     <div class="rx-meter-track"></div>
     <div class="rx-meter-key"><span class="ref at-start" style="left:0">Not measured: no sag ratio from this photo</span></div></div>`;
@@ -472,76 +495,103 @@ function bandOf(w) {
   return w.reason_code === "endpoint_unavailable" ? "Visible part measured" : "Measured";
 }
 
-/** S5: what the analysis found for this photo (app/services/diagnostics.py), shown with every result. */
-function diagHtml(r) {
-  const d = r.diagnosis;
-  if (!d || r.status === "error" || !r.wires.length) return "";
-  const li = (xs) => `<ul>${xs.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>`;
-  const reasons = Object.entries(d.not_measured_reasons || {});
-  return `<section class="rx-diag" aria-labelledby="rx-diag-h"><h2 id="rx-diag-h">What the analysis found</h2>
-    <p class="rx-diag-stage">${esc(d.processing)}. ${d.counts.detected} detected · ${d.counts.measured} measured · ${d.counts.measured_partial} visible part only · ${d.counts.not_measured} not measured${d.counts.not_applicable ? ` · ${d.counts.not_applicable} drop wires` : ""} · ${d.counts.assessed} assessed for severity.</p>
-    ${reasons.length ? `<p class="rx-diag-stage">Not measured: ${esc(reasons.map(([k, n]) => `${k.toLowerCase()} (${n})`).join(", "))}.</p>` : ""}
-    <div class="rx-diag-cols">
-      ${d.observations.length ? `<div><h3>Observed in the image</h3>${li(d.observations)}</div>` : ""}
-      ${d.unavailable.length ? `<div><h3>Not available from one photo</h3>${li(d.unavailable)}</div>` : ""}
-      ${d.needed.length ? `<div><h3>What would complete the assessment</h3>${li(d.needed)}</div>` : ""}
-    </div></section>`;
+// S12: coverage and assessment are separate facts with separate badges (wire_states on the server)
+const COVER = { full_span: "Full Span", edge_clipped: "Edge Clipped", unmeasured: "Unmeasured", drop: "Drop Wire" };
+function coverageOf(w) {
+  if (w.status === "service_drop") return "drop";
+  return w.states?.coverage || (isMeasured(w) ? (w.reason_code === "endpoint_unavailable" ? "edge_clipped" : "full_span") : "unmeasured");
+}
+const withinRes = (w) => w.states ? !!w.states.within_resolution
+  : isMeasured(w) && !!w.sag_ratio_resolution && w.sag_ratio < w.sag_ratio_resolution;
+/** The assessment status, in one phrase: never "safe", and never a severity unless one was assessed. */
+function assessmentOf(w) {
+  if (w.status === "scored" && w.level) return { k: "assessed", t: `Assessed: ${BAND[w.level]}` };
+  if (w.status === "service_drop") return { k: "na", t: "Not Checked (Drop Wire)" };
+  if (!isMeasured(w)) return { k: "un", t: "Unassessed (Not Measured)" };
+  if (w.comparison?.position) return { k: "un", t: "Unassessed (Provisional Comparison Only)" };
+  return { k: "un", t: "Unassessed (No Validated Reference)" };
+}
+const chordPx = (w) => { const e = w.fit?.endpoints; return e ? Math.hypot(e[1][0] - e[0][0], e[1][1] - e[0][1]) : null; };
+const pill = (cls, text, title = "") => `<span class="rx-pill ${cls}"${title ? ` title="${esc(title)}"` : ""}>${esc(text)}</span>`;
+const covPill = (w) => pill(`cov ${coverageOf(w)}`, COVER[coverageOf(w)]);
+/** The inventory's Status cell: assessment, then the reference fact, then "within resolution" (text, not colour alone). */
+function statusPills(w) {
+  const a = assessmentOf(w), out = [pill(`as ${a.k}`, a.k === "assessed" ? a.t : a.k === "na" ? "Not Checked" : "Unassessed")];
+  if (w.comparison?.position) out.push(`<span class="rx-zone ${w.comparison.position} sm"><i aria-hidden="true">${ZONE_MARK[w.comparison.position]}</i>${ZONE[w.comparison.position]}</span>`);
+  else if (isMeasured(w) && w.status !== "scored") out.push(pill("ref", "Reference Unavailable", refWhy(w)));
+  if (withinRes(w)) out.push(pill("res", "Within Resolution", "Straight to within the 1 pixel resolution: no sag is resolvable at this image scale. This is not evidence that the wire is safe."));
+  return out.join("");
 }
 
-function wireCard(w) {
-  if (!w) return `<p class="rx-pick">Select a numbered wire on the photo or in the list to see its measurement.</p>`;
-  const g = group(w);
-  const scored = w.status === "scored" && w.sag_ratio != null;
-  const dg = w.diagnosis;
-  const lim = scored && w.delta_lim ? w.delta_lim : null;
-  const diff = lim != null ? (w.sag_ratio - lim) * 100 : null;
-  const max = lim != null ? Math.max(w.sag_ratio, lim) * 1.35 : 1;
-  return `<header class="rx-wire-head"><span class="rx-id" style="--wc:${wireColor(w)}">${w.index}</span>
-      <div><b>${esc(classLabel(w))}</b><span class="rx-sev ${g}">${esc(bandOf(w))}</span><span class="rx-span">Span ${spanId(w.index)}</span></div></header>
-    <p class="rx-obs">${esc(observation(w))}</p>
-    ${scored ? `<dl class="rx-meas">
-        <div><dt>This wire's sag</dt><dd>${pp(w.sag_ratio)}</dd></div>
-        ${lim != null ? `<div><dt>Reference limit</dt><dd>${pp(lim)}</dd></div>
-        <div><dt>Difference</dt><dd class="${diff > 0 ? "over" : ""}">${diff > 0 ? "+" : diff < 0 ? "−" : ""}${Math.abs(diff).toFixed(1)} percentage points</dd></div>` : ""}
-      </dl>
-      ${lim != null ? `${meter(w, g)}
-        <p class="rx-note">Sag is how far the wire hangs below the straight line between its ends, as a share of that length. The reference is the sag configured for this wire type in WIREFRAME; it has not been calibrated against local field measurements.</p>` : ""}`
-      : ""}
-    ${!scored && isMeasured(w) ? `<dl class="rx-meas"><div><dt>Image sag ratio${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""}</dt><dd>${measuredText(w)}</dd></div>
-        ${w.comparison?.position ? `<div><dt>Reference</dt><dd>${pp(w.comparison.reference)} <small>(${esc(w.comparison.status)}, power lines)</small></dd></div>
-        <div><dt>Difference</dt><dd class="${w.comparison.position === "above" ? "over" : ""}">${w.comparison.difference_pp > 0 ? "+" : w.comparison.difference_pp < 0 ? "−" : ""}${Math.abs(w.comparison.difference_pp).toFixed(1)} percentage points</dd></div>`
-          : `<div><dt>Reference</dt><dd class="none">Not applicable</dd></div>
-        <div><dt>Difference</dt><dd class="none">Not available</dd></div>`}</dl>
-      ${w.comparison?.position ? meterRef(w) : meterType(w)}
-      ${dg ? "" : `<p class="rx-note">Measured in image pixels: the largest distance from the traced wire to the straight line between its visible ends, divided by that line's length (± is the 1 pixel resolution). It is not physical sag and is not compared with any limit, because no validated sag reference exists for this wire type.</p>`}` : ""}
-    ${!isMeasured(w) && w.status !== "service_drop" && w.status !== "scored" ? meterEmpty(w) : ""}
-    ${dg ? `<ul class="rx-diag-wire" aria-label="What the analysis found for this wire">${dg.lines.filter((l) => l.key !== "detection").map((l) => `<li data-k="${esc(l.key)}">${esc(l.text)}.</li>`).join("")}</ul>
-      ${dg.needed.length ? `<p class="rx-note"><b>To complete the assessment:</b> ${esc(dg.needed.join(". "))}.</p>` : ""}` : ""}
-    ${w.class_status === "uncertain" ? `<p class="rx-note">The photo does not show clearly whether this is a power line or a telecommunications cable, so no type is claimed.</p>` : ""}`;
+/** Measurement details (folded): how this wire's number was produced, from the stored trace and fit only. */
+function measureDetails(w) {
+  const p = w.provenance, ch = chordPx(w), res = w.sag_ratio_resolution, part = w.reason_code === "endpoint_unavailable";
+  const share = p?.centerline_inferred_share; // share of the centreline LENGTH, as in the fit diagnostics line
+  const gaps = p?.inferred_segments?.length || 0;
+  const L = Object.fromEntries((w.diagnosis?.lines || []).map((l) => [l.key, l.text]));
+  const na = `<span class="muted">Not available</span>`;
+  const rows = isMeasured(w) ? [
+    ["Traced fraction", share != null ? `${Math.round((1 - share) * 100)}% of the centreline length follows the wire mask` : na],
+    ["Interpolation", share != null ? (share > 0 ? `${Math.round(share * 100)}% of the length bridged across ${gaps} gap${gaps === 1 ? "" : "s"} in the mask` : "None: traced without gaps") : na],
+    ["Chord", ch ? `${Math.round(ch)} px between the ${part ? "visible ends (the span runs off the photo)" : "traced ends"}` : na],
+    ["Sag calculation", "Largest perpendicular distance from the fitted curve to the chord, divided by the chord length, both in image pixels"],
+    ["Uncertainty", res ? `±${(res * 100).toFixed(2)} percentage points (1 px over the chord)${withinRes(w) ? "; the ratio is smaller, so no sag is resolvable" : ""}` : na],
+    ["Pixel resolution", ch ? `1 px = ${(100 / ch).toFixed(3)}% of the chord` : na],
+    ["Fit diagnostics", L.measurement || L.trace ? esc([L.trace, L.measurement].filter(Boolean).join(". ")) + "." : na],
+  ] : [["Reason", esc(plainFinding(w))], ...(L.trace ? [["Trace", esc(L.trace) + "."]] : [])];
+  return `<details class="rx-md"><summary>Measurement details</summary><dl>${rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+    ${w.diagnosis?.needed?.length ? `<p class="rx-note"><b>To complete the assessment:</b> ${esc(w.diagnosis.needed.join(". "))}.</p>` : ""}</details>`;
 }
+
+/** The selected-wire inspector. Rows with nothing to say are left out; a wire with no applicable reference gets one
+ * status with its type-specific reason instead of empty Reference / Difference rows. */
+function wireCard(w, pc) {
+  if (!w) return `<p class="rx-pick">Select a numbered wire on the photo or in the inventory to see its measurement.</p>`;
+  const g = group(w), a = assessmentOf(w), c = w.comparison;
+  const scored = w.status === "scored" && w.sag_ratio != null && w.delta_lim != null;
+  const ch = chordPx(w);
+  const row = (k, v, cls = "") => `<div><dt>${k}</dt><dd class="${cls}">${v}</dd></div>`;
+  const signed = (d) => `${d > 0 ? "+" : d < 0 ? "−" : ""}${Math.abs(d).toFixed(1)} pp`;
+  return `<header class="rx-wire-head"><span class="rx-id" style="--wc:${wireColor(w, "class")}">${w.index}</span>
+      <div><b>${esc(classLabel(w))}</b><span class="rx-span">${spanId(w.index)}</span></div></header>
+    <p class="rx-pills">${covPill(w)}${withinRes(w) ? pill("res", "Within Resolution") : ""}</p>
+    <dl class="rx-meas">
+      ${isMeasured(w) ? row(`Image sag ratio${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""}`, measuredText(w)) : ""}
+      ${ch ? row("Chord", `${Math.round(ch)} px`) : ""}
+      ${scored ? row("Reference limit", pp(w.delta_lim)) + row("Difference", signed((w.sag_ratio - w.delta_lim) * 100), w.sag_ratio > w.delta_lim ? "over" : "") : ""}
+      ${!scored && c?.position ? row("Reference", `${pp(c.reference)} <small>(${esc(c.status)})</small>`) + row("Difference", signed(c.difference_pp), c.position === "above" ? "over" : "") : ""}
+      ${row("Assessment status", esc(a.t), "txt")}
+    </dl>
+    ${scored ? meter(w, g) : isMeasured(w) ? (c?.position ? meterRef(w, pc) : meterType(w, pc)) : w.status === "service_drop" ? "" : meterEmpty()}
+    ${measureDetails(w)}`;
+}
+
+/** S12: the browse filter "Notable sag". The approved UI defines it at 2 % of the chord; it narrows the list only and is
+ * not an engineering threshold (no wire gets a condition from it). */
+const BROWSE_SAG = 0.02;
+const FILTERS = {
+  notable: { t: `Notable Sag > ${BROWSE_SAG * 100}%`, title: `Browsing filter only: image sag ratio above ${BROWSE_SAG * 100}%. Not an engineering threshold.`, f: (w) => isMeasured(w) && w.sag_ratio > BROWSE_SAG },
+  full: { t: "Full Span Only", f: (w) => coverageOf(w) === "full_span", not: "clipped" },
+  clipped: { t: "Clipped at Edge", f: (w) => coverageOf(w) === "edge_clipped", not: "full" },
+};
 
 function renderResult(r) {
   const h = headline(r);
+  const pc = r.comparison;
   const loc = r.pole.location;
   const insp = r.inspection || {};
   const place = [insp.barangay, insp.city].filter(Boolean).join(", ");
   const when = new Date(r.created_at);
   const groups = { high: [], medium: [], low: [], none: [] };
   r.wires.forEach((w) => groups[group(w)].push(w));
-  for (const k of Object.keys(groups)) groups[k].sort((a, b) => (b.sag_ratio ?? -1) - (a.sag_ratio ?? -1) || a.index - b.index);
-  const attention = [...groups.high, ...groups.medium];
+  const attention = [...groups.high, ...groups.medium].sort((a, b) => (b.sag_ratio ?? -1) - (a.sag_ratio ?? -1));
   const assessed = r.wires.filter((w) => w.status === "scored").length;
-  const notAssessed = r.wires.filter((w) => w.status !== "scored").length;
-  // S5: with no assessed span (no validated reference), the measured wires are the diagnostic focus: drawn with their
-  // fitted curve, chord and sag point, listed by image-derived sag ratio (a measurement, never a severity)
+  // S5: with no assessed span the measured wires are the focus, drawn with their fitted curve, chord and sag point
   const measuredWs = r.wires.filter(isMeasured).sort((a, b) => b.sag_ratio - a.sag_ratio || a.index - b.index);
-  const unmeasured = r.wires.filter((w) => !isMeasured(w));
+  const unmeasured = r.wires.filter((w) => !isMeasured(w)).sort((a, b) => a.index - b.index);
   const diagMode = !assessed && measuredWs.length > 0;
   const focus = attention.length ? attention : diagMode ? measuredWs : [];
-  // a retake helps only wires that were not measured or only partly measured, never a missing reference
-  const fixable = r.wires.filter((w) => (!isMeasured(w) && w.status !== "service_drop") || w.reason_code === "endpoint_unavailable").length;
   const dc = r.diagnosis?.counts;
-  photoScale = Math.max(0, ...measuredWs.map((w) => w.sag_ratio + (w.sag_ratio_resolution || 0))) * 1.3; // S7: one meter scale per photo
   const hasMask = !!r.wire_mask, hasVeg = (r.vegetation || []).length > 0;
   const lims = limitations(r);
   const limKeys = new Set(lims.map((l) => l.key));
@@ -550,11 +600,15 @@ function renderResult(r) {
     ["edge", "Wires extending beyond the photograph may not be fully measurable."],
     ["small", "Distant or obscured wires may not have sufficient visual detail."],
   ].filter(([k]) => limKeys.has(k) || (k === "small" && (limKeys.has("other") || limKeys.has("quality") || limKeys.has("estimated"))));
-  const row = (w) => `<li data-wire="${w.index}" tabindex="0" aria-selected="false" role="option">
-      <span class="rx-id" style="--wc:${wireColor(w, diagMode ? "class" : "risk")}">${w.index}</span>
-      <span class="rx-row"><span class="rx-line"><span class="rx-type">${esc(classLabel(w, true))}</span><span class="rx-sev ${group(w)}">${esc(bandOf(w))}</span></span>
-        <span class="rx-find">${esc(plainFinding(w))}</span></span></li>`;
-  const list = (ws, empty) => ws.length ? `<ul class="rx-list" role="listbox" aria-label="Wires">${ws.map(row).join("")}</ul>` : `<p class="rx-empty">${empty}</p>`;
+  const clipped = dc ? dc.measured_partial : r.wires.filter((w) => w.reason_code === "endpoint_unavailable").length;
+  const notMeas = dc ? dc.not_measured : unmeasured.filter((w) => w.status !== "service_drop").length;
+  const kpi = dc ? [["Measured", dc.measured, "full span"], ["Visible Part Only", dc.measured_partial, "clipped at the edge"],
+    ["Not Measured", dc.not_measured, dc.not_applicable ? `+ ${dc.not_applicable} drop wire${dc.not_applicable === 1 ? "" : "s"}` : "no ratio"], ["Assessed", dc.assessed, "for severity"]]
+    : [["Measured", measuredWs.length, "image ratio"], ["Not Measured", unmeasured.length, "no ratio"], ["Assessed", assessed, "for severity"]];
+  const bannerKey = `wf-banner-${r.id}`;
+  let bannerHidden = false;
+  try { bannerHidden = sessionStorage.getItem(bannerKey) === "1"; } catch { /* storage unavailable: show it */ }
+  const pdfHref = `/api/reports/${r.id}/pdf`;
 
   stages.result.innerHTML = `
     <div class="rx">
@@ -562,39 +616,43 @@ function renderResult(r) {
       <div><h1>${esc(insp.name || "Pole inspection")}</h1>
         <p>${[place, `${when.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}, ${when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`].filter(Boolean).map(esc).join(" · ")}</p></div>
       <div class="rx-actions">
-        ${r.status !== "error" ? `<a class="btn lg" href="/api/reports/${r.id}/pdf" target="_blank" rel="noopener" id="pdf">${ICON.pdf}Download PDF report</a>` : ""}
-        <button class="btn primary lg" id="again" type="button">${ICON.plus}New inspection</button>
+        ${r.status !== "error" ? `<a class="btn lg" href="${pdfHref}" target="_blank" rel="noopener" id="pdf">${ICON.pdf}Download PDF Report</a>` : ""}
+        <button class="btn primary lg" id="again" type="button">${ICON.plus}New Inspection</button>
       </div>
     </header>
-    <p class="rx-phototip"><b>Photography tip:</b> stand where both supporting poles and the full span of wire are visible, with the wires against open sky.</p>
     ${guardBanner(r)}
-    ${r.wires.length && fixable / r.wires.length > 0.5 ? `<div class="rx-retake" role="status"><b>More than half of the detected wires (${fixable} of ${r.wires.length}) could not be measured completely from this photo.</b> Retake the photo from a few steps along the street so the wires separate, with both poles in the frame.</div>` : ""}
+    ${bannerHidden ? "" : `<div class="rx-banner${clipped + notMeas ? " warn" : ""}" id="rx-banner" role="status">
+      <p>${clipped + notMeas ? `<b>${[clipped && `${clipped} of ${r.wires.length} wires run off the photo edge, so only their visible part is measured`, notMeas && `${notMeas} could not be measured`].filter(Boolean).join("; ")}.</b> ` : ""}<b>Tip:</b> stand where both supporting poles and the full span are in the frame, with the wires against open sky.</p>
+      <button type="button" class="rx-x" id="banner-x" aria-label="Dismiss this tip">×</button></div>`}
 
     <section class="rx-summary ${h.cls}" aria-labelledby="rx-title">
       <h2 id="rx-title">${esc(h.title)}</h2>
-      ${h.lines.map((l) => `<p>${esc(l)}</p>`).join("")}
-      <dl class="rx-counts">
-        ${(assessed ? [["high", SEVERITY.high, groups.high.length], ["medium", SEVERITY.medium, groups.medium.length], ["low", SEVERITY.low, groups.low.length], ["none", SEVERITY.none, groups.none.length]]
-          // S4: no validated reference, so no severity counts; the measurements and the not-assessed total only
-          : dc ? [["none", "Measured", dc.measured], ["none", "Visible part only", dc.measured_partial], ["none", "Not measured", dc.not_measured], ["none", "Assessed", dc.assessed]]
-          : [["none", "Sag ratio measured", r.wires.filter((w) => w.sag_ratio != null).length], ["none", SEVERITY.none, groups.none.length]])
-          .map(([k, t, n]) => `<div class="${k}"><dt>${t}</dt><dd>${n}</dd></div>`).join("")}
-      </dl>
-      ${r.wires.length ? `<p class="rx-coverage">${r.wires.length} ${r.wires.length === 1 ? "wire" : "wires"} detected · ${assessed} assessed · ${notAssessed} not assessed${statusLine(r) ? ` · ${esc(statusLine(r))}` : ""}</p>` : ""}
+      ${(assessed ? h.lines : r.summary_lines || []).map((l) => `<p>${esc(l)}</p>`).join("")}
+      <dl class="rx-kpi" style="--n:${kpi.length}">${kpi.map(([t, v, s]) => `<div><dt>${t}</dt><dd class="n">${v}</dd><dd class="sub">${esc(s)}</dd></div>`).join("")}</dl>
       ${cmpLine(r)}
     </section>
 
+    <ol class="rx-do" aria-label="What to do">
+      <li><span class="rx-do-n">1</span><div><b>Keep Distance</b><p>Never touch, pull or move a low wire. Treat every conductor as energised.</p></div></li>
+      <li><span class="rx-do-n">2</span><div><b>Download / Share Report</b><p>For the barangay office, the electric utility or the telecom provider.</p></div>
+        <span class="rx-do-acts">${r.status !== "error" ? `<a class="btn sm" href="${pdfHref}" target="_blank" rel="noopener" aria-label="Download the PDF report">PDF</a>` : ""}<button class="btn sm" type="button" id="share">Share</button></span></li>
+      <li><span class="rx-do-n">3</span><div><b>Retake Photo (If Needed)</b><p>${clipped + notMeas ? `A new photo with both poles in frame could complete ${clipped + notMeas} wire${clipped + notMeas === 1 ? "" : "s"}.` : "Every detected wire was measured from this photo."} It cannot supply a sag reference.</p></div>
+        <span class="rx-do-acts"><button class="btn sm" type="button" id="retake">Retake</button></span></li>
+    </ol>
+
     <div class="rx-work">
+      <div class="rx-main">
       <section class="rx-photo" aria-label="Photo">
         <div class="rx-bar" role="toolbar" aria-label="Photo view">
           <div class="rx-seg" role="radiogroup" aria-label="Show">
-            <button type="button" role="radio" data-view="problem" aria-checked="true">${diagMode ? "Measured wires" : "Problem wires"}</button>
-            <button type="button" role="radio" data-view="photo" aria-checked="false">Original photo</button>
-            <button type="button" role="radio" data-view="all" aria-checked="false">All traced wires</button>
+            <button type="button" role="radio" data-view="problem" aria-checked="true">${diagMode ? "Measured" : "Flagged"}</button>
+            <button type="button" role="radio" data-view="all" aria-checked="false">All wires</button>
+            <button type="button" role="radio" data-view="photo" aria-checked="false">Original</button>
             <button type="button" role="radio" data-view="mask" aria-checked="false" ${hasMask ? "" : "disabled title=\"No model mask for this inspection\""}>Mask</button>
+            <button type="button" role="radio" data-view="both" aria-checked="false" ${hasMask ? "" : "disabled title=\"No model mask for this inspection\""}>Both</button>
           </div>
           <span class="fx-spacer"></span>
-          <div class="rx-menu"><button class="btn" type="button" id="opts-btn" aria-expanded="false" aria-controls="opts">View options</button>
+          <div class="rx-menu"><button class="btn sm" type="button" id="opts-btn" aria-expanded="false" aria-controls="opts">Layers</button>
             <div class="rx-pop" id="opts" hidden>
               <label class="rx-op"><span>Overlay opacity</span><input type="range" id="opacity" min="0" max="100" value="100"><output>100%</output></label>
               <label><input type="checkbox" id="veg" ${hasVeg ? "" : "disabled"}> Vegetation${hasVeg ? "" : " (none found)"}</label>
@@ -602,78 +660,68 @@ function renderResult(r) {
               <label><input type="checkbox" id="lyr-labels" checked> Wire numbers</label>
               <label><input type="checkbox" id="lyr-poles"> Utility poles (approximate)</label>
             </div></div>
-          <span class="rx-zoom"><button class="btn icon" type="button" data-zoom="out" aria-label="Zoom out">${ICON.zout}</button>
-            <button class="btn icon" type="button" data-zoom="in" aria-label="Zoom in">${ICON.zin}</button>
-            <button class="btn" type="button" data-zoom="fit">${ICON.fit}Fit</button></span>
+          <span class="rx-zoom"><button class="btn icon sm" type="button" data-zoom="out" aria-label="Zoom out">${ICON.zout}</button>
+            <output id="zoom-pct" class="n" aria-live="off">100%</output>
+            <button class="btn icon sm" type="button" data-zoom="in" aria-label="Zoom in">${ICON.zin}</button>
+            <button class="btn sm" type="button" data-zoom="fit">${ICON.fit}Fit</button>
+            <button class="btn sm" type="button" data-zoom="reset" title="Back to the default view, layers and zoom">Reset</button></span>
+          ${diagMode ? `<p class="rx-legend"><span><i style="background:var(--cls-power)"></i>Power</span><span><i style="background:var(--cls-telecom)"></i>Telecom / fibre</span><span><i style="background:var(--cls-dead)"></i>Abandoned</span><span><i style="background:var(--cls-unknown)"></i>Type uncertain</span><span><i class="chord"></i>Chord</span><span><i class="dot"></i>Largest sag</span><span class="rx-legend-note">Colour shows wire type, not severity.</span></p>`
+            : `<p class="rx-legend"><span><i class="high"></i>${SEVERITY.high}</span><span><i class="medium"></i>${SEVERITY.medium}</span><span class="all-only"><i class="low"></i>${SEVERITY.low}</span><span class="all-only"><i class="none"></i>${SEVERITY.none}</span></p>`}
         </div>
         <div class="fx-canvas rx-canvas" style="--ar:${r.image.width} / ${r.image.height}"><div class="canvas-wrap" id="fs-canvas"></div></div>
-        ${focus.length ? `<div class="rx-callouts" aria-label="${diagMode ? "Measured wires" : "Flagged wires"}">${focus.slice(0, 12).map((w) => `<button type="button" data-goto="${w.index}" class="rx-call ${diagMode ? "measured" : group(w)}"><span${diagMode ? ` style="background:${wireColor(w, "class")}"` : ""}>${w.index}</span>${esc(classLabel(w, true))} · ${pp(w.sag_ratio)}${diagMode ? " (image)" : ""}</button>`).join("")}</div>` : ""}
-        ${diagMode ? `<p class="rx-legend"><span><i style="background:var(--cls-power)"></i>Power line</span><span><i style="background:var(--cls-telecom)"></i>Telecom / fibre</span><span><i style="background:var(--cls-dead)"></i>Abandoned</span><span><i style="background:var(--cls-unknown)"></i>Type uncertain</span><span class="rx-legend-note">Dashed line: chord between the visible ends · dot: largest sag. Colour shows wire type, not severity.</span></p>`
-          : `<p class="rx-legend"><span><i class="high"></i>${SEVERITY.high}</span><span><i class="medium"></i>${SEVERITY.medium}</span><span class="all-only"><i class="low"></i>${SEVERITY.low}</span><span class="all-only"><i class="none"></i>${SEVERITY.none}</span></p>`}
       </section>
 
-      <aside class="rx-side">
-        <section class="rx-wire" id="span-detail" aria-live="polite">${wireCard(focus[0] || null)}</section>
-        <section class="rx-wires" aria-labelledby="rx-wl">
-          <h2 id="rx-wl">Wires</h2>
-          ${diagMode ? `<div class="rx-tabs" role="tablist">
-            <button role="tab" data-tab="att" aria-selected="true">Measured <b>${measuredWs.length}</b></button>
-            <button role="tab" data-tab="ok" aria-selected="false">Not measured <b>${unmeasured.length}</b></button>
-          </div>
-          <div data-panel="att"><p class="rx-split">Sorted by image-derived sag ratio. A ratio is a measurement in the photo, not a severity. They have not passed any check.</p>${list(measuredWs, "")}</div>
-          <div data-panel="ok" hidden>${unmeasured.length ? `<p class="rx-split">${esc(skipSummary(unmeasured))}</p>` : ""}${list(unmeasured, "Every detected wire was measured.")}</div>`
-          : `<div class="rx-tabs" role="tablist">
-            <button role="tab" data-tab="att" aria-selected="true">Flagged <b>${attention.length}</b></button>
-            <button role="tab" data-tab="ok" aria-selected="false">${SEVERITY.low} <b>${groups.low.length}</b></button>
-          </div>
-          <div data-panel="att">${attention.length ? `<p class="rx-split">${groups.high.length} ${SEVERITY.high.toLowerCase()} · ${groups.medium.length} ${SEVERITY.medium.toLowerCase()}</p>` : ""}${list(attention, "No wire in this photo was flagged.")}</div>
-          <div data-panel="ok" hidden>${list(groups.low, "No wire was measured within the reference.")}</div>
-          ${groups.none.length ? `<details class="rx-skipped"><summary><b>${groups.none.length} ${groups.none.length === 1 ? "wire" : "wires"} not assessed</b>: ${esc(skipSummary(groups.none))}</summary>
-            <p class="rx-skip-note">These wires were not assessed. They have not passed any check. Where a sag ratio is shown, it is an image measurement only.</p>
-            ${list(groups.none, "")}</details>` : ""}`}
-        </section>
-      </aside>
-    </div>
-
-    <div class="rx-guide">
-      <section class="rx-steps" aria-labelledby="rx-do"><h2 id="rx-do">What to do</h2>
-        <ol>
-          <li><b>Keep your distance</b><p>Never touch, pull, move or try to repair low-hanging wires. Telecommunications cables may be near energized electrical conductors.</p></li>
-          <li><b>Report the findings</b><p>Download the PDF report and share it with your barangay office, the electric utility or the telecommunications provider.</p></li>
-          <li><b>Arrange field verification</b><p>If another photograph is needed, capture both poles and the full visible span from a safe location.</p></li>
-        </ol></section>
-      <section class="rx-limits" aria-labelledby="rx-lim"><h2 id="rx-lim">Photo limitations</h2>
-        ${LIMS.length ? `<ul>${LIMS.map(([, t]) => `<li>${t}</li>`).join("")}</ul>` : `<p>${assessed === r.wires.length ? "None found: every detected wire could be assessed." : "None found: every detected wire was measured."}</p>`}
+      <section class="rx-wires" id="inventory" aria-labelledby="rx-wl">
+        <header class="rx-inv-head"><h2 id="rx-wl">Wire inventory</h2>
+          <div class="rx-tabs" role="tablist">
+            <button role="tab" data-tab="m" aria-selected="true">Measured <b>${measuredWs.length}</b></button>
+            <button role="tab" data-tab="u" aria-selected="false">Not measured <b>${unmeasured.length}</b></button>
+          </div></header>
+        <div class="rx-filters">
+          <div class="rx-chips" role="group" aria-label="Quick filters"><button type="button" data-chip="all" aria-pressed="true">All <b></b></button>${Object.entries(FILTERS).map(([k, f]) => `<button type="button" data-chip="${k}" aria-pressed="false"${f.title ? ` title="${esc(f.title)}"` : ""}>${f.t} <b></b></button>`).join("")}</div>
+          <input type="search" id="inv-q" placeholder="Search wire ID, type or status" aria-label="Search wires">
+          <button type="button" class="btn sm" id="inv-clear" hidden>Clear filters</button>
+        </div>
+        <p class="rx-inv-hint" id="inv-hint" hidden></p>
+        <div class="rx-inv-scroll" id="inv-scroll"><table class="rx-inv">
+          <thead><tr><th scope="col">Wire ID</th><th scope="col">Type</th><th scope="col">Coverage</th><th scope="col" class="r">Image Sag Ratio</th><th scope="col">Status</th></tr></thead>
+          <tbody id="inv-main"></tbody>
+          <tbody id="inv-grp" class="rx-inv-grp"></tbody>
+          <tbody id="inv-flat" hidden></tbody>
+        </table></div>
       </section>
-    </div>
-    ${diagHtml(r)}
+      </div>
 
-    <section class="rx-notice" aria-label="Important Notice">
-      <p class="rx-notice-short">Automated screening: results can be wrong or incomplete. Have them verified by a qualified professional.</p>
-      <wf-notice variant="full"></wf-notice>
-    </section>
+      <aside class="rx-side"><section class="rx-wire" id="span-detail" aria-live="polite">${wireCard(focus[0] || null, pc)}</section></aside>
+    </div>
+
     ${loc ? `<section class="rx-loc" aria-labelledby="rx-loc-h"><div class="rx-loc-info"><h2 id="rx-loc-h">Inspection location</h2>
         <dl><div><dt>Latitude</dt><dd class="mono">${loc.lat.toFixed(6)}</dd></div><div><dt>Longitude</dt><dd class="mono">${loc.lon.toFixed(6)}</dd></div>
           ${insp.barangay ? `<div><dt>Barangay</dt><dd>${esc(insp.barangay)}</dd></div>` : ""}
           <div><dt>Street</dt><dd id="rx-street" class="muted">Looking up…</dd></div></dl>
         <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${loc.lat.toFixed(6)},${loc.lon.toFixed(6)}" target="_blank" rel="noopener">Open in Google Maps</a></div>
       <div class="fx-map"><div id="fs-map" role="region" aria-label="Location of this inspection"></div></div></section>` : ""}
+
+    ${methodology(r, pc, LIMS)}
     ${r.reviews?.length ? `<p class="fx-muted">Reviewed by ${esc(r.reviews.at(-1).by)}</p>` : ""}
     </div>`;
 
   const root = stages.result;
   const detail = root.querySelector("#span-detail");
   const VIEWS = {
-    problem: { masks: 1, catenary: 0, sag: 1, labels: 1, inferred: 1, ends: 0, wiremask: 0 },
+    problem: { masks: 1, sag: 1, labels: 1, inferred: 1 },
+    all: { masks: 1, sag: 1, labels: 1, inferred: 1 },
     photo: {},
-    all: { masks: 1, catenary: 0, sag: 1, labels: 1, inferred: 1, ends: 0, wiremask: 0 },
     mask: { wiremask: 1 }, // the model's wire mask on its own (every pixel marked as wire)
+    both: { masks: 1, sag: 1, labels: 1, inferred: 1, wiremask: 1 },
   };
-  let view = "problem";
+  let view = "problem", selected = focus[0]?.index ?? null;
 
   viewer?.destroy();
-  viewer = new OverlayViewer($("#fs-canvas"), { onSelect: (i) => mark(i, true) });
+  viewer = new OverlayViewer($("#fs-canvas"), { onSelect: (i) => select(i, "photo") });
   window.wfViewer = viewer; // read-only handle for automated UI checks (scripts/e2e_check.py)
+  const zoomOut = root.querySelector("#zoom-pct");
+  $("#fs-canvas").addEventListener("zoom", () => { zoomOut.textContent = `${viewer.zoomPct}%`; });
   const applyView = (name) => {
     view = name;
     root.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.view === name)));
@@ -692,38 +740,111 @@ function renderResult(r) {
     viewer.layers.vegetation = false;
     if (diagMode) viewer.setMode("class"); // S5: colour by wire type; no severity exists to colour by
     applyView("problem");
-    if (focus[0]) { viewer.selected = focus[0].index; viewer.draw(); mark(focus[0].index, false); }
+    if (selected != null) { viewer.selected = selected; viewer.draw(); }
+    zoomOut.textContent = `${viewer.zoomPct}%`;
   }).catch(() => toast.error("Photo could not be displayed"));
 
-  const mark = (i, scroll) => {
-    root.querySelectorAll("li[data-wire]").forEach((li) => {
-      const on = Number(li.dataset.wire) === i;
-      li.setAttribute("aria-selected", String(on));
-      if (on && scroll && li.offsetParent) li.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    });
-    detail.innerHTML = wireCard(i == null ? null : r.wires.find((w) => w.index === i));
-  };
-  const select = (i) => {
-    const w = r.wires.find((x) => x.index === i);
-    if (w && view === "problem" && !focus.includes(w)) applyView("all"); // a wire the current view hides: show all
-    viewer.select(i); mark(i, true);
-  };
-  root.addEventListener("click", (e) => {
-    const li = e.target.closest("li[data-wire]"); if (li) select(Number(li.dataset.wire));
-    const go = e.target.closest("[data-goto]"); if (go) { select(Number(go.dataset.goto)); root.querySelector(".rx-photo").scrollIntoView({ block: "nearest", behavior: "smooth" }); }
-    const v = e.target.closest("[data-view]"); if (v && !v.disabled) applyView(v.dataset.view);
-    const t = e.target.closest("[data-tab]");
-    if (t) {
-      root.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
-      root.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== t.dataset.tab; });
+  // ---- inventory: tab + quick filters + search, combinable; the selection survives every filter change
+  const inv = { tab: "m", chips: new Set(), q: "", open: false };
+  const tabList = () => (inv.tab === "m" ? measuredWs : unmeasured);
+  const words = (w) => [String(w.index), spanId(w.index), classLabel(w, true), COVER[coverageOf(w)], assessmentOf(w).t,
+    w.comparison?.position ? ZONE[w.comparison.position] : isMeasured(w) && w.status !== "scored" ? "Reference Unavailable" : "",
+    withinRes(w) ? "Within Resolution" : "", isMeasured(w) ? "" : plainFinding(w)].join(" ").toLowerCase();
+  const hit = (w, chips = inv.chips) => (!inv.q || words(w).includes(inv.q)) && [...chips].every((k) => FILTERS[k].f(w));
+  const trow = (w) => `<tr data-wire="${w.index}" tabindex="0" aria-selected="${w.index === selected}">
+      <th scope="row"><span class="rx-id sm" style="--wc:${wireColor(w, "class")}">${w.index}</span><span class="rx-span">${spanId(w.index)}</span></th>
+      <td>${esc(classLabel(w, true))}</td><td>${covPill(w)}</td>
+      <td class="r n">${isMeasured(w) ? measuredText(w).replace(" (within resolution)", "") : `<span class="muted" title="Not measured: there is no value, not a zero">—</span>`}</td>
+      <td><span class="rx-st">${statusPills(w)}</span>${isMeasured(w) ? "" : `<small class="rx-st-why">${esc(plainFinding(w))}</small>`}</td></tr>`;
+  const renderInv = () => {
+    const all = tabList(), vis = all.filter((w) => hit(w));
+    const flat = inv.tab === "m" ? vis.filter(withinRes) : [];
+    const main = vis.filter((w) => !flat.includes(w));
+    const empty = (t) => `<tr class="rx-inv-empty"><td colspan="5">${t}</td></tr>`;
+    root.querySelector("#inv-main").innerHTML = main.length ? main.map(trow).join("")
+      : empty(!all.length ? (inv.tab === "m" ? "No wire was measured in this photo." : "Every detected wire was measured.") : flat.length ? "Every matching wire is straight within the resolution (below)." : "No wire matches these filters.");
+    root.querySelector("#inv-grp").innerHTML = flat.length ? `<tr><td colspan="5"><button type="button" id="grp-btn" aria-expanded="${inv.open}" aria-controls="inv-flat">${inv.open ? "Hide" : "Show"} ${flat.length} wire${flat.length === 1 ? "" : "s"} with no resolvable sag</button>
+      <small>Straight to within the 1 pixel resolution at this image scale. This is not evidence that ${flat.length === 1 ? "the wire is" : "these wires are"} safe.</small></td></tr>` : "";
+    const fl = root.querySelector("#inv-flat");
+    fl.innerHTML = flat.map(trow).join(""); fl.hidden = !inv.open || !flat.length;
+    root.querySelector('[data-chip="all"] b').textContent = all.filter((w) => hit(w, new Set())).length;
+    for (const k of Object.keys(FILTERS)) {
+      const others = new Set([...inv.chips].filter((x) => x !== k && x !== FILTERS[k].not)); others.add(k);
+      root.querySelector(`[data-chip="${k}"] b`).textContent = all.filter((w) => hit(w, others)).length;
     }
+    root.querySelectorAll("[data-chip]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.chip === "all" ? !inv.chips.size : inv.chips.has(b.dataset.chip))));
+    root.querySelector("#inv-clear").hidden = !inv.chips.size && !inv.q;
+    hint();
+  };
+  // the selected wire stays selected when the filters hide it, and the inventory says so (with a way back)
+  const hint = () => {
+    const el = root.querySelector("#inv-hint");
+    const w = r.wires.find((x) => x.index === selected);
+    const shown = w && root.querySelector(`#inventory tr[data-wire="${selected}"]`);
+    const tabOk = w && (inv.tab === "m") === isMeasured(w);
+    el.hidden = !w || (shown && tabOk);
+    if (!el.hidden) el.innerHTML = `Selected wire ${w.index} (${spanId(w.index)}) is ${tabOk ? "hidden by the filters" : `in the ${isMeasured(w) ? "Measured" : "Not measured"} tab`}. <button type="button" class="linkish" id="inv-reveal">Show it</button>`;
+  };
+  const setTab = (t) => {
+    inv.tab = t;
+    root.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", String(x.dataset.tab === t)));
+    renderInv();
+  };
+  // controlled scrolling: only the inventory's own box scrolls, never the page
+  const reveal = (i, force) => {
+    const w = r.wires.find((x) => x.index === i); if (!w) return;
+    if (force) {
+      if ((inv.tab === "m") !== isMeasured(w)) setTab(isMeasured(w) ? "m" : "u");
+      if (!hit(w)) { inv.chips.clear(); inv.q = ""; root.querySelector("#inv-q").value = ""; }
+      if (withinRes(w) && !inv.open) inv.open = true;
+      renderInv();
+    }
+    const tr = root.querySelector(`#inventory tr[data-wire="${i}"]`), box = root.querySelector("#inv-scroll");
+    if (!tr || tr.offsetParent === null) return;
+    const top = tr.offsetTop - box.querySelector("thead").offsetHeight, bottom = tr.offsetTop + tr.offsetHeight;
+    if (top < box.scrollTop) box.scrollTop = top;
+    else if (bottom > box.scrollTop + box.clientHeight) box.scrollTop = bottom - box.clientHeight;
+  };
+  const mark = () => {
+    root.querySelectorAll("#inventory tr[data-wire]").forEach((tr) => tr.setAttribute("aria-selected", String(Number(tr.dataset.wire) === selected)));
+    detail.innerHTML = wireCard(selected == null ? null : r.wires.find((w) => w.index === selected), pc);
+    hint();
+  };
+  const select = (i, from) => {
+    selected = i;
+    const w = r.wires.find((x) => x.index === i);
+    if (from !== "photo" && w && view === "problem" && !focus.includes(w)) applyView("all"); // a wire the view hides: show all
+    if (from !== "photo") viewer.select(i); // centres the wire inside the canvas only
+    mark();
+    if (from === "photo" && i != null) reveal(i, true);
+  };
+  renderInv();
+
+  root.addEventListener("click", (e) => {
+    const tr = e.target.closest("#inventory tr[data-wire]"); if (tr) select(Number(tr.dataset.wire), "table");
+    const v = e.target.closest("[data-view]"); if (v && !v.disabled) applyView(v.dataset.view);
+    const t = e.target.closest("[data-tab]"); if (t) setTab(t.dataset.tab);
+    const c = e.target.closest("[data-chip]");
+    if (c) {
+      const k = c.dataset.chip;
+      if (k === "all") inv.chips.clear();
+      else if (inv.chips.has(k)) inv.chips.delete(k);
+      else { inv.chips.add(k); if (FILTERS[k].not) inv.chips.delete(FILTERS[k].not); }
+      renderInv();
+    }
+    if (e.target.closest("#grp-btn")) { inv.open = !inv.open; renderInv(); }
+    if (e.target.closest("#inv-clear")) { inv.chips.clear(); inv.q = ""; root.querySelector("#inv-q").value = ""; renderInv(); }
+    if (e.target.closest("#inv-reveal")) reveal(selected, true);
   });
+  root.querySelector("#inv-q").addEventListener("input", (e) => { inv.q = e.target.value.trim().toLowerCase(); renderInv(); });
   root.addEventListener("keydown", (e) => {
-    const li = e.target.closest("li[data-wire]"); if (!li) return;
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(Number(li.dataset.wire)); }
+    const tr = e.target.closest("#inventory tr[data-wire]"); if (!tr) return;
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(Number(tr.dataset.wire), "table"); }
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault(); const n = e.key === "ArrowDown" ? li.nextElementSibling : li.previousElementSibling;
-      if (n) { n.focus(); select(Number(n.dataset.wire)); }
+      e.preventDefault();
+      const rows = [...root.querySelectorAll("#inventory tr[data-wire]")].filter((x) => x.offsetParent !== null);
+      const n = rows[rows.indexOf(tr) + (e.key === "ArrowDown" ? 1 : -1)];
+      if (n) { n.focus({ preventScroll: true }); select(Number(n.dataset.wire), "table"); reveal(Number(n.dataset.wire), false); }
     }
   });
   // view options
@@ -731,12 +852,32 @@ function renderResult(r) {
   optsBtn.addEventListener("click", () => { const o = opts.hidden; opts.hidden = !o; optsBtn.setAttribute("aria-expanded", String(o)); });
   document.addEventListener("click", (e) => { if (!opts.hidden && !e.target.closest(".rx-menu")) { opts.hidden = true; optsBtn.setAttribute("aria-expanded", "false"); } });
   const op = $("#opacity");
-  op.addEventListener("input", () => { viewer.setOpacity(op.value / 100); op.nextElementSibling.textContent = `${op.value}%`; });
+  const setOpacity = (x) => { op.value = x; viewer.setOpacity(x / 100); op.nextElementSibling.textContent = `${x}%`; };
+  op.addEventListener("input", () => setOpacity(Number(op.value)));
   $("#veg").addEventListener("change", (e) => viewer.set("vegetation", e.target.checked));
   for (const id of ["lyr-mask", "lyr-labels", "lyr-poles"]) $(`#${id}`).addEventListener("change", () => applyView(view));
-  root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => ({ in: () => viewer.zoomIn(), out: () => viewer.zoomOut(), fit: () => viewer.reset() })[b.dataset.zoom]()));
+  root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => ({
+    in: () => viewer.zoomIn(), out: () => viewer.zoomOut(), fit: () => viewer.reset(),
+    reset: () => { // the default view, layers, opacity and zoom
+      $("#veg").checked = false; viewer.set("vegetation", false);
+      $("#lyr-mask").checked = false; $("#lyr-labels").checked = true; $("#lyr-poles").checked = false;
+      setOpacity(100); applyView("problem"); viewer.reset();
+    },
+  })[b.dataset.zoom]()));
 
   $("#again").addEventListener("click", reset);
+  $("#retake").addEventListener("click", () => startRetake(r));
+  $("#share").addEventListener("click", async () => {
+    const url = `${location.origin}/workspace/result/${r.id}`;
+    try {
+      if (navigator.share) await navigator.share({ title: insp.name || "Pole inspection", url });
+      else { await navigator.clipboard.writeText(url); toast.success("Link copied"); }
+    } catch { /* cancelled or blocked: nothing to do */ }
+  });
+  $("#banner-x")?.addEventListener("click", () => {
+    try { sessionStorage.setItem(bannerKey, "1"); } catch { /* storage unavailable: hide for this view only */ }
+    $("#rx-banner").remove();
+  });
   $("#guard-retake")?.addEventListener("click", async () => {
     try { await api(`/api/analysis/${r.id}/guardrail`, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "retake" }) }); } catch { /* never blocks */ }
@@ -760,6 +901,27 @@ function renderResult(r) {
         el.textContent = road ? `${road} (nearest street, OpenStreetMap)` : "Not available";
       }).catch(() => { const el = $("#rx-street"); if (el) el.textContent = "Not available"; });
   }
+}
+
+/** S12: every disclaimer and method note in one folded section at the bottom of the page. */
+function methodology(r, pc, LIMS) {
+  const d = r.diagnosis;
+  const topics = (r.methodology || []).map((t) => [t.title, t.text]); // app/services/methodology.py, as in the PDF
+  const li = (xs) => `<ul>${xs.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>`;
+  return `<details class="rx-method" id="methodology"><summary><span>Methodology &amp; Limitations</span><small>How the numbers are produced, the reference used and what one photo cannot show</small></summary>
+    <div class="rx-method-body">
+      <div class="rx-method-grid">${topics.map(([t, p]) => `<section${p.length > 400 ? ' class="wide"' : ""}><h3>${esc(t)}</h3><p>${esc(p)}</p></section>`).join("")}</div>
+      ${LIMS.length ? `<section class="rx-method-sec"><h3>This photo</h3><ul>${LIMS.map(([, t]) => `<li>${t}</li>`).join("")}</ul></section>` : ""}
+      ${d && r.wires.length && r.status !== "error" ? `<section class="rx-method-sec" aria-labelledby="rx-diag-h"><h3 id="rx-diag-h">What the analysis found</h3>
+        <p>${esc(d.processing)}. ${d.why ? esc(d.why) : ""}</p>
+        ${Object.keys(d.not_measured_reasons || {}).length ? `<p>Not measured: ${esc(Object.entries(d.not_measured_reasons).map(([k, n]) => `${k.toLowerCase()} (${n})`).join(", "))}.</p>` : ""}
+        <div class="rx-diag-cols">
+          ${d.observations.length ? `<div><h4>Observed in the image</h4>${li(d.observations)}</div>` : ""}
+          ${d.unavailable.length ? `<div><h4>Not available from one photo</h4>${li(d.unavailable)}</div>` : ""}
+          ${d.needed.length ? `<div><h4>What would complete the assessment</h4>${li(d.needed)}</div>` : ""}
+        </div></section>` : ""}
+      <section class="rx-method-sec rx-notice" aria-label="Important Notice"><wf-notice variant="full"></wf-notice></section>
+    </div></details>`;
 }
 
 function skipSummary(ws) {

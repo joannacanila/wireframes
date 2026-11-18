@@ -2,6 +2,12 @@
 
 Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
 
+## 2026-11-18, session S12: approved results page and explicit meter boundaries (register D-28)
+
+- Results page: header actions on the right; one dismissible banner (tip and off-frame warning); dynamic summary from the server; KPI bar Measured / Visible Part Only / Not Measured / Assessed; three-step action bar (Keep Distance, Download / Share Report, Retake Photo); viewer toolbar with Measured / All wires / Original / Mask / Both, Layers, zoom readout, Fit, Reset and the legend; sticky inspector with one status, hidden empty rows and Measurement details; wire inventory with tabs, quick filters (Notable Sag > 2% is a browse filter only), search, clear, Coverage and Status columns and a collapsed "no resolvable sag" group; synchronised selection with controlled scrolling; one Methodology & Limitations section.
+- Meter: green / amber / red from configured boundaries (both 3 %, no validated tolerance), uncertainty widens amber, overlap and overflow shown; no-reference wires keep the coloured meter with "No applicable comparison".
+- PDF follows the page (summary, actions, evidence, measured spans with mini meters, Methodology and Limitations, review). Admin sheet and findings CSV use the same coverage and reference words. The public result keeps the new fields.
+
 ## 2026-11-18, session S11: handoff interface (0916fd2) restored with the engineering corrections (register D-27)
 - **Baseline:** `0916fd2` ("docs: verify ERB 95-21 status; add handoff package", 18 Nov 2026 02:39 +0800), HEAD
   when this account's first session began (transcript 17 Nov 18:51 UTC; working tree clean apart from the owner's

@@ -12,6 +12,9 @@ import { toast } from "./toast.js?v=2.23";
 import { mountMap } from "./admin-map.js?v=2.23";
 import { diagnosticsHtml, bindDiagnostics } from "./admin-diagnostics.js?v=2.23";
 import { mountAssistant } from "./assistant.js?v=2.23";
+// S12 (D-28): why no sag reference applies to a wire, the same words as the result page and the findings CSV
+const REF_WHY = { no_reference_for_telecom: "No validated telecom / fibre reference", no_reference_for_abandoned: "Abandoned wire: type not established",
+  no_reference_for_class: "No validated reference for this wire type", type_uncertain: "Wire type uncertain", drop_wire: "Drop wire", reference_disabled: "No reference configured" };
 
 const view = document.getElementById("view");
 const $ = (s, r = document) => r.querySelector(s);
@@ -739,7 +742,7 @@ function mountInspection(id) {
       || (isMeasured(y) - isMeasured(x)) || (y.sag_ratio ?? -1) - (x.sag_ratio ?? -1) || x.index - y.index);
     const dg = r.diagnosis, dgOn = dg && !dg.counts.assessed && dg.counts.measured + dg.counts.measured_partial > 0;
     // S6: with no assessed span, a wire's condition is its measurement state (same as the result page), never a severity
-    const MST = { measured: "Measured", partial: "Visible part", unmeasured: "Not measured", drop: "Drop wire" };
+    const MST = { measured: "Full span", partial: "Edge clipped", unmeasured: "Unmeasured", drop: "Drop wire" }; // S12: coverage words of the page
     const mst = (w) => (!dgOn ? group(w) : w.status === "service_drop" ? "drop" : !isMeasured(w) ? "unmeasured"
       : w.reason_code === "endpoint_unavailable" ? "partial" : "measured");
     const mcounts = Object.fromEntries(Object.keys(MST).map((k) => [k, r.wires.filter((w) => mst(w) === k).length]));
@@ -807,11 +810,11 @@ function mountInspection(id) {
       ${hasWires ? `<section class="block" aria-labelledby="wf-h">
         <header class="block-head"><h2 id="wf-h">Wire findings</h2><span class="count num">${r.wires.length}</span>
           <div class="chips" role="group" aria-label="Show">${chips.filter(([k]) => k === "all" || ccount[k]).map(([k, t]) => `<button type="button" data-filter="${k}" aria-pressed="${k === "all"}">${t}${k !== "all" ? ` <b class="num">${ccount[k]}</b>` : ""}</button>`).join("")}</div></header>
-        <div class="tbl-scroll"><table class="tbl tbl-wires"><thead><tr><th>Wire</th><th>Type</th><th>Condition</th><th title="Image sag ratio compared with the configured reference (provisional; not an assessment)">${r.comparison ? `vs ${(r.comparison.sag_ratio * 100).toFixed(1)}% (${esc(r.comparison.status)})` : "vs reference"}</th><th>Finding</th></tr></thead><tbody>
+        <div class="tbl-scroll"><table class="tbl tbl-wires"><thead><tr><th>Wire</th><th>Type</th><th>Coverage</th><th title="Image sag ratio compared with the configured reference (provisional; not an assessment)">${r.comparison ? `vs ${(r.comparison.sag_ratio * 100).toFixed(1)}% (${esc(r.comparison.status)})` : "vs reference"}</th><th>Finding</th></tr></thead><tbody>
           ${wires.map((w) => `<tr data-wire="${w.index}" data-group="${mst(w)}" tabindex="0" aria-selected="false">
             <td><span class="wno" style="--wc:${wireColor(w, dgOn ? "class" : "risk")}">${w.index}</span></td><td>${esc(classLabel(w, true))}</td>
             <td>${cond(w)}</td>
-            <td>${w.comparison?.position ? `<span class="cmp ${w.comparison.position}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} ${w.comparison.difference_pp > 0 ? "+" : ""}${w.comparison.difference_pp.toFixed(1)}</span>` : w.comparison || w.sag_ratio == null || w.status === "service_drop" ? "—" : '<span class="muted" title="No applicable reference for this wire type">n/a</span>'}</td>
+            <td>${w.comparison?.position ? `<span class="cmp ${w.comparison.position}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} ${w.comparison.difference_pp > 0 ? "+" : ""}${w.comparison.difference_pp.toFixed(1)}</span>` : w.comparison || w.sag_ratio == null || w.status === "service_drop" ? "—" : `<span class="muted" title="${esc(REF_WHY[w.states?.reference_unavailable_reason] || "No applicable reference")}">Ref. unavailable</span>`}</td>
             <td>${esc(finding(w))}</td></tr>`).join("")}</tbody></table></div>
       </section>` : `<section class="block nowire"><p><b>No wire was detected in this photo.</b> The photo was processed, but the model found no wire it could trace. That does not mean there are no wires or no hazard: wires can blend into the sky or background. See the recommended next steps.</p></section>`}
 

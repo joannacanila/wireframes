@@ -489,6 +489,29 @@ F_RED = colors.HexColor("#991B1B")
 F_AMBER = colors.HexColor("#B45309")
 F_MUTED = colors.HexColor("#475569")
 F_HEAD = colors.HexColor("#F1F5F9")
+F_GREEN = colors.HexColor("#166534")
+# S12 meter colours: the page's green / amber / red zones, lightened for print
+Z_LOW, Z_MED, Z_HIGH = colors.HexColor("#86EFAC"), colors.HexColor("#FCD34D"), colors.HexColor("#FCA5A5")
+ZONE_TEXT = {"below": "Below reference", "at": "Reference-tolerance region", "above": "Above reference"}
+
+
+def _mini_meter(w: dict, scale: float, width: float = 34 * mm):
+    """S12: the page's three-zone meter in print: zones from comparison.zones, the reference tick and the wire's mark;
+    a ratio beyond the configured scale is drawn at the end with an overflow arrow."""
+    from reportlab.graphics.shapes import Drawing, Line, Polygon, Rect
+    c = w["comparison"]
+    z, h, y = c["zones"], 7.0, 3.0
+    d = Drawing(width + 6, h + 6)
+    x = lambda q: max(0.0, min(width, q / scale * width))  # noqa: E731
+    a, b = x(z["at_from"]), max(x(z["above_from"]), x(z["at_from"]) + 0.6)
+    for x0, x1, col in ((0, a, Z_LOW), (a, b, Z_MED), (b, width, Z_HIGH)):
+        d.add(Rect(x0, y, max(0.0, x1 - x0), h, fillColor=col, strokeColor=None))
+    d.add(Line(x(c["reference"]), y - 2, x(c["reference"]), y + h + 2, strokeColor=F_INK, strokeWidth=1))
+    m = x(w["sag_ratio"])
+    d.add(Rect(m - 1.2, y - 1.5, 2.4, h + 3, fillColor=F_INK, strokeColor=colors.white, strokeWidth=0.5))
+    if w["sag_ratio"] > scale:
+        d.add(Polygon([width + 1, y, width + 5, y + h / 2, width + 1, y + h], fillColor=F_RED, strokeColor=None))
+    return d
 
 
 def _fstyles() -> dict[str, ParagraphStyle]:
@@ -544,7 +567,7 @@ def _diagnosis_block(dg: dict, st) -> list:
             out += [Paragraph(f"&#8226; &#160;{_esc(x)}.", st["body"]) for x in items]
             out.append(Spacer(1, 2))
     if out:
-        out.insert(0, Paragraph("4.1 What the Analysis Found", st["h"]))
+        out.insert(0, Paragraph("5.1 What the Analysis Found", st["h"]))
     return out
 
 
@@ -658,7 +681,8 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     story.append(Paragraph("1.0 Inspection Summary", st["h"]))
     lead_col = {"high": F_RED, "medium": F_AMBER}.get(sm["level"], F_INK)
     story.append(Paragraph(f"<font color='{hexc(lead_col)}'>{_esc(sm['headline'])}</font>", st["lead"]))
-    for line in sm["lines"]:
+    # S12: the page's summary sentences (app/services/methodology.py) when no wire was assessed
+    for line in (sm["lines"] if sm["assessed"] or not result.get("summary_lines") else result["summary_lines"]):
         story.append(Paragraph(_esc(line), st["body"]))
     types = ", ".join(f"{k}: {v}" for k, v in sorted(sm["types"].items())) or "none detected"
     measured = [w for w in result.get("wires") or [] if w.get("sag_ratio") is not None]
@@ -667,8 +691,12 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     sev = (("Critical", c["critical"]), ("Minor sag", c["minor_sag"]), ("Within reference", c["within_reference"])) \
         if sm["assessed"] else (("Sag ratio measured", len(measured)), ("Severity", "none"),
                                 ("Sag reference", f"{cmp_['sag_ratio'] * 100:.1f}% {cmp_['status']}, power lines" if cmp_ else "none validated"))
-    cells = [[Paragraph(f"<b>{v}</b><br/><font size='7.6' color='{hexc(F_MUTED)}'>{k}</font>", st["cell"]) for k, v in (
-        ("Wires detected", sm["total"]), ("Assessed", sm["assessed"]), ("Not assessed", c["not_assessed"]), *sev)]]
+    dc0 = (result.get("diagnosis") or {}).get("counts")
+    kpis = (("Wires detected", sm["total"]), ("Assessed", sm["assessed"]), ("Not assessed", c["not_assessed"]), *sev) \
+        if sm["assessed"] or not dc0 else (  # S12: the page's telemetry bar, in the same order
+        ("Wires detected", sm["total"]), ("Measured", dc0["measured"]), ("Visible part only", dc0["measured_partial"]),
+        ("Not measured", dc0["not_measured"]), ("Assessed", dc0["assessed"]), sev[-1])
+    cells = [[Paragraph(f"<b>{v}</b><br/><font size='7.6' color='{hexc(F_MUTED)}'>{k}</font>", st["cell"]) for k, v in kpis]]
     ct = Table(cells, colWidths=[width / 6] * 6)
     ct.setStyle(TableStyle([("GRID", (0, 0), (-1, -1), 0.5, F_RULE), ("TOPPADDING", (0, 0), (-1, -1), 5),
                             ("BOTTOMPADDING", (0, 0), (-1, -1), 5), ("LEFTPADDING", (0, 0), (-1, -1), 6),
@@ -698,8 +726,34 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
                                ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
         story += [Spacer(1, 5), w]
 
+    # 2.0 actions (S12: directly after the summary, as on the page)
+    story.append(Paragraph("2.0 Recommended Field Actions", st["h"]))
+    acts = ["Keep distance: do not touch, pull or move any overhead wire; treat every conductor as energised."]
+    if sm["flagged"]:
+        acts.append("Forward this report to the barangay office and to the operator of the affected lines (electric "
+                    "utility for power lines, telecommunications provider for cables) for field verification. "
+                    "This report does not establish who owns any wire.")
+        acts.append("Verify the Critical spans in section 4.0 first; check Minor sag spans at the next routine inspection.")
+    elif not sm["assessed"] and measured:
+        acts.append("No sag severity was determined: no validated sag reference exists for these wires, so the "
+                    "image-derived sag ratios in section 4.0 are measurements only. They do not show that a wire is "
+                    "safe or unsafe. Arrange an inspection by a qualified person for any concern.")
+    else:
+        acts.append("No wire was flagged in the assessed sections. Keep the report on file; it does not certify the "
+                    "pole or its wires as safe.")
+    no_ref = sum(w.get("reason_code") in ("no_validated_reference", "withdrawn_reference") for w in result.get("wires") or [])
+    if c["not_assessed"] - no_ref > 0:
+        acts.append(f"{c['not_assessed'] - no_ref} detected wire(s) could not be measured completely. A new photograph "
+                    "showing both poles and the full span against open sky, or a field visit, is needed to cover them.")
+    if c["not_assessed"] - no_ref <= 0:
+        acts.append("Retake only if needed: every detected wire was measured from this photo, and a new photo cannot "
+                    "supply a sag reference.")
+    for i, a in enumerate(acts, 1):
+        story.append(Paragraph(f"2.{i} &#160; {_esc(a)}", st["body"]))
+        story.append(Spacer(1, 1.5))
+
     # 2.0 evidence
-    fig_block: list[Any] = [Paragraph("2.0 Annotated Photographic Evidence", st["h"])]
+    fig_block: list[Any] = [Paragraph("3.0 Annotated Photographic Evidence", st["h"])]
     measured_fig = [] if sm["flagged"] else sorted(
         (w for w in result.get("wires") or [] if w.get("sag_ratio") is not None and w.get("status") in ("scored", "not_assessed")),
         key=lambda w: w["index"])
@@ -725,30 +779,6 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
          "no wire was assessed.") if measured_fig else
         "Figure 1. Site photograph. No wire was measured, so none is drawn.", st["small"]))
     story.append(KeepTogether(fig_block))
-
-    # 3.0 actions
-    story.append(Paragraph("3.0 Recommended Field Actions", st["h"]))
-    acts = []
-    if sm["flagged"]:
-        acts.append("Forward this report to the barangay office and to the operator of the affected lines (electric "
-                    "utility for power lines, telecommunications provider for cables) for field verification. "
-                    "This report does not establish who owns any wire.")
-        acts.append("Verify the Critical spans in section 4.0 first; check Minor sag spans at the next routine inspection.")
-    elif not sm["assessed"] and measured:
-        acts.append("No sag severity was determined: no validated sag reference exists for these wires, so the "
-                    "image-derived sag ratios in section 4.0 are measurements only. They do not show that a wire is "
-                    "safe or unsafe. Arrange an inspection by a qualified person for any concern.")
-    else:
-        acts.append("No wire was flagged in the assessed sections. Keep the report on file; it does not certify the "
-                    "pole or its wires as safe.")
-    no_ref = sum(w.get("reason_code") in ("no_validated_reference", "withdrawn_reference") for w in result.get("wires") or [])
-    if c["not_assessed"] - no_ref > 0:
-        acts.append(f"{c['not_assessed'] - no_ref} detected wire(s) could not be measured completely. A new photograph "
-                    "showing both poles and the full span against open sky, or a field visit, is needed to cover them.")
-    acts.append("Do not touch, pull or move any overhead wire; treat every conductor as energised.")
-    for i, a in enumerate(acts, 1):
-        story.append(Paragraph(f"3.{i} &#160; {_esc(a)}", st["body"]))
-        story.append(Spacer(1, 1.5))
 
     # 4.0 schedule
     story.append(Paragraph("4.0 Flagged Spans Schedule", st["h"]))
@@ -778,21 +808,27 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
     elif measured:
         # S4: the measurements, never a severity (no validated reference)
         story[-1] = Paragraph("4.0 Measured Spans (not assessed)", st["h"])
-        rows = [[Paragraph(h, st["th"]) for h in ("Span ID", "Type", "Image-derived sag ratio",
+        rows = [[Paragraph(h, st["th"]) for h in ("Span ID", "Type", "Coverage", "Image-derived sag ratio",
                                                   f"vs {cmp_['sag_ratio'] * 100:.1f}% reference" if cmp_ else "Status", "Observations")]]
-        pos = {"below": "Below", "at": "At (within resolution)", "above": "Above"}
+        scale = (cmp_ or {}).get("meter_scale_max") or 0.10
+        cov = {"full_span": "Full span", "edge_clipped": "Edge clipped"}
         for w in sorted(measured, key=lambda x: x["index"]):
             r = w.get("sag_ratio_resolution")
+            cw = w.get("comparison") or {}
+            if cw.get("position"):  # S12: the page's meter and zone words; a comparison, not a severity
+                ccell = [_mini_meter(w, scale), Paragraph(_esc(f"{ZONE_TEXT[cw['position']]}, {cw['difference_pp']:+.1f} points"
+                                                               + ("; uncertainty overlaps the reference" if cw.get("uncertainty_overlaps") else "")), st["cell"])]
+            else:
+                ccell = Paragraph(_esc("Reference unavailable (no validated reference for this wire type)" if cmp_
+                                       else (w.get("reason_short") or "Not assessed")), st["cell"])
             rows.append([Paragraph(f"<b>{plain.span_id(w['index'])}</b>", st["cell"]),
                          Paragraph(_esc(plain.wire_type(w)), st["cell"]),
+                         Paragraph(cov.get((w.get("states") or {}).get("coverage"), "Measured"), st["cell"]),
                          Paragraph(f"{w['sag_ratio'] * 100:.1f}%" + (f" &#177; {r * 100:.1f}" if r else ""), st["cell"]),
-                         Paragraph(_esc(f"{pos[c['position']]}, {c['difference_pp']:+.1f} points"
-                                        if (c := w.get("comparison")) and c.get("position")
-                                        else "Not applicable (no reference for this wire type)" if cmp_ and not w.get("comparison")
-                                        else (w.get("reason_short") or "Not assessed")), st["cell"]),
+                         ccell,
                          Paragraph(_esc(_wire_observations(w)), st["cell"])])
-        t = Table(rows, colWidths=[width * x for x in (0.10, 0.16, 0.18, 0.24, 0.32)], repeatRows=1)
-        t.setStyle(TableStyle([("LINEBELOW", (0, 0), (-1, 0), 0.8, F_INK), ("LINEBELOW", (0, 1), (-1, -1), 0.4, F_RULE),
+        t = Table(rows, colWidths=[width * x for x in (0.09, 0.13, 0.11, 0.14, 0.25, 0.28)], repeatRows=1)
+        t.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LINEBELOW", (0, 0), (-1, 0), 0.8, F_INK), ("LINEBELOW", (0, 1), (-1, -1), 0.4, F_RULE),
                                ("BACKGROUND", (0, 0), (-1, 0), F_HEAD), ("TOPPADDING", (0, 0), (-1, -1), 2),
                                ("BOTTOMPADDING", (0, 0), (-1, -1), 2)]))
         story.append(t)
@@ -801,27 +837,28 @@ def build_report(result: dict[str, Any], rgb: np.ndarray, generated_at: datetime
             "between the traced ends, divided by that line's length, both in image pixels. It is not physical sag "
             "(no camera-pose correction, no field calibration). The +/- value is the 1 pixel resolution over the chord; a "
             "ratio smaller than it is straight within the resolution (no sag resolvable at this image scale)."
-            + (f" Each ratio is compared with the {_esc(cmp_['label'])} ({_esc(cmp_['source'])}): below, at the "
-               "reference within the +/- resolution, or above. It is an owner-selected provisional reference, not a "
-               "validated limit, and the comparison is not an assessment: no wire level or pole verdict comes from it."
+            + (f" Power-line ratios are compared with the {_esc(cmp_['label'])}: green below the reference, amber the "
+               "reference-tolerance region, red above it, on a 0 to "
+               f"{scale * 100:.0f}% scale (an arrow marks a ratio beyond it). {_esc(cmp_['zone_note'])}. No wire level "
+               "or pole verdict comes from the comparison; see section 5.0."
                if cmp_ else " It is not compared with any limit."), st["small"]))
         if cmp_:
             from app.services.comparison import counts_text
             story.append(Paragraph(_esc(counts_text(cmp_) + "."), st["small"]))
-        story += _diagnosis_block(result.get("diagnosis") or {}, st)
     else:
         story.append(Paragraph("No span was flagged in the assessed sections of this photograph.", st["body"]))
 
-    # 5.0 scope
-    story.append(Paragraph("5.0 Screening Scope", st["h"]))
-    for i, b in enumerate((
-            "Automated computer-vision screening of a single photograph, intended as a decision-support tool. No "
-            "validated sag reference or calibrated clearance is configured: sag ratios and vegetation gaps are image "
-            "measurements, not physical sag, clearance or compliance.",
-            "Results may contain false positives, false negatives or incomplete assessments; no hazard flagged does "
-            "not mean no hazard exists.",
-            "All findings must be verified by qualified personnel before any maintenance, repair or safety decision."), 1):
-        story.append(Paragraph(f"{i}. &#160;{_esc(b)}", st["body"]))
+    # 5.0 Methodology & Limitations (S12): the page's single folded section, the same text (app/services/methodology.py)
+    from app.services.methodology import topics
+    story.append(Paragraph("5.0 Methodology and Limitations", st["h"]))
+    story.append(Paragraph(_esc("Automated computer-vision screening of a single photograph, intended as a decision-support "
+                                "tool. All findings must be verified by qualified personnel before any maintenance, repair or "
+                                "safety decision."), st["body"]))
+    for t in result.get("methodology") or topics(cmp_):
+        story.append(Paragraph(f"<b>{_esc(t['title'])}.</b> {_esc(t['text'])}", st["small"]))
+        story.append(Spacer(1, 1.5))
+    if measured and not sm["flagged"]:
+        story += _diagnosis_block(result.get("diagnosis") or {}, st)
     # owner's decision-support notice (app/core/notice.py), as on the page and the technical reports
     nt = Table([[Paragraph(f"<b>{notice.TITLE}</b><br/>{_esc(DISCLAIMER)}", st["body"])]], colWidths=[width])
     nt.setStyle(TableStyle([("BOX", (0, 0), (-1, -1), 0.6, F_RULE), ("LEFTPADDING", (0, 0), (-1, -1), 8),

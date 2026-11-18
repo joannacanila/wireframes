@@ -231,11 +231,6 @@ html.fs-root { height: auto; min-height: 100%; }
 .rx-summary.high { border-left-color: var(--risk-high); } .rx-summary.medium { border-left-color: var(--risk-med); } .rx-summary.low { border-left-color: var(--risk-low); }
 .rx-summary h2 { font-size: 26px; line-height: 1.25; margin-bottom: 10px; letter-spacing: -0.02em; }
 .rx-summary > p { margin: 0 0 6px; max-width: 78ch; color: var(--text-2); font-size: 16.5px; }
-.rx-counts { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 0; }
-.rx-counts div { display: flex; align-items: baseline; gap: 10px; padding: 10px 16px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line); }
-.rx-counts dt { font-size: 15px; color: var(--text-2); } .rx-counts dd { margin: 0; font: 600 22px var(--mono); }
-.rx-counts .high dd { color: var(--risk-high); } .rx-counts .medium dd { color: var(--risk-med); } .rx-counts .low dd { color: var(--risk-low); }
-.rx-coverage { margin: 14px 0 0 !important; font-size: 15px !important; color: var(--text-3) !important; }
 
 .rx-work { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 24px; align-items: start; }
 .rx-photo { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
@@ -252,10 +247,6 @@ html.fs-root { height: auto; min-height: 100%; }
 .rx-op input { grid-column: 1 / -1; accent-color: var(--accent); }
 .rx-zoom { display: inline-flex; gap: 6px; }
 .rx-canvas { max-height: 72vh; }
-.rx-callouts { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
-.rx-call { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px 0 4px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--text); font: 500 14px var(--font); cursor: pointer; }
-.rx-call span { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 32px; height: 32px; border-radius: 50%; color: #fff; font: 600 12px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; background: var(--risk-high); } /* v2.21: one circle size for 1-3 digits, text dead centre */
-.rx-call.medium span { background: var(--risk-med); color: #1b1404; }
 .rx-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 0; padding: 10px 14px; border-top: 1px solid var(--line); font-size: 14px; color: var(--text-2); }
 .rx-legend span { display: inline-flex; align-items: center; gap: 8px; }
 .rx-legend i { width: 16px; height: 4px; border-radius: 2px; background: var(--risk-none); }
@@ -267,7 +258,6 @@ html.fs-root { height: auto; min-height: 100%; }
 .rx-wire-head { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
 .rx-wire-head b { display: block; font-size: 18px; }
 .rx-id { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; border: 2.5px solid var(--wc); font: 600 13px/1 var(--mono); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; flex: none; }
-.rx-obs { margin: 0 0 14px; font-size: 16px; }
 .rx-meas { margin: 0; display: grid; gap: 0; border-top: 1px solid var(--line); }
 .rx-meas div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 15.5px; }
 .rx-meas dt { color: var(--text-2); } .rx-meas dd { margin: 0; font: 600 16px var(--mono); }
@@ -284,29 +274,11 @@ html.fs-root { height: auto; min-height: 100%; }
 .rx-tabs button { height: 36px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 999px; background: none; color: var(--text-2); font: 500 14px var(--font); cursor: pointer; }
 .rx-tabs button b { font: 600 13px var(--mono); margin-left: 4px; }
 .rx-tabs button[aria-selected="true"] { background: var(--text); color: var(--bg); border-color: var(--text); }
-.rx-list { list-style: none; margin: 0; padding: 0; max-height: 440px; overflow-y: auto; }
-.rx-list li { display: grid; grid-template-columns: 34px 120px 1fr; gap: 12px; align-items: center; padding: 11px 6px; border-bottom: 1px solid var(--line); cursor: pointer; font-size: 15px; border-radius: 6px; }
-.rx-list li[aria-selected="true"] { background: var(--accent-soft); }
-@media (hover: hover) and (pointer: fine) { .rx-list li:hover { background: var(--surface-2); } }
-.rx-list .rx-id { width: 34px; height: 34px; font-size: 12px; }
-.rx-type { color: var(--text-2); } .rx-find { color: var(--text); }
-.rx-empty, .rx-skip-note { margin: 8px 0; color: var(--text-2); font-size: 15px; }
 
-.rx-guide { display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; margin-top: 28px; }
-.rx-steps, .rx-limits { padding: 22px 24px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface); }
-.rx-steps ol { margin: 0; padding: 0; list-style: none; counter-reset: s; display: grid; gap: 16px; }
-.rx-steps li { counter-increment: s; display: grid; grid-template-columns: 36px 1fr; column-gap: 12px; }
-.rx-steps li::before { content: counter(s); grid-row: span 2; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--surface-3); font: 600 15px var(--mono); }
-.rx-steps b { font-size: 17px; } .rx-steps p { margin: 2px 0 0; color: var(--text-2); }
-.rx-limits ul { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 8px; color: var(--text-2); }
-.rx-limits p { color: var(--text-2); }
-.rx-notice { margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
-.rx-notice-short { margin: 0 0 10px; font-size: 15px; color: var(--text-2); }
-.rx-notice wf-notice { font-size: 13.5px; }
 .rx .fx-map { margin-top: 24px; }
 .rx .fx-guard-banner { margin-bottom: 20px; }
 
-@media (max-width: 1080px) { .rx-work, .rx-guide { grid-template-columns: 1fr; } }
+@media (max-width: 1080px) { .rx-work { grid-template-columns: 1fr; } }
 
 /* ================================================================ v2.21 result page: one severity vocabulary */
 .rx-sev { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12.5px; font-weight: 600; white-space: nowrap; color: var(--text-2); background: var(--surface-3); }
@@ -315,17 +287,7 @@ html.fs-root { height: auto; min-height: 100%; }
 .rx-sev.low { color: var(--risk-low); background: color-mix(in srgb, var(--risk-low) 14%, transparent); }
 .rx-span { margin-left: 8px; font: 12.5px var(--mono); color: var(--text-3); }
 .rx-wire-head .rx-sev { margin-left: 8px; }
-.rx-list li { grid-template-columns: 34px minmax(0, 1fr); align-items: start; }
-.rx-row { display: grid; gap: 3px; min-width: 0; }
-.rx-line { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.rx-row .rx-find { font-size: 14px; color: var(--text-2); }
 .rx-meter-key span:first-child { transform: translateX(-50%); }
-.rx-split { margin: 0 0 6px; font-size: 13px; color: var(--text-3); }
-.rx-skipped { margin-top: 14px; border-top: 1px solid var(--line); }
-.rx-skipped > summary { padding: 12px 0; cursor: pointer; font-size: 14px; color: var(--text-2); }
-.rx-skipped > summary b { color: var(--text); }
-.rx-phototip { margin: -6px 0 16px; padding: 10px 14px; border-left: 3px solid var(--accent); background: var(--surface); font-size: 14px; color: var(--text-2); }
-.rx-retake { margin: 0 0 16px; padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--risk-med) 50%, var(--line)); border-radius: 8px; background: color-mix(in srgb, var(--risk-med) 10%, var(--surface)); font-size: 14px; line-height: 1.5; }
 .rx-meter-track { overflow: visible; }
 .rx-meter-track .z { position: absolute; top: 0; bottom: 0; }
 .z-low { background: color-mix(in srgb, var(--risk-low) 55%, transparent); }
@@ -347,27 +309,18 @@ html.fs-root { height: auto; min-height: 100%; }
 @media (max-width: 760px) { .rx-loc { grid-template-columns: 1fr; } }
 
 /* S5: "What the analysis found" (app/services/diagnostics.py) and the per-wire diagnosis */
-.rx-diag { margin-top: 16px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
-.rx-diag h2 { margin: 0 0 6px; font-size: 18px; }
-.rx-diag-stage { margin: 4px 0; color: var(--text-2); font-size: 14.5px; }
 .rx-diag-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px 24px; margin-top: 12px; }
 .rx-diag-cols h3 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
 .rx-diag-cols ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; color: var(--text-2); }
-.rx-diag-wire { margin: 10px 0 0; padding-left: 18px; display: grid; gap: 5px; font-size: 14px; color: var(--text-2); }
-.rx-diag-wire li[data-k="assessment"] { color: var(--text); }
 .rx-legend-note { flex-basis: 100%; color: var(--text-3); font-size: 12.5px; }
 
 /* ================================================================ S7: the v2.21 sag meter without a validated reference
    (register D-25). Same track, dot and key as .rx-meter above; the zones are not drawn, the legend chips are hollow. */
-.rx-meter.unlit .rx-meter-track, .rx-meter.empty .rx-meter-track { background: var(--surface-3); }
 .rx-meter.empty .rx-meter-track { box-sizing: border-box; background: none; border: 1px dashed var(--line-strong); }
 .rx-meter-res { position: absolute; top: 2px; bottom: 2px; border-radius: 4px; background: color-mix(in srgb, var(--text) 24%, transparent); }
 .rx-meter-dot.partial { background: var(--surface); }
 .rx-meter-key span.at-start { transform: none; } .rx-meter-key span.at-end { transform: translateX(-100%); }
 .rx-meter.empty .rx-meter-key { height: 22px; } .rx-meter.empty .rx-meter-key span.ref { top: 0; }
-.rx-zones.unlit span { color: var(--text-3); }
-.rx-zones.unlit i { background: none; box-shadow: inset 0 0 0 1px var(--line-strong); }
-.rx-zones.unlit .rx-zones-note { display: block; flex-basis: 100%; color: var(--text-2); line-height: 1.5; }
 .rx-meas dd.none { font: 500 14px var(--font); color: var(--text-3); }
 
 /* D-26 / D-27: the original meter lit from the power-line comparison; measurement-only meter in the wire-type colour */
@@ -382,3 +335,204 @@ html.fs-root { height: auto; min-height: 100%; }
 .rx-cmp.above { background: color-mix(in srgb, var(--risk-high) 22%, transparent); color: var(--risk-high); }
 .rx-cmp.at { background: color-mix(in srgb, var(--risk-med) 24%, transparent); color: var(--risk-med); }
 .rx-cmp.below { background: color-mix(in srgb, var(--risk-low) 22%, transparent); color: var(--risk-low); }
+
+/* ================================================================ S12 results page (approved layout, register D-28)
+   Restrained: 1px borders, 6px radii, no nested cards, no gradients. Status pills carry text, never colour alone. */
+.rx { font-size: 14.5px; line-height: 1.55; }
+.rx h2 { font-size: 17px; margin: 0 0 8px; }
+.rx-head { align-items: center; padding: 4px 0 14px; }
+.rx-head h1 { font-size: 24px; }
+.rx-head p { font-size: 13.5px; margin-top: 2px; }
+.rx-actions { margin-left: auto; }
+.rx .btn.lg { height: 40px; font-size: 14px; }
+.rx .btn.sm { height: 32px; padding: 0 10px; font-size: 13px; }
+.rx .btn.icon.sm { width: 32px; }
+
+.rx-banner { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 12px; padding: 8px 8px 8px 14px; border: 1px solid var(--line);
+  border-left: 3px solid var(--accent); border-radius: 6px; background: var(--surface); }
+.rx-banner.warn { border-left-color: var(--risk-med); }
+.rx-banner p { margin: 0; flex: 1; font-size: 13.5px; color: var(--text-2); }
+.rx-banner b { color: var(--text); font-weight: 600; }
+.rx-x { flex: none; width: 28px; height: 28px; border: 0; border-radius: 4px; background: none; color: var(--text-3); font-size: 18px; line-height: 1; cursor: pointer; }
+.rx-x:hover { background: var(--surface-3); color: var(--text); }
+
+.rx-summary { padding: 16px 20px; border-radius: 6px; border-left-width: 3px; margin-bottom: 12px; }
+.rx-summary h2 { font-size: 19px; margin-bottom: 6px; }
+.rx-summary > p { margin: 0 0 3px; font-size: 14.5px; max-width: 100ch; }
+.rx-kpi { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); margin: 12px 0 0; border: 1px solid var(--line); border-radius: 6px; }
+.rx-kpi div { padding: 8px 14px; display: grid; grid-template-columns: auto 1fr; align-items: baseline; column-gap: 10px; }
+.rx-kpi div + div { border-left: 1px solid var(--line); }
+.rx-kpi dt { grid-column: 1 / -1; font-size: 12px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; color: var(--text-3); }
+.rx-kpi dd { margin: 0; }
+.rx-kpi dd.n { font: 600 22px var(--mono); color: var(--text); }
+.rx-kpi dd.sub { font-size: 12.5px; color: var(--text-3); }
+.rx-cmp-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 0; font-size: 13.5px; color: var(--text-2); }
+
+/* zone pills: the arrow and the words say the zone, the colour repeats it */
+.rx-zone { display: inline-flex; align-items: center; gap: 5px; height: 24px; padding: 0 8px; border: 1px solid var(--zc, var(--line-strong)); border-radius: 4px;
+  font-size: 12.5px; font-weight: 600; color: var(--text); background: color-mix(in srgb, var(--zc, transparent) 12%, transparent); white-space: nowrap; }
+.rx-zone i { font-style: normal; color: var(--zc, var(--text-3)); }
+.rx-zone.below { --zc: var(--risk-low); } .rx-zone.at { --zc: var(--risk-med); } .rx-zone.above { --zc: var(--risk-high); }
+.rx-zone.none { --zc: var(--line-strong); color: var(--text-2); font-weight: 500; }
+.rx-zone.sm { height: 20px; padding: 0 6px; font-size: 12px; }
+.rx-pill { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; border: 1px solid var(--line-strong); border-radius: 4px;
+  font-size: 12px; font-weight: 500; color: var(--text-2); white-space: nowrap; }
+.rx-pill.cov.full_span { color: var(--text); border-color: var(--text-3); }
+.rx-pill.cov.edge_clipped { border-style: dashed; color: var(--text); }
+.rx-pill.cov.unmeasured, .rx-pill.cov.drop { color: var(--text-3); border-style: dotted; }
+.rx-pill.as.assessed { color: var(--text); border-color: var(--accent); }
+.rx-pill.ref, .rx-pill.res { color: var(--text-3); }
+.rx-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+
+/* three-step action bar, directly under the summary */
+.rx-do { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.rx-do li { display: flex; gap: 10px; padding: 10px 14px; }
+.rx-do li + li { border-left: 1px solid var(--line); }
+.rx-do-n { flex: none; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--accent); color: var(--accent); font: 600 12.5px var(--mono); }
+.rx-do b { font-size: 14px; }
+.rx-do p { margin: 1px 0 6px; font-size: 13px; color: var(--text-2); line-height: 1.45; }
+.rx-do-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* workspace: photo and inventory on the left, the inspector beside them */
+.rx-work { grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; }
+.rx-main { display: grid; gap: 16px; min-width: 0; }
+.rx-photo, .rx-wire, .rx-wires { border-radius: 6px; }
+.rx-bar { gap: 6px; padding: 6px 8px; }
+.rx-seg { padding: 2px; border-radius: 6px; }
+.rx-seg button { height: 30px; padding: 0 11px; border-radius: 4px; font-size: 13px; }
+.rx-seg button[aria-checked="true"] { box-shadow: inset 0 0 0 1px var(--line-strong); }
+.rx-zoom { align-items: center; gap: 4px; }
+#zoom-pct { min-width: 44px; text-align: center; font-size: 12.5px; color: var(--text-2); }
+.rx-pop { border-radius: 6px; }
+.rx-bar .rx-legend { flex-basis: 100%; gap: 4px 14px; padding: 4px 4px 0; border-top: 0; font-size: 12.5px; }
+.rx-legend i.chord { height: 0; border-top: 2px dashed var(--text-2); background: none; }
+.rx-legend i.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text); }
+.rx-legend-note { flex-basis: auto; margin-left: auto; }
+.rx-canvas { height: max(360px, min(62vh, 640px)); }
+
+.rx-side { position: sticky; top: 12px; align-self: start; max-height: calc(100vh - 24px); overflow-y: auto; }
+.rx-wire { padding: 14px 16px; }
+.rx-wire-head { margin-bottom: 8px; }
+.rx-wire-head b { font-size: 16px; }
+.rx-id { width: 32px; height: 32px; border-width: 2px; font-size: 12.5px; }
+.rx-id.sm { width: 26px; height: 26px; font-size: 11.5px; }
+.rx-meas div { padding: 6px 0; font-size: 13.5px; }
+.rx-meas dd { font-size: 13.5px; }
+.rx-meas dd.txt { font-family: var(--font); font-weight: 600; text-align: right; }
+.rx-meas small { font-weight: 400; color: var(--text-3); }
+.rx-why { margin: 8px 0 0; font-size: 13px; color: var(--text-2); }
+.rx-note { font-size: 12.5px; }
+
+/* the meter */
+.rx-meter { margin: 12px 0 4px; }
+.rx-meter-read { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px; }
+.rx-meter-read b { font-size: 17px; }
+.rx-meter-read small { color: var(--text-3); font-size: 12px; }
+.rx-amb { font-size: 12px; color: var(--text-2); border-bottom: 1px dashed var(--risk-med); cursor: help; }
+.rx-meter-track { height: 10px; border-radius: 3px; }
+.rx-meter-track .z-low { border-radius: 3px 0 0 3px; } .rx-meter-track .z-high { border-radius: 0 3px 3px 0; }
+.rx-meter-dot { width: 14px; height: 14px; margin: -7px 0 0 -7px; border-width: 2px; }
+.rx-meter-over { position: absolute; right: -9px; top: 50%; width: 0; height: 0; margin-top: -6px; border: 6px solid transparent; border-left: 7px solid var(--risk-high); }
+.rx-meter.type .rx-meter-over { border-left-color: var(--wc); }
+.rx-meter-key { height: 20px; }
+.rx-meter-key span.ref-k { font-weight: 600; color: var(--text-2); }
+.rx-zones { display: flex; flex-wrap: wrap; gap: 3px 12px; margin: 4px 0 0; font-size: 12px; color: var(--text-2); }
+.rx-zones small { color: var(--text-3); font-family: var(--mono); font-size: 11.5px; }
+.rx-zones-note { flex-basis: 100%; color: var(--text-3); }
+
+.rx-md { margin-top: 12px; border-top: 1px solid var(--line); }
+.rx-md > summary { padding: 8px 0; cursor: pointer; font-size: 13.5px; font-weight: 600; color: var(--text-2); }
+.rx-md dl { margin: 0; display: grid; gap: 6px; }
+.rx-md dl div { display: grid; grid-template-columns: 110px 1fr; gap: 10px; font-size: 12.5px; }
+.rx-md dt { color: var(--text-3); } .rx-md dd { margin: 0; color: var(--text-2); }
+
+/* inventory */
+.rx-wires { padding: 12px 14px; }
+.rx-inv-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.rx-inv-head h2 { margin: 0; }
+.rx-tabs { margin: 0; }
+.rx-tabs button { height: 30px; border-radius: 4px; font-size: 13px; }
+.rx-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.rx-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.rx-chips button { height: 28px; padding: 0 9px; border: 1px solid var(--line-strong); border-radius: 4px; background: none; color: var(--text-2); font: 500 12.5px var(--font); cursor: pointer; }
+.rx-chips button b { font: 600 11.5px var(--mono); margin-left: 3px; color: var(--text-3); }
+.rx-chips button[aria-pressed="true"] { border-color: var(--accent); color: var(--text); background: var(--accent-soft); }
+.rx-chips button[aria-pressed="true"] b { color: var(--text); }
+#inv-q { flex: 1 1 200px; min-width: 0; height: 30px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 4px; background: var(--surface); color: var(--text); font: 13px var(--font); }
+#inv-q:focus { outline: none; border-color: var(--sel); box-shadow: 0 0 0 3px var(--sel-soft); }
+.rx-inv-hint { margin: 0 0 8px; padding: 6px 10px; border: 1px solid var(--line); border-left: 3px solid var(--sel); border-radius: 4px; font-size: 13px; color: var(--text-2); }
+.linkish { border: 0; padding: 0; background: none; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+.rx-inv-scroll { max-height: 440px; overflow: auto; border: 1px solid var(--line); border-radius: 4px; }
+.rx-inv { width: 100%; border-collapse: collapse; font-size: 13px; }
+.rx-inv thead th { position: sticky; top: 0; z-index: 1; padding: 7px 10px; background: var(--surface-2); border-bottom: 1px solid var(--line);
+  text-align: left; font-size: 11.5px; font-weight: 600; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-3); white-space: nowrap; }
+.rx-inv td, .rx-inv tbody th { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: middle; font-weight: 400; }
+.rx-inv tbody th { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.rx-inv .r { text-align: right; white-space: nowrap; }
+.rx-inv tr[data-wire] { cursor: pointer; }
+.rx-inv tr[aria-selected="true"] { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+@media (hover: hover) and (pointer: fine) { .rx-inv tr[data-wire]:hover { background: var(--surface-2); } }
+.rx-st { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.rx-st-why { display: block; margin-top: 2px; color: var(--text-3); font-size: 12px; }
+.rx-inv-empty td { color: var(--text-3); padding: 14px 10px; }
+.rx-inv-grp td { padding: 8px 10px; background: var(--surface-2); border-bottom: 1px solid var(--line); }
+.rx-inv-grp button { border: 0; padding: 0; background: none; color: var(--text); font: 600 13px var(--font); cursor: pointer; text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.rx-inv-grp small { display: block; color: var(--text-3); font-size: 12px; }
+
+/* methodology & limitations: one folded section at the bottom */
+.rx-loc { margin-top: 16px; }
+.rx-method { margin-top: 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.rx-method > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 16px; cursor: pointer; }
+.rx-method > summary span { font-size: 16px; font-weight: 600; }
+.rx-method > summary small { color: var(--text-3); font-size: 13px; }
+.rx-method-body { padding: 0 16px 16px; border-top: 1px solid var(--line); }
+.rx-method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px 24px; padding-top: 12px; }
+.rx-method h3 { margin: 0 0 2px; font-size: 13.5px; }
+.rx-method h4 { margin: 0 0 4px; font-size: 13px; }
+.rx-method p, .rx-method li { margin: 0; font-size: 13px; color: var(--text-2); }
+.rx-method ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.rx-method-sec { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.rx-method .rx-diag-cols { margin-top: 8px; }
+.rx-method wf-notice { font-size: 13px; }
+
+@media (max-width: 1080px) {
+  .rx-side { position: static; max-height: none; overflow: visible; }
+}
+@media (max-width: 760px) {
+  .rx-do { grid-template-columns: 1fr; }
+  .rx-do li + li { border-left: 0; border-top: 1px solid var(--line); }
+  .rx-kpi { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rx-kpi div:nth-child(3) { border-left: 0; }
+  .rx-kpi div:nth-child(n + 3) { border-top: 1px solid var(--line); }
+  .rx-actions { margin-left: 0; }
+  .rx-canvas { height: 300px; }
+  .rx-inv thead th:nth-child(2), .rx-inv tbody td:nth-child(2) { display: none; }
+}
+
+/* S12 first-viewport density: the summary and the three steps stay short so the viewer starts above the fold */
+.rx-head { padding: 0 0 10px; }
+.rx-head h1 { font-size: 22px; }
+.rx-summary { padding: 12px 16px; }
+.rx-summary h2 { font-size: 17px; margin-bottom: 4px; }
+.rx-summary > p { font-size: 13.5px; margin: 0 0 1px; }
+.rx-kpi { margin-top: 10px; }
+.rx-kpi div { display: flex; align-items: baseline; gap: 8px; padding: 6px 12px; }
+.rx-kpi dt { font-size: 11.5px; }
+.rx-kpi dd.n { font-size: 18px; margin-left: auto; }
+.rx-kpi dd.sub { display: none; }
+.rx-cmp-line { margin-top: 8px; font-size: 13px; }
+.rx-do li { align-items: center; padding: 8px 12px; }
+.rx-do li > div { flex: 1; min-width: 0; }
+.rx-do p { margin: 0; font-size: 12.5px; }
+.rx-do b { font-size: 13.5px; }
+/* S12 breakpoints, after the S12 rules so they win: one column below 1080 px, action buttons under their text when
+   the three steps get narrow */
+@media (max-width: 1180px) {
+  .rx-do li { flex-wrap: wrap; align-items: flex-start; }
+  .rx-do-acts { flex-basis: 100%; padding-left: 34px; }
+}
+@media (max-width: 1080px) {
+  .rx-work { grid-template-columns: 1fr; }
+  .rx-side { position: static; max-height: none; overflow: visible; }
+}
+.rx-method-grid .wide { grid-column: 1 / -1; max-width: 120ch; }

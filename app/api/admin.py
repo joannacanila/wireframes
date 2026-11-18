@@ -36,6 +36,14 @@ User = Annotated[object, Depends(require_admin)]
 SystemUser = Annotated[object, Depends(require_system)]
 
 
+# S12 (D-28): why no reference applies, in the words the page uses
+REF_WHY = {"no_reference_for_telecom": "Unavailable: no validated telecom / fibre reference",
+           "no_reference_for_abandoned": "Unavailable: abandoned wire, type not established",
+           "no_reference_for_class": "Unavailable: no validated reference for this type",
+           "type_uncertain": "Unavailable: wire type uncertain", "drop_wire": "Not applicable: drop wire",
+           "reference_disabled": "Unavailable: no reference configured"}
+
+
 # ----------------------------------------------------------------------------- overview & queue
 
 
@@ -458,7 +466,7 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
         cond = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk"}
         out = []
         from app.services.basis import level_withdrawn
-        from app.services.comparison import POSITION_TEXT, compare_detection
+        from app.services.comparison import POSITION_TEXT, compare_detection, detection_states
         for d in a.detections:
             # S4: a level from a withdrawn criterion is not a finding (app/services/basis.py)
             withdrawn = level_withdrawn(d.level, d.wire_class, st.config, a.metadata_json or {})
@@ -480,13 +488,18 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
             if "vegetation_contact" in (d.flags_json or []):
                 finding += "; vegetation overlaps the wire in the photo (check on site)"
             c = compare_detection(d, st.config)  # S8: the configured reference, compared (not an assessment)
+            s9 = detection_states(d, st.config)  # S12: coverage / reference / assessment kept apart
             out.append([d.wire_index, cls.get(d.wire_class, d.wire_class), condition, finding,
+                        {"full_span": "Full span", "edge_clipped": "Edge clipped"}.get(s9["coverage"], "Unmeasured" if s9["measurement"] == "unmeasured" else ""),
+                        "Available" if s9["reference_available"] else REF_WHY.get(s9["reference_unavailable_reason"], "Unavailable"),
+                        "Assessed" if s9["assessed"] else "Unassessed",
                         f"{c['reference'] * 100:.1f}% ({c['status']})" if c else "Not applicable",
                         POSITION_TEXT.get(c["position"], "Not measured") if c else "Not compared (no applicable reference)",
                         f"{c['difference_pp']:+.1f}" if c and c["position"] else ""])
         name = f"wireframe-{a.pole.pole_code}-{a.id[:8]}-findings.csv"
         head = [[f"Pole {a.pole.pole_code}", a.inspection_name or "", a.created_at.isoformat()[:19]]]
-    return _csv_notice(head + [[]] + [["Wire", "Type", "Condition", "Finding", "Sag reference", "Compared with reference (image ratio)",
+    return _csv_notice(head + [[]] + [["Wire", "Type", "Condition", "Finding", "Coverage", "Reference applicability", "Assessment",
+                                           "Sag reference", "Compared with reference (image ratio)",
                                            "Difference (percentage points)"]] + out, [], name)
 
 

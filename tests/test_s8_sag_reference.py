@@ -53,7 +53,7 @@ def test_position_uses_only_the_reference_and_the_wires_resolution(shipped_cfg, 
     c = compare_wire(_w(sag_ratio=ratio, sag_ratio_resolution=res), shipped_cfg)
     assert c["position"] == pos and c["reference"] == 0.03 and c["status"] == "provisional"
     assert c["difference_pp"] == pytest.approx((ratio - 0.03) * 100, abs=0.01)
-    assert c["zones"] == {"at_from": pytest.approx(0.03 - res), "above_from": pytest.approx(0.03 + res)}
+    assert c["zones"] == {"at_from": pytest.approx(0.03 - res), "above_from": pytest.approx(0.03 + res), "lower": 0.03, "upper": 0.03}
 
 
 def test_partial_unmeasured_drop_and_uncovered_wires(shipped_cfg):

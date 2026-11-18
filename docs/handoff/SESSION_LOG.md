@@ -1,5 +1,9 @@
 # Session Log
 
+## S12 (18 Nov 2026)
+
+Branch `recovery/s12-results-ui` (worktree `WIREFRAME-s12`) from `2a8abc1`. Approved results page and D-28 boundaries implemented; 839 tests pass, ruff clean, E2E 63/63 on two photos on an isolated copy (port 8012). NOT yet deployed to port 8000 and not merged into main.
+
 ## S11 (18 Nov 2026)
 - Handoff version `0916fd2` identified from the first-session transcript; its interface restored with the engineering
   corrections on `recovery/handoff-0916fd2-engineering`, deployed on port 8000. `main` unchanged.

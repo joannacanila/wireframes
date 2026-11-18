@@ -361,15 +361,39 @@ class ComparisonReference(_Strict):
     CSV export and the assistant compare every measured wire with. It is a COMPARISON, never an assessment: it sets no
     wire level, no CRS and no pole verdict (those still need a validated reference, ``crs.delta_lim0``).
     ``status`` says what the value is; only a value backed by a cited, applicable source may be called ``validated``.
-    The three meter zones come from the reference and each wire's own measurement resolution (1 px / chord):
-    below = ratio + resolution < reference; at = the reference lies within ratio ± resolution; above = ratio -
-    resolution > reference. No other boundary is configured."""
+    S12: every boundary is explicit. ``lower_boundary`` (green to amber) and ``upper_boundary`` (amber to red) default
+    to the reference itself, i.e. no engineering tolerance (none is validated). With ``uncertainty: resolution`` each
+    wire's ±1 px resolution widens the amber region: below = ratio + resolution < lower; above = ratio - resolution >
+    upper; anything else is "at" (the measurement cannot be told apart from the reference region). With
+    ``uncertainty: none`` the point estimate alone is compared. ``classification_enabled`` may be true only for a
+    ``validated`` reference; until then no wire level, CRS or verdict comes from the comparison."""
     enabled: bool = True
     sag_ratio: float = Field(0.03, gt=0, lt=0.5)
+    unit: str = "image sag-to-span ratio"
     status: Literal["provisional", "manufacturer", "regulatory-superseded", "validated"] = "provisional"
+    status_note: str = ""
+    effective_date: str = ""
     label: str = "3% sag-to-span reference (provisional)"
     source: str = ""
     classes: list[str] = Field(default_factory=lambda: list(WIRE_CLASSES))
+    lower_boundary: float | None = Field(None, gt=0, lt=0.5)
+    upper_boundary: float | None = Field(None, gt=0, lt=0.5)
+    tolerance_basis: str = "none: no engineering tolerance is validated"
+    uncertainty: Literal["resolution", "none"] = "resolution"
+    classification_enabled: bool = False
+    meter_scale_max: float = Field(0.10, gt=0, lt=1)  # display only: ratios above it are drawn as overflow
+
+    @model_validator(mode="after")
+    def _bounds(self):
+        lo = self.sag_ratio if self.lower_boundary is None else self.lower_boundary
+        hi = self.sag_ratio if self.upper_boundary is None else self.upper_boundary
+        if not lo <= self.sag_ratio <= hi:
+            raise ValueError("comparison_reference: lower_boundary <= sag_ratio <= upper_boundary is required")
+        if self.classification_enabled and self.status != "validated":
+            raise ValueError("comparison_reference: classification_enabled needs status 'validated'")
+        if self.meter_scale_max <= hi:
+            raise ValueError("comparison_reference: meter_scale_max must exceed upper_boundary")
+        return self
 
     @field_validator("classes")
     @classmethod

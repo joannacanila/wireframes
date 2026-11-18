@@ -212,10 +212,13 @@ def test_field_page_and_assets_are_the_v215_screener(client):
     js = client.get("/assets/field.js").text + client.get("/assets/findings.js").text  # v2.19: shared wording
     # v2.20 result page: problem wires by default, three views, sag against the reference, wires grouped with
     # "needs attention" first, three-step guidance, short photo limitations, the notice; no technical drawer
-    for needle in ('data-view="problem"', 'data-view="photo"', 'data-view="all"', "View options", 'id="opacity"',
-                   'id="span-detail"', "Reference limit", "percentage points", 'data-tab="att"', "Needs attention",
-                   "Not assessed", "They have not passed any check", "Keep your distance", "Report the findings",
-                   "Arrange field verification", "Photo limitations", "Overlapping wires can prevent reliable separation",
+    # S12: the approved layout keeps every control under its new name (Layers, the three-step bar, one Methodology &
+    # Limitations section, the inventory tabs)
+    for needle in ('data-view="problem"', 'data-view="photo"', 'data-view="all"', 'data-view="mask"', 'data-view="both"',
+                   ">Layers<", 'id="opacity"', 'id="zoom-pct"', 'data-zoom="reset"',
+                   'id="span-detail"', "Reference limit", "percentage points", 'data-tab="m"', 'data-tab="u"',
+                   "Not assessed", "Keep Distance", "Download / Share Report",
+                   "Retake Photo (If Needed)", "Methodology &amp; Limitations", "Overlapping wires can prevent reliable separation",
                    "Inspection summary", "not a safety inspection", 'wf-notice variant="full"', "inspection_name",
                    'data-zoom="fit"', "Do not touch"):
         assert needle in js, needle
