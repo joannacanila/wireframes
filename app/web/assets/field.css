@@ -573,3 +573,5 @@ html.fs-root { height: auto; min-height: 100%; }
 .fx-cmp-line .fx-cmp { margin-right: 4px; }
 .fx-spans td.cmp { white-space: nowrap; }
 .fx-dl small { font-size: 12px; color: var(--text-3); }
+.fx-dl dd small { display: block; }
+.fx-dl dd .fx-cmp { white-space: normal; }

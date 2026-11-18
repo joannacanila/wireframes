@@ -438,7 +438,7 @@ function spanDetail(r, w, mode) {
       [`Image sag ratio${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""}`, esc(measuredText(w))],
       ["Reference", w.comparison ? `${pp(w.comparison.reference)} <small>(${esc(w.comparison.status)})</small>` : "None validated"],
       ["Difference", w.comparison?.position ? `${w.comparison.difference_pp > 0 ? "+" : w.comparison.difference_pp < 0 ? "−" : ""}${Math.abs(w.comparison.difference_pp).toFixed(1)} points` : null],
-      ["Compared", w.comparison?.position ? `<span class="fx-cmp ${w.comparison.position}">${POS[w.comparison.position]}</span>` : null],
+      ["Compared", w.comparison?.position ? `<span class="fx-cmp ${w.comparison.position}" title="${esc(POS[w.comparison.position])}">${{ below: "Below", at: "At", above: "Above" }[w.comparison.position]} reference</span>` : null],
       ["Vegetation", vegText(w.veg_clearance)],
     ]) : kv([["Reference", w.comparison ? `${pp(w.comparison.reference)} <small>(${esc(w.comparison.status)}); not compared: not measured</small>` : null], ["Vegetation", vegText(w.veg_clearance)]])}
     ${sagMeter(w)}
