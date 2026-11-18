@@ -413,7 +413,8 @@ function meter(w, g) {
 }
 
 let photoScale = 0; // S7: one meter scale per photo, shared by the measurement-only meters
-const keyAt = (v) => (v < 12 ? "at-start" : v > 88 ? "at-end" : "");
+// a key label is centred on its mark unless it would run past either end of the track (long labels need ~30 %)
+const keyAt = (v) => (v < 30 ? "at-start" : v > 70 ? "at-end" : "");
 /** D-26 / D-27: the original v2.21 meter (track, green / amber / red zones, reference tick, dot, key, legend) for a
  * power line compared with the configured provisional 3 % reference. Zones come from the reference and this wire's
  * own ±1 px resolution (below / at within resolution / above), never from the withdrawn 2.4 % / 4.0 % boundaries.
