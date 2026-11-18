@@ -449,7 +449,7 @@ function spanDetail(r, w, mode) {
       ["Chord L", f.chord_px == null ? null : `${fmt(f.chord_px, 1)} px`],
       ["Sag δ", w.sag_px == null || !measured ? null : `${fmt(w.sag_px, 2)} px`],
       ["δ / L (image)", w.sag_ratio == null ? null : pc(w.sag_ratio, 3)],
-      ["Resolution (1 px)", w.sag_ratio_resolution == null ? null : `± ${pc(w.sag_ratio_resolution, 3)}`],
+      ["Resolution (1 px)", w.sag_ratio_resolution == null ? null : `± ${pc(w.sag_ratio_resolution, 3)}${w.sag_ratio_resolution_derived ? " (derived on read: record predates S4)" : ""}`],
       ["δ_lim", w.delta_lim == null ? null : pc(w.delta_lim, 2)],
       ["Fit residual", f.rms_residual_px == null ? null : `${fmt(f.rms_residual_px, 2)} px`],
       ["Inclination", f.inclination_deg == null ? null : `${fmt(f.inclination_deg, 1)}°`],

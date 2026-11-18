@@ -207,3 +207,19 @@ def test_withdrawn_historical_levels_stay_withdrawn_with_the_reference(client, s
     w = next(x for x in client.get(f"/api/analysis/{aid}/result").json()["wires"] if x["index"] == idx)
     assert w["historical"] and w["level"] is None and w["status"] != "scored" and w["sag_bands"] is None
     assert w["comparison"]["reference"] == 0.03 and w["comparison"]["position"] in ("below", "at", "above")
+
+
+def test_records_without_a_stored_resolution_get_it_derived_on_read_and_unchanged(client, scene, shipped_cfg):
+    """Pre-S4 records have no stored resolution; the same S4 formula is applied on read, flagged, and not written."""
+    aid = _complete(client, scene)
+    with client.state.db.session() as s:
+        a = s.get(Analysis, aid)
+        d = next(x for x in a.detections if (x.fit_json or {}).get("sag_ratio_resolution"))
+        stored = d.fit_json["sag_ratio_resolution"]
+        d.fit_json = {k: v for k, v in d.fit_json.items() if k != "sag_ratio_resolution"}
+        idx = d.wire_index
+    w = next(x for x in client.get(f"/api/analysis/{aid}/result").json()["wires"] if x["index"] == idx)
+    assert w["sag_ratio_resolution_derived"] is True and w["sag_ratio_resolution"] == pytest.approx(stored, rel=1e-3)
+    assert w["comparison"]["zones"]["above_from"] == pytest.approx(0.03 + stored, rel=1e-3)
+    with client.state.db.session() as s:
+        assert "sag_ratio_resolution" not in s.get(Analysis, aid).detections[[x.wire_index for x in s.get(Analysis, aid).detections].index(idx)].fit_json

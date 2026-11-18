@@ -408,7 +408,8 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                 "sag_ratio": d.sag_ratio if d.sag_ratio is not None or d.status != "not_assessed"
                 else (d.fit_json or {}).get("sag_ratio"),
                 # S4: resolution of the image-derived ratio (1 px / chord); measurement only, never a limit
-                "sag_ratio_resolution": (d.fit_json or {}).get("sag_ratio_resolution"),
+                "sag_ratio_resolution": _resolution(d, a, cfg),
+                "sag_ratio_resolution_derived": "sag_ratio_resolution" not in (d.fit_json or {}) and _resolution(d, a, cfg) is not None,
                 "delta_lim": v["delta_lim"], "delta_lim0": v["delta_lim0"], "crs": v["crs"], "level": v["level"],
                 "historical": v["historical"],
                 "sag_bands": sag_bands(cfg, d.wire_class, v["delta_lim"]),
@@ -460,6 +461,22 @@ def scrub_paths(text: str | None) -> str | None:
     return None if text is None else _PATH.sub(lambda m: m.group(1), text)
 
 
+def _resolution(d, a, cfg) -> float | None:
+    """The 1 px resolution of the image-derived ratio (S4, app/pipeline/runner.py: max(gate_scale, 1) / chord). Records
+    made before S4 did not store it; for them it is derived on read with the same formula from the stored chord and
+    photo size (never written back; flagged ``sag_ratio_resolution_derived``)."""
+    f = d.fit_json or {}
+    if "sag_ratio_resolution" in f:
+        return f["sag_ratio_resolution"]
+    chord = d.chord_px or f.get("chord_px")
+    if not chord or d.status not in ("scored", "not_assessed"):
+        return None
+    # gate_scale as in finalize_detections: model path only; reference polygons use 1. segmentation.imgsz has been
+    # 1024 in every configuration since v2.13 (git history), so the derived value equals the one S4 would store.
+    scale = 1.0 if a.segmentation_source == "annotation" else max(a.width or 0, a.height or 0) / cfg.segmentation.imgsz
+    return round(max(scale, 1.0) / chord, 6)
+
+
 def sag_bands(cfg, wire_class: str, delta_lim: float | None) -> dict[str, float] | None:
     """The sag ratios where this wire's level changes, from the configured CRS cut-offs (Equation 10:
     CRS = 10 x sag / delta_lim x w_class). v2.21: ``minor_from`` and ``critical_from`` are the lower bounds of Minor
@@ -478,7 +495,7 @@ def public_error(code: str | None, message: str | None) -> str:
 
 
 _PUBLIC_WIRE = ("index", "class", "status", "bbox", "mask_polygons", "centerline", "catenary_curve", "sag_ratio",
-                "sag_ratio_resolution",
+                "sag_ratio_resolution", "sag_ratio_resolution_derived",
                 "delta_lim", "sag_bands", "level", "flags", "class_status", "reason_code", "reason_short", "notes", "action",
                 "veg_clearance", "provenance", "diagnosis", "comparison")
 
