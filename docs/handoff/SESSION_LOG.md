@@ -1,5 +1,12 @@
 # Session Log
 
+## S7 (18 Nov 2026), three-zone sag meter
+- Branch `recovery/s7-sag-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`) from `recovery/s6-restore`; `main`,
+  `recovery/s6-restore` and port 8000 untouched. Bookmark `recovery/meter-reference-0916fd2` = `0916fd2`.
+- Meter found: `rx-meter`, `7c5a716` (v2.21), zones at the withdrawn 2.4 % / 4.0 %. Owner chose the v2.23 page with the
+  meter and "zones unlit" until a validated reference exists (D-25).
+- Validation: pytest 794 passed; ruff clean; E2E 29/29, 0 page errors.
+
 ## S6 (18 Nov 2026), recovery of the last known-good experience
 - Starting commit: `a727bb9` on `main` (local only, one commit ahead of origin); 776 passed.
 - Work branch: `recovery/s6-restore` in worktree `/Users/joannacanila/WIREFRAME-recovery` (models and `yolo11n.pt`

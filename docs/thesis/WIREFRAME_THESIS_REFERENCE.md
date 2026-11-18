@@ -747,23 +747,26 @@ Plain HTML, CSS and ES-module JavaScript served by the API (no build step), with
 
 - Upload card: photo, inspection name, city, barangay (validated suggestions), optional coordinates and span data.
 - Processing state with the queue position.
-- Result page (`/workspace/result/{id}`), restored in S6 to the v2.18 layout (register D-24; the v2.19-v2.23 rewrite
-  had removed it): header with inspection name, place, time and file name; summary with the outcome, the coverage line
-  and counts (Measured / Visible part only / Not measured while no span is assessed; severity counts only for spans
-  assessed against a validated reference); the photo beside the wire table. Viewer: Original / Wires / Mask / Both,
-  overlay opacity, Vegetation, Layers (model mask, wire sections, estimated gaps, centre lines, fitted curve, sag
-  measurement, section ends, numbers, poles), zoom with a percentage readout, Fit and Reset. The Wires view draws every
-  wire section; measured sections show the fitted curve, the dashed chord between the visible ends and the point of
-  largest sag. With no assessed span, wires are coloured by type and the legend says so (never a severity). Selected
-  section: plain finding, image sag ratio ± 1 px resolution, "Reference: none validated", vegetation as an image
-  observation, the Section 8.6 diagnosis, what would complete the assessment, and Measurement details (chord, sag in px,
-  δ/L, resolution, fit residual, inclination, type evidence, pole ends, inferred share, status code; internals only in
-  the staff record). Wire table: every section with Type, Condition (measurement state or assessed severity) and
-  Finding, filter chips, keyboard navigation; measured sections are listed by image-derived ratio with a note that it is
-  a measurement. Below: what to do next and photo limitations with the affected section numbers and specific advice;
-  "What the analysis found"; for signed-in staff the Technical diagnostics drawer (model, image quality, segmentation,
-  statistics, timings, configuration); the notice; the location block. The retake banner appears only when more than
-  half of the wires were not measured or only partly measured.
+- Result page (`/workspace/result/{id}`): the v2.21-v2.23 layout with its three-zone sag meter, chosen by the owner in
+  S7 (register D-25; S6 had restored the v2.18 layout, D-24, which has no meter). Header, photography tip, retake banner
+  (only when more than half of the wires were not measured or only partly measured), summary with counts (Measured /
+  Visible part only / Not measured / Assessed while no span is assessed; severity counts only for spans assessed
+  against a validated reference), "What the analysis found", the photo (Measured wires / Original photo / All traced
+  wires / Mask, view options, zoom, Fit; wires coloured by type when nothing is assessed) beside the selected-wire card
+  and the wire list (Measured / Not measured tabs, listed by image-derived ratio), what to do, photo limitations, the
+  location block and the notice. Selected-wire card: type, measurement state, finding, image sag ratio ± 1 px
+  resolution, "Reference limit: None validated", "Difference: Not computed", the sag meter, the Section 8.6 diagnosis
+  and what would complete the assessment.
+- Sag meter (v2.21, `7c5a716`; restored S7): one 12 px track, a dot for the selected wire, a key and a three-chip legend
+  (Within reference, Minor sag, Critical). The three zones and the reference tick are drawn only from `sag_bands`,
+  which the server sends only for a wire assessed against a configured reference; no validated reference exists, so in
+  the shipped configuration every meter is unlit: no zones, no tick, the dot at the wire's image sag ratio with its
+  ± 1 px resolution band on a scale shared by every measured wire on the photo (largest ratio plus resolution, x 1.3),
+  hollow legend chips and the sentence "Zones not defined: no validated sag reference exists for ...". A partly
+  measured wire has a hollow dot ("visible part"); an unmeasured wire has an empty dashed track ("Not measured").
+  Historically the zones were at 2.4 % and 4.0 % image sag (CRS 6 and 10 at the withdrawn 4.0 % placeholder); those
+  values have no engineering basis (S4) and are not restored. Below 700 px the workspace shows its unsupported-screen
+  message, as it has since v2.13.
 - A retake prompt when the guardrail holds the result.
 
 ### 10.2 Admin portal (`/admin`, signed in)
@@ -1052,7 +1055,7 @@ relative sag-ratio error under 5 % (`tests/test_v21.py`). Sag accuracy on real p
 
 ### 15.1 Automated tests
 
-`python -m pytest`: 788 tests, all passing (18 Nov 2026, S6, with transformers 5.17.0; S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
+`python -m pytest`: 794 tests, all passing (18 Nov 2026, S7, with transformers 5.17.0; S6 788, S5 776, S4 754, S2 719). The suite uses synthetic scenes with known geometry
 (`app/devtools/synthetic.py`) and reference polygons, so it needs no model weights.
 
 | Area | Examples |
@@ -1081,8 +1084,11 @@ page counts match the API diagnosis, every measured wire is drawn on the photo, 
 the "What the analysis found" section is present, and the PDF draws the measured wires and contains section 4.1. The
 uploaded photo is then marked as a test record. S6 adds the restored page: every wire drawn and listed, measured rows
 state their measurement, a wire selected with its diagnosis, Measurement details, row selection, Both and Original
-views, the Layers menu, opacity, zoom, Reset and every filter. Result (18 Nov 2026, S6, isolated copy of `var/`): 41
-of 41 checks passed, 0 page errors (S5: 24 of 24; S4: 20 of 20; those checks asserted only the absence of severity and passed while the
+views, the Layers menu, opacity, zoom, Reset and every filter (S6 checks retired in S7 with the v2.18 layout). S7 adds the
+sag meter: unlit for the two most-sagging measured wires with the dot at the expected position and no zone or tick,
+moving with the selection, empty for an unmeasured wire, and the three zones drawn when a reference is supplied (a
+synthetic response in the browser only; nothing stored). Result (18 Nov 2026, S7, isolated copy of `var/`): 29 of 29
+checks passed, 0 page errors (S6: 41 of 41; S5: 24 of 24; S4: 20 of 20; those checks asserted only the absence of severity and passed while the
 measurements were hidden, `results/s5_diagnostic_restoration.json`).
 
 ### 15.4 Manual review (limited)

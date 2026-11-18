@@ -1,0 +1,21 @@
+{
+  "description": "S7 (18 Nov 2026): location and restoration of the three-zone sag meter. Headless Chrome (Playwright, system Chrome) on isolated data only: 0916fd2 on a fresh data directory (port 8014); branch recovery/s7-sag-meter on the online-backup copy of var/ used in S6 (port 8011). Production server (port 8000) not modified or restarted.",
+  "history_search": {"commits_searched": "36 reachable (all branches) plus 3 dangling and 2 unreachable commits", "matches": "rx-meter only (field.js meter(), field.css .rx-meter*, .z-low/.z-medium/.z-high, .rx-zones); v2.13 .fx-meter was a one-bar coverage indicator, not sag"},
+  "origin": {"introduced": "7c5a716 (Frontend v2.19-v2.23, labelled v2.21)", "last_displayed": "0916fd2", "dormant_since": "5313c52 (S4: no wire has a reference, so the meter branch never ran)", "removed": "91f74d8 (S6 restored the v2.18 page)"},
+  "historical_mapping": {"zones": ["Within reference: CRS < 6", "Minor sag: 6 <= CRS < 10", "Critical: CRS >= 10"], "at_placeholder": "2.4 % and 4.0 % image sag (delta_lim 4.0 %)", "basis": "none; withdrawn in S4 (register D-02, D-03)"},
+  "historical_capture_0916fd2": {"analysis": "7c70be7d", "wire": 24, "aria_label": "Sag 5.8%; minor sag from 2.4%, critical from 4.0%; reference 4.0%", "track_px": [374, 12], "zone_widths_px": [119, 80, 175], "legend": ["Within reference", "Minor sag", "Critical"]},
+  "s7_capture": {
+    "analysis": "19ac0678",
+    "wire_24": {"state": "unlit", "aria_label": "Image sag ratio 5.8% ±0.3, on a scale from 0 to 7.9% shared by the wires on this photo. No sag zones are shown: no validated sag reference exists for this wire type.", "track_px": [374, 12], "zones": 0},
+    "wire_21": {"state": "unlit, visible part", "key": "This wire 2.4% ±0.4 (visible part)"},
+    "wire_13": {"state": "empty", "key": "Not measured: no sag ratio from this photo"},
+    "widths_checked": [1440, 1024, 760], "below_700px": "workspace unsupported-screen message (unchanged since v2.13)",
+    "historical_records": {"e7170e06 (pre-S4, stored Critical withdrawn)": "unlit, wire 101", "ac0c8543 (S4)": "unlit, wire 47", "03064557": "unlit, wire 2"},
+    "page_errors": 0,
+    "lit_state": "three zones, reference tick and legend drawn when the result carries sag_bands (synthetic response in the browser only)"
+  },
+  "e2e_check": "29 of 29 passed, 0 page errors",
+  "pytest": "794 passed",
+  "ruff": "no findings",
+  "comparison_image": "results/s7_sag_meter_comparison.png"
+}

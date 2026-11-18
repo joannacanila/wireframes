@@ -2,6 +2,23 @@
 
 Location: `docs/thesis/` (moved from `docs/handoff/` in S5). Newest first. Each entry: task, original behaviour, issue, change, files, source, tests, results, risks, commit.
 
+## 2026-11-18, session S7: the v2.23 result page with the three-zone sag meter (register D-25)
+- **Branch:** `recovery/s7-sag-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`), from `recovery/s6-restore`;
+  bookmark `recovery/meter-reference-0916fd2` = `0916fd2` (last commit that displayed the meter).
+- **Finding:** the only sag meter in the history is `rx-meter` (`7c5a716`, v2.21). Its three zones were Within
+  reference / Minor sag / Critical at 2.4 % and 4.0 % image sag (withdrawn placeholder). After S4 it never rendered.
+  The S6 v2.18 restore removed it with the v2.23 page.
+- **Change:** owner's choice: the v2.23 page (as S5 left it, `a727bb9`, with the S4/S5 corrections) replaces the S6
+  v2.18 page; `meter()` kept verbatim for a wire assessed against a configured reference; new `meterUnlit()` and
+  `meterEmpty()` for every other wire; card rows "Image sag ratio", "Reference limit: None validated", "Difference:
+  Not computed". S6 fixes outside the page kept: table finding wording (`findings.js`), PDF wording and colours, admin
+  sheet, backup.
+- **Not changed:** thresholds (none reintroduced), models, configuration, stored inspections.
+- **Tests / results:** pytest 794 passed; ruff clean; E2E 29/29, 0 page errors; three historical records render the
+  meter unlit with no page error (`results/s7_sag_meter.json`).
+- **Risk:** the S6 v2.18 controls (table, Both view, opacity slider, Layers menu, Reset, Measurement details,
+  technical drawer on the result page) are not on this page; they remain on branch `recovery/s6-restore`.
+
 ## 2026-11-18, session S6: recovery of the v2.18 result experience, full backup (register D-13, D-24)
 - **Branch:** `recovery/s6-restore` (worktree `../WIREFRAME-recovery`), from `a727bb9`; `main` untouched. Bookmarks:
   `recovery/baseline-v218` (`f74250e`), `recovery/pre-recovery-main` (`a727bb9`).

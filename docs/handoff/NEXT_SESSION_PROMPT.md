@@ -20,7 +20,7 @@ commit listed in `docs/handoff/SESSION_LOG.md`). S5 was committed locally; check
 ```bash
 cd /Users/joannacanila/WIREFRAME
 git fetch origin && git status --short && git log -5 --oneline && git rev-parse HEAD origin/main
-.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 788 passed (pyproject adds -q; with
+.venv/bin/python -m pytest -p no:cacheprovider -o addopts="" -q   # expect 794 passed (pyproject adds -q; with
                                                                    # the default -q -q the count line is hidden)
 .venv/bin/ruff check app tests scripts ml                          # expect clean
 lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's server; check before stopping it
@@ -74,6 +74,10 @@ lsof -iTCP:8000 -sTCP:LISTEN                                       # owner's ser
   now in `docs/thesis/`. Research: DSOAR s.1.7.12 "Poles, Sag of Wires" lead (S16), text NOT read (TLS error).
 
 ## Outstanding tasks (priority order)
+S7 status: the owner's chosen page (v2.23 layout with the three-zone sag meter, D-25) is on branch
+`recovery/s7-sag-meter` (worktree `/Users/joannacanila/WIREFRAME-meter`), pushed, NOT merged. It supersedes the S6
+v2.18 page; merge `recovery/s7-sag-meter` (it contains all of S6) after the owner's review, not `recovery/s6-restore`.
+Expected: 794 passed, E2E 29 checks.
 S6 status: the recovery is on branch `recovery/s6-restore` (worktree `/Users/joannacanila/WIREFRAME-recovery`),
 pushed to origin, NOT merged into `main`. First: ask the owner to review the restored page (port 8011 isolated or
 after merge), then merge `recovery/s6-restore` into `main` with a normal merge (no force), restart port 8000, and

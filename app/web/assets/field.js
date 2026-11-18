@@ -300,123 +300,157 @@ function guardBanner(r) {
 }
 
 // ------------------------------------------------------------------ result model (v2.15: written for non-specialists)
-import { css, group, pc, SECTION, SEVERITY, SCORE_HELP, sagFactors, finding, limitations, assessment, recommendations, measuredText } from "./findings.js?v=2.23";
-// ------------------------------------------------------------------ result view
-// S6 recovery (register D-24): the v2.18 result page (commit f74250e), restored. Photo and wire table side by side,
-// Original / Wires / Mask / Both, overlay opacity, Vegetation, Layers, zoom with Reset, every wire section in a
-// filterable table, the selected section with its measurement details, specific photo limitations and next steps,
-// and the technical diagnostics drawer for signed-in staff. Engineering corrections kept: no severity without a
-// validated reference (S4), measurement states and the per-wire diagnosis (S5).
+import { css, group, plural, pc, SECTION, CONDITION, SEVERITY, spanId, skipReason, SCORE_HELP, sagFactors, finding, limitations, assessment, recommendations, MEASURED_ONLY, measuredText } from "./findings.js?v=2.23";
+// ------------------------------------------------------------------ result view (v2.20: written for the public)
+// Reading order: what was found (headline from the record), the photo with only the problem wires, the selected
+// wire against its reference limit, the wire list (needs attention first), what to do, photo limitations, notice.
+// Scores, fit parameters and model internals are not shown here (System / technical diagnostics in the admin portal).
 const ICON = {
   pdf: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7zM14 3v5h5M12 11v6M9 14l3 3 3-3"/></svg>`,
   plus: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>`,
   zin: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2M11 8v6M8 11h6"/></svg>`,
   zout: `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.2-4.2M8 11h6"/></svg>`,
   fit: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>`,
-  reset: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/></svg>`,
-  layers: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 4 8 4-8 4-8-4zM4 12l8 4 8-4M4 16l8 4 8-4"/></svg>`,
-  leaf: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14zM5 19l7-7"/></svg>`,
 };
-// view presets; every layer can also be switched on its own in the Layers menu
-const PRESETS = {
-  photo: {},
-  spans: { masks: 1, inferred: 1, catenary: 1, sag: 1, ends: 1, labels: 1, poles: 1 },
-  mask: { wiremask: 1 },
-  overlay: { wiremask: 1, masks: 1, inferred: 1, catenary: 1, sag: 1, ends: 1, labels: 1, poles: 1 },
-};
-const LAYERS = [
-  ["wiremask", "Model mask", "Every pixel the model marked as wire, including small pieces that are not part of any wire section"],
-  ["masks", "Wire sections", "The detected pixels of each wire section, coloured by wire type (or by condition where a section was assessed)"],
-  ["inferred", "Estimated gaps", "Short gaps where a wire was hidden or faint and was joined by estimation (dashed); not detected"],
-  ["skeleton", "Centre lines", "The traced centre line of each wire section"],
-  ["catenary", "Fitted curve", "The hanging curve fitted to each measured wire section"],
-  ["sag", "Sag measurement", "For the selected section: the straight line between its ends and how far the wire hangs below it"],
-  ["ends", "Section ends", "Where each traced wire section starts and ends in the photo (not where it is attached to a pole)"],
-  ["labels", "Section numbers", ""],
-  ["poles", "Utility poles", "Poles found by the pole detector (dashed boxes); context only, they never create or join a wire"],
-];
+const BAND = SEVERITY; // v2.21: Critical / Minor sag / Within reference / Not assessed, everywhere
+const isPower = (w) => w.class === "power-distribution-lines" && w.class_status !== "uncertain";
+const isTelecom = (w) => w.class === "telecom-cable" && w.class_status !== "uncertain";
+const pp = (x) => `${(x * 100).toFixed(1)}%`;
 
-/** Where a wire section stands: a severity only when it was assessed against a validated reference (S4); otherwise
- *  what was measured. Never a severity inferred from a measurement. */
-function mstate(w) {
-  if (w.status === "scored" && w.level) return w.level;
-  if (w.status === "service_drop") return "drop";
-  if (!isMeasured(w)) return "unmeasured";
-  return w.reason_code === "endpoint_unavailable" ? "partial" : "measured";
-}
-const STATE_LABEL = { high: SEVERITY.high, medium: SEVERITY.medium, low: SEVERITY.low, measured: "Measured",
-  partial: "Visible part", unmeasured: "Not measured", drop: "Drop wire" };
-const STATE_ORDER = ["high", "medium", "low", "measured", "partial", "unmeasured", "drop"];
-const conditionCell = (w) => { const g = mstate(w); return `<span class="fx-risk ${g}"><i></i>${STATE_LABEL[g]}</span>`; };
-const vegText = (veg) => (veg ? (veg.gap_px === 0 ? "Overlaps it in the photo" : `${veg.gap_px.toFixed(0)} px away in the photo`) : "None detected nearby");
-
-function spansTable(r, mode) {
-  const rank = Object.fromEntries(STATE_ORDER.map((k, i) => [k, i]));
-  // assessed sections by score; measured sections by image-derived sag ratio (a measurement, stated as such)
-  const rows = [...r.wires].sort((a, b) => rank[mstate(a)] - rank[mstate(b)] || (b.crs ?? -1) - (a.crs ?? -1)
-    || (b.sag_ratio ?? -1) - (a.sag_ratio ?? -1) || a.index - b.index);
-  const counts = Object.fromEntries(STATE_ORDER.map((g) => [g, rows.filter((w) => mstate(w) === g).length]));
-  const body = rows.map((w) => `<tr data-wire="${w.index}" data-group="${mstate(w)}" tabindex="0" aria-selected="false">
-      <td class="id"><span class="fx-id" style="--wc:${wireColor(w, mode)}">${w.index}</span></td>
-      <td class="cls">${esc(classLabel(w, true))}</td>
-      <td class="risk">${conditionCell(w)}</td>
-      <td class="find" title="${esc(finding(w))}">${esc(finding(w, true))}</td></tr>`).join("");
-  return { rows, counts, html: rows.length ? `<table class="fx-spans"><thead><tr><th class="id">Wire</th><th>Type</th><th>Condition</th><th>Finding</th></tr></thead>
-      <tbody>${body}</tbody></table>` : `<p class="fx-empty">No wire was detected in this photo.</p>` };
-}
-
-/** The selected wire section: the plain reading first, its diagnosis, the measurement detail folded underneath. */
-function spanDetail(r, w, mode) {
-  if (!w) return `<p class="fx-detail-empty">Select a wire section in the list or on the photo to see it highlighted and read its details.</p>`;
-  const f = w.fit || {};
-  const p = w.provenance;
-  const dg = w.diagnosis;
-  const kv = (pairs) => `<dl class="fx-dl">${pairs.filter(([, v]) => v != null && v !== "").map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
-  const scored = w.status === "scored";
-  const measured = isMeasured(w);
-  return `<header><span class="fx-id" style="--wc:${wireColor(w, mode)}">${w.index}</span>
-      <b>${esc(classLabel(w))}</b>${conditionCell(w)}</header>
-    <p class="fx-finding">${esc(finding(w))}.</p>
-    ${w.action && !scored ? `<p class="fx-do"><b>What would help:</b> ${esc(w.action)}.</p>` : ""}
-    ${w.class_status === "uncertain" ? `<p class="fx-note">The photo does not show clearly whether this is a power or a telecom line, so no type is claimed (grey on the photo).</p>` : ""}
-    ${p && p.inferred_px ? `<p class="fx-note">About ${pc(p.centerline_inferred_share, 0)} of this wire's traced length was hidden or too faint and was filled by estimation (dashed on the photo).</p>` : ""}
-    ${scored ? kv([
-      ["Sag", `${pc(w.sag_ratio)} of its length`],
-      ["Allowed sag", w.delta_lim ? pc(w.delta_lim) : null],
-      [`<abbr title="${esc(SCORE_HELP)}">Sag score</abbr>`, w.crs == null ? null : `${fmt(w.crs, 1)} of 10`],
-      ["Vegetation", vegText(w.veg_clearance)],
-    ]) : measured ? kv([
-      [`Image sag ratio${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""}`, esc(measuredText(w))],
-      ["Reference", "None validated"],
-      ["Vegetation", vegText(w.veg_clearance)],
-    ]) : kv([["Vegetation", vegText(w.veg_clearance)]])}
-    ${dg ? `<ul class="fx-diag-wire" aria-label="What the analysis found for this wire">${dg.lines.filter((l) => l.key !== "detection").map((l) => `<li data-k="${esc(l.key)}">${esc(l.text)}.</li>`).join("")}</ul>
-      ${dg.needed.length ? `<p class="fx-complete"><b>To complete the assessment:</b> ${esc(dg.needed.join(". "))}.</p>` : ""}` : ""}
-    <details class="fx-more"><summary>Measurement details</summary>${kv([
-      ["Sag score (CRS)", w.crs == null ? null : fmt(w.crs, 3)],
-      ["Chord L", f.chord_px == null ? null : `${fmt(f.chord_px, 1)} px`],
-      ["Sag δ", w.sag_px == null || !measured ? null : `${fmt(w.sag_px, 2)} px`],
-      ["δ / L (image)", w.sag_ratio == null ? null : pc(w.sag_ratio, 3)],
-      ["Resolution (1 px)", w.sag_ratio_resolution == null ? null : `± ${pc(w.sag_ratio_resolution, 3)}`],
-      ["δ_lim", w.delta_lim == null ? null : pc(w.delta_lim, 2)],
-      ["Fit residual", f.rms_residual_px == null ? null : `${fmt(f.rms_residual_px, 2)} px`],
-      ["Inclination", f.inclination_deg == null ? null : `${fmt(f.inclination_deg, 1)}°`],
-      ["Mean wire probability", w.confidence == null ? null : fmt(w.confidence, 3)],
-      ["Type evidence", w.class_evidence ? Object.entries(w.class_evidence).filter(([, v]) => v >= 0.005).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${esc(CLASS_SHORT[k] || k)} ${pc(v, 0)}`).join(" · ") : null],
-      ["Ends at a pole", f.pole_ends == null ? null : `${f.pole_ends} of 2`],
-      ["Inferred share", p ? pc(p.centerline_inferred_share, 1) : "n/a (reference polygons)"],
-      ["Status code", esc(w.reason_code ? `${w.status} · ${w.reason_code}` : w.status)],
-      ["Reason (technical)", w.reason ? esc(w.reason) : null],
-    ])}</details>`;
+/** The headline and its supporting lines, from the stored verdict and the stored wires only. */
+function headline(r) {
+  const v = r.hazard?.verdict || "";
+  const scored = r.wires.filter((w) => w.status === "scored");
+  const flagged = scored.filter((w) => w.level === "high" || w.level === "medium");
+  const high = scored.filter((w) => w.level === "high");
+  const tel = flagged.filter(isTelecom).length, pow = flagged.filter(isPower).length;
+  const powScored = scored.filter(isPower).length;
+  const n = (k, one, many) => `${k} ${k === 1 ? one : many}`;
+  const lines = [];
+  if (flagged.length) {
+    const parts = [tel && `${n(tel, "appears", "appear")} to be ${tel === 1 ? "a telecommunications cable" : "telecommunications cables"}`,
+      pow && `${n(pow, "appears", "appear")} to be ${pow === 1 ? "a power line" : "power lines"}`].filter(Boolean);
+    if (parts.length) lines.push(`Of the ${n(flagged.length, "flagged wire", "flagged wires")}, ${parts.join(" and ")}.`);
+    if (!pow && powScored) lines.push(`None of the ${n(powScored, "power line", "power lines")} that could be assessed was flagged. This does not mean the location is electrically safe.`);
+  }
+  if (r.status === "error") return { cls: "none", title: "This photo could not be processed", lines: ["Try again. If it fails again, take a new photo or contact your administrator."] };
+  if (v.startsWith("INCONCLUSIVE")) { // v2.21: say why (spans off the photo, no reference, poor photo), never "safe"
+    const why = (r.hazard?.reasons || []).find((x) => x.startsWith("INCONCLUSIVE"));
+    const noRef = r.wires.some((w) => MEASURED_ONLY.has(w.reason_code));
+    const d = r.diagnosis;
+    if (d?.why && d.counts.measured + d.counts.measured_partial > 0) { // S5: what was measured, and why no verdict
+      const hist = why && /withdrawn/.test(why) ? [why.replace(/^INCONCLUSIVE - RETAKE PHOTO:\s*/, "").replace(/\.*$/, ".")] : [];
+      return { cls: "none", title: "Inspection summary: assessment incomplete", lines: [...hist, d.why,
+        d.retake_helps ? "A new photo can complete the measurement of wires that run off the photo or could not be traced, but it cannot supply a sag reference. Arrange a field inspection by a qualified person for any concern."
+          : "A new photo will not complete the assessment. Arrange a field inspection by a qualified person for any concern."] };
+    }
+    return { cls: "none", title: "Inspection summary: assessment incomplete",
+      lines: [why ? why.replace(/^INCONCLUSIVE - RETAKE PHOTO:\s*/, "").replace(/^./, (c) => c.toUpperCase()) + "." : "The photo is not clear enough to assess.",
+        noRef ? "This is not a low-risk result. No validated sag reference exists for these wires, so a retake will not complete the assessment; the sag ratios shown are image measurements only. Arrange a field inspection by a qualified person for any concern."
+          : "This is not a low-risk result. Retake the photo with both poles in the frame, or arrange a field check."] };
+  }
+  if (!scored.length) return { cls: "none", title: "Inspection summary: no span could be assessed", lines: ["Take a new photo using the tip above, or arrange a field check."] };
+  if (v === "AT RISK - HIGH" || v === "AT RISK - MODERATE") {
+    const k = v === "AT RISK - HIGH" ? (high.length || flagged.length) : flagged.length;
+    const what = v === "AT RISK - HIGH" ? n(k, "low-hanging wire", "low-hanging wires") : n(k, "wire with some sag", "wires with some sag");
+    const veg = (r.hazard?.factors?.vegetation || []).some((x) => x.gap_px === 0 && x.class === "power-distribution-lines");
+    if (veg) lines.push("Vegetation appears to touch a power line.");
+    void what;
+    return { cls: v === "AT RISK - HIGH" ? "high" : "medium", title: summaryTitle(r), lines };
+  }
+  if (flagged.length) lines.unshift(`${n(flagged.length, "wire reads", "wires read")} as sagging on ${flagged.length === 1 ? "its" : "their"} own. A reading like this can come from the photo rather than the wire, so the pole as a whole was not flagged, but ${flagged.length === 1 ? "it is" : "they are"} worth a look.`);
+  return { cls: "low", title: summaryTitle(r), lines: [...lines, "This is a screening of one photo, not a safety inspection."] };
 }
 
-/** S5: what the analysis found for this photo (app/services/diagnostics.py). */
+/** v2.21 status header: counts of the stored wire levels, the same numbers as the tabs and the PDF. */
+function summaryTitle(r) {
+  const c = r.wires.filter((w) => w.level === "high").length, m = r.wires.filter((w) => w.level === "medium").length;
+  if (c) return `Inspection summary: ${c} ${c === 1 ? "wire needs" : "wires need"} attention`;
+  if (m) return `Inspection summary: no critical wires, ${m} with minor sag`;
+  return "Inspection summary: no wire flagged in this photo";
+}
+
+/** One plain sentence per wire for the list (never "normal" for a wire that was not assessed). */
+function plainFinding(w) {
+  const edge = (w.flags || []).includes("truncated");
+  if (w.status === "scored") {
+    const s = pp(w.sag_ratio);
+    const over = w.delta_lim != null && w.sag_ratio >= w.delta_lim;
+    const base = { high: over ? `Exceeds reference limit: ${s} sag` : `Near reference limit: ${s} sag`, medium: `Minor sag: ${s}`, low: `Within normal range: ${s}` }[w.level];
+    return base + (edge ? "; partly outside the photo" : "");
+  }
+  if (w.status === "service_drop") return "Drop wire to a building; not checked for sag";
+  if (w.status === "not_assessed") return { endpoint_unavailable: w.sag_ratio != null ? `Not assessed: runs off the photo; visible part measured ${measuredText(w)}` : "Not assessed: endpoint unavailable (runs off the photo)",
+    class_uncertain: w.sag_ratio != null ? `Measured, not assessed (type uncertain): image-derived sag ratio ${measuredText(w)}` : "Not assessed: uncertain wire type", no_reference_for_class: "Not assessed: no sag reference for power lines",
+    no_validated_reference: w.sag_ratio != null ? `Measured, not assessed: image-derived sag ratio ${measuredText(w)}` : "Not assessed: no validated sag reference",
+    withdrawn_reference: w.sag_ratio != null ? `Measured, not assessed: image-derived sag ratio ${measuredText(w)} (earlier reference withdrawn)` : "Not assessed: earlier reference withdrawn" }[w.reason_code] || "Not assessed";
+  return { chord_below_precision_gate: "Unable to assess: too small or far away", too_short: "Unable to assess: too small or far away",
+    residual_too_large: "Unable to assess due to overlapping wires", non_positive_a: "Unable to assess due to overlapping wires",
+    empty_mask: "Unable to assess: too faint" }[w.reason_code] || (edge ? "Partially outside the photograph" : "Unable to assess from this photo");
+}
+
+function observation(w) {
+  if (w.status !== "scored") return plainFinding(w) + ".";
+  const t = isTelecom(w) ? "This cable" : isPower(w) ? "This power line" : "This wire";
+  const veg = w.veg_clearance?.gap_px === 0 ? " Vegetation appears to touch it." : "";
+  const over = w.delta_lim != null && w.sag_ratio >= w.delta_lim;
+  // "Needs attention" starts below the reference (the screening flags sag from 60% of it), so say which it is
+  return ({ high: over ? `${t} sags beyond the configured reference.` : `${t} sags close to the configured reference.`,
+    medium: `${t} shows some sag.`, low: `${t} sags within the normal range.` }[w.level] || "") + veg;
+}
+
+/** Selected wire: measured sag against the configured reference, as numbers and as a meter. */
+/** Sag meter with the zones where this wire's level changes (from the configuration, via the server). */
+function meter(w, g) {
+  const lim = w.delta_lim, b = w.sag_bands;
+  const max = Math.max(w.sag_ratio, lim, b?.critical_from || 0) * 1.3;
+  const x = (v) => `${Math.min(100, (v / max) * 100)}%`;
+  return `<div class="rx-meter" role="img" aria-label="Sag ${pp(w.sag_ratio)}${b ? `; minor sag from ${pp(b.minor_from)}, critical from ${pp(b.critical_from)}` : ""}; reference ${pp(lim)}">
+    <div class="rx-meter-track">${b ? `<i class="z z-low" style="left:0;width:${x(b.minor_from)}"></i><i class="z z-medium" style="left:${x(b.minor_from)};width:calc(${x(b.critical_from)} - ${x(b.minor_from)})"></i><i class="z z-high" style="left:${x(b.critical_from)};right:0"></i>` : ""}
+      <i class="rx-meter-ref" style="left:${x(lim)}"></i><i class="rx-meter-dot ${g}" style="left:${x(w.sag_ratio)}" title="This wire: ${pp(w.sag_ratio)}"></i></div>
+    <div class="rx-meter-key">${b ? `<span style="left:${x(b.minor_from)}">${pp(b.minor_from)}</span><span style="left:${x(b.critical_from)}">${pp(b.critical_from)}</span>` : ""}<span class="ref" style="left:${x(lim)}">Reference ${pp(lim)}</span></div>
+    ${b ? `<p class="rx-zones"><span><i class="z-low"></i>Within reference</span><span><i class="z-medium"></i>Minor sag</span><span><i class="z-high"></i>Critical</span></p>` : ""}</div>`;
+}
+
+/** S7 (register D-25): the same meter when no validated reference exists, which is every wire today. The three zones
+ * are the configured levels, so without a reference they are not drawn: the track stays unlit, the dot is the wire's
+ * image sag ratio with its ±1 px resolution, on one scale shared by every wire on this photo so the dots compare.
+ * A wire that was not measured gets an empty track. Never a severity, never a limit. */
+let photoScale = 0;
+const keyAt = (v) => (v < 12 ? "at-start" : v > 88 ? "at-end" : "");
+function meterUnlit(w) {
+  const res = w.sag_ratio_resolution || 0, part = w.reason_code === "endpoint_unavailable";
+  const max = photoScale || (w.sag_ratio + res) * 1.3 || 0.01;
+  const v = (x) => Math.min(100, Math.max(0, (x / max) * 100));
+  const at = v(w.sag_ratio), lo = v(Math.max(0, w.sag_ratio - res)), hi = v(w.sag_ratio + res);
+  return `<div class="rx-meter unlit" role="img" aria-label="Image sag ratio ${measuredText(w)}${part ? ", visible part only" : ""}, on a scale from 0 to ${pp(max)} shared by the wires on this photo. No sag zones are shown: no validated sag reference exists for this wire type.">
+    <div class="rx-meter-track">${res ? `<i class="rx-meter-res" style="left:${lo}%;width:${Math.max(hi - lo, 0.6)}%"></i>` : ""}<i class="rx-meter-dot${part ? " partial" : ""}" style="left:${at}%" title="This wire: image sag ratio ${measuredText(w)}"></i></div>
+    <div class="rx-meter-key"><span class="at-start" style="left:0">0%</span><span class="at-end" style="left:100%">${pp(max)}</span><span class="ref ${keyAt(at)}" style="left:${at}%">This wire ${measuredText(w)}${part ? " (visible part)" : ""}</span></div>
+    <p class="rx-zones unlit"><span><i class="z-low"></i>Within reference</span><span><i class="z-medium"></i>Minor sag</span><span><i class="z-high"></i>Critical</span>
+      <span class="rx-zones-note">Zones not defined: no validated sag reference exists for ${w.class_status === "uncertain" ? "a wire of uncertain type" : `a ${esc(classLabel(w).toLowerCase())}`}. Scale: image sag ratio on this photo, not physical sag.</span></p></div>`;
+}
+
+function meterEmpty(w) {
+  return `<div class="rx-meter empty" role="img" aria-label="Not measured: this wire has no image sag ratio.">
+    <div class="rx-meter-track"></div>
+    <div class="rx-meter-key"><span class="ref at-start" style="left:0">Not measured: no sag ratio from this photo</span></div></div>`;
+}
+
+/** S5: the wire's badge. A severity only when one was assessed; otherwise what was measured. */
+function bandOf(w) {
+  if (w.status === "scored" && w.level) return BAND[w.level];
+  if (w.status === "service_drop") return "Not checked";
+  if (!isMeasured(w)) return "Not measured";
+  return w.reason_code === "endpoint_unavailable" ? "Visible part measured" : "Measured";
+}
+
+/** S5: what the analysis found for this photo (app/services/diagnostics.py), shown with every result. */
 function diagHtml(r) {
   const d = r.diagnosis;
   if (!d || r.status === "error" || !r.wires.length) return "";
   const li = (xs) => `<ul>${xs.map((x) => `<li>${esc(x)}.</li>`).join("")}</ul>`;
   const reasons = Object.entries(d.not_measured_reasons || {});
-  return `<section class="rx-diag fx-after" aria-labelledby="rx-diag-h"><h2 id="rx-diag-h">What the analysis found</h2>
+  return `<section class="rx-diag" aria-labelledby="rx-diag-h"><h2 id="rx-diag-h">What the analysis found</h2>
     <p class="rx-diag-stage">${esc(d.processing)}. ${d.counts.detected} detected · ${d.counts.measured} measured · ${d.counts.measured_partial} visible part only · ${d.counts.not_measured} not measured${d.counts.not_applicable ? ` · ${d.counts.not_applicable} drop wires` : ""} · ${d.counts.assessed} assessed for severity.</p>
     ${reasons.length ? `<p class="rx-diag-stage">Not measured: ${esc(reasons.map(([k, n]) => `${k.toLowerCase()} (${n})`).join(", "))}.</p>` : ""}
     <div class="rx-diag-cols">
@@ -426,179 +460,162 @@ function diagHtml(r) {
     </div></section>`;
 }
 
-/** Everything technical, grouped, for administrators and researchers (signed-in staff: the public record does not
- *  carry these fields, v2.20). Collapsed by default. */
-function diagnostics(r) {
-  const sag = sagFactors(r);
-  const rule = r.parameters?.hazard_rule || {};
-  const q = r.quality || {};
-  const iq = r.segmentation_input?.quality || {};
-  const wm = r.wire_mask;
-  const unc = q.uncertainty || {};
-  const tel = r.telemetry || {};
-  const sup = (r.suppressed_spans || []).filter((s) => !s.unavailable);
-  const kv = (pairs) => `<dl class="fx-kv">${pairs.filter(([, v]) => v != null && v !== "").map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>`;
-  const ms = (k) => (r.timings_ms?.[k] != null ? `${fmt(r.timings_ms[k], 0)} ms` : null);
-  const inf = r.wires.reduce((a, w) => a + (w.provenance?.inferred_px || 0), 0);
-  return `
-    <section><h3>Model information</h3>${kv([["Model", esc(tel.model || r.segmentation_source)], ["Segmentation source", esc(r.segmentation_source)],
-      ["WireNet weights", esc(tel.wirenet_weights)], ["Detector weights", esc(tel.detector_weights)],
-      ["Polarity", (r.flags || []).includes("polarity_inverted") ? "inverted (night)" : "as photographed"],
-      ["Enhancement", esc((r.segmentation_input?.enhancement || []).join(", ") || "none")]])}</section>
-    <section><h3>Image quality</h3>${kv([["Grade", esc(q.grade)], ["Reliability R", q.reliability == null ? null : fmt(q.reliability, 3)], ["Reason", esc(q.reason)],
-      ["Entropy U", unc.entropy == null ? null : fmt(unc.entropy, 3)], ["Flip disagreement D", unc.disagreement == null ? null : fmt(unc.disagreement, 3)],
-      ["Mean L*", iq.mean_l == null ? null : fmt(iq.mean_l, 1)], ["Contrast", iq.contrast == null ? null : fmt(iq.contrast, 1)],
-      ["Near-white share", iq.bright_share == null ? null : pct(iq.bright_share, 0)], ["Thin-line contrast", iq.line_contrast == null ? null : fmt(iq.line_contrast, 1)],
-      ["Sharpness", iq.sharpness == null ? null : fmt(iq.sharpness, 0)], ["Noise σ", iq.noise_sigma == null ? null : fmt(iq.noise_sigma, 1)],
-      ["Motion coherence", iq.motion_coherence == null ? null : fmt(iq.motion_coherence, 2)], ["Resolution", `${r.image.width} × ${r.image.height}`]])}</section>
-    <section><h3>Segmentation metrics</h3>${wm ? kv([["Wire pixels (model)", wm.wire_pixels?.toLocaleString()], ["Inside wire sections", wm.span_coverage == null ? "—" : pct(wm.span_coverage, 0)],
-      ["Fragments outside sections", wm.wire_pixels_in_spans == null ? null : `${(wm.wire_pixels - wm.wire_pixels_in_spans).toLocaleString()} px`],
-      ["Inferred gap pixels", `${inf.toLocaleString()} px`],
-      ["Power px", wm.pixels?.["power-distribution-lines"]?.toLocaleString()], ["Telecom px", wm.pixels?.["telecom-cable"]?.toLocaleString()],
-      ["Abandoned px", wm.pixels?.["abandoned-wire"]?.toLocaleString()], ["Vegetation px", wm.pixels?.Vegetation?.toLocaleString()]]) : "<p>No model mask (reference polygons).</p>"}
-      <h4>Ignored as not wires / not vegetation</h4>${sup.length ? `<ul class="fx-suppressed">${sup.map((s) => `<li>${esc(s.wire_class === "Vegetation" ? "Vegetation" : (CLASS_SHORT[s.wire_class] || s.wire_class))} · ${esc(s.reason_code === "structure_edge" ? "structure outline" : s.reason_code === "not_vegetation" ? "not vegetation" : `${pct(s.ground_share, 0)} on road / pavement`)} · x ${Math.round(s.bbox[0])}–${Math.round(s.bbox[2])}, y ${Math.round(s.bbox[1])}–${Math.round(s.bbox[3])}</li>`).join("")}</ul>
-      ${[...new Set(sup.map((s) => s.reason))].map((t) => `<p>${esc(t)}.</p>`).join("")}<p>These are never measured.</p>` : "<p>None: no trace lay on the road or along a structure outline, and every vegetation region was confirmed.</p>"}
-      ${r.scene?.poles_detected ? `<h4>Poles</h4><p>${r.scene.poles_detected.length} utility pole${r.scene.poles_detected.length === 1 ? "" : "s"} found, outlined with dashed boxes on the photo (context only: a pole never creates or joins a wire).</p>` : ""}</section>
-    <section><h3>Statistical analysis</h3>${rule.sag_rule === "corroborated" && sag.scored_spans ? `
-      <p>High band: <b class="fx-num">${(sag.high || []).length}</b> of <b class="fx-num">${sag.scored_spans}</b> assessed spans; <b class="fx-num">${sag.k_high}</b> needed above the ${(rule.p0_high * 100).toFixed(1)}% per-span noise floor (one-sided binomial, α = ${rule.alpha}).</p>
-      <p>Medium or above: <b class="fx-num">${(sag.high || []).length + (sag.medium || []).length}</b>; <b class="fx-num">${sag.k_medium}</b> needed (noise floor ${(rule.p0_medium * 100).toFixed(1)}%).</p>`
-      : `<p>No span was assessed (no validated sag reference), so no sag rule was applied.</p>`}
-      <p>Server verdict: <b>${esc(r.hazard?.verdict || "—")}</b></p>
-      <ul class="fx-notes">${(r.hazard?.reasons || []).map((x) => `<li>${esc(x)}</li>`).join("")}</ul></section>
-    <section><h3>Processing performance</h3>${kv([["Total", tel.inference_s != null ? `${fmt(tel.inference_s, 2)} s` : null],
-      ["Preprocess", ms("preprocess")], ["Segmentation", ms("segmentation")], ["Geometry and risk", ms("geometry_and_risk")]])}</section>
-    <section><h3>Configuration and execution</h3>${kv([["Config fingerprint", esc(r.parameters?.fingerprint)], ["Current config", esc(r.parameters?.current_fingerprint)],
-      ["Chord gate", r.parameters?.min_chord_px ? `${fmt(r.parameters.min_chord_px, 0)} px` : "off (resolution reported)"],
-      ["Provisional blocks", esc((r.parameters?.provisional || []).join(", "))], ["Assessment basis", esc(r.metadata?.assessment_basis)],
-      ["Pole code", esc(r.pole?.code)], ["Analysis id", `<span class="fx-num">${esc(r.id)}</span>`], ["Submitted via", esc(r.submitted_via)],
-      ["Flags", esc((r.flags || []).join(", ") || "none")]])}</section>`;
+function wireCard(w) {
+  if (!w) return `<p class="rx-pick">Select a numbered wire on the photo or in the list to see its measurement.</p>`;
+  const g = group(w);
+  const scored = w.status === "scored" && w.sag_ratio != null;
+  const dg = w.diagnosis;
+  const lim = scored && w.delta_lim ? w.delta_lim : null;
+  const diff = lim != null ? (w.sag_ratio - lim) * 100 : null;
+  const max = lim != null ? Math.max(w.sag_ratio, lim) * 1.35 : 1;
+  return `<header class="rx-wire-head"><span class="rx-id" style="--wc:${wireColor(w)}">${w.index}</span>
+      <div><b>${esc(classLabel(w))}</b><span class="rx-sev ${g}">${esc(bandOf(w))}</span><span class="rx-span">Span ${spanId(w.index)}</span></div></header>
+    <p class="rx-obs">${esc(observation(w))}</p>
+    ${scored ? `<dl class="rx-meas">
+        <div><dt>This wire's sag</dt><dd>${pp(w.sag_ratio)}</dd></div>
+        ${lim != null ? `<div><dt>Reference limit</dt><dd>${pp(lim)}</dd></div>
+        <div><dt>Difference</dt><dd class="${diff > 0 ? "over" : ""}">${diff > 0 ? "+" : diff < 0 ? "−" : ""}${Math.abs(diff).toFixed(1)} percentage points</dd></div>` : ""}
+      </dl>
+      ${lim != null ? `${meter(w, g)}
+        <p class="rx-note">Sag is how far the wire hangs below the straight line between its ends, as a share of that length. The reference is the sag configured for this wire type in WIREFRAME; it has not been calibrated against local field measurements.</p>` : ""}`
+      : ""}
+    ${!scored && isMeasured(w) ? `<dl class="rx-meas"><div><dt>Image sag ratio${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""}</dt><dd>${measuredText(w)}</dd></div>
+        <div><dt>Reference limit</dt><dd class="none">None validated</dd></div>
+        <div><dt>Difference</dt><dd class="none">Not computed</dd></div></dl>
+      ${meterUnlit(w)}
+      ${dg ? "" : `<p class="rx-note">Measured in image pixels: the largest distance from the traced wire to the straight line between its visible ends, divided by that line's length (± is the 1 pixel resolution). It is not physical sag and is not compared with any limit, because no validated sag reference exists for this wire type.</p>`}` : ""}
+    ${!isMeasured(w) && w.status !== "service_drop" && w.status !== "scored" ? meterEmpty(w) : ""}
+    ${dg ? `<ul class="rx-diag-wire" aria-label="What the analysis found for this wire">${dg.lines.filter((l) => l.key !== "detection").map((l) => `<li data-k="${esc(l.key)}">${esc(l.text)}.</li>`).join("")}</ul>
+      ${dg.needed.length ? `<p class="rx-note"><b>To complete the assessment:</b> ${esc(dg.needed.join(". "))}.</p>` : ""}` : ""}
+    ${w.class_status === "uncertain" ? `<p class="rx-note">The photo does not show clearly whether this is a power line or a telecommunications cable, so no type is claimed.</p>` : ""}`;
 }
 
 function renderResult(r) {
-  const a = assessment(r);
-  const lims = limitations(r);
-  const recs = recommendations(r, a, lims);
+  const h = headline(r);
   const loc = r.pole.location;
-  const anyScored = r.wires.some((w) => w.status === "scored" && w.level);
-  // S5: with no assessed span there is no severity to colour by; wires are coloured by type (never a severity)
-  const mode = anyScored ? "risk" : "class";
-  const tbl = spansTable(r, mode);
-  const c = tbl.counts;
-  // first selection: the most severe assessed section (v2.18), else the measured section with the largest
-  // image-derived ratio (the first row of the table)
-  const first = tbl.rows.find((w) => (w.status === "scored" ? w.level !== "low" : isMeasured(w)));
-  const hasMask = !!r.wire_mask;
-  const hasVeg = (r.vegetation || []).length > 0;
-  const when = new Date(r.created_at);
   const insp = r.inspection || {};
   const place = [insp.barangay, insp.city].filter(Boolean).join(", ");
-  const dc = r.diagnosis?.counts;
-  // a retake helps only wires that were not measured or only partly measured, never a missing reference (S5)
+  const when = new Date(r.created_at);
+  const groups = { high: [], medium: [], low: [], none: [] };
+  r.wires.forEach((w) => groups[group(w)].push(w));
+  for (const k of Object.keys(groups)) groups[k].sort((a, b) => (b.sag_ratio ?? -1) - (a.sag_ratio ?? -1) || a.index - b.index);
+  const attention = [...groups.high, ...groups.medium];
+  const assessed = r.wires.filter((w) => w.status === "scored").length;
+  const notAssessed = r.wires.filter((w) => w.status !== "scored").length;
+  // S5: with no assessed span (no validated reference), the measured wires are the diagnostic focus: drawn with their
+  // fitted curve, chord and sag point, listed by image-derived sag ratio (a measurement, never a severity)
+  const measuredWs = r.wires.filter(isMeasured).sort((a, b) => b.sag_ratio - a.sag_ratio || a.index - b.index);
+  const unmeasured = r.wires.filter((w) => !isMeasured(w));
+  const diagMode = !assessed && measuredWs.length > 0;
+  const focus = attention.length ? attention : diagMode ? measuredWs : [];
+  // a retake helps only wires that were not measured or only partly measured, never a missing reference
   const fixable = r.wires.filter((w) => (!isMeasured(w) && w.status !== "service_drop") || w.reason_code === "endpoint_unavailable").length;
-  const coverage = !anyScored && dc && r.wires.length
-    ? `${dc.measured + dc.measured_partial} of ${r.wires.length} wire sections were measured in the image${dc.measured_partial ? ` (${dc.measured_partial} visible part only)` : ""}; ${dc.assessed} assessed for severity.`
-    : a.coverage;
-  const COUNTS = anyScored ? [["high", "High"], ["medium", "Moderate"], ["low", "Low"]].map(([g]) => [g, SEVERITY[g]])
-    : [["measured", "Measured"], ["partial", "Visible part only"], ["unmeasured", "Not measured"]];
-  const FILTERS = anyScored ? [["high", SEVERITY.high], ["medium", SEVERITY.medium], ["low", SEVERITY.low], ["measured", "Measured"], ["partial", "Visible part"], ["unmeasured", "Not measured"], ["drop", "Drop"]]
-    : [["measured", "Measured"], ["partial", "Visible part"], ["unmeasured", "Not measured"], ["drop", "Drop"]];
-  const legendSpans = anyScored
-    ? [["--risk-high", SEVERITY.high], ["--risk-med", SEVERITY.medium], ["--risk-low", SEVERITY.low], ["--risk-none", SEVERITY.none]]
-    : [["--cls-power", "Power line"], ["--cls-telecom", "Telecom / fibre"], ["--cls-dead", "Abandoned"], ["--cls-unknown", "Type uncertain"]];
+  const dc = r.diagnosis?.counts;
+  photoScale = Math.max(0, ...measuredWs.map((w) => w.sag_ratio + (w.sag_ratio_resolution || 0))) * 1.3; // S7: one meter scale per photo
+  const hasMask = !!r.wire_mask, hasVeg = (r.vegetation || []).length > 0;
+  const lims = limitations(r);
+  const limKeys = new Set(lims.map((l) => l.key));
+  const LIMS = [
+    ["overlap", "Overlapping wires can prevent reliable separation."],
+    ["edge", "Wires extending beyond the photograph may not be fully measurable."],
+    ["small", "Distant or obscured wires may not have sufficient visual detail."],
+  ].filter(([k]) => limKeys.has(k) || (k === "small" && (limKeys.has("other") || limKeys.has("quality") || limKeys.has("estimated"))));
+  const row = (w) => `<li data-wire="${w.index}" tabindex="0" aria-selected="false" role="option">
+      <span class="rx-id" style="--wc:${wireColor(w, diagMode ? "class" : "risk")}">${w.index}</span>
+      <span class="rx-row"><span class="rx-line"><span class="rx-type">${esc(classLabel(w, true))}</span><span class="rx-sev ${group(w)}">${esc(bandOf(w))}</span></span>
+        <span class="rx-find">${esc(plainFinding(w))}</span></span></li>`;
+  const list = (ws, empty) => ws.length ? `<ul class="rx-list" role="listbox" aria-label="Wires">${ws.map(row).join("")}</ul>` : `<p class="rx-empty">${empty}</p>`;
 
   stages.result.innerHTML = `
-    <header class="fx-insp">
-      <div class="fx-insp-id">
-        <h1>${esc(insp.name || r.image.original_filename || "Pole inspection")}</h1>
-        <p>${place ? `<span>${esc(place)}</span>` : ""}
-          <time datetime="${esc(r.created_at)}">${esc(when.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" }))}, ${esc(when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" }))}</time>
-          ${insp.name && r.image.original_filename ? `<span class="fx-file" title="Original file name">${esc(r.image.original_filename)}</span>` : ""}</p>
-      </div>
-      <div class="fx-insp-actions">
-        ${r.status !== "error" ? `<a class="btn" href="/api/reports/${r.id}/pdf" target="_blank" rel="noopener" id="pdf">${ICON.pdf}PDF report</a>` : ""}
-        <button class="btn primary" id="again" type="button">${ICON.plus}New inspection</button>
+    <div class="rx">
+    <header class="rx-head">
+      <div><h1>${esc(insp.name || "Pole inspection")}</h1>
+        <p>${[place, `${when.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })}, ${when.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}`].filter(Boolean).map(esc).join(" · ")}</p></div>
+      <div class="rx-actions">
+        ${r.status !== "error" ? `<a class="btn lg" href="/api/reports/${r.id}/pdf" target="_blank" rel="noopener" id="pdf">${ICON.pdf}Download PDF report</a>` : ""}
+        <button class="btn primary lg" id="again" type="button">${ICON.plus}New inspection</button>
       </div>
     </header>
-
+    <p class="rx-phototip"><b>Photography tip:</b> stand where both supporting poles and the full span of wire are visible, with the wires against open sky.</p>
     ${guardBanner(r)}
     ${r.wires.length && fixable / r.wires.length > 0.5 ? `<div class="rx-retake" role="status"><b>More than half of the detected wires (${fixable} of ${r.wires.length}) could not be measured completely from this photo.</b> Retake the photo from a few steps along the street so the wires separate, with both poles in the frame.</div>` : ""}
-    <section class="fx-summary ${a.cls}" aria-label="Overall assessment">
-      <div class="fx-outcome">
-        <span class="fx-pill ${a.cls}" id="verdict-pill">${esc(a.pill)}</span>
-        <h2 id="rx-title">${esc(a.title)}</h2>
-        ${a.lines.map((l) => `<p>${l}</p>`).join("")}
-        ${r.status !== "error" && a.cls !== "low" ? "<p>This is a screening from one photo, not a safety inspection.</p>" : ""}
-        ${coverage ? `<p class="fx-coverage">${esc(coverage)}</p>` : ""}
-      </div>
-      <dl class="fx-counts" aria-label="Wire sections">
-        ${COUNTS.map(([g, label]) => `<div><dt><i class="${g}"></i>${label}</dt><dd><button type="button" class="fx-count ${g}" data-filter-go="${g}" ${c[g] ? "" : "disabled"} aria-label="Show ${label.toLowerCase()} wire sections">${c[g]}</button></dd></div>`).join("")}
-      </dl>
-    </section>
 
-    <div class="fx-work">
-      <section class="fx-viewer" aria-label="Photo and detected wires">
-        <div class="fx-toolbar" role="toolbar" aria-label="Photo view">
-          <div class="fx-seg" role="radiogroup" aria-label="View">
-            <button type="button" role="radio" data-view="photo" aria-checked="false">Original</button>
-            <button type="button" role="radio" data-view="spans" aria-checked="true">Wires</button>
+    <section class="rx-summary ${h.cls}" aria-labelledby="rx-title">
+      <h2 id="rx-title">${esc(h.title)}</h2>
+      ${h.lines.map((l) => `<p>${esc(l)}</p>`).join("")}
+      <dl class="rx-counts">
+        ${(assessed ? [["high", SEVERITY.high, groups.high.length], ["medium", SEVERITY.medium, groups.medium.length], ["low", SEVERITY.low, groups.low.length], ["none", SEVERITY.none, groups.none.length]]
+          // S4: no validated reference, so no severity counts; the measurements and the not-assessed total only
+          : dc ? [["none", "Measured", dc.measured], ["none", "Visible part only", dc.measured_partial], ["none", "Not measured", dc.not_measured], ["none", "Assessed", dc.assessed]]
+          : [["none", "Sag ratio measured", r.wires.filter((w) => w.sag_ratio != null).length], ["none", SEVERITY.none, groups.none.length]])
+          .map(([k, t, n]) => `<div class="${k}"><dt>${t}</dt><dd>${n}</dd></div>`).join("")}
+      </dl>
+      ${r.wires.length ? `<p class="rx-coverage">${r.wires.length} ${r.wires.length === 1 ? "wire" : "wires"} detected · ${assessed} assessed · ${notAssessed} not assessed${statusLine(r) ? ` · ${esc(statusLine(r))}` : ""}</p>` : ""}
+    </section>
+    ${diagHtml(r)}
+
+    <div class="rx-work">
+      <section class="rx-photo" aria-label="Photo">
+        <div class="rx-bar" role="toolbar" aria-label="Photo view">
+          <div class="rx-seg" role="radiogroup" aria-label="Show">
+            <button type="button" role="radio" data-view="problem" aria-checked="true">${diagMode ? "Measured wires" : "Problem wires"}</button>
+            <button type="button" role="radio" data-view="photo" aria-checked="false">Original photo</button>
+            <button type="button" role="radio" data-view="all" aria-checked="false">All traced wires</button>
             <button type="button" role="radio" data-view="mask" aria-checked="false" ${hasMask ? "" : "disabled title=\"No model mask for this inspection\""}>Mask</button>
-            <button type="button" role="radio" data-view="overlay" aria-checked="false" ${hasMask ? "" : "disabled title=\"No model mask for this inspection\""}>Both</button>
-          </div>
-          <label class="fx-opacity" id="opacity-wrap"><span>Overlay</span><input type="range" id="opacity" min="0" max="100" value="100" aria-label="Overlay opacity"><output for="opacity">100%</output></label>
-          <button class="btn sm" type="button" data-layer="vegetation" aria-pressed="${hasVeg}" ${hasVeg ? "" : "disabled title=\"No vegetation detected\""}>${ICON.leaf}Vegetation</button>
-          <div class="fx-layers">
-            <button class="btn sm" type="button" id="layers-btn" aria-expanded="false" aria-controls="layers-menu">${ICON.layers}Layers</button>
-            <div class="fx-menu" id="layers-menu" hidden>${LAYERS.map(([k, label, help]) => `<label title="${esc(help)}"><input type="checkbox" data-l="${k}" ${k === "wiremask" && !hasMask ? "disabled" : ""}><span>${label}${help ? `<small>${help}</small>` : ""}</span></label>`).join("")}</div>
           </div>
           <span class="fx-spacer"></span>
-          <span class="fx-zoom">
-            <button class="btn sm icon" type="button" data-zoom="out" aria-label="Zoom out" title="Zoom out">${ICON.zout}</button>
-            <output id="zoom-pct" class="fx-num" aria-live="off">100%</output>
-            <button class="btn sm icon" type="button" data-zoom="in" aria-label="Zoom in" title="Zoom in">${ICON.zin}</button>
-            <button class="btn sm" type="button" data-zoom="fit" title="Fit the photo to the viewer">${ICON.fit}Fit</button>
-            <button class="btn sm" type="button" data-zoom="reset" title="Fit, clear the selection and restore the default view">${ICON.reset}Reset</button>
-          </span>
+          <div class="rx-menu"><button class="btn" type="button" id="opts-btn" aria-expanded="false" aria-controls="opts">View options</button>
+            <div class="rx-pop" id="opts" hidden>
+              <label class="rx-op"><span>Overlay opacity</span><input type="range" id="opacity" min="0" max="100" value="100"><output>100%</output></label>
+              <label><input type="checkbox" id="veg" ${hasVeg ? "" : "disabled"}> Vegetation${hasVeg ? "" : " (none found)"}</label>
+              <label><input type="checkbox" id="lyr-mask" ${hasMask ? "" : "disabled"}> Every pixel marked as wire</label>
+              <label><input type="checkbox" id="lyr-labels" checked> Wire numbers</label>
+              <label><input type="checkbox" id="lyr-poles"> Utility poles (approximate)</label>
+            </div></div>
+          <span class="rx-zoom"><button class="btn icon" type="button" data-zoom="out" aria-label="Zoom out">${ICON.zout}</button>
+            <button class="btn icon" type="button" data-zoom="in" aria-label="Zoom in">${ICON.zin}</button>
+            <button class="btn" type="button" data-zoom="fit">${ICON.fit}Fit</button></span>
         </div>
-        <div class="fx-canvas" style="--ar:${r.image.width} / ${r.image.height}"><div class="canvas-wrap" id="fs-canvas"></div></div>
-        <div class="fx-legend" aria-label="Legend">
-          ${legendSpans.map(([v, t]) => `<span data-legend="spans"><i style="--c:${css(v)}"></i>${t}</span>`).join("")}
-          <span data-legend="inferred"><i class="dash"></i>Estimated, not detected</span>
-          <span data-legend="mask" hidden><i style="--c:rgb(25,113,194)"></i>Power line pixels</span><span data-legend="mask" hidden><i style="--c:rgb(156,54,181)"></i>Telecom pixels</span><span data-legend="mask" hidden><i style="--c:rgb(232,89,12)"></i>Abandoned wire pixels</span>
-          ${hasVeg ? `<span data-legend="veg"><i style="--c:${css("--cls-veg")}"></i>Vegetation</span>` : ""}
-          <span class="fx-legend-hint">${anyScored ? "" : "Colour shows wire type, not severity · "}Scroll to zoom · drag to move · double-click to fit</span>
-        </div>
+        <div class="fx-canvas rx-canvas" style="--ar:${r.image.width} / ${r.image.height}"><div class="canvas-wrap" id="fs-canvas"></div></div>
+        ${focus.length ? `<div class="rx-callouts" aria-label="${diagMode ? "Measured wires" : "Flagged wires"}">${focus.slice(0, 12).map((w) => `<button type="button" data-goto="${w.index}" class="rx-call ${diagMode ? "measured" : group(w)}"><span${diagMode ? ` style="background:${wireColor(w, "class")}"` : ""}>${w.index}</span>${esc(classLabel(w, true))} · ${pp(w.sag_ratio)}${diagMode ? " (image)" : ""}</button>`).join("")}</div>` : ""}
+        ${diagMode ? `<p class="rx-legend"><span><i style="background:var(--cls-power)"></i>Power line</span><span><i style="background:var(--cls-telecom)"></i>Telecom / fibre</span><span><i style="background:var(--cls-dead)"></i>Abandoned</span><span><i style="background:var(--cls-unknown)"></i>Type uncertain</span><span class="rx-legend-note">Dashed line: chord between the visible ends · dot: largest sag. Colour shows wire type, not severity.</span></p>`
+          : `<p class="rx-legend"><span><i class="high"></i>${SEVERITY.high}</span><span><i class="medium"></i>${SEVERITY.medium}</span><span class="all-only"><i class="low"></i>${SEVERITY.low}</span><span class="all-only"><i class="none"></i>${SEVERITY.none}</span></p>`}
       </section>
 
-      <aside class="fx-side" aria-label="Wire sections">
-        <section class="fx-detail" id="span-detail" aria-live="polite">${spanDetail(r, null, mode)}</section>
-        <section class="fx-spans-panel">
-          <div class="fx-table-head"><h2>Wire sections <span class="fx-num">${r.wires.length}</span></h2>
-            <div class="fx-filters" role="group" aria-label="Show">
-              <button type="button" data-filter="all" aria-pressed="true">All</button>
-              ${FILTERS.filter(([g]) => c[g] || g !== "drop").map(([g, label]) => `<button type="button" data-filter="${g}" aria-pressed="false" ${c[g] ? "" : "disabled"}>${label} <b class="fx-num">${c[g]}</b></button>`).join("")}
-            </div></div>
-          ${anyScored ? "" : `<p class="fx-table-note">Measured sections are listed by image-derived sag ratio: a measurement in the photo, not a severity. No section was assessed against a sag reference, so none has passed or failed any check. They have not passed any check.</p>`}
-          <div class="fx-scroll" id="fx-scroll">${tbl.html}<p class="fx-empty" id="filter-empty" hidden>No wire sections in this group.</p></div>
+      <aside class="rx-side">
+        <section class="rx-wire" id="span-detail" aria-live="polite">${wireCard(focus[0] || null)}</section>
+        <section class="rx-wires" aria-labelledby="rx-wl">
+          <h2 id="rx-wl">Wires</h2>
+          ${diagMode ? `<div class="rx-tabs" role="tablist">
+            <button role="tab" data-tab="att" aria-selected="true">Measured <b>${measuredWs.length}</b></button>
+            <button role="tab" data-tab="ok" aria-selected="false">Not measured <b>${unmeasured.length}</b></button>
+          </div>
+          <div data-panel="att"><p class="rx-split">Sorted by image-derived sag ratio. A ratio is a measurement in the photo, not a severity. They have not passed any check.</p>${list(measuredWs, "")}</div>
+          <div data-panel="ok" hidden>${unmeasured.length ? `<p class="rx-split">${esc(skipSummary(unmeasured))}</p>` : ""}${list(unmeasured, "Every detected wire was measured.")}</div>`
+          : `<div class="rx-tabs" role="tablist">
+            <button role="tab" data-tab="att" aria-selected="true">Flagged <b>${attention.length}</b></button>
+            <button role="tab" data-tab="ok" aria-selected="false">${SEVERITY.low} <b>${groups.low.length}</b></button>
+          </div>
+          <div data-panel="att">${attention.length ? `<p class="rx-split">${groups.high.length} ${SEVERITY.high.toLowerCase()} · ${groups.medium.length} ${SEVERITY.medium.toLowerCase()}</p>` : ""}${list(attention, "No wire in this photo was flagged.")}</div>
+          <div data-panel="ok" hidden>${list(groups.low, "No wire was measured within the reference.")}</div>
+          ${groups.none.length ? `<details class="rx-skipped"><summary><b>${groups.none.length} ${groups.none.length === 1 ? "wire" : "wires"} not assessed</b>: ${esc(skipSummary(groups.none))}</summary>
+            <p class="rx-skip-note">These wires were not assessed. They have not passed any check. Where a sag ratio is shown, it is an image measurement only.</p>
+            ${list(groups.none, "")}</details>` : ""}`}
         </section>
       </aside>
     </div>
 
-    <div class="fx-guide">
-      <section class="fx-recs" aria-labelledby="recs-h"><h2 id="recs-h">What to do next</h2>
-        <ol id="next-action">${recs.map((x) => `<li><span>${x}</span></li>`).join("")}</ol></section>
-      <section class="fx-limits" id="limits" aria-labelledby="lim-h"><h2 id="lim-h">Photo limitations</h2>
-        ${lims.length ? `<ul>${lims.map((l) => `<li data-limit="${l.key}"><p>${esc(l.text)}${l.ids.length ? ` <span class="fx-lim-ids">(${SECTION(l.ids)})</span>` : ""}</p>${l.help ? `<p class="fx-help">${esc(l.help)}</p>` : ""}</li>`).join("")}</ul>`
-          : `<p class="fx-none">None found. Every detected wire section was measured from this photo.</p>`}
+    <div class="rx-guide">
+      <section class="rx-steps" aria-labelledby="rx-do"><h2 id="rx-do">What to do</h2>
+        <ol>
+          <li><b>Keep your distance</b><p>Never touch, pull, move or try to repair low-hanging wires. Telecommunications cables may be near energized electrical conductors.</p></li>
+          <li><b>Report the findings</b><p>Download the PDF report and share it with your barangay office, the electric utility or the telecommunications provider.</p></li>
+          <li><b>Arrange field verification</b><p>If another photograph is needed, capture both poles and the full visible span from a safe location.</p></li>
+        </ol></section>
+      <section class="rx-limits" aria-labelledby="rx-lim"><h2 id="rx-lim">Photo limitations</h2>
+        ${LIMS.length ? `<ul>${LIMS.map(([, t]) => `<li>${t}</li>`).join("")}</ul>` : `<p>${assessed === r.wires.length ? "None found: every detected wire could be assessed." : "None found: every detected wire was measured."}</p>`}
       </section>
     </div>
-    ${diagHtml(r)}
-
-    ${r.public ? "" : `<section class="fx-drawer" id="diag">
-      <button class="fx-drawer-btn" type="button" aria-expanded="false" aria-controls="diag-body">
-        <b>Technical diagnostics</b><span>For administrators and researchers: model, image quality, segmentation, statistics, timings, configuration</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
-      <div class="fx-drawer-body" id="diag-body" role="region" aria-label="Technical diagnostics"><div><div class="fx-drawer-inner">${diagnostics(r)}</div></div></div>
-    </section>`}
 
     <section class="rx-notice" aria-label="Important Notice">
       <p class="rx-notice-short">Automated screening: results can be wrong or incomplete. Have them verified by a qualified professional.</p>
@@ -610,144 +627,84 @@ function renderResult(r) {
           <div><dt>Street</dt><dd id="rx-street" class="muted">Looking up…</dd></div></dl>
         <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${loc.lat.toFixed(6)},${loc.lon.toFixed(6)}" target="_blank" rel="noopener">Open in Google Maps</a></div>
       <div class="fx-map"><div id="fs-map" role="region" aria-label="Location of this inspection"></div></div></section>` : ""}
-    ${r.reviews?.length ? `<p class="fx-muted">Reviewed by ${esc(r.reviews.at(-1).by)}</p>` : ""}`;
+    ${r.reviews?.length ? `<p class="fx-muted">Reviewed by ${esc(r.reviews.at(-1).by)}</p>` : ""}
+    </div>`;
 
   const root = stages.result;
-  const table = root.querySelector(".fx-spans");
   const detail = root.querySelector("#span-detail");
+  const VIEWS = {
+    problem: { masks: 1, catenary: 0, sag: 1, labels: 1, inferred: 1, ends: 0, wiremask: 0 },
+    photo: {},
+    all: { masks: 1, catenary: 0, sag: 1, labels: 1, inferred: 1, ends: 0, wiremask: 0 },
+    mask: { wiremask: 1 }, // the model's wire mask on its own (every pixel marked as wire)
+  };
+  let view = "problem";
 
-  // ---------------- viewer
   viewer?.destroy();
   viewer = new OverlayViewer($("#fs-canvas"), { onSelect: (i) => mark(i, true) });
   window.wfViewer = viewer; // read-only handle for automated UI checks (scripts/e2e_check.py)
-  if (mode === "class") viewer.setMode("class");
-  const zoomOut = root.querySelector("#zoom-pct");
-  $("#fs-canvas").addEventListener("zoom", (e) => { zoomOut.textContent = `${Math.round(e.detail * 100)}%`; });
+  const applyView = (name) => {
+    view = name;
+    root.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.view === name)));
+    const p = VIEWS[name];
+    for (const k of ["masks", "catenary", "sag", "labels", "inferred", "ends", "skeleton"]) viewer.layers[k] = !!p[k];
+    viewer.layers.labels = !!p.labels && $("#lyr-labels").checked;
+    viewer.layers.wiremask = !!p.wiremask || $("#lyr-mask")?.checked || false;
+    viewer.layers.poles = $("#lyr-poles").checked;
+    viewer.layers.overlays = name !== "photo";
+    viewer.setVisible(name === "problem" ? focus.map((w) => w.index) : null);
+    root.querySelectorAll(".rx-legend .all-only").forEach((x) => { x.hidden = name !== "all"; });
+  };
   viewer.load(r.image.url, r.wires, r.vegetation || []).then(() => {
-    if (first) { viewer.selected = first.index; viewer.draw(); mark(first.index, false); }
     if (hasMask) viewer.setWireMask(r.wire_mask.url);
     viewer.setPoles(r.scene?.poles_detected || []);
+    viewer.layers.vegetation = false;
+    if (diagMode) viewer.setMode("class"); // S5: colour by wire type; no severity exists to colour by
+    applyView("problem");
+    if (focus[0]) { viewer.selected = focus[0].index; viewer.draw(); mark(focus[0].index, false); }
   }).catch(() => toast.error("Photo could not be displayed"));
 
   const mark = (i, scroll) => {
-    table?.querySelectorAll("tr[data-wire]").forEach((tr) => {
-      const on = Number(tr.dataset.wire) === i;
-      tr.setAttribute("aria-selected", String(on));
-      if (on && scroll && !tr.hidden) tr.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    root.querySelectorAll("li[data-wire]").forEach((li) => {
+      const on = Number(li.dataset.wire) === i;
+      li.setAttribute("aria-selected", String(on));
+      if (on && scroll && li.offsetParent) li.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
-    detail.innerHTML = spanDetail(r, i == null ? null : r.wires.find((w) => w.index === i), mode);
+    detail.innerHTML = wireCard(i == null ? null : r.wires.find((w) => w.index === i));
   };
-  const select = (i, toggle = true) => {
-    const next = toggle && viewer.selected === i ? null : i;
-    viewer.select(next); mark(next, true);
+  const select = (i) => {
+    const w = r.wires.find((x) => x.index === i);
+    if (w && view === "problem" && !focus.includes(w)) applyView("all"); // a wire the current view hides: show all
+    viewer.select(i); mark(i, true);
   };
-  table?.addEventListener("click", (e) => { const tr = e.target.closest("tr[data-wire]"); if (tr) select(Number(tr.dataset.wire)); });
-  table?.addEventListener("keydown", (e) => {
-    const tr = e.target.closest("tr[data-wire]");
-    if (!tr) return;
-    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(Number(tr.dataset.wire)); }
-    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-      e.preventDefault();
-      const rows = [...table.querySelectorAll("tr[data-wire]:not([hidden])")];
-      const n = rows[rows.indexOf(tr) + (e.key === "ArrowDown" ? 1 : -1)];
-      if (n) { n.focus(); select(Number(n.dataset.wire), false); }
-    }
-  });
-  table?.addEventListener("pointerover", (e) => { const tr = e.target.closest("tr[data-wire]"); viewer.hover = tr ? Number(tr.dataset.wire) : null; viewer.draw(); });
-  table?.addEventListener("pointerleave", () => { viewer.hover = null; viewer.draw(); });
   root.addEventListener("click", (e) => {
-    const b = e.target.closest("button[data-goto]");
-    if (b) {
-      select(Number(b.dataset.goto), false);
-      root.querySelector(".fx-viewer").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const li = e.target.closest("li[data-wire]"); if (li) select(Number(li.dataset.wire));
+    const go = e.target.closest("[data-goto]"); if (go) { select(Number(go.dataset.goto)); root.querySelector(".rx-photo").scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    const v = e.target.closest("[data-view]"); if (v && !v.disabled) applyView(v.dataset.view);
+    const t = e.target.closest("[data-tab]");
+    if (t) {
+      root.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", String(x === t)));
+      root.querySelectorAll("[data-panel]").forEach((p) => { p.hidden = p.dataset.panel !== t.dataset.tab; });
     }
   });
+  root.addEventListener("keydown", (e) => {
+    const li = e.target.closest("li[data-wire]"); if (!li) return;
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(Number(li.dataset.wire)); }
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault(); const n = e.key === "ArrowDown" ? li.nextElementSibling : li.previousElementSibling;
+      if (n) { n.focus(); select(Number(n.dataset.wire)); }
+    }
+  });
+  // view options
+  const optsBtn = $("#opts-btn"), opts = $("#opts");
+  optsBtn.addEventListener("click", () => { const o = opts.hidden; opts.hidden = !o; optsBtn.setAttribute("aria-expanded", String(o)); });
+  document.addEventListener("click", (e) => { if (!opts.hidden && !e.target.closest(".rx-menu")) { opts.hidden = true; optsBtn.setAttribute("aria-expanded", "false"); } });
+  const op = $("#opacity");
+  op.addEventListener("input", () => { viewer.setOpacity(op.value / 100); op.nextElementSibling.textContent = `${op.value}%`; });
+  $("#veg").addEventListener("change", (e) => viewer.set("vegetation", e.target.checked));
+  for (const id of ["lyr-mask", "lyr-labels", "lyr-poles"]) $(`#${id}`).addEventListener("change", () => applyView(view));
+  root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => ({ in: () => viewer.zoomIn(), out: () => viewer.zoomOut(), fit: () => viewer.reset() })[b.dataset.zoom]()));
 
-  // ---------------- view presets, layers, opacity
-  const seg = root.querySelector(".fx-seg");
-  const opacity = root.querySelector("#opacity"), opWrap = root.querySelector("#opacity-wrap");
-  const menu = root.querySelector("#layers-menu"), menuBtn = root.querySelector("#layers-btn");
-  const legend = (k, on) => root.querySelectorAll(`[data-legend="${k}"]`).forEach((x) => { x.hidden = !on; });
-  const syncUi = () => {
-    const L = viewer.layers;
-    menu.querySelectorAll("[data-l]").forEach((cb) => { cb.checked = !!L[cb.dataset.l] && L.overlays; });
-    legend("spans", L.overlays && L.masks); legend("inferred", L.overlays && L.inferred && L.masks);
-    legend("mask", L.overlays && L.wiremask); legend("veg", L.overlays && L.vegetation);
-    opWrap.toggleAttribute("data-off", !L.overlays);
-  };
-  const setView = (name) => {
-    seg.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-checked", String(b.dataset.view === name)));
-    const p = PRESETS[name];
-    for (const [k] of LAYERS) viewer.layers[k] = !!p[k];
-    viewer.layers.overlays = name !== "photo";
-    viewer.draw(); syncUi();
-  };
-  seg.addEventListener("click", (e) => { const b = e.target.closest("[data-view]"); if (b && !b.disabled) setView(b.dataset.view); });
-  seg.addEventListener("keydown", (e) => {
-    if (!["ArrowLeft", "ArrowRight"].includes(e.key)) return;
-    const opts = [...seg.querySelectorAll("[data-view]:not(:disabled)")];
-    const i = opts.findIndex((b) => b.getAttribute("aria-checked") === "true");
-    const next = opts[(i + (e.key === "ArrowRight" ? 1 : opts.length - 1)) % opts.length];
-    setView(next.dataset.view); next.focus();
-  });
-  const closeMenu = () => { menu.hidden = true; menuBtn.setAttribute("aria-expanded", "false"); };
-  menuBtn.addEventListener("click", () => {
-    const open = menu.hidden; menu.hidden = !open; menuBtn.setAttribute("aria-expanded", String(open));
-  });
-  document.addEventListener("click", (e) => { if (!menu.hidden && !e.target.closest(".fx-layers")) closeMenu(); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !menu.hidden) { closeMenu(); menuBtn.focus(); } });
-  menu.addEventListener("change", (e) => {
-    const cb = e.target.closest("[data-l]"); if (!cb) return;
-    viewer.layers.overlays = true;
-    viewer.layers[cb.dataset.l] = cb.checked;
-    // a hand-picked combination is no preset: un-check the view control so it never claims a state it is not in
-    const match = Object.entries(PRESETS).find(([n, p]) => n !== "photo" && LAYERS.every(([k]) => !!p[k] === !!viewer.layers[k]));
-    seg.querySelectorAll("[data-view]").forEach((b) => b.setAttribute("aria-checked", String(!!match && b.dataset.view === match[0])));
-    viewer.draw(); syncUi();
-  });
-  opacity.addEventListener("input", () => {
-    viewer.setOpacity(opacity.value / 100);
-    opWrap.querySelector("output").textContent = `${opacity.value}%`;
-  });
-  root.querySelector('[data-layer="vegetation"]')?.addEventListener("click", (e) => {
-    const b = e.currentTarget, on = b.getAttribute("aria-pressed") !== "true";
-    b.setAttribute("aria-pressed", String(on)); viewer.set("vegetation", on); syncUi();
-  });
-  root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
-    ({ in: () => viewer.zoomIn(), out: () => viewer.zoomOut(), fit: () => viewer.reset(),
-      reset: () => {
-        viewer.reset(); select(null, false);
-        opacity.value = 100; viewer.setOpacity(1); opWrap.querySelector("output").textContent = "100%";
-        const vb = root.querySelector('[data-layer="vegetation"]');
-        if (vb && !vb.disabled) { vb.setAttribute("aria-pressed", "true"); viewer.layers.vegetation = true; }
-        setView("spans");
-      } })[b.dataset.zoom]();
-  }));
-  viewer.layers.vegetation = hasVeg;
-  setView("spans");
-
-  // ---------------- filters
-  const filter = (f) => {
-    root.querySelectorAll("[data-filter]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.filter === f)));
-    let shown = 0;
-    table?.querySelectorAll("tr[data-group]").forEach((tr) => { tr.hidden = f !== "all" && tr.dataset.group !== f; shown += !tr.hidden; });
-    root.querySelector("#filter-empty").hidden = !table || shown > 0;
-  };
-  root.querySelectorAll("[data-filter]").forEach((b) => b.addEventListener("click", () => filter(b.dataset.filter)));
-  root.querySelectorAll("[data-filter-go]").forEach((b) => b.addEventListener("click", () => {
-    filter(b.dataset.filterGo);
-    const f1 = table?.querySelector("tr[data-wire]:not([hidden])");
-    if (f1) select(Number(f1.dataset.wire), false);
-    root.querySelector(".fx-spans-panel").scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }));
-
-  // ---------------- diagnostics drawer (staff only)
-  const drawer = root.querySelector("#diag"), dbtn = drawer?.querySelector(".fx-drawer-btn");
-  dbtn?.addEventListener("click", () => {
-    const open = !drawer.hasAttribute("data-open");
-    drawer.toggleAttribute("data-open", open);
-    dbtn.setAttribute("aria-expanded", String(open));
-  });
   $("#again").addEventListener("click", reset);
   $("#guard-retake")?.addEventListener("click", async () => {
     try { await api(`/api/analysis/${r.id}/guardrail`, { method: "POST", headers: { "Content-Type": "application/json" },
@@ -755,7 +712,6 @@ function renderResult(r) {
     startRetake(r);
   });
 
-  // ---------------- map
   map?.remove(); map = null;
   if (loc && window.L) {
     map = L.map("fs-map", { zoomControl: false, attributionControl: true, scrollWheelZoom: false }).setView([loc.lat, loc.lon], 17);
@@ -774,6 +730,13 @@ function renderResult(r) {
       }).catch(() => { const el = $("#rx-street"); if (el) el.textContent = "Not available"; });
   }
 }
+
+function skipSummary(ws) {
+  const n = {};
+  for (const w of ws) { const k = skipReason(w); n[k] = (n[k] || 0) + 1; }
+  return Object.entries(n).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${v} ${k}`).join(", ");
+}
+const statusLine = (r) => ({ "AT RISK - HIGH": "Overall: at risk, high", "AT RISK - MODERATE": "Overall: at risk, moderate", "NOT AT RISK": "Overall: no pole-level risk indicated" })[r.hazard?.verdict] || "";
 
 
 function reset() {
