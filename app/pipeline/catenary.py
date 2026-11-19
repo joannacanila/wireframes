@@ -65,6 +65,10 @@ class CatenaryFit:
     truncated: bool = False
     n_points: int = 0
     iterations: int | None = None
+    # S15 (D-32, app/pipeline/span_fit.py): set when the trace was split at a kink and one piece measured
+    kink_split: bool = False
+    kink_index: int | None = None
+    excluded_frac: float = 0.0
 
     def curve(self, n: int = 128) -> list[tuple[float, float]]:
         """Fitted curve sampled between the chord ends, in image coordinates (y down)."""

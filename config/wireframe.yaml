@@ -162,6 +162,12 @@ segmentation:                     # Section 3.6.3, Algorithm 3
   # numbers are leave-one-photo-out. Below min_conf the type is shown as uncertain (0.5 = never; best on val).
   strand_head: models/strand_head_v217.pt
   strand_head_min_conf: 0.5
+  # S15 (register D-31): compute the head's features in the 1024 letterbox it was fitted in (curated photos are
+  # letterboxed, ml/curate.py), and clip its hand features to the range of its fitting strands
+  # (models/strand_head_v217.bounds.json). Held-out test cropped to field shape: strand accuracy 91.9 -> 93.1%
+  # (square photos 93.6%, unchanged by construction); docs/thesis/results/s15_aspect_*_field_test.json.
+  strand_head_frame: letterbox
+  strand_head_clamp: true
 
 centerline:                       # Section 3.6.4, Algorithm 4
   provisional: true
@@ -173,6 +179,13 @@ catenary:                         # Section 3.6.5, Equations 6-8
   max_rel_residual: 0.02          # tau: RMS residual / chord length; set on validation set
   border_margin_frac: 0.01        # endpoint within this fraction of the image side -> truncated
   max_function_evals: 4000
+  # S15 (register D-32, app/pipeline/span_fit.py): a trace that is two straight pieces at an angle (it switched to a
+  # neighbouring cable or ran through a support) is split, not read as sag. Validation (22 photos): sag error vs the
+  # labelled wire MAE 0.58 -> 0.47 pp, measured 95.6 -> 97.2%; held-out test (21): MAE 0.67 -> 0.50 pp, measured
+  # 96.5 -> 99.2% (docs/thesis/results/s15_measure_*_field_test.json). Settings fixed before the test run.
+  kink_split: true
+  kink_ratio: 0.5
+  kink_check_from: 0.004
 
 crs:                              # Section 3.6.5, Equation 10, Table 1.2
   provisional: true
@@ -236,21 +249,117 @@ comparison_reference:             # S8 (register D-26); a comparison for the sag
   # source gives an engineering tolerance or a separate upper limit, so both transitions sit at 3 % and the amber
   # region is the wire's own +/-1 px measurement uncertainty around it (never the withdrawn 2.4 % / 4.0 %). A
   # validated tolerance would set lower_boundary < sag_ratio < upper_boundary here and nowhere else.
+  # S17 (register D-37): owner decision. The power-line reference becomes a CLASSIFICATION (three bands, point
+  # estimate, unrounded ratio, both boundaries of the middle band inclusive). 3 % is the ERB 95-21 s.19 figure; 2 %
+  # is a DESCRIPTIVE subdivision for presentation, not a regulatory value. The ratio is image-derived (endpoint
+  # chord, not a surveyed pole-to-pole distance), so every class is a screening result, never a compliance or safety
+  # finding. The calibrated 90 % band is reported beside the class and never moves a wire between classes.
   enabled: true
+  version: "PWR-2026.11-S17"
   sag_ratio: 0.03
   unit: "image sag-to-span ratio"
-  status: provisional
-  status_note: "ERB Res. 95-21 s.19 was recited as superseded by the DSOAR (ERC Res. 02 s.2010); the DSOAR text was not obtained, so current applicability is unverified"
-  effective_date: "1995 (ERB Res. 95-21); current status unverified"
-  label: "3% sag-to-span reference for power lines (provisional)"
-  source: "ERB Res. 95-21 s.19 (1995, superseded by the DSOAR); owner-selected; power lines only; not validated for image sag ratios"
+  status: regulatory
+  status_note: "ERB Res. 95-21 (1995) s.19; ERC Res. 02 s.2010 recites that the DSOAR superseded it and the DSOAR text was not obtained. Used as the screening reference by owner decision (D-37)"
+  effective_date: "2026-11-19 (WIREFRAME reference version PWR-2026.11-S17)"
+  title: "ERB Resolution No. 95-21: Standard Rules and Regulations Governing the Operation of Electrical Power Services"
+  issuer: "Energy Regulatory Board"
+  published: "1995-08-03"
+  section: "Section 19, Poles, Sag of Wires"
+  source_url: "https://elibrary.judiciary.gov.ph/thebookshelf/showdocs/10/72764"
+  applicability: "Horizontal electric-utility conductors (WIREFRAME class power-distribution-lines) with an identified type. Not telecom, fiber or abandoned wires."
+  interpretation: "s.19 limits sag to 3% of the distance between poles. WIREFRAME compares the image-derived sag-to-chord ratio with it: a screening comparison, not a field measurement, a compliance finding or a safety certification."
+  label: "3% power-line sag reference (ERB Res. 95-21 s.19)"
+  source: "Energy Regulatory Board (1995, August 3). ERB Resolution No. 95-21, Section 19, Poles, Sag of Wires"
   classes: [power-distribution-lines]
-  lower_boundary: 0.03          # green -> amber (before uncertainty): the reference itself
-  upper_boundary: 0.03          # amber -> red (before uncertainty): the reference itself
-  tolerance_basis: "none: no source gives an engineering tolerance around 3 %; the amber region is the measurement uncertainty only"
-  uncertainty: resolution       # each wire's +/-1 px resolution over its chord widens the amber region
-  classification_enabled: false # a comparison, not a severity, until a validated reference exists
-  meter_scale_max: 0.10         # display: the meter shows 0-10 %; larger ratios are drawn as overflow
+  lower_boundary: 0.02          # descriptive subdivision (not regulatory)
+  upper_boundary: 0.03          # the ERB 95-21 s.19 reference; exactly 3.00 % is within
+  boundary_basis:
+    lower: "descriptive: separates the lower part of the range for presentation; no regulatory meaning"
+    upper: "regulatory: ERB Res. 95-21 s.19, 3% of the distance between poles"
+  tolerance_basis: "none: the class uses the point estimate; the measurement band is shown beside it"
+  uncertainty: none             # classification by the unrounded point estimate
+  classification_enabled: true
+  classifications:
+    below: WITHIN_LOWER_REFERENCE_RANGE
+    at: WITHIN_REFERENCE_THRESHOLD
+    above: REFERENCE_THRESHOLD_EXCEEDED
+  zone_labels:
+    below: "Within lower reference range"
+    at: "Within reference threshold"
+    above: "Reference threshold exceeded"
+  zone_text:
+    below: "Estimated sag is below 2% of the span, within the 3% power-line reference."
+    at: "Estimated sag is between 2% and 3% of the span, within the 3% power-line reference."
+    above: "Estimated sag exceeds the 3% power-line reference. Refer this span for professional inspection."
+  audience_label: "power lines"
+  meter_scale_max: 0.10
+  attention_zones: [above]      # S17: only an exceedance needs review (S16 also counted the uncertainty around 3 %)
+  notable_zones: []
+
+telecom_reference:                # S15 (register D-31); SEPARATE from the power-line reference above
+  # Contextual bands for aerial telecom / fiber cable, compared with the IMAGE sag ratio. Not a regulation, not a
+  # cable-specific design limit, not a severity: no level, CRS or verdict comes from it (classification stays off).
+  # Sources read 18 Nov 2026 (docs/thesis/RESEARCH_AND_DECISION_REGISTER.md D-31):
+  #  * FOA, Aerial Construction Workmanship: "Sag is generally limited to <2% of span length and maximum tension <30%
+  #    of cable minimum breaking strength" - a guideline for strand-and-lash (messenger) cable; ADSS is an exception.
+  #  * JEA OH-VI-1 (2017), JEA's own ADSS designs: 600 ft span / 4 ft nominal sag (0.67%), 1000 ft / 8 ft, 1200 ft /
+  #    10 ft (about 0.8%) - read from search excerpts; the full PDF was behind a bot check.
+  #  * ZTO Cable (manufacturer article): "a maximum sag of 2% of span is typical"; FAQ: "Typical maximum sag is 2-5% of
+  #    span length", depending on clearances and local codes.
+  #  * GL Fiber (manufacturer article): sag-tension tables are cable-specific illustrations; no percentage given.
+  # Hence: below 2% = within the typical range; 2-5% = depends on the cable design (ADSS designs can reach it);
+  # above 5% = beyond the typical ranges in these sources. The construction (ADSS vs lashed) is not identified from a
+  # photo, so the bands stay general. Tension cannot be inferred from an image sag ratio.
+  # S17 (D-37): the same three-band classification as power, with telecom's own boundaries and names. Never the
+  # ERB 3 % (that covers electric-utility conductors only), and power never uses these.
+  enabled: true
+  version: "TEL-2026.11-S17"
+  sag_ratio: 0.02
+  lower_boundary: 0.02
+  upper_boundary: 0.05
+  unit: "image sag-to-span ratio"
+  status: guideline
+  status_note: "industry guideline and manufacturer ranges; cable construction not identified from the photo"
+  effective_date: "FOA (2024), JEA OH-VI-1 (2017), ZTO / GL Fiber articles"
+  label: "typical sag range for telecom and fiber cable (2% / 5%)"
+  source: "FOA aerial workmanship guideline (<2%); JEA OH-VI-1 ADSS design sags; ZTO Cable ADSS article (2-5%); GL Fiber ADSS sag-tension article"
+  classes: [telecom-cable]
+  tolerance_basis: "2-5% is the design-dependent range reported for self-supporting (ADSS) cable"
+  uncertainty: none
+  classification_enabled: true
+  classifications:
+    below: BELOW_TYPICAL_RANGE
+    at: WITHIN_TYPICAL_RANGE
+    above: ABOVE_TYPICAL_RANGE
+  title: "Typical sag ranges for aerial telecom and fiber cable"
+  issuer: "Fiber Optic Association; JEA; ZTO Cable; GL Fiber"
+  published: "2017-2024"
+  section: "FOA Aerial Construction Workmanship; JEA OH-VI-1; manufacturer ADSS articles"
+  source_url: "https://www.thefoa.org/tech/ref/OSP/aerial.html"
+  applicability: "Aerial telecom and fiber cables (WIREFRAME class telecom-cable). Not power lines."
+  interpretation: "Industry guideline and manufacturer ranges, not a regulation. Acceptable sag depends on the cable design."
+  boundary_basis:
+    lower: "FOA guideline: sag generally below 2% of span"
+    upper: "manufacturer range: typical maximum 2-5% of span"
+  meter_scale_max: 0.10
+  audience_label: "telecom and fiber cables"
+  attention_zones: []            # S16 (D-34): never "needs attention" / Needs review. Against labelled wires, a measured
+  notable_zones: [above]        # telecom sag above 5 % was right in 1 of 11 cases (val + test), so "beyond typical
+                                # ranges" is shown and ranked as worth a closer look, not counted as attention
+  zone_labels:
+    below: "Below typical range"
+    at: "Within typical range"
+    above: "Above typical range"
+  zone_text:
+    below: "Estimated sag is below 2% of the span, below the typical range for telecom and fiber cable."
+    at: "Estimated sag is between 2% and 5% of the span, within the cited typical range for telecom and fiber cable."
+    above: "Estimated sag exceeds the 5% upper end of the typical range for telecom and fiber cable. The provider may review this span."
+
+measurement_uncertainty:          # S16 (D-34): calibrated 90 % band of the image sag ratio (display and ranking only)
+  a_px: 0.05804                   # |error| q0.90 = a_px / chord_model_px + b + c * rel_residual; fitted on val,
+  b: 0.0                          # coverage 0.88 on the held-out test split (+/-1 px alone: 0.69)
+  c: 3.30469                      # ml/experiments/s16_uncertainty.py; docs/thesis/results/s16_uncertainty_residual.json
+  quantile: 0.9
 
 hazard:                           # v2.8 explainable verdict on top of CRS (app/pipeline/hazard.py)
   enabled: true

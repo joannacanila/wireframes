@@ -27,8 +27,10 @@ log = logging.getLogger(__name__)
 
 
 class PoleDetector:
-    def __init__(self, weights: Path, conf: float = 0.35, imgsz: int = 640, device: str = "auto") -> None:
+    def __init__(self, weights: Path, conf: float = 0.35, imgsz: int = 640, device: str = "auto",
+                 augment: bool = False) -> None:
         self.weights, self.conf, self.imgsz, self.device = Path(weights), conf, imgsz, device
+        self.augment = augment  # S18: test-time augmentation, evaluation option only (see S18 report section 17)
         self._model, self._lock, self.error = None, threading.Lock(), None
 
     def load(self) -> bool:
@@ -53,7 +55,8 @@ class PoleDetector:
         if not self.load():
             return None
         with self._lock:
-            r = self._model.predict(rgb[..., ::-1], imgsz=self.imgsz, conf=self.conf, device=self._dev, verbose=False)[0]
+            r = self._model.predict(rgb[..., ::-1], imgsz=self.imgsz, conf=self.conf, device=self._dev, verbose=False,
+                                     augment=self.augment)[0]
         boxes = r.boxes.xyxy.cpu().numpy() if r.boxes is not None else np.zeros((0, 4))
         confs = r.boxes.conf.cpu().numpy() if r.boxes is not None else np.zeros(0)
         return [{"bbox": [round(float(v), 1) for v in b], "confidence": round(float(c), 3)}
@@ -97,8 +100,9 @@ def clean_boxes(dets: list[dict], iou: float = 0.5, group_n: int = 2) -> list[di
     return out
 
 
-def make_pole_detector(spec: str, conf: float, root: Path, device: str = "auto"):
+def make_pole_detector(spec: str, conf: float, root: Path, device: str = "auto", imgsz: int = 640,
+                       augment: bool = False):
     """``pole_weights``: a YOLO .pt path (relative to the project root). The experimental zero-shot (Grounding DINO)
     backend evaluated in v2.18 was removed in v2.23; the shipped configuration never selected it."""
     p = Path(spec)
-    return PoleDetector(p if p.is_absolute() else root / p, conf, device=device)
+    return PoleDetector(p if p.is_absolute() else root / p, conf, imgsz=imgsz, device=device, augment=augment)

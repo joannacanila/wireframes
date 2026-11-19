@@ -28,8 +28,8 @@ SLANG = {"u": "you", "ur": "your", "pls": "please", "plz": "please", "wat": "wha
 
 # destinations that exist in app/web/assets/admin.js ROUTES and admin-map.js (?tab=pinning)
 NAV = {
-    "map": {"label": "Map & Dispatch", "href": "/admin/map"},
-    "pinning": {"label": "Needs pinning (Map & Dispatch)", "href": "/admin/map?tab=pinning"},
+    "map": {"label": "Map & Locations", "href": "/admin/map"},
+    "pinning": {"label": "Needs pinning (Map & Locations)", "href": "/admin/map?tab=pinning"},
     "inspections": {"label": "Inspections", "href": "/admin/inspections"},
     "dashboard": {"label": "Dashboard", "href": "/admin"},
     "screener": {"label": "Field Screener", "href": "/workspace"},

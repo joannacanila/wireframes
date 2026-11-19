@@ -1,4 +1,4 @@
-"""v2.21 dispatch route sheet: the stops a dispatcher picked on Map & Dispatch, in visiting order, printable.
+"""v2.21 dispatch route sheet: the stops a dispatcher picked on Map & Locations, in visiting order, printable.
 
 Distances are straight lines between the recorded coordinates (haversine), labelled as such. Road distance and
 travel time are not computed here; each stop and the whole route carry a Google Maps link that computes them.
@@ -17,6 +17,7 @@ from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import mm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.core import notice
 from app.services.records import RISK_LABEL
 
 INK, MUTED, RULE = colors.HexColor("#1b1d21"), colors.HexColor("#5d636c"), colors.HexColor("#d5d3cd")
@@ -66,7 +67,7 @@ def build_route_pdf(stops: list[dict], prepared_by: str, share_url: str, generat
                            ("BOTTOMPADDING", (0, 0), (-1, -1), 4), ("LEFTPADDING", (0, 0), (-1, -1), 3)]))
     route = gmaps_route(pts)
     story = [
-        Paragraph("WIREFRAME · Dispatch route", st["h"]), Spacer(1, 2 * mm),
+        Paragraph("WIREFRAME · Visit route", st["h"]), Spacer(1, 2 * mm),
         Paragraph(f"{len(stops)} stops · prepared by {escape(prepared_by)} · {now.astimezone().strftime('%d %b %Y, %H:%M')}", st["m"]),
         Spacer(1, 5 * mm), t, Spacer(1, 4 * mm),
         Paragraph(f"<b>{sum(legs):.2f} km</b> straight-line distance between the stops, in this order. Road distance and "
@@ -85,7 +86,7 @@ def build_route_pdf(stops: list[dict], prepared_by: str, share_url: str, generat
         canvas.saveState()
         canvas.setFont("Helvetica", 7.5)
         canvas.setFillColor(MUTED)
-        canvas.drawString(18 * mm, 10 * mm, "Preliminary CV screening only. Field verification required")
+        canvas.drawString(18 * mm, 10 * mm, notice.SHORT)
         canvas.drawRightString(A4[0] - 18 * mm, 10 * mm, f"Page {doc.page}")
         canvas.restoreState()
 

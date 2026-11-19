@@ -1,0 +1,197 @@
+{
+ "shipped (v2.17 head), square test": {
+  "strands_matched": 639,
+  "unmatched_predictions": 148,
+  "accuracy": 0.9358,
+  "power": {
+   "precision": 0.9615,
+   "recall": 0.8755,
+   "f1": 0.9165,
+   "FNR": 0.1245,
+   "FPR": 0.0236,
+   "n_true": 257
+  },
+  "telecom": {
+   "precision": 0.921,
+   "recall": 0.9764,
+   "f1": 0.9479,
+   "FNR": 0.0236,
+   "FPR": 0.1245,
+   "n_true": 382
+  },
+  "macro_f1": 0.9322,
+  "weighted_f1": 0.9353,
+  "confusion": {
+   "power->power": 225,
+   "power->telecom": 32,
+   "telecom->power": 9,
+   "telecom->telecom": 373
+  },
+  "centerline_detection": {
+   "wire": {
+    "precision": 0.8228,
+    "recall": 0.7917,
+    "f1": 0.807,
+    "iou": 0.6499,
+    "dice": 0.7878
+   },
+   "power-distribution-lines": {
+    "precision": 0.8524,
+    "recall": 0.8044,
+    "f1": 0.8277,
+    "iou": 0.6668,
+    "dice": 0.8001
+   },
+   "telecom-cable": {
+    "precision": 0.7133,
+    "recall": 0.7063,
+    "f1": 0.7098,
+    "iou": 0.5449,
+    "dice": 0.7054
+   },
+   "abandoned-wire": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "iou": 0.0,
+    "dice": 0.0
+   }
+  },
+  "mask_map50": {
+   "strict": 6.803311910138383e-05,
+   "tolerant": 0.028659605476286494
+  },
+  "fragments_per_wire": 3.904,
+  "mixed_class_rate": 0.0496
+ },
+ "shipped, field-shaped test": {
+  "strands_matched": 642,
+  "unmatched_predictions": 139,
+  "accuracy": 0.919,
+  "power": {
+   "precision": 0.9319,
+   "recall": 0.8588,
+   "f1": 0.8939,
+   "FNR": 0.1412,
+   "FPR": 0.0413,
+   "n_true": 255
+  },
+  "telecom": {
+   "precision": 0.9115,
+   "recall": 0.9587,
+   "f1": 0.9345,
+   "FNR": 0.0413,
+   "FPR": 0.1412,
+   "n_true": 387
+  },
+  "macro_f1": 0.9142,
+  "weighted_f1": 0.9184,
+  "confusion": {
+   "power->power": 219,
+   "power->telecom": 36,
+   "telecom->power": 16,
+   "telecom->telecom": 371
+  },
+  "centerline_detection": {
+   "wire": {
+    "precision": 0.8257,
+    "recall": 0.7996,
+    "f1": 0.8124,
+    "iou": 0.6552,
+    "dice": 0.7917
+   },
+   "power-distribution-lines": {
+    "precision": 0.833,
+    "recall": 0.7941,
+    "f1": 0.8131,
+    "iou": 0.651,
+    "dice": 0.7886
+   },
+   "telecom-cable": {
+    "precision": 0.7067,
+    "recall": 0.7053,
+    "f1": 0.706,
+    "iou": 0.5415,
+    "dice": 0.7026
+   },
+   "abandoned-wire": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "iou": 0.0,
+    "dice": 0.0
+   }
+  },
+  "mask_map50": {
+   "strict": 7.231418122507232e-05,
+   "tolerant": 0.031158313905681002
+  },
+  "fragments_per_wire": 3.854,
+  "mixed_class_rate": 0.0509
+ },
+ "S15 letterbox+clamp, field-shaped test": {
+  "strands_matched": 642,
+  "unmatched_predictions": 139,
+  "accuracy": 0.9315,
+  "power": {
+   "precision": 0.9607,
+   "recall": 0.8627,
+   "f1": 0.9091,
+   "FNR": 0.1373,
+   "FPR": 0.0233,
+   "n_true": 255
+  },
+  "telecom": {
+   "precision": 0.9153,
+   "recall": 0.9767,
+   "f1": 0.945,
+   "FNR": 0.0233,
+   "FPR": 0.1373,
+   "n_true": 387
+  },
+  "macro_f1": 0.927,
+  "weighted_f1": 0.9307,
+  "confusion": {
+   "power->power": 220,
+   "power->telecom": 35,
+   "telecom->power": 9,
+   "telecom->telecom": 378
+  },
+  "centerline_detection": {
+   "wire": {
+    "precision": 0.8257,
+    "recall": 0.7996,
+    "f1": 0.8124,
+    "iou": 0.6552,
+    "dice": 0.7917
+   },
+   "power-distribution-lines": {
+    "precision": 0.8507,
+    "recall": 0.7948,
+    "f1": 0.8218,
+    "iou": 0.6625,
+    "dice": 0.797
+   },
+   "telecom-cable": {
+    "precision": 0.7114,
+    "recall": 0.7186,
+    "f1": 0.715,
+    "iou": 0.549,
+    "dice": 0.7089
+   },
+   "abandoned-wire": {
+    "precision": null,
+    "recall": 0.0,
+    "f1": null,
+    "iou": 0.0,
+    "dice": 0.0
+   }
+  },
+  "mask_map50": {
+   "strict": 7.210067511310402e-05,
+   "tolerant": 0.03127846398534071
+  },
+  "fragments_per_wire": 3.854,
+  "mixed_class_rate": 0.0526
+ }
+}

@@ -1,0 +1,46 @@
+{
+ "pairs": 516,
+ "measured_vs_label_same_extent": {
+  "n": 512,
+  "mae_pp": 0.497,
+  "median_pp": 0.178,
+  "p90_pp": 1.288,
+  "within_0.5pp": 0.746,
+  "within_1pp": 0.861,
+  "bias_pp": 0.243
+ },
+ "measured_vs_full_label": {
+  "n": 510,
+  "mae_pp": 0.64,
+  "median_pp": 0.275,
+  "p90_pp": 1.94,
+  "within_0.5pp": 0.673,
+  "within_1pp": 0.808,
+  "bias_pp": 0.099
+ },
+ "label_fit_ok_rate": 1.0,
+ "by_status": {
+  "fit_failed": 4,
+  "measured": 512
+ },
+ "measured_share": 0.992,
+ "split": 127,
+ "same_extent_power-distribution-lines": {
+  "n": 200,
+  "mae_pp": 0.243,
+  "median_pp": 0.123,
+  "p90_pp": 0.624,
+  "within_0.5pp": 0.85,
+  "within_1pp": 0.96,
+  "bias_pp": 0.091
+ },
+ "same_extent_telecom-cable": {
+  "n": 312,
+  "mae_pp": 0.66,
+  "median_pp": 0.237,
+  "p90_pp": 1.958,
+  "within_0.5pp": 0.679,
+  "within_1pp": 0.798,
+  "bias_pp": 0.341
+ }
+}

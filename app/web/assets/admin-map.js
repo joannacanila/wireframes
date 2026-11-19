@@ -1,10 +1,10 @@
-// v2.21 Map & Dispatch.
+// v2.21 Map & Locations.
 // Map: keyless base maps (CARTO's basemaps now return an "API KEY REQUIRED" image, so they are not used):
 //   Light = OpenStreetMap, Dark = Esri Dark Gray Canvas + labels, Satellite = Esri World Imagery + place labels.
 //   If a base map fails to load, the page falls back to OpenStreetMap and says so.
 // Markers: priority pins only, coloured by the pole's latest inspection (red high, amber moderate, green low, grey
 //   not assessed); poles that share a recorded GPS point are clustered and spiderfied, never moved.
-// Sidebar: (1) tabs + filters that combine, (2) the dispatch route drawer once a pole is ticked, (3) pole cards.
+// Sidebar: (1) tabs + filters that combine, (2) the visit route drawer once a pole is ticked, (3) pole cards.
 // Route: ordered stops with remove / move up / move down, "Shortest straight-line order" (nearest neighbour + 2-opt
 //   on straight-line distance, labelled as such), a printable route PDF and a shareable link (sign-in required).
 //   Road distance and travel time come from Google Maps; nothing here invents them.
@@ -12,9 +12,16 @@
 //   coordinates, validated on the server and recorded in the audit trail.
 
 import { toast } from "./toast.js?v=2.23";
+import { riskChip, reviewChip } from "./result-view.js?v=2.36";
 
-const RISK_VAR = { high: "--risk-high", medium: "--risk-med", low: "--risk-low", unassessed: "--risk-none" };
-const RISK_ORDER = { high: 0, medium: 1, unassessed: 2, low: 3 };
+// S16: markers use the operational status, the same one the dashboard and the Inspections page show
+// (app/services/ops.py, via records.latest_rows); the legacy risk level is "unassessed" for every pole since S4.
+const ST_VAR = { processing_failed: "--ops-failed", flagged: "--ops-flagged", incomplete: "--ops-incomplete",
+  awaiting_review: "--ops-awaiting", reviewed: "--ops-reviewed", processing: "--ops-processing" };
+const ST_ORDER = { processing_failed: 0, flagged: 1, incomplete: 2, processing: 3, awaiting_review: 4, reviewed: 5 };
+const ST_LABEL = { processing_failed: "Processing failed", flagged: "Needs review", incomplete: "Incomplete",
+  processing: "Processing", awaiting_review: "Awaiting review", reviewed: "Reviewed" };
+const stOf = (r) => (ST_VAR[r.op_status] ? r.op_status : "awaiting_review");
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const ll = (l) => `${l.lat.toFixed(6)},${l.lon.toFixed(6)}`;
@@ -67,15 +74,15 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
   let base = (() => { try { return localStorage.getItem("wf-map-base"); } catch { return null; } })() || (document.documentElement.dataset.theme === "dark" ? "dark" : "light");
   if (!BASE[base]) base = "light";
   view.innerHTML = `<section class="dispatch">
-    <header class="pg-head pg-head-line dsp-head"><div class="pg-title-line"><h1 class="pg-title">Map &amp; Dispatch</h1><span class="pg-count" id="dsp-count"></span></div>
+    <header class="pg-head pg-head-line dsp-head"><div class="pg-title-line"><h1 class="pg-title">Map &amp; Locations</h1><span class="pg-count" id="dsp-count"></span></div>
       <div class="pg-actions"><a class="btn" href="/api/admin/exports/sites.pdf" target="_blank" rel="noopener">Priority report (PDF)</a></div></header>
     <div class="dsp-body">
       <div class="dsp-map">
         <div id="map" class="wf-map" role="region" aria-label="Pole map"></div>
-        <form class="place-search" id="place" role="search"><label class="sr-only" for="place-q">Find a street, barangay or pole</label>
-          <input id="place-q" type="search" placeholder="Find a street or barangay" autocomplete="off">
+        <form class="place-search" id="place" role="search"><label class="sr-only" for="place-q">Search poles, or find a street or barangay</label>
+          <input id="place-q" type="search" placeholder="File, pole, place or coordinates" autocomplete="off" value="${esc(params.get("q") || "")}">
           <button class="btn sm" type="submit">Find</button><ol class="place-res" id="place-res" hidden></ol></form>
-        <ul class="map-legend" aria-label="Marker colours"><li><i style="background:var(--risk-high)"></i>High</li><li><i style="background:var(--risk-med)"></i>Moderate</li><li><i style="background:var(--risk-low)"></i>Low</li><li><i style="background:var(--risk-none)"></i>Assessment incomplete</li></ul>
+        <ul class="map-legend" aria-label="Marker colours: latest inspection status">${Object.keys(ST_VAR).filter((k) => k !== "processing").map((k) => `<li><i style="background:var(${ST_VAR[k]})"></i>${ST_LABEL[k]}</li>`).join("")}</ul>
         <div class="seg base-seg" role="radiogroup" aria-label="Base map">${[["light", "Light"], ["dark", "Dark"], ["satellite", "Satellite"]].map(([k, t]) => `<button type="button" role="radio" data-base="${k}" aria-checked="${k === base}">${t}</button>`).join("")}</div>
         <div class="pin-bar" id="pin-bar" hidden role="status"></div>
         <div class="map-note" id="map-note" hidden></div>
@@ -85,12 +92,11 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
           <div class="dsp-tabs" role="tablist"><button type="button" role="tab" data-tab="map" aria-selected="true">On map <b class="num" id="n-map"></b></button>
             <button type="button" role="tab" data-tab="pinning" aria-selected="false">Needs pinning <b class="num pin-n" id="n-pin"></b></button></div>
           <form class="dsp-filters" id="df">
-            <input type="search" name="q" placeholder="Search pole ID, code or barangay" value="${esc(params.get("q") || "")}" aria-label="Search the list">
-            <div class="chips" role="group" aria-label="Risk level">${[["", "All"], ["high", "High"], ["medium", "Moderate"], ["low", "Low"], ["unassessed", "Assessment incomplete"]].map(([k, t]) => `<button type="button" data-risk="${k}" aria-pressed="${(params.get("risk") || "") === k}">${t}</button>`).join("")}</div>
+            <div class="chips" role="group" aria-label="Latest inspection status">${[["", "All"], ...Object.entries(ST_LABEL).filter(([k]) => k !== "processing")].map(([k, t]) => `<button type="button" data-risk="${k}" aria-pressed="${(params.get("status") || "") === k}">${t}</button>`).join("")}</div>
             <select name="barangay" aria-label="Barangay"><option value="">All barangays</option></select>
           </form>
         </div>
-        <section class="route-card" id="route" hidden aria-label="Dispatch route"></section>
+        <section class="route-card" id="route" hidden aria-label="Visit route"></section>
         <p class="pin-explain" id="pin-explain" hidden></p>
         <ol class="ranks" id="ranks"></ol>
       </aside>
@@ -99,7 +105,7 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
   const $ = (s) => view.querySelector(s);
   const f = $("#df");
   let rows = [], map = null, tiles = [], cluster = null, markers = new Map(), fitted = false, placeLayer = null, routeLine = null, pinLayer = null;
-  let active = params.get("pole"), risk = params.get("risk") || "", tab = params.get("tab") === "pinning" ? "pinning" : "map";
+  let active = params.get("pole"), risk = params.get("status") || "", tab = params.get("tab") === "pinning" || params.get("pin") ? "pinning" : "map";
   let stops = (params.get("route") || "").split(",").filter(Boolean).slice(0, MAX_STOPS), routeOpen = true, pinning = null, tileErr = 0, tileOk = 0;
 
   const note = (t) => { const n = $("#map-note"); n.hidden = !t; n.textContent = t || ""; };
@@ -124,14 +130,27 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
   }
 
   const located = (r) => usable(r.location);
+  // S18: search by file name, inspection or report ID, pole, place, inspection name, and coordinates
+  const searchable = (r) => [r.filename, r.analysis_id, `wf-${(r.analysis_id || "").slice(0, 8)}`, r.pole_code, r.label, r.barangay, r.city,
+    r.inspection_name, r.place_label, r.location && `${r.location.lat.toFixed(6)}, ${r.location.lon.toFixed(6)} ${r.location.lat.toFixed(6)},${r.location.lon.toFixed(6)}`];
+  // the label a person gave (barangay / city or inspection place); the placeholders "Coordinates only" and
+  // "Location not recorded" are not labels, and the coordinates have their own line
+  const locLabel = (r) => (r.barangay ? [r.barangay, r.city].filter(Boolean).join(", ")
+    : !["Coordinates only", "Location not recorded"].includes(r.place_label) ? r.place_label || r.city || "" : r.city || "");
+  /** S18 naming: original file name / the location label people gave / exact coordinates */
+  const nameLines = (r) => `<p class="pc-l1"><b class="mono pc-file">${esc(r.filename || r.label || r.pole_code)}</b></p>
+    <p class="pc-l2">${locLabel(r) ? esc(locLabel(r)) : '<span class="muted">No location label</span>'}${mismatch(r)}</p>
+    ${r.location ? `<p class="pc-l3 mono">${r.location.lat.toFixed(6)}, ${r.location.lon.toFixed(6)}</p>` : ""}`;
+  const screenLine = (r) => r.machine_state === "processed" ? `<span class="pc-n"><b class="num">${r.detected}</b> detected · <b class="num${r.problem_count ? " warn" : ""}">${r.problem_count}</b> problem</span>` : "";
   const byCode = (c) => rows.find((r) => r.pole_code === c);
-  const placeLine = (r) => r.barangay ? esc([r.barangay, r.city].filter(Boolean).join(", ")) : located(r) ? `<span class="mono">${r.location.lat.toFixed(4)}, ${r.location.lon.toFixed(4)}</span>` : '<span class="muted">No location</span>';
   const matches = (r) => {
-    const q = (f.q.value || "").trim().toLowerCase(), b = f.barangay.value;
-    return (!risk || r.risk === risk) && (!b || (b === "__none__" ? !r.barangay : r.barangay === b))
-      && (!q || [r.pole_code, r.label, r.barangay, r.inspection_name, r.city].some((x) => (x || "").toLowerCase().includes(q)));
+    const q = ($("#place-q").value || "").trim().toLowerCase(), b = f.barangay.value;
+    return (!risk || stOf(r) === risk) && (!b || (b === "__none__" ? !r.barangay : r.barangay === b))
+      && (!q || searchable(r).some((x) => (x || "").toLowerCase().includes(q)));
   };
-  const order = (a, b) => (a.rank ?? 1e9) - (b.rank ?? 1e9) || (RISK_ORDER[a.risk] ?? 4) - (RISK_ORDER[b.risk] ?? 4);
+  const order = (a, b) => (ST_ORDER[stOf(a)] - ST_ORDER[stOf(b)]) || (a.rank ?? 1e9) - (b.rank ?? 1e9);
+  const stBadge = (r) => `<span class="ops ops-${stOf(r)}"><i aria-hidden="true"></i>${esc(r.op_label || ST_LABEL[stOf(r)])}</span>`;
+  const mismatch = (r) => r.location_check?.consistent === false ? `<span class="tag tag-warn" title="${esc(r.location_check.message || "")}">Barangay / city mismatch</span>` : "";
 
   function render() {
     const vis = rows.filter(matches).sort(order);
@@ -148,9 +167,9 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
     $("#ranks").innerHTML = list.map((r) => {
       const sel = stops.includes(r.pole_code);
       return `<li class="pcard${sel ? " is-stop" : ""}" data-code="${esc(r.pole_code)}" tabindex="0" aria-selected="${r.pole_code === active}">
-        ${tab === "map" ? `<input type="checkbox" class="pc-cb" data-stop="${esc(r.pole_code)}" ${sel ? "checked" : ""} aria-label="Add ${esc(r.label || r.pole_code)} to the dispatch route">` : `<span class="pc-cb"></span>`}
-        <div class="pc-main"><p class="pc-l1"><b>${esc(r.label || r.pole_code)}</b><span class="mono">${esc(r.pole_code)}</span></p><p class="pc-l2">${placeLine(r)}</p></div>
-        <div class="pc-side">${riskBadge(r.risk)}
+        ${tab === "map" ? `<input type="checkbox" class="pc-cb" data-stop="${esc(r.pole_code)}" ${sel ? "checked" : ""} aria-label="Add ${esc(r.label || r.pole_code)} to the visit route">` : `<span class="pc-cb"></span>`}
+        <div class="pc-main">${nameLines(r)}</div>
+        <div class="pc-side">${stBadge(r)}${screenLine(r)}
           ${tab === "pinning" && isAdmin() ? `<button class="btn sm" type="button" data-pin="${esc(r.pole_code)}">${pinning === r.pole_code ? "Cancel" : "Pin location"}</button>` : `<a class="go" href="/admin/inspections/${r.analysis_id}" data-link>Open</a>`}</div></li>`;
     }).join("") || `<li class="empty">${!rows.length ? "No inspected poles yet." : tab === "pinning" ? (nPinAll ? "No pole matches these filters." : "Every pole has a location.") : "No pole on the map matches these filters."}</li>`;
     drawMarkers(rows.filter(located));
@@ -160,19 +179,25 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
   function icon(r) {
     const n = stops.indexOf(r.pole_code);
     return L.divIcon({ className: "", iconSize: [26, 26], iconAnchor: [13, 13],
-      html: `<span class="pin pin-${esc(r.risk)}${r.pole_code === active ? " is-active" : ""}${n >= 0 ? " is-stop" : ""}" style="--pc:${css(RISK_VAR[r.risk] || "--risk-none")}">${n >= 0 ? n + 1 : ""}</span>` });
+      html: `<span class="pin pin-${stOf(r)}${r.pole_code === active ? " is-active" : ""}${n >= 0 ? " is-stop" : ""}" style="--pc:${css(ST_VAR[stOf(r)])}">${n >= 0 ? n + 1 : ""}</span>` });
   }
   function drawMarkers(all) {
     if (!map) return;
     const shown = all.filter(matches);
     cluster?.remove(); markers.clear();
     cluster = L.markerClusterGroup ? L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true, zoomToBoundsOnClick: true, maxClusterRadius: 34,
-      iconCreateFunction: (c) => { const k = c.getAllChildMarkers().map((m) => m.options.risk).sort((a, b) => (RISK_ORDER[a] ?? 4) - (RISK_ORDER[b] ?? 4))[0];
-        return L.divIcon({ className: "", iconSize: [34, 34], html: `<span class="clu" style="--pc:${css(RISK_VAR[k] || "--risk-none")}">${c.getChildCount()}</span>` }); } }) : L.layerGroup();
+      // S16: a cluster shows its mix of statuses as a ring (largest share first), and lists it in its tooltip
+      iconCreateFunction: (c) => {
+        const n = {}; for (const m of c.getAllChildMarkers()) n[m.options.status] = (n[m.options.status] || 0) + 1;
+        const ks = Object.keys(n).sort((a, b) => ST_ORDER[a] - ST_ORDER[b]), tot = c.getChildCount();
+        let at = 0; const stops = ks.map((k) => { const a = at; at += (n[k] / tot) * 360; return `${css(ST_VAR[k])} ${a}deg ${at}deg`; }).join(",");
+        const title = ks.map((k) => `${n[k]} ${ST_LABEL[k].toLowerCase()}`).join(", ");
+        return L.divIcon({ className: "", iconSize: [38, 38], html: `<span class="clu clu-mix" style="--ring:conic-gradient(${stops})" title="${esc(title)}" aria-label="${tot} poles: ${esc(title)}">${tot}</span>` });
+      } }) : L.layerGroup();
     for (const r of shown) {
-      const m = L.marker([r.location.lat, r.location.lon], { icon: icon(r), title: `${r.label || r.pole_code} · ${RISK[r.risk]}`, keyboard: true, riseOnHover: true, risk: r.risk,
-        zIndexOffset: { high: 300, medium: 200 }[r.risk] || 0 });
-      m.bindTooltip(`<b>${esc(r.label || r.pole_code)}</b> · ${esc(RISK[r.risk])}`, { direction: "top", offset: [0, -12] });
+      const m = L.marker([r.location.lat, r.location.lon], { icon: icon(r), title: `${r.label || r.pole_code} · ${ST_LABEL[stOf(r)]}`, keyboard: true, riseOnHover: true, status: stOf(r),
+        zIndexOffset: (6 - ST_ORDER[stOf(r)]) * 50 });
+      m.bindTooltip(`<b>${esc(r.label || r.pole_code)}</b> · ${esc(ST_LABEL[stOf(r)])}`, { direction: "top", offset: [0, -12] });
       m.on("click", () => select(r.pole_code, { pan: false }));
       cluster.addLayer(m); markers.set(r.pole_code, m);
     }
@@ -188,9 +213,13 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
 
   function popupHtml(r) {
     const l = r.location;
-    return `<div class="pp"><p class="pp-top"><b>${esc(r.label || r.pole_code)}</b><span class="mono muted">${esc(r.pole_code)}</span>${riskBadge(r.risk)}</p>
-      <p class="pp-sub">${r.barangay ? esc(r.barangay) + " · " : ""}<span class="mono">${l.lat.toFixed(6)}, ${l.lon.toFixed(6)}</span></p>
-      <p class="pp-sub">${r.rank ? `Number ${r.rank} in the inspection order` : "Not ranked"} · ${esc(REVIEW[r.review] || "")}</p>
+    return `<div class="pp"><p class="pp-top"><b class="mono">${esc(r.filename || r.label || r.pole_code)}</b>${stBadge(r)}</p>
+      <p class="pp-sub">${esc(locLabel(r) || "No location label")} · <span class="mono muted">${esc(r.pole_code)}</span></p>
+      <p class="pp-sub mono">${l.lat.toFixed(6)}, ${l.lon.toFixed(6)}</p>
+      <dl class="pp-kv"><div><dt>Detected</dt><dd class="num">${r.machine_state === "processed" ? r.detected : "–"}</dd></div>
+        <div><dt>Problem</dt><dd class="num">${r.machine_state === "processed" ? r.problem_count : "–"}</dd></div>
+        <div><dt>Risk</dt><dd>${r.machine_state === "failed" ? "Processing failed" : riskChip(r.risk_level)}</dd></div>
+        <div><dt>Review</dt><dd>${reviewChip(r.review_status, r.review_status_label)}</dd></div></dl>${r.location_check?.consistent === false ? `<p class="pp-sub warn">${esc(r.location_check.message)}</p>` : ""}
       <div class="pp-acts"><a class="btn sm" href="/admin/inspections/${r.analysis_id}" data-link>Open inspection</a>
         <a class="btn sm" href="${gmaps.walk(l)}" target="_blank" rel="noopener">Directions</a>
         <a class="btn sm" href="${gmaps.street(l)}" target="_blank" rel="noopener">Street View</a></div></div>`;
@@ -211,7 +240,7 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
     cluster?.zoomToShowLayer ? cluster.zoomToShowLayer(m, go) : go();
   }
 
-  // ---- dispatch route drawer
+  // ---- visit route drawer
   function drawRoute() {
     stops = stops.filter((c) => { const r = byCode(c); return !rows.length || (r && located(r)); });
     const el = $("#route"), pts = stops.map(byCode).filter(Boolean);
@@ -223,9 +252,9 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
     if (!pts.length) return;
     if (map && pts.length > 1) routeLine = L.polyline(pts.map((r) => [r.location.lat, r.location.lon]), { color: css("--accent"), weight: 3, dashArray: "6 7", opacity: 0.95, interactive: false }).addTo(map);
     const dist = pathKm(pts.map((r) => r.location));
-    el.innerHTML = `<header class="rc-head"><button type="button" class="rc-toggle" aria-expanded="${routeOpen}" aria-controls="rc-body"><b>Dispatch route</b><span class="muted">${pts.length} stop${pts.length === 1 ? "" : "s"}${pts.length > 1 ? ` · ${dist.toFixed(2)} km straight-line` : ""}</span><i aria-hidden="true">${routeOpen ? "−" : "+"}</i></button></header>
+    el.innerHTML = `<header class="rc-head"><button type="button" class="rc-toggle" aria-expanded="${routeOpen}" aria-controls="rc-body"><b>Visit route</b><span class="muted">${pts.length} stop${pts.length === 1 ? "" : "s"}${pts.length > 1 ? ` · ${dist.toFixed(2)} km straight-line` : ""}</span><i aria-hidden="true">${routeOpen ? "−" : "+"}</i></button></header>
       <div id="rc-body" ${routeOpen ? "" : "hidden"}>
-        <ol class="rc-stops">${pts.map((r, i) => `<li><span class="num">${i + 1}.</span><button type="button" class="rc-name" data-goto="${esc(r.pole_code)}">${esc(r.label || r.pole_code)}</button>${riskBadge(r.risk)}
+        <ol class="rc-stops">${pts.map((r, i) => `<li><span class="num">${i + 1}.</span><button type="button" class="rc-name" data-goto="${esc(r.pole_code)}">${esc(r.label || r.pole_code)}</button>${stBadge(r)}
           <span class="rc-ops"><button type="button" data-move="${i}:-1" aria-label="Move up" ${i ? "" : "disabled"}>↑</button><button type="button" data-move="${i}:1" aria-label="Move down" ${i < pts.length - 1 ? "" : "disabled"}>↓</button><button type="button" data-unstop="${esc(r.pole_code)}" aria-label="Remove ${esc(r.label || r.pole_code)}">×</button></span></li>`).join("")}</ol>
         <div class="rc-acts">
           ${pts.length > 2 ? `<button class="btn sm" type="button" id="rc-opt" title="Reorders the stops after the first for the shortest straight-line path. It does not use roads.">Shortest straight-line order</button>` : ""}
@@ -365,7 +394,7 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
     const q = $("#place-q").value.trim(), res = $("#place-res");
     if (!q) return;
     const k = q.toLowerCase();
-    const poles = rows.filter((r) => [r.label, r.pole_code, r.barangay].some((x) => (x || "").toLowerCase().includes(k))).slice(0, 5);
+    const poles = rows.filter((r) => searchable(r).some((x) => (x || "").toLowerCase().includes(k))).slice(0, 5);
     let places = [];
     try {
       const r = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=ph&q=${encodeURIComponent(q)}`, { headers: { Accept: "application/json" } });
@@ -383,6 +412,8 @@ export function mountMap(view, { api, json, esc, navigate, riskBadge, RISK, REVI
       map.setView([+x.lat, +x.lon], 17); res.hidden = true;
     };
   });
+  let qT = 0;
+  $("#place-q").addEventListener("input", () => { clearTimeout(qT); qT = setTimeout(render, 150); });
   const closeRes = (e) => { if (!e.target.closest("#place")) $("#place-res").hidden = true; };
   document.addEventListener("click", closeRes);
 

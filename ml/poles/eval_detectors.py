@@ -78,8 +78,9 @@ def match(pred: list[dict], gts: list[list[float]], thr: float = 0.5) -> list[bo
     return [s == "tp" for s in match_status(pred, gts, thr)]
 
 
-def run_detector(spec: str, images: list[Path], low: float, device: str = "auto") -> tuple[list[list[dict]], float]:
-    det = make_pole_detector(spec, low, Path("."), device=device)
+def run_detector(spec: str, images: list[Path], low: float, device: str = "auto", imgsz: int = 640,
+                 augment: bool = False) -> tuple[list[list[dict]], float]:
+    det = make_pole_detector(spec, low, Path("."), device=device, imgsz=imgsz, augment=augment)
     raw_fn = (lambda rgb: det.raw(rgb, low)) if hasattr(det, "raw") else det.detect
     out, t = [], []
     for p in images:
@@ -125,6 +126,21 @@ def ap50(dets, gts, zero_shot: bool, ignore_small: bool = False) -> float:
     return average_precision(scores, tps, sum(n_counted(g, ignore_small) for g in gts))
 
 
+def map50_95(dets, gts, zero_shot: bool, ignore_small: bool = False) -> float:
+    """S18: COCO-style mean AP over IoU 0.50:0.05:0.95 (one-to-one, greedy by score at each IoU)."""
+    aps = []
+    for iou in np.arange(0.5, 0.96, 0.05):
+        tps, scores = [], []
+        for ds, g in zip(dets, gts, strict=True):
+            ds = sorted(clean_boxes(ds) if zero_shot else ds, key=lambda x: -x["confidence"])
+            for x, st in zip(ds, match_status(ds, g, thr=float(iou), ignore_small=ignore_small), strict=True):
+                if st != "ign":
+                    tps.append(st == "tp")
+                    scores.append(x["confidence"])
+        aps.append(average_precision(scores, tps, sum(n_counted(g, ignore_small) for g in gts)))
+    return float(np.mean(aps))
+
+
 def _prf(tp, fp, n_gt) -> dict:
     p = tp / (tp + fp) if tp + fp else None
     r = tp / n_gt if n_gt else None
@@ -155,6 +171,8 @@ def main() -> None:
     ap.add_argument("--prefix", default="v218")
     ap.add_argument("--device", default="auto")
     ap.add_argument("--save-dets", default=None, help="folder: keep raw detections (for the verifier stage)")
+    ap.add_argument("--imgsz", type=int, default=640, help="S18: inference size (the shipped detector runs at 640)")
+    ap.add_argument("--augment", action="store_true", help="S18: test-time augmentation (flip + scales)")
     a = ap.parse_args()
     spec = yaml.safe_load(Path(a.data).read_text())
     root = Path(spec.get("path", Path(a.data).parent))
@@ -167,14 +185,16 @@ def main() -> None:
     res = {"data": a.data, "split": a.split, "images": len(images), "boxes": sum(map(len, gts)), "detectors": {}}
     for d in a.detector:
         zs = d.startswith("grounding-dino:") or d.startswith("owlv2:")
-        dets, lat = run_detector(d, images, 0.1 if zs else 0.01, a.device)
-        entry = {"latency_s": lat, "peak_rss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20}
+        dets, lat = run_detector(d, images, 0.1 if zs else 0.01, a.device, a.imgsz, a.augment)
+        entry = {"latency_s": lat, "peak_rss_mb": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 2**20,
+                 "imgsz": a.imgsz, "augment": a.augment}
         for proto, ig in (("all", False), ("medium_large", True)):
             curve = {t: {k: v for k, v in score(dets, gts, t, zs, ig).items() if k != "per_image"} for t in GRID}
             key = d if proto == "all" else f"{d}|medium_large"
             thr = chosen[key]["threshold"] if key in chosen else max(GRID, key=lambda t: curve[t]["f1"])
             at = score(dets, gts, thr, zs, ig)
-            r = {"protocol": proto, "ap50": ap50(dets, gts, zs, ig), "threshold": thr,
+            r = {"protocol": proto, "ap50": ap50(dets, gts, zs, ig), "map50_95": map50_95(dets, gts, zs, ig),
+                 "threshold": thr,
                  "chosen_on": "val (reused)" if key in chosen else a.split,
                  **{k: v for k, v in at.items() if k != "per_image"}, **boot(at["per_image"]), **entry, "curve": curve}
             res["detectors"][key] = r

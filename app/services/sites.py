@@ -22,7 +22,7 @@ FINISHED = ("complete", "fit_failed", "no_wires_detected")
 
 def latest_per_pole(s: Session, include_test: bool = False) -> list[tuple[Pole, Analysis]]:
     """v2.19: test records (app/services/records.py) are left out unless ``include_test``."""
-    from app.services.records import is_operational, list_columns  # local: records imports this module
+    from app.services.records import list_columns, listed  # local: records imports this module
     poles = s.scalars(
         select(Pole).options(
             selectinload(Pole.location),
@@ -33,7 +33,7 @@ def latest_per_pole(s: Session, include_test: bool = False) -> list[tuple[Pole, 
     out = []
     for p in poles:
         done = [a for a in p.analyses if a.status in FINISHED and a.vni is not None
-                and (include_test or is_operational(a))]
+                and listed(a, include_test)]
         if done:
             out.append((p, max(done, key=lambda a: a.created_at)))
     return out
@@ -50,29 +50,35 @@ def ranking(s: Session, cfg: AnalysisConfig, weights: tuple[float, float, float]
 
 def ranking_payload(s: Session, cfg: AnalysisConfig, weights: tuple[float, float, float] | None = None,
                     include_test: bool = False) -> dict[str, Any]:
+    """S16: one row per registered pole, from ``records.latest_rows`` (the dashboard's rows), so the map and the
+    dashboard show the same status for a pole. The MSPI rank fields are merged in where the pole is ranked (system
+    area); a pole whose latest inspection failed or is still processing is listed too, with that status."""
     from app.services import records
-    ranked, index = ranking(s, cfg, weights, include_test)
+    from app.services.contacts import location_check
+    from app.services.labels import all_labels
+    ranked, _ = ranking(s, cfg, weights, include_test)
+    by_code = {r.site_id: r for r in ranked}
     w = weights or (cfg.mspi.alpha, cfg.mspi.beta, cfg.mspi.gamma)
-    rows = []
-    for r in ranked:
-        pole, a = index[r.site_id]
-        loc = pole.location
-        rows.append({
-            **asdict(r), "flags": list(r.flags), "pole_code": r.site_id, "barangay": pole.barangay,
-            "analysis_id": a.id, "analysis_status": a.status, "vni_band": a.vni_band,
-            "has_location": loc is not None, "analyzed_at": a.created_at.isoformat(),
-            # v2.19 plain fields for the dispatch list (the score fields above stay for the system area)
-            "risk": records.risk(a), "review": records.review_status(a), "inspection_name": a.inspection_name,
-            "city": a.city, "location": None if loc is None else {"lat": loc.latitude, "lon": loc.longitude,
-                                                                  "source": loc.source},
-        })
-    from app.services.labels import all_labels  # v2.20 readable pole labels (SAL-001); the pole code stays the id
     labels = all_labels(s)
-    for row in rows:
-        row["label"] = labels.get(row["pole_code"])
+    rows = []
+    for x in records.latest_rows(s, labels, include_test):
+        r = by_code.get(x["pole_code"])
+        rank = asdict(r) if r else {"site_id": x["pole_code"], "rank": None, "mspi": None, "level": None,
+                                    "vni": None, "mean_crs": None, "max_crs": None, "n_wires": None, "flags": []}
+        rows.append({**rank, "flags": list(rank["flags"]), "pole_code": x["pole_code"], "barangay": x["barangay"],
+                     "analysis_id": x["id"], "analysis_status": x["status"], "has_location": x["has_location"],
+                     "analyzed_at": x["created_at"], "risk": x["risk"], "review": x["review"],
+                     "inspection_name": x["inspection_name"], "city": x["city"], "location": x["location"],
+                     "label": x["label"], "op_status": x.get("op_status"), "op_label": x.get("op_status_label"),
+                     "op_reason": x.get("op_reason"), "assignee": x.get("assignee"), "result": x.get("result"),
+                     "location_check": location_check(x["barangay"], x["city"]),
+                     # S18: what the map list and preview show (the same server values as every other surface)
+                     **{k: x.get(k) for k in ("filename", "detected", "problem_count", "risk_level", "review_status",
+                                              "review_status_label", "machine_state", "decision")},
+                     "place_label": (x.get("place") or {}).get("label")})
     return {"weights": {"alpha": w[0], "beta": w[1], "gamma": w[2]},
             "provisional": cfg.mspi.provisional, "ranked_count": sum(r["rank"] is not None for r in rows),
-            "sites": rows}
+            "counts_of": "poles", "sites": rows}
 
 
 def rank_of(s: Session, cfg: AnalysisConfig, pole_code: str) -> dict[str, Any] | None:

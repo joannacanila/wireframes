@@ -213,9 +213,10 @@ def prob_to_original(prob: np.ndarray, lb: Letterbox) -> np.ndarray:
 def skeleton_instances(probs: np.ndarray, class_masks: dict[int, np.ndarray], lb: Letterbox, conf_min: float,
                        span_params: dict | None = None, strands: bool = False,
                        min_class_share: float = 0.0, tau: float | None = None, head=None,
-                       rgb: np.ndarray | None = None) -> list[WireDetection]:
+                       rgb: np.ndarray | None = None, x_lb: np.ndarray | None = None) -> list[WireDetection]:
     if strands:
-        return strand_instances(probs, lb, conf_min, span_params or {}, min_class_share, tau=tau, head=head, rgb=rgb)
+        return strand_instances(probs, lb, conf_min, span_params or {}, min_class_share, tau=tau, head=head, rgb=rgb,
+                                x_lb=x_lb)
     out = []
     for name in CLASSES:
         if name == VEGETATION:
@@ -232,7 +233,7 @@ def skeleton_instances(probs: np.ndarray, class_masks: dict[int, np.ndarray], lb
 
 def strand_instances(probs: np.ndarray, lb: Letterbox, conf_min: float, params: dict,
                      min_class_share: float, tau: float | None = None, head=None,
-                     rgb: np.ndarray | None = None) -> list[WireDetection]:
+                     rgb: np.ndarray | None = None, x_lb: np.ndarray | None = None) -> list[WireDetection]:
     """v2.16: one class per physical strand (``wire_instances.strand_spans``), in original image coordinates.
     v2.17: ``tau`` sets the wire mask to P(any wire) >= tau instead of the argmax; ``head`` (a StrandHead) then
     names each strand's type from the whole strand and the photo ``rgb`` (original size)."""
@@ -249,7 +250,8 @@ def strand_instances(probs: np.ndarray, lb: Letterbox, conf_min: float, params: 
     strands = [s for s in strand_spans(orig, wire_ids, params, min_class_share=min_class_share, mask=union)
                if s.confidence >= conf_min]
     if head is not None and rgb is not None and strands:
-        if not head.classify(strands, orig, rgb):
+        frame = (probs, x_lb, lb) if x_lb is not None and getattr(head, "letterbox_frame", False) else None
+        if not head.classify(strands, orig, rgb, frame=frame):
             log.warning(head.error)
     out = []
     for s in strands:
@@ -288,6 +290,7 @@ class HybridSegmenter:
         self.last_class_masks: dict[int, np.ndarray] | None = None  # v2.11: full WireNet mask for the UI
         self.last_polarity: str | None = None  # v2.11: "normal" / "inverted" when dual polarity was checked
         self.last_suppressed: list[dict] = []  # v2.13: spans removed by the ground gate, with the reason
+        self.last_head_error: str | None = None  # S13: strand head could not load for the last photo
         self.last_scene: dict | None = None  # v2.16: scene context (pole regions) from the ADE20K parser
         self.last_poles: list[dict] | None = None  # v2.16: pole detector boxes in photo coordinates (None = off)
         self._pole_det = None
@@ -376,7 +379,10 @@ class HybridSegmenter:
             spans = skeleton_instances(probs, masks, lb, self.yolo.cfg.conf_min, sp,
                                        strands=getattr(cfg, "span_strand_classes", False),
                                        min_class_share=getattr(cfg, "span_class_min_share", 0.0),
-                                       tau=getattr(cfg, "span_wire_tau", None), head=head, rgb=rgb)
+                                       tau=getattr(cfg, "span_wire_tau", None), head=head, rgb=rgb, x_lb=x)
+            # S13: a strand head that failed to load leaves the segmentation types in place; the runner flags it so
+            # the record says its wire types came without the head (a silent difference between otherwise equal runs)
+            self.last_head_error = head.error if head is not None and head._head is None and spans else None
             veg, spans = self._scene_gate(spans, veg, x, lb)
             return veg + spans
         dilate = max(2, int(round(self.dilate_frac * max(lb.orig_w, lb.orig_h))))
@@ -394,6 +400,8 @@ class HybridSegmenter:
             p = Path(path)
             self._head = StrandHead(p if p.is_absolute() else ROOT_DIR / p, self.yolo.cfg.strand_head_min_conf,
                                     device=self._device)
+            self._head.letterbox_frame = getattr(self.yolo.cfg, "strand_head_frame", "original") == "letterbox"
+            self._head.clamp = bool(getattr(self.yolo.cfg, "strand_head_clamp", False))
         return self._head
 
     def _poles(self, x: np.ndarray, lb: Letterbox) -> list[dict] | None:
@@ -514,7 +522,9 @@ def span_params(cfg) -> dict:
             "cluster_radius": cfg.span_cluster_radius, "max_gap": cfg.span_max_gap,
             "gap_angle_deg": cfg.span_gap_angle_deg, "draw_bridge": cfg.span_draw_bridge,
             "min_span_len": cfg.span_min_stitched_len, "own_component": cfg.span_own_component,
-            "max_lateral_px": getattr(cfg, "span_max_lateral_px", 0.0)}
+            "max_lateral_px": getattr(cfg, "span_max_lateral_px", 0.0),
+            "xjunction_tol_deg": getattr(cfg, "span_xjunction_tol_deg", 0.0),
+            "xjunction_min_cross_deg": getattr(cfg, "span_xjunction_min_cross_deg", 30.0)}
 
 
 def make_segmenter(cfg, root: Path):

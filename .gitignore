@@ -26,6 +26,7 @@ passwords*.txt
 .DS_Store
 .agents/
 .claude/
+.impeccable/
 skills-lock.json
 
 # Scratch
@@ -42,3 +43,10 @@ _quarantine/
 models/strand_head_v217.json
 models/hf/
 /yolo11*.pt
+
+# Local symlinks to the shared data and model folders (the rules above only match real directories)
+/datasets
+/models/hf
+
+# Local server logs
+/*.log

@@ -48,6 +48,7 @@ def ingest(
     distance_m: float | None, elevation_deg: float | None,
     latitude: float | None, longitude: float | None, labels: bytes | None,
     model_ready: bool = True, trusted: bool = True, inspection_name: str | None = None, city: str | None = None,
+    capture: dict | None = None,
 ) -> str:
     """Validate, strip GPS, store, and create the analysis row (status ``processing``).
 
@@ -82,7 +83,7 @@ def ingest(
         written[1].write_bytes(labels)
     try:
         return _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context,
-                       latitude, longitude, w, h, trusted, _clean(inspection_name), _clean(city))
+                       latitude, longitude, w, h, trusted, _clean(inspection_name), _clean(city), capture)
     except Exception:
         for p in written:  # no orphan files when the transaction fails
             p.unlink(missing_ok=True)
@@ -105,7 +106,8 @@ def _clean(v: str | None) -> str | None:
 
 
 def _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context, latitude, longitude, w, h,
-            trusted: bool = True, inspection_name: str | None = None, city: str | None = None) -> str:
+            trusted: bool = True, inspection_name: str | None = None, city: str | None = None,
+            capture: dict | None = None) -> str:
     """``trusted`` (an admin upload) may change an existing pole's barangay and location; an
     anonymous field upload may only fill them in where nothing is recorded yet."""
     from app.services.barangay import resolve as resolve_barangay
@@ -134,6 +136,8 @@ def _insert(db, cfg, acq, code, barangay, filename, stored, label_name, context,
         from app.services.records import classify
         if entered and entered != official:
             a.metadata_json = {**(a.metadata_json or {}), "barangay_entered": entered[:120]}
+        if capture:  # S18: device location, its accuracy and the address lookup, as submitted
+            a.metadata_json = {**(a.metadata_json or {}), "location_capture": _jsonable(capture)}
         a.record_kind, a.record_kind_reason = classify(code, entered or pole.barangay, city, inspection_name,
                                                        a.original_filename)
         s.add(a)
@@ -159,40 +163,118 @@ def _update_location(s: Session, pole: Pole, gps: tuple[float, float] | None,
         loc.latitude, loc.longitude, loc.source = coords[0], coords[1], source
 
 
-def process(analysis_id: str, db: Database, settings: Settings, cfg: AnalysisConfig, segmenter: Segmenter) -> str:
-    """Run the pipeline for one queued analysis and persist the result. Returns the status."""
+# S14: a job that keeps dying (the process is killed mid-inference, e.g. out of memory on an 8 GB machine) is re-queued
+# on every restart; after this many starts it is recorded as failed instead of looping forever.
+MAX_ATTEMPTS = 3
+# Failure categories a retry can plausibly fix (resources, model files, the database); the others need a new photo.
+RETRYABLE = {"model_unavailable", "out_of_memory", "persistence_error", "interrupted", "inference_error"}
+
+
+def _category(stage: str, exc: BaseException) -> str:
+    text = f"{type(exc).__name__}: {exc}".lower()
+    if isinstance(exc, SegmenterUnavailable):
+        return "model_unavailable"
+    if isinstance(exc, MemoryError) or "out of memory" in text:
+        return "out_of_memory"
+    if stage in ("load_image", "load_labels"):
+        return "image_unreadable"
+    if stage in ("save_mask", "persist"):
+        return "persistence_error"
+    return "inference_error"
+
+
+def _start_attempt(db: Database, analysis_id: str) -> tuple[str, dict] | None:
+    """Count this start of the job. Returns (status, inputs), or None when the analysis does not exist."""
     with db.session() as s:
         a = s.get(Analysis, analysis_id)
         if a is None:
-            return "missing"
+            return None
         if a.status != "processing":
-            return a.status
-        stored, label_name, ctx_raw = a.stored_name, a.label_name, dict(a.context_json)
-        envelope = list(a.envelope_json or [])
+            return a.status, {}
+        md = dict(a.metadata_json or {})
+        proc = dict(md.get("processing") or {})
+        proc["attempts"] = int(proc.get("attempts") or 0) + 1
+        proc["started_at"] = datetime.now(UTC).isoformat()
+        a.metadata_json = {**md, "processing": proc}
+        return "processing", {"stored": a.stored_name, "label": a.label_name, "ctx": dict(a.context_json),
+                              "envelope": list(a.envelope_json or []), "attempts": proc["attempts"]}
 
+
+def process(analysis_id: str, db: Database, settings: Settings, cfg: AnalysisConfig, segmenter: Segmenter) -> str:
+    """Run the pipeline for one queued analysis and persist the result. Returns the status.
+
+    S14: every stage that can fail is named, and every failure ends in a recorded ``error`` state with its stage,
+    category, model identity and attempt count (``metadata_json.failure``). Before S14 an exception while saving the
+    mask or persisting escaped to the worker, which only logged it: the inspection stayed ``processing`` for good and
+    was re-run on every restart with no limit."""
+    started = _start_attempt(db, analysis_id)
+    if started is None:
+        return "missing"
+    status, job = started
+    if status != "processing":
+        return status
+    ident = getattr(segmenter, "identity", None)
+    if job["attempts"] > MAX_ATTEMPTS:
+        _fail(db, analysis_id, "interrupted", f"processing was interrupted {MAX_ATTEMPTS} times without finishing",
+              stage="worker", category="interrupted", identity=ident)
+        return "error"
+
+    stage, dets = "load_image", None
     try:
-        rgb = load_rgb((settings.upload_dir / stored).read_bytes())
+        rgb = load_rgb((settings.upload_dir / job["stored"]).read_bytes())
+        ctx_raw = job["ctx"]
         ctx = EngineeringContext(
             span_m=ctx_raw.get("span_m"), temperature_c=ctx_raw.get("temperature_c"),
             wind_speed_mps=ctx_raw.get("wind_speed_mps"),
         )
-        dets = None
-        if label_name:
-            text = (settings.upload_dir / label_name).read_text("utf-8")
+        if job["label"]:
+            stage = "load_labels"
+            text = (settings.upload_dir / job["label"]).read_text("utf-8")
             dets = parse_yolo_seg_labels(text, rgb.shape[1], rgb.shape[0])
-        outcome = run_analysis(rgb, cfg, segmenter, ctx, detections=dets, envelope=envelope)
-    except SegmenterUnavailable as exc:
-        _fail(db, analysis_id, "model_unavailable", str(exc))
-        return "error"
+        stage = "inference"
+        outcome = run_analysis(rgb, cfg, segmenter, ctx, detections=dets, envelope=job["envelope"])
+        if outcome.wire_mask is not None:
+            stage = "save_mask"
+            save_wire_mask(settings, analysis_id, outcome.wire_mask)
+        stage = "persist"
+        persist(db, analysis_id, outcome)
     except Exception as exc:  # recorded, never swallowed silently
-        log.exception("analysis %s failed", analysis_id)
-        _fail(db, analysis_id, "pipeline_exception", f"{type(exc).__name__}: {exc}")
+        cat = _category(stage, exc)
+        if cat == "model_unavailable":
+            log.warning("analysis %s: model unavailable: %s", analysis_id, exc)
+            _fail(db, analysis_id, "model_unavailable", str(exc), stage=stage, category=cat, identity=ident)
+        else:
+            log.exception("analysis %s failed at %s", analysis_id, stage)
+            _fail(db, analysis_id, "pipeline_exception", f"{type(exc).__name__}: {exc}", stage=stage, category=cat,
+                  identity=ident)
         return "error"
 
-    if outcome.wire_mask is not None:
-        save_wire_mask(settings, analysis_id, outcome.wire_mask)
-    persist(db, analysis_id, outcome)
+    with db.session() as s:  # S13: the exact checkpoints behind this result; S14: when processing finished
+        a = s.get(Analysis, analysis_id)
+        md = dict(a.metadata_json or {})
+        md["processing"] = {**(md.get("processing") or {}), "finished_at": datetime.now(UTC).isoformat()}
+        md.pop("failure", None)  # a successful re-run supersedes an earlier failure (the audit trail keeps it)
+        if ident and dets is None:
+            md["model_identity"] = ident
+        md["methods"] = methods(cfg)  # S15 (D-31, D-32): which measurement and typing methods produced this result
+        a.metadata_json = md
     return outcome.status
+
+
+def methods(cfg: AnalysisConfig) -> dict:
+    """The algorithm versions behind a result, so a stored measurement keeps its meaning after a method changes."""
+    seg, cat = cfg.segmentation, cfg.catenary
+    if getattr(cat, "kink_split", False):
+        from app.pipeline.span_fit import ALGORITHM
+        algo = ALGORITHM
+    else:
+        algo = "catenary/1"
+    return {"measurement_algorithm": algo, "kink_ratio": cat.kink_ratio if cat.kink_split else None,
+            "strand_head_frame": getattr(seg, "strand_head_frame", "original"),
+            "strand_head_clamp": bool(getattr(seg, "strand_head_clamp", False)),
+            "references": [r for r in ("power", "telecom") if getattr(cfg, "comparison_reference" if r == "power"
+                                                                        else "telecom_reference").enabled],
+            "config_fingerprint": cfg.fingerprint}
 
 
 def wire_mask_path(settings: Settings, analysis_id: str) -> Path:
@@ -211,13 +293,24 @@ def save_wire_mask(settings: Settings, analysis_id: str, label: np.ndarray) -> N
     img.save(wire_mask_path(settings, analysis_id), "PNG", optimize=True, transparency=0)
 
 
-def _fail(db: Database, analysis_id: str, code: str, message: str) -> None:
+def _fail(db: Database, analysis_id: str, code: str, message: str, *, stage: str | None = None,
+          category: str | None = None, identity: dict | None = None) -> None:
+    """Record a failure. S14: with the stage, category, model identity, attempt count and whether a retry can help
+    (``metadata_json.failure``, staff only in the API), so a failure is diagnosable without the server log."""
+    category = category or code
     with db.session() as s:
         a = s.get(Analysis, analysis_id)
         if a is not None:
+            md = dict(a.metadata_json or {})
+            attempts = int((md.get("processing") or {}).get("attempts") or 0)
+            md["failure"] = {"stage": stage, "category": category, "code": code, "message": scrub_paths(message[:500]),
+                             "at": datetime.now(UTC).isoformat(), "attempts": attempts,
+                             "retryable": category in RETRYABLE, "model_identity": (identity or {}).get("fingerprint")}
+            a.metadata_json = md
             a.status, a.error_code, a.error_message = "error", code, message[:2000]
             from app.services import audit
-            audit.record(s, "System", "inspection.failed", a.pole.pole_code if a.pole else None, a.id, code=code)
+            audit.record(s, "System", "inspection.failed", a.pole.pole_code if a.pole else None, a.id, code=code,
+                         stage=stage, category=category, attempts=attempts)
             a.completed_at = datetime.now(UTC)
 
 
@@ -297,6 +390,7 @@ def load_analysis(s: Session, analysis_id: str) -> Analysis | None:
         select(Analysis)
         .where(Analysis.id == analysis_id)
         .options(selectinload(Analysis.detections), selectinload(Analysis.reviews),
+                 selectinload(Analysis.decisions), selectinload(Analysis.review_progress),
                  selectinload(Analysis.pole).selectinload(Pole.location))
     )
 
@@ -322,9 +416,30 @@ def serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] |
         w["comparison"] = compare_wire(w, cfg)
         w["states"] = wire_states(w, cfg, w["comparison"])  # S12: separate measurement / coverage / reference facts
     r["comparison"] = pole_comparison(r, cfg)
+    # S16 (D-34): say which references this reading uses and whether they differ from those recorded when the photo
+    # was analysed. The stored measurements are never changed; only the comparison is made with today's references.
+    then = ((a.metadata_json or {}).get("methods") or {}).get("references")
+    now = [x["id"] for x in (r["comparison"] or {}).get("by_reference") or []]
+    r["interpretation"] = {"references_now": now, "references_at_analysis": then,
+                           "reinterpreted": then is not None and then != now or then is None and bool(now),
+                           "note": ("Compared with the references in use today; the measurements are as recorded."
+                                    if (then is None or then != now) and now else None)}
     from app.services.methodology import summary_lines, topics
     r["methodology"] = topics(r["comparison"])
     r["summary_lines"] = summary_lines(r)  # S12: one Methodology & Limitations text for the page and the PDF
+    from app.services.outcome import attach  # S14: processing lifecycle, assessment state and plain findings, apart
+    attach(r)
+    # S18: what we know (machine observations + triage risk) and the photo's three timestamps, kept apart from review
+    from app.services import screening
+    from app.services.review_flow import current_critical
+    r["screening"] = screening.summary(r, current_critical(a), cfg.quality, cfg.enhancement)
+    from app.services.metrics import mask_legend, other_metrics  # S18: Other metrics and the mask legend
+    r["metrics"] = other_metrics(r, cfg)
+    r["mask_legend"] = mask_legend(r)
+    r["timeline"] = {"captured_at": r.get("captured_at"), "received_at": r.get("created_at"),
+                     "completed_at": r.get("completed_at")}
+    if (fl := (a.metadata_json or {}).get("failure")):
+        r["failure"] = fl  # S14: stage, category, attempts, model identity (staff only; public_view drops it)
     return _jsonable(r)
 
 
@@ -366,7 +481,9 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                  # the submitter's own pole only (capability URL); the multi-pole map is admin-only
                  "location": None if a.pole.location is None else {
                      "lat": a.pole.location.latitude, "lon": a.pole.location.longitude,
-                     "source": a.pole.location.source}},
+                     "source": a.pole.location.source,
+                     # S18: how this inspection's coordinates were captured, when it said so
+                     "capture": (a.metadata_json or {}).get("location_capture")}},
         "submitted_via": a.submitted_via,
         "reviews": [{"decision": r.decision, "override_level": r.override_level, "note": r.note,
                      "by": r.reviewer_name, "at": r.created_at.isoformat()} for r in a.reviews],
@@ -414,6 +531,7 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                 # S4: resolution of the image-derived ratio (1 px / chord); measurement only, never a limit
                 "sag_ratio_resolution": _resolution(d, a, cfg),
                 "sag_ratio_resolution_derived": "sag_ratio_resolution" not in (d.fit_json or {}) and _resolution(d, a, cfg) is not None,
+                "sag_ratio_uncertainty": uncertainty90(_resolution(d, a, cfg), (d.fit_json or {}).get("rel_residual"), cfg),
                 "delta_lim": v["delta_lim"], "delta_lim0": v["delta_lim0"], "crs": v["crs"], "level": v["level"],
                 "historical": v["historical"],
                 "sag_bands": sag_bands(cfg, d.wire_class, v["delta_lim"]),
@@ -432,6 +550,8 @@ def _serialize_result(a: Analysis, cfg: AnalysisConfig, ranking: dict[str, Any] 
                                    (d.fit_json or {}).get("chord_gate_px") or gate),)
         ],
         "acquisition": {"metadata": a.metadata_json, "envelope": a.envelope_json},
+        # S17: when the photo was taken (EXIF), shown on the report; only the timestamp, never device or position
+        "captured_at": (a.metadata_json or {}).get("captured_at"),
         "engineering_context": a.context_json,
         "flags": a.flags_json,
         "timings_ms": a.timings_json,
@@ -481,6 +601,15 @@ def _resolution(d, a, cfg) -> float | None:
     return round(max(scale, 1.0) / chord, 6)
 
 
+def uncertainty90(resolution: float | None, rel_residual: float | None, cfg) -> float | None:
+    """S16 (D-34): the calibrated 90 % band of the image sag ratio. ``resolution`` is 1 model pixel over the chord
+    (stored per wire since S4, derived on read before), so the band applies to every record without changing it."""
+    if resolution is None:
+        return None
+    u = cfg.measurement_uncertainty
+    return round(u.a_px * resolution + u.b + u.c * float(rel_residual or 0.0), 6)
+
+
 def sag_bands(cfg, wire_class: str, delta_lim: float | None) -> dict[str, float] | None:
     """The sag ratios where this wire's level changes, from the configured CRS cut-offs (Equation 10:
     CRS = 10 x sag / delta_lim x w_class). v2.21: ``minor_from`` and ``critical_from`` are the lower bounds of Minor
@@ -499,9 +628,9 @@ def public_error(code: str | None, message: str | None) -> str:
 
 
 _PUBLIC_WIRE = ("index", "class", "status", "bbox", "mask_polygons", "centerline", "catenary_curve", "sag_ratio",
-                "sag_ratio_resolution", "sag_ratio_resolution_derived",
+                "sag_ratio_resolution", "sag_ratio_resolution_derived", "sag_ratio_uncertainty",
                 "delta_lim", "sag_bands", "level", "flags", "class_status", "reason_code", "reason_short", "notes", "action",
-                "veg_clearance", "provenance", "diagnosis", "comparison", "states")
+                "veg_clearance", "provenance", "diagnosis", "comparison", "states", "finding", "wire_id")
 
 
 def public_view(r: dict[str, Any]) -> dict[str, Any]:
@@ -510,7 +639,8 @@ def public_view(r: dict[str, Any]) -> dict[str, Any]:
     record. Drawing geometry and the measured sag / reference limit stay (the page shows them)."""
     out = {k: r.get(k) for k in ("id", "status", "created_at", "completed_at", "inspection", "pole", "submitted_via",
                                  "image", "vegetation", "wire_mask", "guardrail", "flags", "diagnosis", "comparison",
-                                 "summary_lines", "methodology")}  # S12: plain sentences and states, no scores
+                                 "summary_lines", "methodology", "overview", "report_id", "captured_at",
+                                 "screening", "timeline", "mask_legend")}  # S12/S14: plain sentences and states
     out["reviews"] = [{"decision": x["decision"], "by": x["by"], "at": x["at"]} for x in r.get("reviews") or []]
     if r.get("error"):
         out["error"] = {"code": r["error"]["code"], "message": public_error(r["error"]["code"], r["error"]["message"])}

@@ -14,7 +14,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import admin, analysis, assistant, auth, dashboard, reports
+from app.api import admin, analysis, assistant, auth, dashboard, reports, review
 from app.core import weights
 from app.core.config import get_analysis_config, get_settings
 from app.core.state import MODELS_DIR, AppState, build_state, get_state
@@ -47,13 +47,18 @@ def create_app(state: AppState | None = None, segmenter: Segmenter | None = None
 
     app = FastAPI(title="WIREFRAME", version="2.23", lifespan=lifespan,
                   description="Vision-based diagnostic framework for urban overhead wire risk screening.")
+    from app.api import operations  # S14: before analysis.router so /{id}/contacts is matched as its own route
+    app.include_router(operations.public)
+    app.include_router(operations.staff)
     app.include_router(analysis.router)
     app.include_router(dashboard.router)
     app.include_router(reports.router)
     app.include_router(auth.router)
     app.include_router(admin.router)
     app.include_router(admin.system)
+    app.include_router(review.router)  # S18: review workflow, decisions, rubric
     app.include_router(assistant.router)
+    app.include_router(assistant.help_router)  # S14: citizen assistant (public, no tools)
 
     @app.exception_handler(Exception)
     async def _unhandled(request: Request, exc: Exception) -> JSONResponse:
@@ -84,6 +89,7 @@ def create_app(state: AppState | None = None, segmenter: Segmenter | None = None
                       "weights": st.config.segmentation.weights,
                       "downloads": weights.status()},  # first start on a fresh clone: downloading / ready
             "config_fingerprint": st.config.fingerprint,
+            "model_identity": getattr(seg, "identity", None),
             "provisional": st.config.provisional_blocks(),
             "queue_depth": st.queue.depth,
         }

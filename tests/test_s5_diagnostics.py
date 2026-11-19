@@ -181,7 +181,7 @@ def test_pdf_draws_measured_wires_and_explains_the_analysis(client, scene):
     assert pdf.status_code == 200
     doc = pdfium.PdfDocument(io.BytesIO(pdf.content))
     text = "\n".join(doc[i].get_textpage().get_text_range() for i in range(len(doc)))
-    assert "Figure 1. Measured wires (not assessed)" in text and "No wire was flagged, so none is drawn" not in text
+    assert "Figure 1. Measured wires: the fitted curve" in text and "(not assessed)" not in text and "No wire was flagged, so none is drawn" not in text
     assert "5.1 What the Analysis Found" in text and "Not available from one photo" in text
     assert "Observations" in text  # per-wire observation column
     assert not re.search(r"\b(Critical|Minor sag)\b", text.split("Important Notice")[0])
@@ -206,7 +206,5 @@ def test_result_page_scripts_draw_and_list_measured_wires():
     field = (ROOT_DIR / "app/web/assets/field.js").read_text()
     assert "export const isMeasured" in viewer and "const scored = isMeasured(w);" in viewer
     assert "L.sag && isMeasured(w) && f.sag_point" in viewer
-    assert "const focus = attention.length ? attention : diagMode ? measuredWs : [];" in field
-    assert 'viewer.setVisible(name === "problem" ? focus.map((w) => w.index) : null);' in field
     assert "These wires were not measured, so nothing is known about their sag" not in field
-    assert "${methodology(r, pc, LIMS)}" in field  # S12: what the analysis found, inside Methodology & Limitations
+    assert "resultViewHtml(r, { mode: \"citizen\"" in field  # S18: the shared result view draws the wires

@@ -190,6 +190,21 @@ def wire_diagnosis(w: dict, cfg=None) -> dict[str, Any]:
     return {"state": state, "assessed": assessed, "resolvable": resolvable(w), "lines": lines, "needed": needed}
 
 
+
+def name_wires(ids: list[int], cap: int = 12) -> str:
+    """S18: wires named as on every page ("wire 3", "wires 3, 5 and 7"), so each number can link to the photo."""
+    head = [str(i) for i in list(ids)[:cap]]
+    if len(head) == 1:
+        return f"wire {head[0]}"
+    if len(ids) > cap:
+        return f"wires {', '.join(head)} and {len(ids) - cap} more"
+    return f"wires {', '.join(head[:-1])} and {head[-1]}"
+
+
+def _ix(items) -> list[int]:
+    return [x["index"] if isinstance(x, dict) else int(x) for x in items]
+
+
 def pole_diagnosis(r: dict, cfg=None) -> dict[str, Any]:
     """Per-photo explanation built from the serialised result and its per-wire diagnoses."""
     wires = r.get("wires") or []
@@ -225,22 +240,24 @@ def pole_diagnosis(r: dict, cfg=None) -> dict[str, Any]:
     obs: list[str] = []
     veg_ids = sorted(w["index"] for w in wires if (w.get("veg_clearance") or {}).get("gap_px") == 0)
     if veg_ids:
-        obs.append(f"Vegetation overlaps or adjoins {len(veg_ids)} wire{'s' if len(veg_ids) > 1 else ''} in the image "
-                   f"({', '.join(map(str, veg_ids[:12]))}{'…' if len(veg_ids) > 12 else ''}); a photo cannot measure "
+        obs.append(f"Vegetation overlaps or adjoins {name_wires(veg_ids)} in the image; a photo cannot measure "
                    "physical clearance, so check on site")
     elif r.get("vegetation"):
         obs.append(f"Vegetation detected in the photo ({len(r['vegetation'])} region"
                    f"{'s' if len(r['vegetation']) > 1 else ''}); none overlaps a traced wire in the image")
-    bridged = [w["index"] for w in wires if ((w.get("provenance") or {}).get("centerline_inferred_share") or 0) > 0]
-    if bridged:
-        obs.append(f"{len(bridged)} traced wire{'s were' if len(bridged) > 1 else ' was'} partly bridged across mask "
-                   "gaps (faint, occluded or crossing segments)")
+    from app.services.comparison import BRIDGED_MIN_SHARE
+    from app.services.comparison import bridged as is_bridged
+    bridged = [w["index"] for w in wires if is_bridged(w)]
+    if bridged:  # S15 (D-33): the same rule as the results page (>= 5% of the trace estimated)
+        obs.append(f"{len(bridged)} traced wire{'s were' if len(bridged) > 1 else ' was'} partly estimated across mask "
+                   f"gaps (at least {BRIDGED_MIN_SHARE:.0%} of the trace: faint, occluded or crossing segments): "
+                   f"{name_wires(sorted(bridged))}")
     if partial:
         obs.append(f"{len(partial)} wire{'s reach' if len(partial) > 1 else ' reaches'} the photo edge, so only the "
-                   "visible part was measured")
+                   f"visible part was measured: {name_wires(sorted(_ix(partial)))}")
     if flat:
         obs.append(f"{len(flat)} measured wire{'s are' if len(flat) > 1 else ' is'} straight to within the 1 pixel "
-                   "resolution (no sag resolvable at this image scale)")
+                   f"resolution (no sag resolvable at this image scale): {name_wires(sorted(_ix(flat)))}")
     q = r.get("quality") or {}
     if q.get("reason") and q.get("grade") not in (None, "A"):
         obs.append(f"Photo quality: {q['reason']}")

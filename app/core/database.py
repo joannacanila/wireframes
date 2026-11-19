@@ -146,6 +146,14 @@ def migrate(engine: Engine) -> None:
         _rebuild(engine, Review.__table__, {})
     with engine.begin() as conn:
         backfill(conn)  # v2.19: operational / test classification of older rows (only rows not yet classified)
+    from app.services.review_flow import backfill_legacy
+    with engine.connect() as conn:
+        pending = conn.execute(text("SELECT COUNT(*) FROM reviews r WHERE NOT EXISTS (SELECT 1 FROM admin_decisions d "
+                                    "WHERE d.legacy_review_id = r.id)")).scalar()
+    if pending:
+        backup_before_migration(engine)  # S18: a copy before pre-S18 reviews are read into decisions
+        with engine.begin() as conn:
+            backfill_legacy(conn)
 
 
 def _missing_columns(conn) -> list[str]:

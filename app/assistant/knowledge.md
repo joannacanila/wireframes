@@ -22,11 +22,11 @@ Telecom cables are usually thinner and darker than power lines and are often bun
 ## Getting to the utility poles {#nav-poles}
 Link: /admin/map
 **To view or reach the utility poles:**
-1. Open **Map & Dispatch** from the top bar.
+1. Open **Map & Locations** from the top bar.
 2. Stay on the **On map** tab to see the poles that have a GPS location; the pin colour is the risk level.
 3. Use the **Find a street or barangay** box on the map, or the search box in the list, to find a pole, street or barangay.
 4. Click a pole's row or its pin: the map zooms to it and shows **Directions** and **Street View** links (Google Maps).
-5. To visit several poles, tick their rows: they are added to the **Dispatch route** card.
+5. To visit several poles, tick their rows: they are added to the **Visit route** card.
 Poles without a location are under **Needs pinning**; they must be pinned before they appear on the map.
 
 ## Opening an inspection or its PDF report {#nav-reports}
@@ -36,20 +36,20 @@ Link: /admin/inspections
 2. Find the pole with the search box, the status tabs (**All**, **Needs review**, **Failed**, **Low risk**) or **Filters**.
 3. Click the row, or **Open**, to see the inspection page.
 4. Use **PDF report** at the top of the inspection page to download the printable report; **Findings CSV** gives the wire list.
-From Map & Dispatch, a pole's **Open** link goes to the same inspection page.
+From Map & Locations, a pole's **Open** link goes to the same inspection page.
 
 ## Poles that need pinning {#nav-pinning}
 Link: /admin/map?tab=pinning
 Poles with no usable GPS location are not drawn on the map and cannot be added to a route. Their place in the inspection order does not change.
-1. Open **Map & Dispatch** and choose the **Needs pinning** tab; the number beside it is how many poles need a location.
+1. Open **Map & Locations** and choose the **Needs pinning** tab; the number beside it is how many poles need a location.
 2. Administrators: choose **Pin location** on a pole.
 3. Click the map where the pole stands, or type its latitude and longitude and choose **Preview**.
 4. Check the point and choose **Save location**. The pole moves to **On map**; the change is recorded in the activity log.
 
 ## Building a dispatch route {#route-build}
 Link: /admin/map
-1. Open **Map & Dispatch**, **On map** tab.
-2. Tick the checkbox on each pole to visit; the **Dispatch route** card appears with numbered stops and a dashed line on the map.
+1. Open **Map & Locations**, **On map** tab.
+2. Tick the checkbox on each pole to visit; the **Visit route** card appears with numbered stops and a dashed line on the map.
 3. Reorder stops with the up and down arrows, or remove one with ×.
 4. **Shortest straight-line order** reorders the stops after the first one for the shortest straight-line path. It does not follow roads.
 5. **Route PDF** prints the stops with coordinates; **Copy link** copies a link to the same route (sign-in required); **Google Maps** opens the route for road directions and travel time.
@@ -57,14 +57,14 @@ WIREFRAME shows straight-line distance only; road distance and travel time come 
 
 ## Filtering poles on the map {#filter-poles}
 Link: /admin/map
-In Map & Dispatch, the list has a search box (pole ID, pole code or barangay), risk chips (**All**, **High**, **Moderate**, **Low**, **Not assessed**) and a barangay menu. They work together. **Unassigned** in the barangay menu lists poles with no recorded barangay. The base map switch (**Light**, **Dark**, **Satellite**) is at the bottom right of the map.
+In Map & Locations, the list has a search box (pole ID, pole code or barangay), status chips (**All**, **Processing failed**, **Needs review**, **Incomplete**, **Awaiting review**, **Reviewed**) and a barangay menu. They work together. **Unassigned** in the barangay menu lists poles with no recorded barangay. The base map switch (**Light**, **Dark**, **Satellite**) is at the bottom right of the map.
 
 ## Getting around the admin portal {#nav-portal}
 Link: /admin
-- **Dashboard** (/admin): counts, the Needs attention queue and recent activity.
+- **Dashboard** (/admin): a fleet line (poles, inspections, poles on the map, poles needing a location), the review queue with status tiles that filter it, and activity split into People and Automated.
 - **Inspections** (/admin/inspections): every inspection, with search, status tabs, filters and bulk actions.
-- **Map & Dispatch** (/admin/map): the poles on a map, the inspection order, dispatch routes and pinning.
-- **Technical exports** (administrators): on **Inspections**, next to **Download CSV**.
+- **Map & Locations** (/admin/map): the poles on a map, the inspection order, dispatch routes and pinning.
+- **Technical exports** (administrators): on **Inspections**, in the **Export** menu, below the list CSV and the summary PDF.
 - **Field Screener** (/workspace): upload a photo for a new inspection.
 
 ## Assigning a barangay {#assign-barangay}
@@ -73,7 +73,7 @@ Barangays come from the official list (PSGC). On **Inspections**, hover a row wi
 
 ## Who uses which part {#portals}
 Link: /admin
-There are two parts. The Field Screener (/workspace) needs no account: anyone with the link uploads a pole photo and gets a screening result and a PDF report. The admin portal (/admin) needs an account. It has three main pages: Dashboard (what needs attention), Inspections (every inspection, its findings, the professional review and the reports) and Map & Dispatch (where the poles are and which to inspect first). Accounts are either inspectors (the three main pages, reviews and reports) or administrators (the same pages, plus technical exports, technical diagnostics on each inspection, test records and deleting inspections). There is no separate System page.
+There are two parts. The Field Screener (/workspace) needs no account: anyone with the link uploads a pole photo and gets a screening result and a PDF report. The admin portal (/admin) needs an account. It has three main pages: Dashboard (what needs attention), Inspections (every inspection, its findings, the professional review and the reports) and Map & Locations (where the poles are and which to inspect first). Accounts are either inspectors (the three main pages, reviews and reports) or administrators (the same pages, plus technical exports, technical diagnostics on each inspection, test records and deleting inspections). There is no separate System page.
 
 ## How an inspection works {#workflow}
 Link: /workspace
@@ -98,28 +98,35 @@ Each wire section is labelled as a power line, a telecom cable (including fibre 
 
 ## Risk levels {#risk-levels}
 Link: /admin/inspections
-Each inspection gets one overall risk level:
-- High risk means a wire condition that may need prompt professional attention under a validated criterion.
-- Moderate risk means a condition to look at in the next routine inspection under a validated criterion.
-- Low risk means every measured wire was assessed and none was flagged. This is not a safety clearance.
-- Assessment incomplete: no conclusion could be reached. A field inspection or more information is needed. It is never the same as low risk.
-- Processing failed: the photo could not be processed.
-Since 18 Nov 2026 no sag or vegetation criterion is validated (see Excessive sag), so new inspections with measured wires are Assessment incomplete. Older inspections used withdrawn provisional criteria and are shown as Assessment incomplete with a notice.
-
+Each inspection has a **screening result** for the pole, and separately a **status** in the review queue:
+- **Reference threshold exceeded**: at least one power-line span exceeds the 3% sag reference. Refer it for professional inspection. An unmeasured span never removes an exceedance.
+- **No threshold exceedance detected**: every applicable span was measured and none exceeds its reference. This is not a safety clearance.
+- **Incomplete assessment**: no measured span exceeds its reference, but at least one span could not be measured (the reason is listed per wire).
+- **Measurement unavailable**: no span could be measured from this photo.
+- **No applicable reference**: only wires without a reference (for example abandoned wires) were found.
+The status (Processing failed, Needs review, Incomplete, Awaiting review, Reviewed) says where the record is in review. It is a separate column and never changes the screening result. A pole can also show Needs review because a reviewer flagged it.
+**High risk, Moderate risk and Low risk** are risk levels from earlier versions. Older inspections may still show them in exports; they came from criteria that were withdrawn, so they are not findings. Since S17 a pole has a screening result instead (above), and a high risk label never means more than "review this record".
 ## Why one wire reading may not decide the pole's level {#corroboration}
-If a validated sag reference is ever configured, one or two wire sections could read as over it because of the photo (an overlap, a faint stretch, the angle) rather than the wire, so the pole's level would need enough consistent readings. No reference is configured, so this rule does not currently apply.
+Since S17 each power-line span is classified on its own estimated sag, and the pole result is exceeded if any span exceeds the 3% reference. The calibrated measurement range is reported beside each estimate; it never changes the classification.
 
 ## Excessive sag {#sag}
-Sag is how far a wire hangs below the straight line between its two ends. WIREFRAME fits a hanging-wire curve to each measurable wire section and reports its **image-derived sag ratio**: the largest distance from the curve to that line, divided by the line's length, in image pixels, with its 1 pixel resolution (for example 2.1% ±0.3). This is a measurement of the photo, not physical sag: there is no camera-angle correction and no field calibration. It is **compared with a configured, provisional 3% sag-to-span reference** (S8): each measured wire is shown below the reference, at it (the reference lies within the wire's own ±1 pixel resolution) or above it, on a green / amber / red sag meter. This is a comparison, **not an assessment**: no wire is given a severity and no pole is rated from it. The 3% comes from ERB Resolution No. 95-21 (1995), Section 19, which says the sag of wires on electric utility poles shall not be greater than 3% of the distance between poles, citing the Philippine Electrical Code; ERC Resolution No. 02, s. 2010 records that the DSOAR superseded ERB 95-21 (the DSOAR text was not obtained). It was written for physical sag of power lines, not for image ratios, and manufacturer data for fibre cable (Prysmian ezPlan ADSS, TLS-DS-A-517) gives 1.5% installation sag and more than 3% under its loading cases, so a ratio above 3% is not a finding of excessive sag. The former 4.0% telecom reference and 2.4% Minor-sag band were development values and were removed. So there is no Critical, Minor sag or Within reference condition: every measured wire is "measured, not assessed".
+Sag is how far a wire hangs below the straight line between its two visible ends. WIREFRAME fits a hanging-wire curve to each measurable wire section and reports its **estimated relative sag**: the largest distance from the curve to that line, divided by the line's length, in the photo. Where available, an **estimated measurement range** (a calibrated 90% range) is shown beside it. This is an image-derived screening estimate, not a surveyed sag.
+**Power lines** of a clearly identified type are classified against ERB Resolution No. 95-21 (1995), Section 19, which says the sag of wires on electric utility poles shall not be greater than 3% of the distance between poles:
+- below 2%: **Within lower reference range** (the 2% boundary is descriptive, not regulatory)
+- 2% to 3% inclusive: **Within reference threshold**
+- above 3%: **Reference threshold exceeded**
+The classification uses the unrounded estimate, so 3.004% exceeds even though it displays as 3.0%. ERC Resolution No. 02, s. 2010 records that the DSOAR superseded ERB 95-21 for compliance purposes, so an image-derived classification is a screening result, never a compliance finding.
+
+## Which wires the 3% reference applies to {#reference-scope}
+The 3% reference applies only to **power lines** whose type the photo shows clearly. No 3% limit applies to telecom or fibre cable: no source gives one, and manufacturer data for fibre cable allow more than 3% sag under load. **Telecom and fibre** cables have their own typical ranges: below 2% "Below typical range", 2% to 5% "Within typical range", above 5% "Above typical range" (worth review by the provider, not an exceedance). Neither reference is ever applied to the other type. An abandoned wire's type and owner are not established, so no reference applies. A wire of uncertain type is not assumed to be a power line: its span is listed as measurement unavailable for the reference. Even for a power line the classification is image-based screening: not an assessment or a safety finding in the engineering sense, and not a compliance finding.
 
 ## Wires that were not assessed {#not-assessed}
-A wire section is "not assessed" when its shape could not be measured reliably, or when the measurement cannot support a severity. Reasons:
-- **Endpoint unavailable**: the wire runs past the edge of the photo, so at least one pole attachment is not visible and the full span cannot be measured.
-- **No validated sag reference**: the wire was measured (its image-derived sag ratio is shown), but no applicable engineering sag reference exists for any wire type, so no severity is given.
-- **Earlier reference withdrawn**: an inspection from before 18 Nov 2026 used a provisional reference that was withdrawn; the measurement is kept, the earlier severity is not a finding.
-- **Uncertain type**: the photo does not show clearly whether the wire is a power line or a telecom cable.
-- **Too small, overlapping or too faint**: the shape could not be traced or separated from other wires.
-A wire that was not assessed is never counted as low risk. Unless every measured span was assessed, the pole's result is "assessment incomplete" rather than low risk.
+A span cannot be classified when it could not be measured reliably or no reference applies. The per-wire reason is shown:
+- **Runs off the photo**: at least one end is not visible, so the full span cannot be measured.
+- **Conductor type uncertain**: no reference can be selected.
+- **Too small, overlapping or too faint**: the shape could not be traced or separated from neighbouring wires.
+- **No applicable reference**: abandoned wires.
+Unmeasured spans make a pole "Incomplete assessment" only when no measured span exceeds its reference; they never hide an exceedance.
 
 ## Why a wire was not detected {#missed-wires}
 The photograph may not provide enough visual detail for reliable detection. This happens when wires blend into the background (buildings, trees, a bright or grey sky), overlap other wires or structures, are very thin or far away, or the photo is dark, blurred or compressed. Telecom cables are harder to detect than power lines. Take another photograph with better light and a clearer view of the wires against the sky. Absence of a detected wire or hazard does not mean there is none.
@@ -128,8 +135,7 @@ The photograph may not provide enough visual detail for reliable detection. This
 The Photo limitations section lists only what affected this inspection, each with what would help: wires too small to measure, overlapping wires, wires past the photo edge, parts filled by estimation, and image quality problems such as glare, darkness, blur, low resolution or a busy background. Read it before relying on a result.
 
 ## Incomplete assessments {#incomplete}
-Link: /admin/inspections
-An assessment is complete when every detected wire section could be assessed, partial when some could not, and not assessed when none could or the photo was too unclear. Some parts of the photograph could not be assessed reliably, so the available results should not be treated as a complete inspection. The Inspections page can filter by assessment completeness.
+An **Incomplete assessment** means no measured span exceeds its reference but at least one span could not be measured. The result page lists each unmeasured span with its reason; a photo that shows both poles and the full span against open sky usually completes it. The Inspections page has an Incomplete tab.
 
 ## Retake warnings {#retake}
 When the photo is unlikely to give a reliable result (wires hard to tell apart, conflicting wire types, or photo problems), the Field Screener asks before showing the result whether to retake the photo or proceed. Proceeding keeps the warning "Assessment may be inaccurate" on the result and in the PDF. A retake is linked to the earlier inspection, which is kept.
@@ -152,37 +158,40 @@ WIREFRAME provides an inspection screening result, not a safety certification. A
 ## Accuracy {#accuracy}
 On the project's held-out test photographs, wire detection agreed with the hand-drawn labels with an F1 score of about 0.81 overall (about 0.83 for power lines and 0.71 for telecom cables), and the wire-type check reached an accuracy of about 0.94 on the same test set. These figures come from a limited set of local photos; accuracy on other streets, cameras and conditions can be lower. The full evaluation is documented in the project's thesis reference.
 
-## Professional review {#review}
+## Administrative review {#review}
 Link: /admin/inspections
-Open an inspection and use the Professional review section. Decisions:
-- Confirm finding: you agree with the automated result.
-- Flag for further inspection: the pole needs a field visit or closer check.
-- Change risk level: you set a different level; a note is required.
-- Dismiss finding: the automated finding does not apply (for example a misdetection); a note is required.
-The reviewer's name, the decision, the note and the time are recorded. The original automated findings are never changed; the review is recorded beside them, shown in the inspection history and printed in the PDF report. Inspections that are high or moderate risk and not reviewed show "Needs review".
+Every inspection has a review status, kept separate from the machine screening:
+- Not yet reviewed: no administrator has opened it.
+- Partially reviewed: an administrator opened it (opening it records you as a reviewer).
+- Review complete: an administrator recorded a decision.
+To finish a review, open the inspection and use the Administrative review panel: choose a decision (For field inspection, For utility coordination, For scheduled cleanup, For monitoring, No further administrative action at this time, or Other documented decision), give the rationale (required), and optionally a follow-up and field observations. A confirmed critical hazard (a snapped or hanging wire, a wire dangling into a path, sparking, a conductor in an accessible area, or a physically measured low clearance against a documented reference) can be recorded; it sets the triage to High. The machine findings never change; the decision is stored beside them with your name, the time and what the screening showed when you decided. Failed inspections can be reviewed too.
 
 ## Review records and history {#review-history}
 Link: /admin/inspections
-Every review is kept in order with its reviewer, time and note; a later review does not erase an earlier one. The inspection page lists the pole's other inspections, newest first, so you can see whether its condition changed between photos. Wires are not matched one to one between photos, so a change describes the pole's overall result, not one tracked wire.
+Decisions are never overwritten. "Amend decision" stores a new decision and marks the previous one superseded; "Reopen review" (with a reason) returns the inspection to Partially reviewed. Both are in the audit trail with the previous and new values, and the decision history is listed in the review panel. Several reviewers can work on one inspection; each is recorded. The inspection page also lists the pole's other inspections.
 
 ## When to request professional review {#when-review}
-Request or record a professional review whenever a result is high or moderate risk, not assessed or partial, shows a retake warning, involves vegetation touching a power line, or anything about it seems wrong. When in doubt, flag it for further inspection.
+Record a decision for every inspection, starting with High and Moderate triage, failed processing, retake warnings, vegetation touching a power line, or anything that seems wrong. When in doubt, choose For field inspection.
+
+## Problem wires and inspection triage {#triage}
+Link: /admin/inspections
+A problem wire is a detected wire with a supported observation: measured sag beyond its reference or typical range, a possible loose or dangling end, vegetation contact, or an apparently abandoned cable. Detected wires and problem wires are counted separately. Inspection triage counts problem wires: 0 is Normal, 1 to 9 is Moderate, 10 or more is High, and a confirmed critical hazard sets High. This is an operational triage rubric (versioned and configurable), not a legal or statutory classification. Each wire's sag meter is a different scale: green Low, yellow Moderate, red High against that wire's reference (for power lines below 2%, 2 to 3%, above 3%).
 
 ## Dashboard {#dashboard}
 Link: /admin
-The Dashboard shows the number of registered poles and how many are high risk, moderate, low and assessment incomplete (each pole counted once, by its latest inspection, so the numbers add up to the total), how many inspections are waiting for review, a Needs attention list (flagged poles first, then unreviewed high-risk, moderate and assessment-incomplete inspections) and recent inspections and reviews. A short status line appears only when inspection processing needs attention.
+The first line counts poles, inspections, poles on the map, poles needing a location and poles awaiting a review. "Inspections by pole" shows each pole's latest inspection with its file name, location, detected wires, triage (for example "Moderate · 3 / 12 problem wires") and review status. Tabs filter by review status (All, Not yet reviewed, Partially reviewed, Review complete) and the Screening chips by triage (High, Moderate, Normal) or by Processing issue and Missing location; every count matches the rows it shows. Activity lists real events, with automated events (photo received, processing completed) marked apart from people's actions. Review progress shows how many poles are in each review status.
 
 ## Inspections page {#inspections}
 Link: /admin/inspections
-Inspections lists every inspection with pole ID, inspection name, barangay, risk level, date and review status. Search by pole ID, inspection name or place, and filter by risk level, review status, barangay, date range and assessment completeness. "Latest per pole" shows each pole once. Open a row for the inspection sheet: details, the annotated photo, findings, wire list, professional review, reports and the pole's history. Download the filtered list as CSV.
+Inspections lists every inspection: file name, location, date, detected wires, problem wires, triage, review status and the administrative decision. Search by file name, inspection or report ID, pole ID, place or coordinates. Tabs filter by review status, the Screening chips by triage or processing issue or missing location, and Filters by barangay, date and more. Preview opens a quick review drawer (J and K step through rows) with the same result view and decision panel as the inspection page. Download the filtered list as CSV, which includes the triage, problem wires, review status and decision.
 
 ## The annotated photo {#viewer}
 Link: /admin/inspections
-The inspection photo can show the original, the detected wires coloured by condition, the model mask, or both. Advanced view controls set the overlay opacity and individual layers. Scroll or use the buttons to zoom, drag to move, and use Fit to see the whole photo. Click a wire on the photo or a row in the wire list to highlight it; dashed parts were estimated, grey wires have an uncertain type.
+"How did we know?" shows the evidence in six layers: Original, Pole detection, Segmentation mask (each traced wire in its own colour), Drawn wires, Problem wires and Combined. Zoom with the buttons, the scroll wheel or a pinch, drag to move, and Reset view to see the whole photo. Hover or click a wire in the photo or the list to highlight it and see its sag meter.
 
-## Map & Dispatch {#map}
+## Map & Locations {#map}
 Link: /admin/map
-Map & Dispatch shows the latest inspection of each pole on a map and the inspection order beside it. Marker colour is the risk level (red high, amber moderate, green low, grey not assessed); the number is the pole's position in the inspection order. Filter by risk level, barangay and GPS availability, search the list by pole or place, or search the map for a street, barangay or landmark. Select a pole to open it in Google Maps, get walking directions, open Street View where Google has it, or open its inspection.
+Map & Locations shows the latest inspection of each pole on a map and the inspection order beside it. Marker colour is the pole's status, the same one the Dashboard and Inspections show (red processing failed, amber needs review, grey incomplete, dark grey awaiting review, green reviewed); a group of nearby poles shows a ring with its mix of statuses. Filter by status and barangay. One search box filters the poles as you type; press Find to also look up a street, barangay or landmark. Select a pole to open it in Google Maps, get walking directions, open Street View where Google has it, or open its inspection.
 
 ## How poles are ranked {#ranking}
 Link: /admin/map
@@ -194,17 +203,17 @@ A pole's location comes from the photo's GPS data, from "Use my location" on upl
 
 ## Getting walking directions to a pole {#directions}
 Link: /admin/map
-Select a pole with GPS on Map & Dispatch, then use "Directions" for walking directions in Google Maps from where you are, "Google Maps" to see the place, or "Street View" to look at the street first where Google has imagery. These open Google Maps in a new tab; WIREFRAME sends only the coordinates.
+Select a pole with GPS on Map & Locations, then use "Directions" for walking directions in Google Maps from where you are, "Google Maps" to see the place, or "Street View" to look at the street first where Google has imagery. These open Google Maps in a new tab; WIREFRAME sends only the coordinates.
 
 ## Reports {#reports}
 Link: /admin/inspections
-From an inspection: the PDF report (the annotated photo, findings, each wire, photo limitations, professional reviews and the Important Notice) and a findings CSV (one row per wire: type, condition, finding). From Inspections: the filtered inspection list as CSV. From Map & Dispatch: the inspection priority report (PDF). Every report and CSV carries the Important Notice. Reports are generated when you open them, so they include the latest reviews.
+From an inspection: the PDF report (the annotated photo, findings, each wire, photo limitations, professional reviews and the Important Notice) and a findings CSV (one row per wire: type, condition, finding). From Inspections: the filtered inspection list as CSV. From Map & Locations: the inspection priority report (PDF). Every report and CSV carries the Important Notice. Reports are generated when you open them, so they include the latest reviews.
 
 ## What a PDF report contains {#pdf}
 The inspection PDF has the inspection name, place, pole and time; the Important Notice; any retake warning; the annotated photo; the overall assessment and its reasons; wire counts by type; every wire with its condition and notes; processing notes; and the professional review record (or "Not yet reviewed"). It prints on A4 with the notice in every page footer.
 
 ## Test records {#test-records}
-QA runs, synthetic samples, UI checks, timing runs and stock photos are marked as test records. They are kept in the database but left out of the Dashboard, Inspections, Map & Dispatch, the exports and the assistant. Administrators can show them on **Inspections** (Filters, **Include test records**) and re-classify any record with **Mark as operational** or **Mark as test**.
+QA runs, synthetic samples, UI checks, timing runs and stock photos are marked as test records. They are kept in the database but left out of the Dashboard, Inspections, Map & Locations, the exports and the assistant. Administrators can show them on **Inspections** (Filters, **Include test records**) and re-classify any record with **Mark as operational** or **Mark as test**.
 
 ## Administrator tools {#system}
 Link: /admin/inspections

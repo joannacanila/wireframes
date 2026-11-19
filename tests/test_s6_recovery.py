@@ -60,6 +60,11 @@ def test_admin_sheet_uses_measurement_states_when_nothing_is_assessed():
     coverage line blaming the photo for a missing reference."""
     from app.core.config import ROOT_DIR
     js = (ROOT_DIR / "app/web/assets/admin.js").read_text()
-    assert 'const MST = { measured: "Full span", partial: "Edge clipped", unmeasured: "Unmeasured", drop: "Drop wire" };' in js  # S12 words
-    assert 'data-group="${mst(w)}"' in js and "Colour shows wire type, not severity" in js
-    assert "assessed for severity (no validated sag reference)." in js
+    rv = (ROOT_DIR / "app/web/assets/result-view.js").read_text()
+    # S18: the sheet is the shared result view; wires are coloured by type (never a severity legend) and a wire's band
+    # is the server's meter_level, so an unassessed wire shows "No reference", never a severity
+    sheet = js[js.index("function mountInspection(id)"):]
+    assert "CONDITION" not in js and "riskBadge(group(" not in sheet and "legend-hint" not in sheet
+    assert 'wireColor(w, "class")' in sheet and "w.finding?.meter_level" in sheet
+    assert '`<span class="sm2-lv none">No reference</span>`' in rv
+    assert 'resultViewHtml(r, { mode: "admin"' in sheet

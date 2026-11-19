@@ -1,0 +1,70 @@
+{
+ "session": "S13",
+ "date": "2026-11-18",
+ "method": "scripts/repeatability.py: same photo, same process x3 and two fresh processes; exact comparison of status, flags, every wire's class/status/chord/sag/ratio/resolution/endpoints, and the wire-mask hash; tolerances 1e-6 ratio, 1e-3 px (not needed: all exact)",
+ "device": "Apple M1 8 GB, MPS, torch 2.15.0, flip TTA",
+ "identity": {
+  "config_fingerprint": "8bd1e19d8f4a",
+  "checkpoints": {
+   "wirenet-r34.pt": "ab2353c796f547ce",
+   "v212_mitb1.pt": "f595ef68fa5a6216",
+   "v212_convnext_t.pt": "9633cee827508919",
+   "strand_head_v217.pt": "eac91d8473db12a0",
+   "poles-yolo11n-v218.pt": "6fe9183a3e9a9cac",
+   "wireframe-yolo11m-seg.pt": "1532d7ae9c74acab"
+  },
+  "segmenter_error": null,
+  "tta": "flip"
+ },
+ "in_process": {
+  "10a9613ec7b44a548388d667041bdb4f.jpg": {
+   "n_wires": 135,
+   "runs": 3,
+   "all_exact": true
+  },
+  "176ff238e465438f8d63d40b4dc59ddb.jpg": {
+   "n_wires": 18,
+   "runs": 3,
+   "all_exact": true
+  },
+  "19d5fe5b71624765b10eb04008d7f485.jpg": {
+   "n_wires": 26,
+   "runs": 3,
+   "all_exact": true
+  }
+ },
+ "cross_process": {
+  "10a9613ec7b44a548388d667041bdb4f.jpg": {
+   "run1": "b9a8141b78c69e08",
+   "run2": "b9a8141b78c69e08",
+   "equal": true
+  },
+  "176ff238e465438f8d63d40b4dc59ddb.jpg": {
+   "run1": "28049cc2e823b3f5",
+   "run2": "28049cc2e823b3f5",
+   "equal": true
+  },
+  "19d5fe5b71624765b10eb04008d7f485.jpg": {
+   "run1": "b79e7c34ca292e19",
+   "run2": "b79e7c34ca292e19",
+   "equal": true
+  }
+ },
+ "stored_duplicates": {
+  "note": "byte-identical photos uploaded repeatedly (var/uploads SHA-1): results identical within every config fingerprint, different only between fingerprints",
+  "photo_409ac155_12_uploads": {
+   "4663ecdb2b58": "3 runs identical",
+   "95da5698c7d2": "2 runs identical",
+   "64204cfca2a5": "2 runs identical",
+   "852e65915a93": "1",
+   "31987242af35 / fa876a25b421": "identical to each other",
+   "e154c8ebaa3d": "1"
+  },
+  "photo_d3c348a7_8_uploads": {
+   "95da5698c7d2": "4 runs identical",
+   "852e65915a93": "2 runs identical",
+   "80b10875068e / 2edff0fc041e": "identical to each other"
+  }
+ },
+ "conclusion": "Inference is deterministic for one code version, configuration and checkpoint set. Observed fluctuation is version drift (configuration and code changed across sessions S4-S12; three servers ran three branches at once)."
+}

@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import Response
 
 from app.core.security import current_admin
@@ -21,7 +21,8 @@ State = Annotated[AppState, Depends(get_state)]
 
 
 @router.get("/{analysis_id}/pdf")
-def report_pdf(analysis_id: str, st: State, request: Request, technical: bool = False) -> Response:
+def report_pdf(analysis_id: str, st: State, request: Request, technical: bool = False,
+               include: Annotated[str | None, Query(max_length=4000, pattern=r"^(none|[0-9]+(,[0-9]+)*)?$")] = None) -> Response:
     """Generate (or regenerate) the report. The PDF is rebuilt on every request because the
     MSPI rank depends on the other poles; the latest file and its hash are recorded. v2.20: the formal screening
     report; ``technical=true`` (signed-in staff only) gives the technical report with scores and diagnostics."""
@@ -35,7 +36,12 @@ def report_pdf(analysis_id: str, st: State, request: Request, technical: bool = 
             raise HTTPException(409, {"code": a.status, "message": f"No report for an analysis in state '{a.status}'."})
         result = svc.serialize_result(a, st.config, sites.rank_of(s, st.config, a.pole.pole_code), st.settings)
         rgb = load_rgb((st.settings.upload_dir / a.stored_name).read_bytes())
-        pdf = (build_technical_report if technical else build_report)(result, rgb)
+        if technical:
+            pdf = build_technical_report(result, rgb)
+        else:  # S14: the wires the person chose (default: the flagged ones) and the contacts for this location
+            from app.services import contacts as directory
+            chosen = None if include is None else ([] if include in ("", "none") else [int(x) for x in include.split(",")])
+            pdf = build_report(result, rgb, include=chosen, contacts=directory.for_analysis(s, a))
         name = f"{a.id}.pdf"
         (st.settings.report_dir / name).write_bytes(pdf)
         digest = hashlib.sha256(pdf).hexdigest()

@@ -152,6 +152,11 @@ class Analysis(Base):
     # Test records are kept, never deleted; operational views leave them out.
     record_kind: Mapped[str | None] = mapped_column(String(12))
     record_kind_reason: Mapped[str | None] = mapped_column(String(160))
+    # S18: "Delete inspection" archives (soft delete). The photo, findings, reviews and audit stay; operational views,
+    # counts, the map and exports leave the record out. Reversible (restore), audited both ways.
+    archived_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    archived_by: Mapped[str | None] = mapped_column(String(120))
+    archived_reason: Mapped[str | None] = mapped_column(String(300))
 
     created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
     completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
@@ -340,3 +345,159 @@ class AuditEvent(Base):
     detail: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
     __table_args__ = (Index("ix_audit_at", "at"),)
+
+
+# --------------------------------------------------------------------------- S14
+CONTACT_TYPES = ("emergency", "electric_utility", "telecom_provider", "barangay", "city_government", "other")
+VERIFICATION = ("verified", "secondary_source", "unverified")
+
+
+class Contact(Base):
+    """S14: a reporting contact in the provider directory, maintained by administrators (no redeployment).
+    ``verification`` says how the contact was checked; only ``verified`` and ``secondary_source`` contacts are ever
+    suggested to the public, and a secondary-source contact is labelled so. A suggestion is never a statement of who
+    owns a wire: a model's wire type cannot establish the operator."""
+
+    __tablename__ = "contacts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    organization: Mapped[str] = mapped_column(String(160), nullable=False)
+    org_type: Mapped[str] = mapped_column(String(24), nullable=False)
+    service_area: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    # matching: "national", or city / municipality names as in the PSGC list (e.g. "City of Dasmariñas")
+    cities: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    barangays: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    phone: Mapped[str | None] = mapped_column(String(80))
+    url: Mapped[str | None] = mapped_column(String(300))
+    assistance: Mapped[str] = mapped_column(String(300), nullable=False, default="")
+    instructions: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    source_url: Mapped[str | None] = mapped_column(String(300))
+    source_note: Mapped[str] = mapped_column(String(300), nullable=False, default="")
+    verification: Mapped[str] = mapped_column(String(20), nullable=False, default="unverified")
+    last_verified: Mapped[str | None] = mapped_column(String(10))  # YYYY-MM-DD
+    active: Mapped[bool] = mapped_column(default=True, nullable=False)
+    seed_key: Mapped[str | None] = mapped_column(String(40), unique=True)  # built-in rows; never re-seeded once edited
+    # S18: the provider identity and its evidence (app/services/contacts.py). ``category`` NULL on rows written before
+    # S18 is read from ``org_type``.
+    category: Mapped[str | None] = mapped_column(String(16))
+    registered_name: Mapped[str | None] = mapped_column(String(200))
+    previous_names: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)
+    email: Mapped[str | None] = mapped_column(String(160))
+    reporting_url: Mapped[str | None] = mapped_column(String(300))
+    source_type: Mapped[str | None] = mapped_column(String(24))
+    coverage_basis: Mapped[str | None] = mapped_column(String(24))  # documented_area | branch_office | national_license
+    admin_notes: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, onupdate=_now, nullable=False)
+    updated_by: Mapped[str | None] = mapped_column(String(120))
+
+    __table_args__ = (CheckConstraint(_in("org_type", CONTACT_TYPES), name="ck_contact_type"),
+                      CheckConstraint(_in("verification", VERIFICATION), name="ck_contact_verification"),
+                      CheckConstraint("phone IS NOT NULL OR url IS NOT NULL OR verification = 'unverified'",
+                                      name="ck_contact_channel"),
+                      Index("ix_contacts_org", "organization"))
+
+
+class Assignment(Base):
+    """S14: who is following up an inspection. One current assignment per inspection; history is in the audit trail."""
+
+    __tablename__ = "assignments"
+
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("analyses.id", ondelete="CASCADE"), primary_key=True)
+    assignee_id: Mapped[int | None] = mapped_column(ForeignKey("admin_users.id", ondelete="SET NULL"))
+    assignee_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    assigned_by: Mapped[str] = mapped_column(String(120), nullable=False)
+    assigned_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
+
+
+Analysis.assignment = relationship(Assignment, uselist=False, cascade="all, delete-orphan", passive_deletes=True)
+
+
+# --------------------------------------------------------------------------- S18: administrative review workflow
+# Machine findings (analyses / detections), the review PROGRESS and the administrator's DECISION are three different
+# things and live in three different places. No machine state (INCONCLUSIVE, incomplete, failed) is ever stored here.
+REVIEW_STATUSES = ("NOT_YET_REVIEWED", "PARTIALLY_REVIEWED", "REVIEW_COMPLETE")
+
+
+class ReviewProgress(Base):
+    """S18: where an inspection is in administrative review. No row means NOT_YET_REVIEWED. ``source`` is
+    ``legacy_review`` for an inspection a person reviewed before S18 (backfilled from ``reviews``; nothing there is
+    changed)."""
+
+    __tablename__ = "review_progress"
+
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("analyses.id", ondelete="CASCADE"), primary_key=True)
+    status: Mapped[str] = mapped_column(String(20), nullable=False)
+    started_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    started_by: Mapped[str | None] = mapped_column(String(120))
+    completed_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+    completed_by: Mapped[str | None] = mapped_column(String(120))
+    reviewers: Mapped[list[str]] = mapped_column(JSON, default=list, nullable=False)  # everyone who opened it
+    source: Mapped[str] = mapped_column(String(16), nullable=False, default="workflow")
+    updated_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, onupdate=_now, nullable=False)
+
+    __table_args__ = (CheckConstraint(_in("status", REVIEW_STATUSES), name="ck_review_progress_status"),
+                      CheckConstraint(_in("source", ("workflow", "legacy_review")), name="ck_review_progress_source"),
+                      CheckConstraint("status <> 'REVIEW_COMPLETE' OR completed_at IS NOT NULL",
+                                      name="ck_review_progress_complete"),
+                      Index("ix_review_progress_status", "status"))
+
+
+class AdminDecision(Base):
+    """S18: the administrator's inspection decision. Append-only: an amendment adds a row and stamps the previous
+    one ``superseded_at``; nothing is overwritten. The machine findings at decision time are kept in ``machine_json``
+    so the record shows what the reviewer saw."""
+
+    __tablename__ = "admin_decisions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    analysis_id: Mapped[str] = mapped_column(ForeignKey("analyses.id", ondelete="CASCADE"), nullable=False)
+    decision: Mapped[str] = mapped_column(String(40), nullable=False)
+    decision_label: Mapped[str] = mapped_column(String(120), nullable=False)
+    rationale: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    follow_up: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    observations: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    critical_json: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    machine_json: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+    reviewer_id: Mapped[int | None] = mapped_column(ForeignKey("admin_users.id", ondelete="SET NULL"))
+    reviewer_name: Mapped[str] = mapped_column(String(120), nullable=False)
+    source: Mapped[str] = mapped_column(String(16), nullable=False, default="workflow")
+    legacy_review_id: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
+    superseded_at: Mapped[datetime | None] = mapped_column(UTCDateTime())
+
+    __table_args__ = (CheckConstraint("length(trim(decision)) > 0", name="ck_decision_code"),
+                      CheckConstraint(_in("source", ("workflow", "legacy_review")), name="ck_decision_source"),
+                      UniqueConstraint("legacy_review_id", name="uq_decision_legacy_review"),
+                      Index("ix_admin_decisions_analysis", "analysis_id", "created_at"))
+
+
+Analysis.review_progress = relationship(ReviewProgress, uselist=False, cascade="all, delete-orphan",
+                                        passive_deletes=True)
+Analysis.decisions = relationship(AdminDecision, cascade="all, delete-orphan", passive_deletes=True,
+                                  order_by=AdminDecision.created_at)
+
+
+# --------------------------------------------------------------------------- S18: provider directory, ownership
+PROVIDER_CATEGORIES = ("electricity", "telecom", "broadband", "catv", "other_infra", "emergency", "government")
+
+
+class PoleAttachment(Base):
+    """S18: a CONFIRMED relationship between a pole and the provider responsible for one of its attachments, entered by
+    an administrator from an authoritative record (asset record, attachment agreement, utility confirmation). Area
+    coverage never creates one: GPS shows who operates in an area, not who owns a wire."""
+
+    __tablename__ = "pole_attachments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    pole_id: Mapped[int] = mapped_column(ForeignKey("poles.id", ondelete="CASCADE"), nullable=False)
+    contact_id: Mapped[int] = mapped_column(ForeignKey("contacts.id", ondelete="CASCADE"), nullable=False)
+    wire_class: Mapped[str | None] = mapped_column(String(32))
+    record_type: Mapped[str] = mapped_column(String(24), nullable=False)
+    record_reference: Mapped[str] = mapped_column(String(200), nullable=False)
+    verified_by: Mapped[str] = mapped_column(String(120), nullable=False)
+    verified_at: Mapped[datetime] = mapped_column(UTCDateTime(), default=_now, nullable=False)
+
+    __table_args__ = (CheckConstraint(_in("record_type", ("asset_record", "attachment_agreement",
+                                                          "utility_confirmation", "permit")), name="ck_attach_record"),
+                      CheckConstraint("length(trim(record_reference)) > 0", name="ck_attach_reference"),
+                      Index("ix_pole_attachments_pole", "pole_id"))

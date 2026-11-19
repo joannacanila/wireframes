@@ -214,8 +214,11 @@ class Centerline:
     reason: str | None = None  # "empty_mask" | "too_short"
 
 
-def extract_centerline(mask: np.ndarray, l_min: int = 30, n_min: int = 20) -> Centerline:
-    """Algorithm 4. Works on the mask's bounding box for speed; coordinates are global."""
+def extract_centerline(mask: np.ndarray, l_min: int = 30, n_min: int = 20, path_rule: str = "longest") -> Centerline:
+    """Algorithm 4. Works on the mask's bounding box for speed; coordinates are global.
+
+    ``path_rule="continuation"`` (S16, D-34): through junctions only by good continuation
+    (app/pipeline/continuation.py); a skeleton without junctions gives the same path either way."""
     m = np.asarray(mask) > 0
     rows = np.flatnonzero(m.any(axis=1))
     cols = np.flatnonzero(m.any(axis=0))
@@ -228,7 +231,12 @@ def extract_centerline(mask: np.ndarray, l_min: int = 30, n_min: int = 20) -> Ce
     adj = pixel_graph(skel)
     n_skel = len(adj)
     pruned = prune_spurs(adj, l_min)
-    path = longest_path(adj)
+    path = None
+    if path_rule == "continuation":
+        from app.pipeline.continuation import continuation_path
+        path = continuation_path(adj)
+    if path is None:
+        path = longest_path(adj)
     if len(path) < n_min:
         pts = np.array([(c + c0, r + r0) for r, c in path], dtype=np.float64).reshape(-1, 2)
         return Centerline(False, pts, n_skel, pruned, "too_short")

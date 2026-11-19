@@ -56,6 +56,12 @@ async def upload(
     elevation_deg: Annotated[float | None, Form(ge=0, le=90)] = None,
     latitude: Annotated[float | None, Form()] = None,
     longitude: Annotated[float | None, Form()] = None,
+    # S18: how the coordinates were captured (the browser's location service), its accuracy, and the address the
+    # reverse lookup returned; kept apart from the typed city / barangay and from an administrator's correction
+    location_method: Annotated[str | None, Form(pattern="^(device)$")] = None,
+    location_accuracy_m: Annotated[float | None, Form(ge=0, le=100000)] = None,
+    geocoded_city: Annotated[str | None, Form(max_length=120)] = None,
+    geocoded_barangay: Annotated[str | None, Form(max_length=120)] = None,
     labels: Annotated[UploadFile | None, File(description="Optional YOLO-seg reference polygons")] = None,
     retake_of: Annotated[str | None, Form(max_length=64, description="v2.17: id of the analysis this photo replaces")] = None,
 ) -> dict:
@@ -78,6 +84,10 @@ async def upload(
             distance_m=distance_m, elevation_deg=elevation_deg,
             latitude=latitude, longitude=longitude, labels=label_bytes,
             model_ready=_segmentable(st, label_bytes is not None), trusted=admin is not None,
+            capture=None if latitude is None or location_method is None else {
+                "method": location_method, "accuracy_m": location_accuracy_m,
+                "geocoded": {k: v.strip() for k, v in (("city", geocoded_city), ("barangay", geocoded_barangay))
+                             if v and v.strip()} or None},
         )
     except ImageRejected as exc:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, {"code": exc.code, "message": str(exc)}) from exc
@@ -91,6 +101,43 @@ async def upload(
     st.queue.submit(aid)
     return {"id": aid, "status": "processing", "status_url": f"/api/analysis/{aid}",
             "result_url": f"/api/analysis/{aid}/result"}
+
+
+PREVIEW_MAX_SIDE = 1600
+
+
+@router.post("/preview")
+async def preview(request: Request, st: State,
+                  file: Annotated[UploadFile, File(description="Photo to preview before it is submitted")]) -> dict:
+    """S17 (Part 4.1): a browser-displayable copy of a photo BEFORE it is submitted, so HEIC / HEIF (which most
+    browsers cannot draw) previews like any JPEG. The photo goes through the same decoder as the upload
+    (``acquire``: content-sniffed format, EXIF orientation applied once, size and pixel limits), so the preview shows
+    exactly the pixels that will be analysed. Nothing is stored; the copy is re-encoded without metadata. The
+    photo's own GPS position, if any, is returned only to the person who sent the file, for location confirmation."""
+    import base64
+    import io as _io
+
+    from PIL import Image
+
+    from app.pipeline.acquisition import acquire
+    if current_admin(request) is None:
+        wait = st.upload_limiter.blocked(client_key(request))
+        if wait:
+            raise HTTPException(429, {"code": "rate_limited", "message":
+                                      f"Upload limit reached. Try again in {int(wait // 60) + 1} min."})
+    data = await _read_limited(file, st.settings.max_upload_mb * 2**20)
+    try:
+        r = acquire(data, st.config.acquisition)
+    except ImageRejected as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, {"code": exc.code, "message": str(exc)}) from exc
+    im = Image.fromarray(r.image_rgb, "RGB")
+    im.thumbnail((PREVIEW_MAX_SIDE, PREVIEW_MAX_SIDE))
+    buf = _io.BytesIO()
+    im.save(buf, "JPEG", quality=85)
+    h, w = r.image_rgb.shape[:2]
+    return {"image": "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode(),
+            "width": w, "height": h, "format": r.metadata.get("format"), "flags": r.flags,
+            "gps": None if r.gps is None else {"latitude": r.gps[0], "longitude": r.gps[1]}}
 
 
 def _summary(a: Analysis) -> dict:
@@ -125,7 +172,15 @@ def get_status(analysis_id: str, st: State, request: Request) -> dict:
     a = _load(st, analysis_id)
     staff = current_admin(request) is not None
     msg = svc.scrub_paths(a.error_message) if staff else (svc.public_error(a.error_code, a.error_message) if a.error_code else None)
-    return {"id": a.id, "status": a.status, "error_code": a.error_code, "error_message": msg}
+    from app.services.outcome import PROCESSING_TEXT, processing_state
+    proc = processing_state(a.status, [], running=st.queue.current == a.id) if a.status in ("processing", "error") else None
+    out = {"id": a.id, "status": a.status, "error_code": a.error_code, "error_message": msg,
+           # S14: pending (queued) vs processing (running now); the full lifecycle comes with the result
+           "processing": proc, "processing_text": PROCESSING_TEXT.get(proc) if proc else None,
+           "queue_position": st.queue.position(a.id) if a.status == "processing" else None}
+    if staff and a.status == "error":
+        out["failure"] = (a.metadata_json or {}).get("failure")
+    return out
 
 
 @router.get("/{analysis_id}/result")
@@ -188,7 +243,13 @@ def retry(analysis_id: str, st: State, user: Admin) -> dict:
         if not _segmentable(st, a.label_name is not None):
             raise HTTPException(503, {"code": "model_unavailable",
                                       "message": "The segmentation model is still not available."})
+        if (a.metadata_json or {}).get("failure", {}).get("retryable") is False and a.error_code != "model_unavailable":
+            raise HTTPException(409, {"code": "not_retryable", "message": "This photo cannot be processed (for example, "
+                                      "the file is unreadable). Ask for a new photo instead."})
         a.status, a.error_code, a.error_message, a.completed_at = "processing", None, None, None
+        md = dict(a.metadata_json or {})  # S14: a manual retry starts a fresh attempt count; the failure stays audited
+        md["processing"] = {**(md.get("processing") or {}), "attempts": 0}
+        a.metadata_json = md
         from app.services import audit
         audit.record(s, audit.actor_of(user), "inspection.retried", a.pole.pole_code, a.id)
     st.queue.submit(analysis_id)

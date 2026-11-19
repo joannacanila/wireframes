@@ -147,11 +147,37 @@ def add_review(analysis_id: str, body: ReviewBody, st: State, user: User) -> lis
             raise HTTPException(404, {"code": "not_found", "message": "Analysis not found."})
         if a.status not in ("complete", "fit_failed", "no_wires_detected"):
             raise HTTPException(409, {"code": a.status, "message": "Only finished analyses can be reviewed."})
-        s.add(Review(analysis_id=analysis_id, reviewer_id=user.id, reviewer_name=user.display_name or user.username,
-                     decision=body.decision, override_level=body.override_level, note=body.note.strip()))
+        rv = Review(analysis_id=analysis_id, reviewer_id=user.id, reviewer_name=user.display_name or user.username,
+                    decision=body.decision, override_level=body.override_level, note=body.note.strip())
+        s.add(rv)
         audit.record(s, audit.actor_of(user), f"review.{body.decision}", a.pole.pole_code, analysis_id,
                      level=body.override_level)
+        s.flush()
+        _mirror_review(s, a, rv, user)
     return _reviews(analysis_id, st)
+
+
+def _mirror_review(s, a: Analysis, rv: Review, user) -> None:
+    """S18: a review recorded through the pre-S18 route (quick review, API clients) is also the administrator's
+    decision, with its meaning preserved (review_flow.LEGACY) and linked by ``legacy_review_id`` (never duplicated)."""
+    from app.models.orm import AdminDecision, ReviewProgress
+    from app.services import review_flow
+    code, label = review_flow.LEGACY[rv.decision]
+    t = rv.created_at or review_flow.now()
+    for d in a.decisions:
+        if d.superseded_at is None:
+            d.superseded_at = t
+    a.decisions.append(AdminDecision(analysis_id=a.id, decision=code, decision_label=label, rationale=rv.note,
+                                     reviewer_id=rv.reviewer_id, reviewer_name=rv.reviewer_name,
+                                     legacy_review_id=rv.id, created_at=t))
+    p = a.review_progress
+    if p is None:
+        a.review_progress = ReviewProgress(status="REVIEW_COMPLETE", started_at=t, started_by=rv.reviewer_name,
+                                           completed_at=t, completed_by=rv.reviewer_name, reviewers=[rv.reviewer_name])
+    else:
+        p.status, p.completed_at, p.completed_by = "REVIEW_COMPLETE", t, rv.reviewer_name
+        if rv.reviewer_name not in (p.reviewers or []):
+            p.reviewers = [*(p.reviewers or []), rv.reviewer_name]
 
 
 # ----------------------------------------------------------------------------- v2.19 operational portal
@@ -161,8 +187,9 @@ def _all_analyses(s, include_test: bool = False) -> list[Analysis]:
     rows = s.scalars(select(Analysis).options(
         selectinload(Analysis.pole).selectinload(Pole.location),
         selectinload(Analysis.detections).load_only(*records.list_columns()),
-        selectinload(Analysis.reviews)).order_by(Analysis.created_at.desc())).all()
-    return [a for a in rows if include_test or records.is_operational(a)]
+        selectinload(Analysis.reviews), selectinload(Analysis.assignment), selectinload(Analysis.decisions),
+        selectinload(Analysis.review_progress)).order_by(Analysis.created_at.desc())).all()
+    return [a for a in rows if records.listed(a, include_test)]
 
 
 def _health(st: AppState) -> dict:
@@ -227,8 +254,15 @@ def dashboard(st: State, user: User) -> dict:
         events = audit.recent(s, 25)
         for e in events:  # v2.20: the readable label beside the pole code
             e["target_label"] = labels.get(e["target"]) if e["target"] else None
+        feed = audit.activity(s, 30)  # S18: real inspection and administrative events, automated vs human
+        for e in feed:
+            e["target_label"] = labels.get(e["target"]) if e["target"] else None
+        rows_all = [records.row(a, labels) for a in items]
+        review_counts = {k: sum(r["review_status"] == k for r in rows_all) for k in REVIEW_TABS[1:]}
+        risk_counts = {k: sum(SCREEN_FILTERS[k](r) for r in rows_all) for k in SCREEN_FILTERS}
     return {"poles": {"total": len(by_pole), **buckets}, "pending_reviews": sum(r["review"] == "pending" for r in triage),
             "triage": triage, "triage_total": len(triage), "activity": events, "system": _health(st),
+            "feed": feed, "inspections": {"total": len(rows_all), "review": review_counts, "screen": risk_counts},
             "notice": notice.TEXT}
 
 
@@ -248,11 +282,33 @@ STATUS_TABS = {"all": {}, "needs_review": {"review": "pending,flagged"}, "failed
                "low": {"risk": "low"}}
 SORTS = {"triage": None, "pole": lambda r: (r["label"] or r["pole_code"]), "location": lambda r: (r["barangay"] or "~"),
          "risk": lambda r: TRIAGE_ORDER.get(r["risk"], 8 if r["risk"] == "low" else 9),
-         "inspected": lambda r: r["created_at"], "review": lambda r: r["review"]}
+         "inspected": lambda r: r["created_at"], "review": lambda r: r["review"],
+         # S14: the operational status and the assignee (records.row, app/services/ops.py)
+         "status": lambda r: (OP_ORDER.get(r.get("op_status"), 9), r["created_at"]),
+         "assigned": lambda r: ((r.get("assignee") or {}).get("name") or "~").lower(),
+         # S18
+         "risk_level": lambda r: (RISK_ORDER.get((r.get("risk_level") or {}).get("level"), 3), -(r.get("problem_count") or 0)),
+         "problem": lambda r: r.get("problem_count") or 0, "detected": lambda r: r.get("detected") or 0,
+         "review_status": lambda r: REVIEW_ORDER.get(r.get("review_status"), 9),
+         "filename": lambda r: (r.get("filename") or "").lower()}
+# S18: review progress (administrative) and screening filters (machine), never mixed in one control
+RISK_ORDER = {"high": 0, "moderate": 1, "normal": 2}
+REVIEW_ORDER = {"NOT_YET_REVIEWED": 0, "PARTIALLY_REVIEWED": 1, "REVIEW_COMPLETE": 2}
+REVIEW_TABS = ("all", "NOT_YET_REVIEWED", "PARTIALLY_REVIEWED", "REVIEW_COMPLETE")
+SCREEN_FILTERS = {"high": lambda r: (r.get("risk_level") or {}).get("level") == "high",
+                  "moderate": lambda r: (r.get("risk_level") or {}).get("level") == "moderate",
+                  "normal": lambda r: (r.get("risk_level") or {}).get("level") == "normal",
+                  "processing_issue": lambda r: r.get("machine_state") in ("failed", "processing"),
+                  "missing_location": lambda r: not r.get("has_location")}
+# S14 (D-30): status tabs on the operational vocabulary. "attention" is every latest-state that is not reviewed.
+OP_ORDER = {"processing_failed": 0, "flagged": 1, "incomplete": 2, "processing": 3, "awaiting_review": 4, "reviewed": 5}
+OP_TABS = {"all": None, "attention": {"processing_failed", "flagged", "incomplete", "awaiting_review", "processing"},
+           "flagged": {"flagged"}, "incomplete": {"incomplete"}, "failed": {"processing_failed", "processing"},
+           "reviewed": {"reviewed"}}
 
 
 def _filtered(s, q, risk, review, barangay, date_from, date_to, completeness, latest_only, include_test,
-              sort: str = "triage", desc: bool = False):
+              sort: str = "triage", desc: bool = False, status: str | None = None, assignee: str | None = None):
     labels = all_labels(s)
     rows = [records.row(a, labels) for a in _all_analyses(s, include_test)]
     seen_day: dict[tuple, int] = {}
@@ -269,9 +325,7 @@ def _filtered(s, q, risk, review, barangay, date_from, date_to, completeness, la
                 keep.append(r)
         rows = keep
     if q:
-        k = q.strip().lower()
-        rows = [r for r in rows if any(k in (r[f] or "").lower() for f in ("pole_code", "label", "inspection_name",
-                                                                           "barangay", "city"))]
+        rows = [r for r in rows if records.matches(r, q)]
     if risk:
         rows = [r for r in rows if r["risk"] in risk.split(",")]
     if review:
@@ -284,6 +338,11 @@ def _filtered(s, q, risk, review, barangay, date_from, date_to, completeness, la
     if lo or hi:
         rows = [r for r in rows if (not lo or datetime.fromisoformat(r["created_at"]) >= lo)
                 and (not hi or datetime.fromisoformat(r["created_at"]) <= hi)]
+    if status:
+        rows = [r for r in rows if r.get("op_status") in status.split(",")]
+    if assignee:
+        rows = [r for r in rows if (not r.get("assignee") if assignee == "none"
+                                    else str((r.get("assignee") or {}).get("id")) == assignee)]
     key = SORTS.get(sort)
     if key is None:  # default: records needing attention first, then newest
         rows.sort(key=lambda r: (_triage_key(r)[:2] if r["review"] in ("pending", "flagged") or r["risk"] in
@@ -300,8 +359,13 @@ Filt = Annotated[str | None, Query(max_length=120)]
 def inspections(st: State, user: User, q: Filt = None, risk: Filt = None, review: Filt = None, barangay: Filt = None,
                 date_from: Filt = None, date_to: Filt = None, completeness: Filt = None, latest_only: bool = False,
                 include_test: bool = False, tab: Annotated[str, Query(pattern="^(all|needs_review|failed|low)$")] = "all",
-                sort: Annotated[str, Query(pattern="^(triage|pole|location|risk|inspected|review)$")] = "triage",
-                desc: bool = False, page: Annotated[int, Query(ge=1)] = 1,
+                sort: Annotated[str, Query(pattern="^(triage|pole|location|risk|inspected|review|status|assigned|risk_level|problem|detected|review_status|filename)$")] = "triage",
+                status: Annotated[str | None, Query(pattern=r"^[a-z_]+(,[a-z_]+)*$", max_length=120)] = None,
+                assignee: Annotated[str | None, Query(pattern=r"^(none|\d+)$")] = None,
+                op_tab: Annotated[str | None, Query(pattern="^(all|attention|flagged|incomplete|failed|reviewed)$")] = None,
+                mismatch: bool = False, desc: bool = False, page: Annotated[int, Query(ge=1)] = 1,
+                review_status: Annotated[str | None, Query(pattern="^(all|NOT_YET_REVIEWED|PARTIALLY_REVIEWED|REVIEW_COMPLETE)$")] = None,
+                screen: Annotated[str | None, Query(pattern="^(high|moderate|normal|processing_issue|missing_location)$")] = None,
                 per_page: Annotated[int, Query(ge=5, le=500)] = 25, limit: Annotated[int | None, Query(ge=1, le=1000)] = None,
                 offset: Annotated[int, Query(ge=0)] = 0) -> dict:
     """Inspections, newest first or by triage, filtered and paginated server-side. ``include_test`` is honoured for
@@ -312,8 +376,22 @@ def inspections(st: State, user: User, q: Filt = None, risk: Filt = None, review
     with st.db.session() as s:
         labels = all_labels(s)
         everything = [records.row(a, labels) for a in _all_analyses(s, include_test)]
+        if op_tab and OP_TABS[op_tab] and not status:
+            status = ",".join(sorted(OP_TABS[op_tab]))
         rows = _filtered(s, q, risk, review, barangay, date_from, date_to, completeness, latest_only, include_test,
-                         sort, desc)
+                         sort, desc, status, assignee)
+    if mismatch:  # S16: barangay recorded for a different city than the inspection's (reported, never auto-corrected)
+        rows = [r for r in rows if (r.get("location_check") or {}).get("consistent") is False]
+    # S18: counts are computed on the rows the other filters left, so the review tabs always add up to "all"
+    base_rs = list(rows)
+    if screen:
+        rows = [r for r in rows if SCREEN_FILTERS[screen](r)]
+    review_tabs = {"all": len(rows), **{k: sum(r.get("review_status") == k for r in rows) for k in REVIEW_TABS[1:]}}
+    screen_tabs = {k: sum(1 for r in (base_rs if not review_status or review_status == "all" else
+                                      [x for x in base_rs if x.get("review_status") == review_status]) if f(r))
+                   for k, f in SCREEN_FILTERS.items()}
+    if review_status and review_status != "all":
+        rows = [r for r in rows if r.get("review_status") == review_status]
     if limit is not None:  # v2.19 clients
         page_rows = rows[offset: offset + limit]
     else:
@@ -323,13 +401,17 @@ def inspections(st: State, user: User, q: Filt = None, risk: Filt = None, review
     brgys = sorted({r["barangay"] for r in everything if r["barangay"]})
     return {"total": len(everything), "matched": len(rows), "items": page_rows, "page": page, "per_page": per_page,
             "pages": max(1, -(-len(rows) // per_page)), "tabs": tabs,
+            "op_tabs": {k: sum(1 for r in everything if v is None or r.get("op_status") in v) for k, v in OP_TABS.items()},
+            "mismatch": sum(1 for r in everything if (r.get("location_check") or {}).get("consistent") is False),
+            "review_tabs": review_tabs, "screen_tabs": screen_tabs,
             "facets": {"barangays": brgys, "no_barangay": sum(1 for r in everything if not r["barangay"])}}
 
 
 class BulkBody(BaseModel):
     ids: list[str] = Field(min_length=1, max_length=500)
-    action: str = Field(pattern="^(assign_barangay|mark_test|mark_operational)$")
+    action: str = Field(pattern="^(assign_barangay|mark_test|mark_operational|assign|unassign|mark_reviewed)$")
     barangay: str | None = Field(default=None, max_length=120)
+    assignee_id: int | None = None  # S14: for "assign"
 
 
 @router.post("/inspections/bulk")
@@ -342,6 +424,8 @@ def bulk(body: BulkBody, st: State, user: User) -> dict:
         body.barangay = official_barangay(body.barangay)
     who = audit.actor_of(user)
     done = 0
+    if body.action in ("assign", "unassign", "mark_reviewed"):
+        return _bulk_ops(body, st, user, who)
     with st.db.session() as s:
         for a in s.scalars(select(Analysis).where(Analysis.id.in_(body.ids)).options(selectinload(Analysis.pole))).all():
             if body.action == "assign_barangay":
@@ -352,6 +436,45 @@ def bulk(body: BulkBody, st: State, user: User) -> dict:
                 kind = "test" if body.action == "mark_test" else "operational"
                 a.record_kind, a.record_kind_reason = kind, f"Set by {who}"
                 audit.record(s, who, f"record.{kind}", a.pole.pole_code, a.id, bulk=True)
+            done += 1
+    return {"updated": done}
+
+
+def _bulk_ops(body: BulkBody, st: AppState, user, who: str) -> dict:
+    """S14: assign / unassign a follow-up person, or mark the selected inspections reviewed (a "confirmed" review)."""
+    from app.models.orm import AdminUser, Assignment
+    done = 0
+    with st.db.session() as s:
+        assignee = None
+        if body.action == "assign":
+            assignee = s.get(AdminUser, body.assignee_id) if body.assignee_id else None
+            if assignee is None or not assignee.active:
+                raise HTTPException(422, {"code": "assignee", "message": "Choose an active staff account to assign."})
+        for a in s.scalars(select(Analysis).where(Analysis.id.in_(body.ids)).options(
+                selectinload(Analysis.pole), selectinload(Analysis.assignment), selectinload(Analysis.reviews))).all():
+            if body.action == "assign":
+                name = assignee.display_name or assignee.username
+                if a.assignment is None:
+                    a.assignment = Assignment(assignee_id=assignee.id, assignee_name=name, assigned_by=who)
+                else:
+                    a.assignment.assignee_id, a.assignment.assignee_name = assignee.id, name
+                    a.assignment.assigned_by, a.assignment.assigned_at = who, datetime.now(UTC)
+                audit.record(s, who, "inspection.assigned", a.pole.pole_code, a.id, to=name, bulk=True)
+            elif body.action == "unassign":
+                if a.assignment is None:
+                    continue
+                old = a.assignment.assignee_name
+                a.assignment = None
+                audit.record(s, who, "inspection.unassigned", a.pole.pole_code, a.id, old=old, bulk=True)
+            else:
+                if a.status in ("processing", "error"):
+                    continue  # nothing to review yet
+                rv = Review(analysis_id=a.id, reviewer_id=getattr(user, "id", None), reviewer_name=who,
+                            decision="confirmed", note="Marked reviewed (bulk action).")
+                s.add(rv)
+                audit.record(s, who, "review.confirmed", a.pole.pole_code, a.id, bulk=True)
+                s.flush()
+                _mirror_review(s, a, rv, user)  # S18: the same decision record as every other review
             done += 1
     return {"updated": done}
 
@@ -399,6 +522,19 @@ def set_barangay(pole_code: str, body: BarangayBody, st: State, user: User) -> d
     return {"pole_code": pole_code, "barangay": name}
 
 
+@router.delete("/poles/{pole_code}/barangay")
+def clear_barangay(pole_code: str, st: State, user: User) -> dict:
+    """S18: remove a barangay assignment (the X beside it). Coordinates, city and the inspections are untouched."""
+    with st.db.session() as s:
+        p = s.scalar(select(Pole).where(Pole.pole_code == pole_code))
+        if p is None:
+            raise HTTPException(404, {"code": "not_found", "message": "Pole not found."})
+        old, p.barangay = p.barangay, None
+        if old is not None:
+            audit.record(s, audit.actor_of(user), "barangay.unset", pole_code, None, old=old, new=None)
+    return {"pole_code": pole_code, "barangay": None}
+
+
 def official_barangay(text: str | None) -> str:
     """v2.21: the official name, or 422. A free-text box once stored a person's name as a barangay."""
     name = barangay_svc.resolve(text)
@@ -437,19 +573,42 @@ def _csv_notice(rows: list[list], header: list[str], name: str) -> StreamingResp
 @router.get("/exports/inspections.csv")
 def inspections_csv(st: State, user: User, q: Filt = None, risk: Filt = None, review: Filt = None,
                     barangay: Filt = None, date_from: Filt = None, date_to: Filt = None, completeness: Filt = None,
-                    latest_only: bool = False) -> StreamingResponse:
-    """The inspection list as filtered on screen (operational records only)."""
+                    latest_only: bool = False,
+                    ids: Annotated[str | None, Query(pattern=r"^[0-9a-f]{32}(,[0-9a-f]{32}){0,499}$")] = None,
+                    review_status: Annotated[str | None, Query(pattern="^(all|NOT_YET_REVIEWED|PARTIALLY_REVIEWED|REVIEW_COMPLETE)$")] = None,
+                    screen: Annotated[str | None, Query(pattern="^(high|moderate|normal|processing_issue|missing_location)$")] = None,
+                    ) -> StreamingResponse:
+    """The inspection list as filtered on screen (operational records only). S14: ``ids`` limits it to the rows
+    selected on the dashboard."""
     with st.db.session() as s:
         rows = _filtered(s, q, risk, review, barangay, date_from, date_to, completeness, latest_only, False)
+    if ids:
+        keep = set(ids.split(","))
+        rows = [r for r in rows if r["id"] in keep]
+    if screen:  # S18: the same filters as the list on screen
+        rows = [r for r in rows if SCREEN_FILTERS[screen](r)]
+    if review_status and review_status != "all":
+        rows = [r for r in rows if r.get("review_status") == review_status]
     out = [[r["pole_code"], r["inspection_name"] or "", r["barangay"] or "", r["city"] or "",
             records.RISK_LABEL[r["risk"]], records.COMPLETENESS_LABEL[r["completeness"]],
             r["wires"]["high"], r["wires"]["medium"], r["wires"]["low"], r["wires"]["unassessed"],
             records.REVIEW_LABEL[r["review"]], r["reviewed_by"] or "",
             f"{r['location']['lat']:.6f}" if r["location"] else "", f"{r['location']['lon']:.6f}" if r["location"] else "",
-            r["created_at"][:19].replace("T", " "), r["id"]] for r in rows]
+            r["created_at"][:19].replace("T", " "), r["id"],
+            r.get("op_status_label", ""), r.get("op_reason", ""), (r.get("assignee") or {}).get("name", ""),
+            (r.get("result") or {}).get("label", ""),
+            # S18: machine screening, triage and the administrative decision, in separate columns
+            r.get("filename") or "", "" if r.get("machine_state") != "processed" else r.get("detected"),
+            "" if r.get("machine_state") != "processed" else r.get("problem_count"),
+            (r.get("risk_level") or {}).get("label", "Processing failed" if r.get("machine_state") == "failed" else ""),
+            (r.get("risk_level") or {}).get("rubric_version", ""), r.get("review_status_label", ""),
+            (r.get("decision") or {}).get("label", ""), (r.get("decision") or {}).get("by", "")] for r in rows]
     return _csv_notice(out, ["Pole ID", "Inspection name", "Barangay", "City", "Risk level", "Assessment",
                              "High-risk wires", "Moderate-risk wires", "Low-risk wires", "Wires not assessed",
-                             "Review", "Reviewed by", "Latitude", "Longitude", "Inspected (UTC)", "Inspection ID"],
+                             "Review", "Reviewed by", "Latitude", "Longitude", "Inspected (UTC)", "Inspection ID",
+                             "Status", "Status reason", "Assigned to", "Screening result",
+                             "File name", "Wires detected", "Problem wires", "Triage risk (operational rubric)",
+                             "Rubric version", "Review status", "Administrative decision", "Decided by"],
                        f"wireframe-inspections-{_stamp()}.csv")
 
 
@@ -466,7 +625,7 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
         cond = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk"}
         out = []
         from app.services.basis import level_withdrawn
-        from app.services.comparison import POSITION_TEXT, compare_detection, detection_states
+        from app.services.comparison import compare_detection, detection_states, position_text
         for d in a.detections:
             # S4: a level from a withdrawn criterion is not a finding (app/services/basis.py)
             withdrawn = level_withdrawn(d.level, d.wire_class, st.config, a.metadata_json or {})
@@ -494,7 +653,7 @@ def findings_csv(analysis_id: str, st: State) -> StreamingResponse:
                         "Available" if s9["reference_available"] else REF_WHY.get(s9["reference_unavailable_reason"], "Unavailable"),
                         "Assessed" if s9["assessed"] else "Unassessed",
                         f"{c['reference'] * 100:.1f}% ({c['status']})" if c else "Not applicable",
-                        POSITION_TEXT.get(c["position"], "Not measured") if c else "Not compared (no applicable reference)",
+                        position_text(c),
                         f"{c['difference_pp']:+.1f}" if c and c["position"] else ""])
         name = f"wireframe-{a.pole.pole_code}-{a.id[:8]}-findings.csv"
         head = [[f"Pole {a.pole.pole_code}", a.inspection_name or "", a.created_at.isoformat()[:19]]]
@@ -521,7 +680,12 @@ def inspection_context(analysis_id: str, st: State, user: User) -> dict:
                 "record_kind_reason": a.record_kind_reason,
                 "history": history, "priority": None if not operational_rank else
                 {"position": operational_rank["rank"], "of": operational_rank["of"]},
-                "can": {"review": a.status in records.FINISHED, "delete": is_admin and a.status != "processing",
+                # S18: a failed run can still be decided
+                "archived": None if a.archived_at is None else
+                {"at": a.archived_at.isoformat(), "by": a.archived_by, "reason": a.archived_reason},
+                "can": {"review": a.status != "processing" and a.archived_at is None,
+                        "delete": is_admin and a.status != "processing" and a.archived_at is None,
+                        "restore": is_admin and a.archived_at is not None,
                         "retry": a.status == "error", "diagnostics": is_admin, "reclassify": is_admin},
                 "notice": notice.TEXT}
 
@@ -545,6 +709,46 @@ def set_record_kind(analysis_id: str, body: RecordKindBody, st: State, user: Sys
         a.record_kind_reason = (body.reason.strip() or f"Set by {user.display_name or user.username}")[:160]
         audit.record(s, audit.actor_of(user), f"record.{body.record_kind}", a.pole.pole_code, a.id)
         return {"id": a.id, "record_kind": a.record_kind, "record_kind_reason": a.record_kind_reason}
+
+
+class ArchiveBody(BaseModel):
+    reason: str = Field(min_length=1, max_length=300)
+
+
+@system.post("/inspections/{analysis_id}/archive")
+def archive_inspection(analysis_id: str, body: ArchiveBody, st: State, user: SystemUser) -> dict:
+    """S18 "Delete inspection": an audited soft delete. Nothing is removed (photo, findings, decisions, audit); the
+    inspection leaves every operational view and can be restored. Permanent deletion stays the separate
+    DELETE /api/analysis/{id} (no portal control)."""
+    reason = body.reason.strip()
+    if len(reason) < 3:
+        raise HTTPException(422, {"code": "reason", "message": "Say why the inspection is being deleted."})
+    with st.db.session() as s:
+        a = s.get(Analysis, analysis_id)
+        if a is None:
+            raise HTTPException(404, {"code": "not_found", "message": "Inspection not found."})
+        if a.status == "processing":
+            raise HTTPException(409, {"code": "processing", "message": "Wait until processing has finished."})
+        if a.archived_at is not None:
+            raise HTTPException(409, {"code": "archived", "message": "This inspection is already deleted (archived)."})
+        a.archived_at, a.archived_by, a.archived_reason = datetime.now(UTC), audit.actor_of(user), reason[:300]
+        audit.record(s, audit.actor_of(user), "inspection.archived", a.pole.pole_code, a.id, reason=reason[:300],
+                     file=a.original_filename)
+        return {"id": a.id, "archived": {"at": a.archived_at.isoformat(), "by": a.archived_by, "reason": a.archived_reason}}
+
+
+@system.post("/inspections/{analysis_id}/restore")
+def restore_inspection(analysis_id: str, st: State, user: SystemUser) -> dict:
+    with st.db.session() as s:
+        a = s.get(Analysis, analysis_id)
+        if a is None:
+            raise HTTPException(404, {"code": "not_found", "message": "Inspection not found."})
+        if a.archived_at is None:
+            raise HTTPException(409, {"code": "not_archived", "message": "This inspection is not archived."})
+        old = {"at": a.archived_at.isoformat(), "by": a.archived_by, "reason": a.archived_reason}
+        a.archived_at = a.archived_by = a.archived_reason = None
+        audit.record(s, audit.actor_of(user), "inspection.restored", a.pole.pole_code, a.id, old=old)
+        return {"id": a.id, "archived": None}
 
 
 @system.get("/system/status")
@@ -651,7 +855,7 @@ MAX_STOPS = 25
 def route_pdf(request: Request, st: State, user: User,
               stops: Annotated[str, Query(min_length=1, max_length=2000, pattern=r"^[A-Za-z0-9_.\-]+(,[A-Za-z0-9_.\-]+)*$")]
               ) -> Response:
-    """v2.21: printable dispatch route for the stops picked on Map & Dispatch, in the given order (pole codes).
+    """v2.21: printable dispatch route for the stops picked on Map & Locations, in the given order (pole codes).
     Only poles with a usable recorded location; test records are not included."""
     from app.services.route_pdf import build_route_pdf
     codes = list(dict.fromkeys(stops.split(",")))[:MAX_STOPS]

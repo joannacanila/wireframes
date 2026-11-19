@@ -17,6 +17,7 @@ UNASSESSED = {
     "too_short": "too small or too far away in the photo",
     "residual_too_large": "overlapping or crossing other wires",
     "non_positive_a": "overlapping or crossing other wires",
+    "kinked_trace": "overlapping or crossing other wires",
     "empty_mask": "too faint to trace",
     "service_drop": "drop wires to buildings (not checked for sag)",
     "endpoint_unavailable": "endpoint off the photo (partial span)",
@@ -75,7 +76,8 @@ def summary_title(c: dict[str, int]) -> str:
 
 
 def span_id(i: int) -> str:
-    return f"SP-{i:03d}"
+    """S18: the PDF names a wire the way every page does ("Wire 3"); "SP-003" was a second name for the same wire."""
+    return f"Wire {i}"
 
 
 def short_observation(w: dict) -> str:

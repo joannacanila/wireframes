@@ -1343,6 +1343,20 @@ with each analysis and report. Runtime varies with machine load, so the benchmar
     Memorandum Circular No. 2021-135. https://arta.gov.ph/documents/ (full text not retrieved: the official hosts
     refused automated access; described from ARTA releases only)
 
+45. Fiber Optic Association (FOA). *Aerial Fiber Optic Cable Installation* (Guide to Fiber Optics & Premises
+    Cabling). https://www.thefoa.org/tech/ref/OSP/aerial.html. Guideline: sag generally limited to less than 2 % of
+    span, maximum tension below 30 % of the cable's minimum breaking strength; ADSS cable is an exception. Industry
+    guidance, not a regulation. (Used for the 2 % lower boundary, D-31.)
+46. ZTO Cable (vendor). Aerial fiber optic cable installation guide and FAQ. "A maximum sag of 2 % of span is
+    typical"; FAQ: "typical maximum sag is 2-5 % of span length". Manufacturer material. (Used for the 5 % upper
+    boundary, D-31.)
+47. GL Fiber (vendor). ADSS / aerial cable technical notes. Gives no percentage: sag and tension come from
+    cable-specific sag-tension tables. (Cited for the limitation that no single figure fits every cable.)
+48. JEA (2017). *OH-VI-1 Fiber Optic* (Electric Reference Materials). https://www.jea.com/Engineering_and_Construction/
+    Electric_Reference_Materials/OH-VI-1-Fiber-Optic_pdf. ADSS design sags of about 0.67-0.8 % of span (e.g. 600 ft /
+    4 ft, 1200 ft / 10 ft). **Partially verified**: the PDF was behind an automated-access check; values are from
+    search-engine extracts of the document. A utility design standard, not a Philippine rule.
+
 ---
 
 ## 20. Appendix: endpoint, schema and configuration inventory

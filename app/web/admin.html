@@ -7,13 +7,12 @@
   <meta name="robots" content="noindex">
   <meta name="theme-color" content="#f3f2ef">
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/fonts.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" crossorigin="">
-  <link rel="stylesheet" href="/assets/styles.css?v=2.23">
-  <link rel="stylesheet" href="/assets/admin.css?v=2.23">
+  <link rel="stylesheet" href="/assets/styles.css?v=2.29">
+  <link rel="stylesheet" href="/assets/admin.css?v=2.35">
+  <link rel="stylesheet" href="/assets/result-view.css?v=2.37">
   <!-- light by default (readable in daylight and on projectors); the choice is remembered per browser -->
   <script>try { const t = localStorage.getItem("wf-admin-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch {}</script>
 </head>
@@ -24,7 +23,8 @@
     <nav class="adm-nav" aria-label="Main">
       <a href="/admin" data-link data-nav="dashboard">Dashboard</a>
       <a href="/admin/inspections" data-link data-nav="inspections">Inspections</a>
-      <a href="/admin/map" data-link data-nav="map">Map &amp; Dispatch</a>
+      <a href="/admin/map" data-link data-nav="map">Map &amp; Locations</a>
+      <a href="/admin/directory" data-link data-nav="directory">Directory</a>
     </nav>
     <span class="adm-spacer"></span>
     <a class="adm-alert" id="sys-alert" href="/admin" data-link hidden></a>
@@ -48,6 +48,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js" crossorigin=""></script>
   <script type="module" src="/assets/notice.js?v=2.23"></script>
-  <script type="module" src="/assets/admin.js?v=2.23"></script>
+  <script type="module" src="/assets/admin.js?v=2.35"></script>
 </body>
 </html>

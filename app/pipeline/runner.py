@@ -157,19 +157,26 @@ def _score_wire(
         return WireOutcome(**{**base, "fit": {"inclination_deg": round(incl, 1)}}, status="service_drop",
                            fail_reason=None, flags=["service_drop"])
 
-    fit = fit_catenary(
-        cl.points, image_size=image_size,
-        max_rel_residual=cfg.catenary.max_rel_residual,
-        border_margin_frac=cfg.catenary.border_margin_frac,
-        max_function_evals=cfg.catenary.max_function_evals,
-    )
+    fit_kw = dict(image_size=image_size, max_rel_residual=cfg.catenary.max_rel_residual,
+                  border_margin_frac=cfg.catenary.border_margin_frac, max_function_evals=cfg.catenary.max_function_evals)
+    if getattr(cfg.catenary, "kink_split", False):
+        from app.pipeline.span_fit import fit_span
+        fit = fit_span(cl.points, kink_ratio=cfg.catenary.kink_ratio, kink_check_from=cfg.catenary.kink_check_from,
+                       n_min=cfg.centerline.n_min_points, **fit_kw)
+    else:
+        fit = fit_catenary(cl.points, **fit_kw)
     flags = ["truncated"] if fit.truncated else []
+    if fit.kink_split:
+        flags.append("kink_split")
     fit_info = {
         k: getattr(fit, k)
         for k in ("a", "b", "c", "rms_residual_px", "rel_residual", "chord_px", "sag_px",
                   "sag_ratio", "sag_point", "chord_foot", "endpoints", "n_points", "iterations")
     }
     fit_info["pruned_px"] = cl.pruned_pixels
+    if fit.kink_split:  # S15 (D-32): the trace bent at a junction; one piece was measured (or none fitted)
+        fit_info["kink_split"] = True
+        fit_info["trace_excluded_frac"] = fit.excluded_frac
     fit_info["inclination_deg"] = round(incl, 1)
     if not fit.ok:
         return WireOutcome(**{**base, "fit": fit_info}, status="fit_failed", fail_reason=fit.reason,
@@ -399,6 +406,8 @@ def run_analysis(
         flags.extend(f"enhanced:{s}" for s in pre.enhancement)
     if polarity == "inverted":
         flags.append("polarity_inverted")  # v2.11: night photo, light conductors on a dark sky
+    if detections is None and getattr(segmenter, "last_head_error", None):
+        flags.append("strand_head_unavailable")  # S13: wire types from segmentation only for this photo
     if any(s.get("unavailable") for s in suppressed):
         flags.append("ground_gate_unavailable")  # v2.13: scene parser could not load; every span kept
         suppressed = []

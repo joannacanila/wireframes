@@ -36,6 +36,8 @@ function polyPath(polys) {
 // v2.16: a strand whose class evidence is split is shown as "type uncertain" (neutral grey), never forced to a type
 export const isUncertain = (w) => w.class_status === "uncertain";
 const SHORT = { "power-distribution-lines": "power", "telecom-cable": "telecom", "abandoned-wire": "abandoned" };
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 export function classLabel(w, short = false) {
   if (isUncertain(w)) return short ? "Type uncertain" : `Type uncertain (more likely ${SHORT[w.class] || w.class})`;
   return short ? ({ "power-distribution-lines": "Power line", "telecom-cable": "Telecom cable", "abandoned-wire": "Abandoned wire" }[w.class] || w.class)
@@ -44,14 +46,22 @@ export function classLabel(w, short = false) {
 
 /** S5: a wire with a fitted curve and an image-derived sag ratio (assessed or not). */
 export const isMeasured = (w) => w.sag_ratio != null && (w.status === "scored" || w.status === "not_assessed") && !!w.fit?.endpoints;
+/** S18: the colour token of a segmentation class (the mask legend and the drawing use this one mapping). */
+export const classVar = (key) => (key === "uncertain" ? "--cls-unknown" : key === "Vegetation" ? "--cls-veg" : CLASS_VAR[key] || "--cls-unknown");
+
 export function wireColor(w, mode = "risk") {
   if (mode === "class") return css(isUncertain(w) ? "--cls-unknown" : CLASS_VAR[w.class]);
+  // S18: one distinguishable hue per wire instance (golden-angle steps), for the segmentation-mask layer
+  if (mode === "instance") return `hsl(${Math.round((w.index * 137.508) % 360)} 85% 58%)`;
   return css(LEVEL_VAR[w.level] || "--risk-none");
 }
 
 export class OverlayViewer {
-  constructor(wrap, { onHover, onSelect } = {}) {
+  constructor(wrap, { onHover, onSelect, scrollFriendly = false } = {}) {
     this.wrap = wrap;
+    // S16: on a scrolling page the wheel / one-finger drag scroll the page until the photo is zoomed in
+    // (Ctrl / Cmd + wheel, pinch, or the zoom buttons); then they pan and zoom the photo
+    this.scrollFriendly = scrollFriendly;
     this.canvas = document.createElement("canvas");
     this.ctx = this.canvas.getContext("2d");
     wrap.append(this.canvas);
@@ -112,6 +122,8 @@ export class OverlayViewer {
   }
 
   set(layer, on) { this.layers[layer] = on; this.draw(); }
+  /** S18: highlight a wire from outside the photo (hover in a list); null clears it. */
+  highlight(index) { if (this.hover !== index) { this.hover = index; this.draw(); } }
   /** v2.20: draw and hit-test only these wire indices (null = all). Geometry is never changed, only hidden. */
   setVisible(indices) { this.visible = indices ? new Set(indices) : null; this.draw(); }
   _shown() { return this.visible ? this.wires.filter((w) => this.visible.has(w.index)) : this.wires; }
@@ -131,7 +143,7 @@ export class OverlayViewer {
 
   zoomIn() { this.zoomBy(1.4); }
   zoomOut() { this.zoomBy(1 / 1.4); }
-  reset() { this._userMoved = false; this.fit(); }
+  reset() { this._userMoved = false; this._focused = null; this.fit(); }
   get zoomPct() { return Math.round((this.view.s || 1) * 100); }
   setMode(mode) { this.mode = mode; this.draw(); }
   select(index) { this.selected = index; this.draw(); if (index != null) this.focus(index); }
@@ -139,17 +151,18 @@ export class OverlayViewer {
   fit() {
     if (!this.image) return;
     const { width: W, height: H } = this.wrap.getBoundingClientRect();
-    const pad = 24;
+    const pad = W < 600 ? 6 : 12; // S14: a small margin so the photo fills its frame on phones too
     // not laid out yet (zero-size container): a negative scale would invert the drawing; the resize handler fits later
     if (W <= pad * 2 || H <= pad * 2) return;
     const s = Math.min((W - pad * 2) / this.image.width, (H - pad * 2) / this.image.height);
     this.view = { s, x: (W - this.image.width * s) / 2, y: (H - this.image.height * s) / 2 };
+    this._fitS = s;
     this._emitZoom();
     this.draw();
   }
 
   zoomBy(f, cx, cy, user = true) {
-    if (user) this._userMoved = true;
+    if (user) { this._userMoved = true; this._focused = null; }
     const r = this.wrap.getBoundingClientRect();
     cx ??= r.width / 2; cy ??= r.height / 2;
     const s = Math.min(40, Math.max(0.02, this.view.s * f));
@@ -159,14 +172,19 @@ export class OverlayViewer {
     this.draw();
   }
 
-  /** Centre the selected wire, with a short ease so the jump is legible. */
+  /** Centre the selected wire and zoom so it fills most of the frame (S18: never less than the fitted view, at most
+   *  6x it), with a short ease so the jump is legible. The wire stays framed through a resize until the user moves. */
   focus(index) {
     const w = this.wires.find((x) => x.index === index);
     if (!w || !this.image) return;
     const r = this.wrap.getBoundingClientRect();
+    if (r.width < 2 || r.height < 2) return;
+    if (!this._fitS) this.fit();
+    const fitS = this._fitS || this.view.s;
     const [x1, y1, x2, y2] = w.bbox;
-    const s = Math.min(this.view.s * 1.0, (r.width * 0.8) / Math.max(1, x2 - x1), (r.height * 0.8) / Math.max(1, y2 - y1));
-    const target = { s: Math.max(s, this.view.s * 0.999), x: 0, y: 0 };
+    const want = Math.min((r.width * 0.8) / Math.max(1, x2 - x1), (r.height * 0.8) / Math.max(1, y2 - y1));
+    const target = { s: Math.min(fitS * 4, Math.max(fitS, want)), x: 0, y: 0 };
+    this._userMoved = true; this._focused = index;
     target.x = r.width / 2 - ((x1 + x2) / 2) * target.s;
     target.y = r.height / 2 - ((y1 + y2) / 2) * target.s;
     const from = { ...this.view };
@@ -184,6 +202,19 @@ export class OverlayViewer {
     requestAnimationFrame(step);
   }
 
+  /** S18: re-frame the focused wire at once (after a resize the old pixel offsets would point elsewhere). */
+  _snapFocus(index) {
+    const w = this.wires.find((x) => x.index === index);
+    const r = this.wrap.getBoundingClientRect();
+    if (!w || r.width < 2) return this.draw();
+    const fitS = Math.min(r.width / this.image.width, r.height / this.image.height);
+    this._fitS = fitS;
+    const [x1, y1, x2, y2] = w.bbox;
+    const s = Math.min(fitS * 4, Math.max(fitS, Math.min((r.width * 0.8) / Math.max(1, x2 - x1), (r.height * 0.8) / Math.max(1, y2 - y1))));
+    this.view = { s, x: r.width / 2 - ((x1 + x2) / 2) * s, y: r.height / 2 - ((y1 + y2) / 2) * s };
+    this._emitZoom(); this.draw();
+  }
+
   draw() {
     cancelAnimationFrame(this._raf);
     this._raf = requestAnimationFrame(() => this._paint());
@@ -191,7 +222,11 @@ export class OverlayViewer {
 
   // ---------------------------------------------------------------- internals
 
-  _emitZoom() { this.wrap.dispatchEvent(new CustomEvent("zoom", { detail: this.view.s })); }
+  get zoomed() { return !!this._fitS && this.view.s > this._fitS * 1.02; }
+  _emitZoom() {
+    this.wrap.toggleAttribute("data-zoomed", this.zoomed);
+    this.wrap.dispatchEvent(new CustomEvent("zoom", { detail: this.view.s }));
+  }
 
   _resize() {
     const r = this.wrap.getBoundingClientRect();
@@ -201,7 +236,9 @@ export class OverlayViewer {
     this.dpr = dpr;
     // Until the user pans or zooms, keep the image fitted to the container as layout settles
     // (breakpoints, sidebars, rotation); after that, respect their view.
-    if (this.image && !this._userMoved) this.fit(); else this.draw();
+    if (this.image && !this._userMoved) this.fit();
+    else if (this.image && this._focused != null && this.selected === this._focused) { this.view.s = this._fitS || this.view.s; this._snapFocus(this._focused); }
+    else this.draw();
   }
 
   _toImage(clientX, clientY) {
@@ -229,23 +266,41 @@ export class OverlayViewer {
     this._abort = new AbortController();
     const o = { signal: this._abort.signal };
     const el = this.wrap;
-    let drag = null;
+    let drag = null, pinch = null;
+    const pts = new Map();
     el.addEventListener("wheel", (e) => {
+      if (this.scrollFriendly && !this.zoomed && !e.ctrlKey && !e.metaKey) return; // let the page scroll
       e.preventDefault();
       const r = el.getBoundingClientRect();
       const f = Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.0015));
       this.zoomBy(f, e.clientX - r.left, e.clientY - r.top);
     }, { passive: false, ...o });
     el.addEventListener("pointerdown", (e) => {
+      pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pts.size === 2) { // two fingers: pinch zoom about their midpoint
+        const [a, b] = [...pts.values()];
+        pinch = { d: Math.hypot(a.x - b.x, a.y - b.y) || 1 };
+        if (drag) { drag.moved = true; drag = null; }
+        el.setPointerCapture(e.pointerId);
+        return;
+      }
       if (drag || e.button !== 0) return; // ignore extra touch points
       drag = { id: e.pointerId, x: e.clientX, y: e.clientY, vx: this.view.x, vy: this.view.y, moved: false };
       el.setPointerCapture(e.pointerId);
     }, o);
     el.addEventListener("pointermove", (e) => {
+      if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (pinch && pts.size === 2) {
+        const [a, b] = [...pts.values()], r = el.getBoundingClientRect();
+        const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+        this.zoomBy(d / pinch.d, (a.x + b.x) / 2 - r.left, (a.y + b.y) / 2 - r.top);
+        pinch.d = d; this.draw();
+        return;
+      }
       if (drag && e.pointerId === drag.id) {
         const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
         if (!drag.moved && Math.hypot(dx, dy) > 3) { drag.moved = true; el.setAttribute("data-dragging", ""); }
-        if (drag.moved) { this._userMoved = true; this.view.x = drag.vx + dx; this.view.y = drag.vy + dy; this.draw(); this._tip(null); }
+        if (drag.moved) { this._userMoved = true; this._focused = null; this.view.x = drag.vx + dx; this.view.y = drag.vy + dy; this.draw(); this._tip(null); }
         return;
       }
       const h = this._hit(e.clientX, e.clientY);
@@ -253,6 +308,8 @@ export class OverlayViewer {
       this._tip(h, e);
     }, o);
     const end = (e) => {
+      pts.delete(e.pointerId);
+      if (pinch) { if (pts.size < 2) pinch = null; return; }
       if (!drag || e.pointerId !== drag.id) return;
       if (!drag.moved) { const h = this._hit(e.clientX, e.clientY); this.selected = h; this.onSelect?.(h); this.draw(); }
       drag = null;
@@ -271,7 +328,7 @@ export class OverlayViewer {
     // v2.19: condition and sag in plain terms; the score itself stays in the technical diagnostics
     const scored = w.status === "scored" && w.sag_ratio != null;
     this.tip.innerHTML = `<b>Wire ${w.index} · ${classLabel(w)}</b>
-      <div class="row"><span>Condition</span><span>${(scored && { high: "Critical", medium: "Minor sag", low: "Within reference" }[w.level]) || "Not assessed"}</span></div>
+      <div class="row"><span>Result</span><span>${esc(w.finding?.classification_label || w.finding?.citizen_label || w.finding?.label || ((scored && { high: "Critical", medium: "Minor sag", low: "Within reference" }[w.level]) || (isMeasured(w) ? "Measured" : "Not measured")))}</span></div>
       ${scored ? `<div class="row"><span>Sag</span><span>${(w.sag_ratio * 100).toFixed(1)}% of its length</span></div>`
         : isMeasured(w) ? `<div class="row"><span>Sag ratio (image${w.reason_code === "endpoint_unavailable" ? ", visible part" : ""})</span><span>${(w.sag_ratio * 100).toFixed(1)}%, measured only</span></div>` : ""}`;
     const x = Math.min(e.clientX - r.left + 14, r.width - 200);
@@ -372,7 +429,7 @@ export class OverlayViewer {
     }
 
     if (L.masks) {
-      this._spanLayer(this._shown().filter((w) => w !== fw), fw ? 0.32 : 0.62);
+      this._spanLayer(this._shown().filter((w) => w !== fw), fw ? 0.16 : 0.62); // S14: a selected wire stands out clearly
       if (fw) {
         T(); ctx.globalAlpha = 1; ctx.strokeStyle = "rgba(255,255,255,0.95)"; ctx.lineWidth = 3 * px; ctx.stroke(fw._mask);
         this._spanLayer([fw], 0.95);
@@ -465,7 +522,7 @@ export class OverlayViewer {
       if (L.sag && isMeasured(w) && f.sag_point && focus === w.index) {
         const [sx, sy] = toScreen(f.sag_point);
         const label = w.status === "scored" ? `sags ${(w.sag_ratio * 100).toFixed(1)}% of its length` // v2.19: no raw score
-          : `image sag ratio ${(w.sag_ratio * 100).toFixed(1)}%${w.sag_ratio_resolution ? ` ±${(w.sag_ratio_resolution * 100).toFixed(1)}` : ""}${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""} · measured, not assessed`;
+          : `Wire ${w.index} · estimated sag ${(w.sag_ratio * 100).toFixed(1)}%${w.reason_code === "endpoint_unavailable" ? " (visible part)" : ""}`; // S14: plain words
         const lw = ctx.measureText(label).width + 16;
         const cw = this.canvas.width / dpr, ch = this.canvas.height / dpr;
         const lx = Math.max(4, Math.min(sx + 10, cw - lw - 4)), ly = Math.max(14, Math.min(sy + 16, ch - 14));

@@ -19,6 +19,35 @@ def shipped_cfg():
     return load_analysis_config(ROOT_DIR / "config" / "wireframe.yaml")
 
 
+def s16_comparison(cfg):
+    """S17: the S16 shipped references (a provisional, non-classifying comparison widened by each wire's +/-1 px
+    resolution; telecom as contextual bands). S17 ships a classifying reference instead, but this mode stays
+    supported (``classification_enabled: false``) and its tests run against it."""
+    pw = cfg.comparison_reference.model_copy(update={
+        "status": "provisional", "classification_enabled": False, "uncertainty": "resolution",
+        "lower_boundary": 0.03, "upper_boundary": 0.03, "zone_labels": {}, "zone_text": {}, "classifications": {},
+        "attention_zones": ["at", "above"], "label": "3% sag-to-span reference for power lines (provisional)",
+        "source": "ERB Res. 95-21 s.19 (1995, superseded by the DSOAR); owner-selected; power lines only; not "
+                  "validated for image sag ratios",
+        "tolerance_basis": "none: no source gives an engineering tolerance around 3 %; the amber region is the "
+                           "measurement uncertainty only"})
+    tel = cfg.telecom_reference.model_copy(update={
+        "classification_enabled": False, "uncertainty": "resolution", "classifications": {},
+        "zone_labels": {"below": "Typical range", "at": "Depends on cable design", "above": "Beyond typical ranges"},
+        "zone_text": {"below": "This cable dips less than about 2% of its span, which is within the typical range for "
+                               "telecom and fiber cables.",
+                      "at": "This cable dips between about 2% and 5% of its span. Some cable designs allow this much; "
+                            "whether it is acceptable depends on the cable and how it was installed.",
+                      "above": "This cable appears to dip more than about 5% of its span, beyond the typical ranges "
+                               "for telecom and fiber cables. It may be worth a closer look by the provider."}})
+    return cfg.model_copy(update={"comparison_reference": pw, "telecom_reference": tel})
+
+
+@pytest.fixture(scope="session")
+def s16_cfg(shipped_cfg):
+    return s16_comparison(shipped_cfg)
+
+
 # S4 (register D-02..D-15): the shipped configuration has no sag reference, no conductor data and no vegetation
 # verdict. The CRS, banding, corroboration and change-of-state code is kept for a future validated reference, and is
 # tested with these TEST-ONLY values (the former v2.23 development placeholders). They are not engineering values

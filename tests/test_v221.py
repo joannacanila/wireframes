@@ -76,8 +76,8 @@ def test_intent_routes_before_keyword_retrieval(q, kind, section):
 def test_assistant_answers_navigation_with_steps_and_real_links(client, monkeypatch):
     monkeypatch.setattr(client.state.settings, "assistant_provider", "local")
     r = client.post("/api/assistant/ask", json={"question": "How can I go to the poles?", "page": "/admin/map"}).json()
-    assert r["intent"] == "navigation" and "1. Open **Map & Dispatch**" in r["answer"]
-    assert r["nav"] == [{"label": "Map & Dispatch", "href": "/admin/map"}] and r["sources"][0]["link"] == "/admin/map"
+    assert r["intent"] == "navigation" and "1. Open **Map & Locations**" in r["answer"]
+    assert r["nav"] == [{"label": "Map & Locations", "href": "/admin/map"}] and r["sources"][0]["link"] == "/admin/map"
     r = client.post("/api/assistant/ask", json={"question": "Who made you?"}).json()
     assert "Canila, Tubianosa and Villamar" in r["answer"]
     r = client.post("/api/assistant/ask", json={"question": "poles"}).json()
@@ -123,7 +123,10 @@ def test_system_page_is_removed(client, anon):
     js = client.get("/assets/admin.js").text + client.get("/assets/assistant.js").text
     assert "/admin/system" not in html and "/admin/system" not in js and "nav-system" not in html
     assert "Technical exports" in js and "/api/admin/exports/wires.csv" in js  # moved to Inspections
-    assert client.get("/assets/admin-diagnostics.js").status_code == 200
+    # S18 (Phase 2): the technical diagnostics block (metric cards, acquisition envelope, geometry) was removed from the
+    # inspection page; VNI and CRS moved to "Other" in the technical details (result-view.js otherMetricsHtml)
+    assert client.get("/assets/admin-diagnostics.js").status_code == 404 and "admin-diagnostics" not in js
+    assert "otherMetricsHtml" in js
     r = client.post("/api/assistant/ask", json={"question": "Where are the technical exports?"}).json()
     assert all("/admin/system" not in (n.get("href") or "") for n in r.get("nav") or [])
     assert "/admin/system" not in r["answer"]

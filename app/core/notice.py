@@ -1,16 +1,13 @@
-"""v2.19: the approved decision-support notice, in one place for every server-side output (PDF reports, CSV
-exports, the assistant). The web pages use the identical text from app/web/assets/notice.js; a test keeps the two
-copies equal. Do not reword: the wording is the project owner's (S4 brief, 18 Nov 2026, section 7)."""
+"""S17 (Part 5.4): the ONE canonical Important Notice, verbatim, for every output: the results page and every web page
+(app/web/assets/notice.js holds the identical string; a test keeps them equal), PDF reports, CSV exports and the
+assistant. Do not reword and do not add a second general disclaimer anywhere. It replaces the v2.19 notice and the S14
+landing variant, which said the same thing in competing words."""
 
 TITLE = "Important Notice"
 TEXT = (
-    "WIREFRAME is a decision-support tool intended for preliminary visual screening of overhead conductor conditions. "
-    "Its automated outputs and image-derived measurements may be inaccurate or incomplete due to image quality, "
-    "visibility, perspective, classification errors, environmental conditions, and other limitations. Results do "
-    "not constitute a certified engineering inspection, confirmation of structural or electrical safety, or proof "
-    "of regulatory compliance. All findings should be reviewed by a qualified professional. Results marked as "
-    "inconclusive or not assessed require further information, verification, or an appropriate field inspection."
+    "WIREFRAME is an image-based decision-support tool designed to help document visible pole and wire conditions. "
+    "Its results are preliminary and may contain errors or limitations. Findings should be reviewed by qualified "
+    "professionals and must not replace an on-site inspection or applicable safety assessment."
 )
-# one line for page footers and CSV headers, so no printed page or exported file is separated from the notice
-SHORT = ("Preliminary visual screening, not a certified inspection or proof of compliance. Review with a qualified "
-         "professional.")
+# page footers point to the notice rather than restating it in other words
+SHORT = "Preliminary image-based screening. See the Important Notice."

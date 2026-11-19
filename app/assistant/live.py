@@ -71,7 +71,9 @@ def _card(r: dict, rank: int | None = None) -> dict[str, Any]:
             "risk": r["risk"], "risk_label": records.RISK_LABEL.get(r["risk"], r["risk"]),
             "review": records.REVIEW_LABEL.get(r["review"], r["review"]),
             "place": ", ".join(x for x in (r.get("barangay"), r.get("city")) if x) or None,
-            "location": r.get("location"), "issue": issue, "rank": rank}
+            "location": r.get("location"), "issue": r.get("op_reason") or issue, "rank": rank,
+            "status": r.get("op_status_label"), "review_status": r.get("review_status_label"),
+            "triage": (r.get("risk_level") or {}).get("short"), "file": r.get("filename")}
 
 
 def _name(c: dict) -> str:
@@ -83,7 +85,7 @@ def _list_text(intro: str, cards: list[dict], empty: str, limit: int = 8) -> str
         return empty
     lines = [intro]
     for c in cards[:limit]:
-        bits = [c["risk_label"]] + ([c["place"]] if c["place"] else []) + ([c["issue"]] if c["issue"] else [])
+        bits = [c.get("status") or c["risk_label"]] + ([c["place"]] if c["place"] else []) + ([c["issue"]] if c["issue"] else [])
         lines.append(f"- {_name(c)}: " + " · ".join(bits))
     if len(cards) > limit:
         lines.append(f"- and {len(cards) - limit} more")
@@ -122,8 +124,8 @@ def handle(s: Session, question: str, page: str | None, analysis: Analysis | Non
         if re.search(r"\b(map|locate|where)\b", ql):
             if not r.get("location"):
                 return Live(f"{_name(c)} has no GPS location yet, so it is listed under Needs pinning on Map & "
-                            "Dispatch.", [c], {"type": "navigate", "href": f"/admin/map?pole={r['pole_code']}",
-                                               "label": f"Open {c['label']} in Map & Dispatch"})
+                            "Locations.", [c], {"type": "navigate", "href": f"/admin/map?pole={r['pole_code']}",
+                                               "label": f"Open {c['label']} in Map & Locations"})
             return Live(f"Showing {_name(c)} on the map.", [c],
                         {"type": "navigate", "href": f"/admin/map?pole={r['pole_code']}", "label": f"Locate {c['label']}"})
         return Live(f"Opening the latest inspection of {_name(c)}.", [c],
@@ -135,8 +137,8 @@ def handle(s: Session, question: str, page: str | None, analysis: Analysis | Non
         lab = labels.get(code, code)
         if analysis.pole.location is None:
             return Live(f"This pole ({lab}) has no GPS location yet. An administrator can drop a pin for it on Map & "
-                        "Dispatch, under Needs pinning.", [],
-                        {"type": "navigate", "href": f"/admin/map?pole={code}", "label": "Open Map & Dispatch"})
+                        "Locations, under Needs pinning.", [],
+                        {"type": "navigate", "href": f"/admin/map?pole={code}", "label": "Open Map & Locations"})
         return Live(f"Showing {lab} on the map.", [],
                     {"type": "navigate", "href": f"/admin/map?pole={code}", "label": f"Locate {lab}"})
 
@@ -156,7 +158,7 @@ def handle(s: Session, question: str, page: str | None, analysis: Analysis | Non
                           "There are no inspected poles yet.")
         if cards:
             text += "\nMissing GPS does not lower a pole's priority. An administrator can drop a pin for each one on " \
-                    "Map & Dispatch, under Needs pinning."
+                    "Map & Locations, under Needs pinning."
         return Live(text, cards[:6], {"type": "navigate", "href": "/admin/map?tab=pinning",
                                       "label": "Show Needs pinning"} if showing or "map" in page else None)
 
@@ -174,14 +176,13 @@ def handle(s: Session, question: str, page: str | None, analysis: Analysis | Non
     # ---- needs review / urgent
     if re.search(r"\b(review|urgent|attention|pending|flagged)\b", ql) and re.search(
             r"\b(which|what|who|list|show|need|needs|pending|urgent)\b", ql) and not re.search(r"\bhow\b", ql):
-        sel = [r for r in rows if r["review"] in ("pending", "flagged")]
+        # S14: the dashboard's "Needs review" status (app/services/ops.py), so the numbers match the portal
+        sel = [r for r in rows if r.get("op_status") == "flagged"]
         sel.sort(key=lambda r: records_priority(r))
         cards = [_card(r, rank_of.get(r["pole_code"])) for r in sel]
-        flagged = sum(1 for r in sel if r["review"] == "flagged")
-        intro = f"{len(cards)} pole{'s' if len(cards) != 1 else ''} need a review" + (
-            f" ({flagged} flagged for further inspection)" if flagged else "") + ", most serious first:"
-        return Live(_list_text(intro, cards, "No pole is waiting for a review."), cards[:6],
-                    {"type": "navigate", "href": "/admin/inspections?tab=needs_review", "label": "Show Needs review"})
+        intro = f"{len(cards)} pole{'s' if len(cards) != 1 else ''} need{'s' if len(cards) == 1 else ''} review, most serious first:"
+        return Live(_list_text(intro, cards, "No pole needs review right now."), cards[:6],
+                    {"type": "navigate", "href": "/admin/inspections?tab=flagged", "label": "Show Needs review"})
 
     # ---- show only <risk> poles (a filter on the current page)
     if showing and risks:
@@ -218,7 +219,7 @@ def handle(s: Session, question: str, page: str | None, analysis: Analysis | Non
             for c in cards:
                 lines.append(f"- {c['rank']}. {_name(c)}: {c['risk_label']}"
                              + (f" · {c['place']}" if c["place"] else "") + ("" if c["location"] else " · no GPS"))
-        return Live("\n".join(lines), cards, {"type": "navigate", "href": "/admin/map", "label": "Open Map & Dispatch"}
+        return Live("\n".join(lines), cards, {"type": "navigate", "href": "/admin/map", "label": "Open Map & Locations"}
                     if "dispatch" in ql or "priorit" in ql else None)
     return None
 

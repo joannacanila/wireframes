@@ -45,7 +45,32 @@ _TAG_EXPOSURE_TIME = 0x829A
 _TAG_ISO = 0x8827
 _TAG_GPS_IFD = 0x8825
 
-ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "TIFF", "MPO", "BMP", "GIF"}
+ALLOWED_FORMATS = {"JPEG", "PNG", "WEBP", "TIFF", "MPO", "BMP", "GIF", "HEIF"}
+
+
+# S16 (Part 8): HEIC / HEIF from phones. pi-heif is the decode-only build of pillow-heif (libheif + libde265, no
+# encoder). Registering its opener makes Pillow recognise HEIF by content (the ISO-BMFF ``ftyp`` box), never by file
+# name or the client's MIME type. libheif applies the container's rotation / mirror on decode and pi-heif resets the
+# EXIF orientation to 1, so ``to_rgb``'s exif_transpose cannot rotate twice. Pillow's decompression-bomb limit applies.
+def _register_heif() -> bool:
+    try:
+        import pi_heif
+    except ImportError:  # optional at import time; uploads then report HEIC as unsupported
+        return False
+    pi_heif.register_heif_opener()
+    return True
+
+
+HEIF_AVAILABLE = _register_heif()
+HEIF_BRANDS = {b"heic", b"heix", b"hevc", b"hevx", b"heim", b"heis", b"mif1", b"msf1", b"heif"}
+
+
+def heif_brand(data: bytes) -> str | None:
+    """The major brand of an ISO-BMFF file when it is a HEIF-family image (``ftyp`` box at offset 4), else None."""
+    if len(data) >= 12 and data[4:8] == b"ftyp":
+        brand = data[8:12]
+        return brand.decode("ascii", "replace") if brand in HEIF_BRANDS or brand == b"avif" else None
+    return None
 DEFAULT_MAX_SIDE = 2048
 
 
@@ -337,9 +362,19 @@ def acquire(
         img = Image.open(io.BytesIO(data))
         fmt = (img.format or "").upper()
         img.load()
-    except (UnidentifiedImageError, OSError, ValueError, ImportError, Image.DecompressionBombError) as exc:
+    except Image.DecompressionBombError as exc:
+        raise ImageRejected("too_many_pixels", "The image has too many pixels to process.") from exc
+    except (UnidentifiedImageError, OSError, ValueError, ImportError, RuntimeError) as exc:
         # ImportError: plugins registered by other libraries (e.g. Ultralytics registers a
         # lazy HEIF opener) can raise ModuleNotFoundError on bytes that are not an image.
+        brand = heif_brand(data)
+        if brand == "avif" or (brand and not HEIF_AVAILABLE):
+            raise ImageRejected("unsupported_codec", "This photo uses an image encoding the server cannot read "
+                                "(HEIC / HEIF support or this codec is not available). Export it as JPEG and "
+                                "try again.") from exc
+        if brand:
+            raise ImageRejected("undecodable", "This HEIC / HEIF photo could not be read; the file may be damaged "
+                                "or incomplete. Try the original photo again, or export it as JPEG.") from exc
         raise ImageRejected("undecodable", "The file is not a readable image.") from exc
     if fmt not in ALLOWED_FORMATS:
         raise ImageRejected("unsupported_format", f"Unsupported image format: {fmt or 'unknown'}.")

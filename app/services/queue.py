@@ -28,6 +28,17 @@ class AnalysisQueue:
         self._task: asyncio.Task | None = None
         self._loop: asyncio.AbstractEventLoop | None = None
         self.processed = 0
+        self.current: str | None = None  # S14: the analysis running now (pending vs processing)
+        self._pending: list[str] = []
+
+    def position(self, analysis_id: str) -> int | None:
+        """0 = running now, n = n jobs ahead of it, None = not in this queue (e.g. after a restart, until re-queued)."""
+        if analysis_id == self.current:
+            return 0
+        try:
+            return self._pending.index(analysis_id) + 1
+        except ValueError:
+            return None
 
     @property
     def depth(self) -> int:
@@ -41,6 +52,9 @@ class AnalysisQueue:
             running = asyncio.get_running_loop()
         except RuntimeError:
             running = None
+        if analysis_id in self._pending or analysis_id == self.current:
+            return  # S14: never queue the same analysis twice (a retry while the job is still queued)
+        self._pending.append(analysis_id)
         if self._loop is not None and running is not self._loop:
             self._loop.call_soon_threadsafe(self._queue.put_nowait, analysis_id)
         else:
@@ -69,11 +83,15 @@ class AnalysisQueue:
     async def _run(self) -> None:
         while True:
             aid = await self._queue.get()
+            if aid in self._pending:
+                self._pending.remove(aid)
+            self.current = aid
             try:
                 status = await asyncio.to_thread(self._job, aid)
                 log.info("analysis %s -> %s", aid, status)
             except Exception:  # the job records its own errors; this guards the loop
                 log.exception("worker crashed on %s", aid)
             finally:
+                self.current = None
                 self.processed += 1
                 self._queue.task_done()

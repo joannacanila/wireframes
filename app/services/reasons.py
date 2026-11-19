@@ -14,6 +14,8 @@ REASONS = {
     "residual_too_large": "Does not follow one hanging curve (likely crossing or merged wires)",
     "non_positive_a": "Curves upward, not like a hanging wire (likely a merged or bent trace)",
     "no_convergence": "Curve fit did not converge",
+    "kinked_trace": ("Bends sharply where it meets another wire or a support, and no part of it fits one hanging "
+                     "curve, so the bend is not read as sag"),
     "degenerate": "Too straight or too short a baseline to estimate curvature",
     "service_drop": "Steep service drop or guy wire: not a pole-to-pole span, not scored for sag",
     # v2.21 measurement validity (the wire was traced and measured, but the measurement cannot support a severity)
@@ -40,6 +42,7 @@ REASONS_SHORT = {
     "residual_too_large": "Ambiguous wire path",
     "non_positive_a": "Ambiguous wire path",
     "no_convergence": "Curve fit failed",
+    "kinked_trace": "Ambiguous wire path",
     "degenerate": "Baseline too short or straight",
     "service_drop": "Service drop (not scored)",
     "endpoint_unavailable": "Endpoint unavailable",

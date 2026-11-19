@@ -10,7 +10,8 @@ export const plural = (n, one, many = `${one}s`) => `${n} ${n === 1 ? one : many
 export const list = (xs) => (xs.length <= 1 ? String(xs[0] ?? "") : `${xs.slice(0, -1).join(", ")} and ${xs.at(-1)}`);
 export const pc = (x, d = 1) => `${(x * 100).toFixed(d)}%`;
 export function sagFactors(r) { return r.hazard?.factors?.sag || {}; }
-export const SECTION = (ids) => `${ids.length === 1 ? "section" : "sections"} ${list(ids.map((i) => `<button type="button" class="fx-ref" data-goto="${i}">${i}</button>`))}`;
+// S18: one wire reference everywhere ("wire 3", "wires 3 and 5"), each number a link that pans the photo to that wire
+export const SECTION = (ids) => `${ids.length === 1 ? "wire" : "wires"} ${list(ids.map((i) => `<button type="button" class="fx-ref" data-w="${i}" aria-label="Show wire ${i} in the photo">${i}</button>`))}`;
 // v2.21: ONE wire-severity vocabulary for the result page, the admin inspection page and the PDF
 // (app/services/plain.py SEVERITY). It names the stored wire level; it never recomputes it.
 export const SEVERITY = { high: "Critical", medium: "Minor sag", low: "Within reference", none: "Not assessed" };
@@ -86,16 +87,16 @@ export function limitations(r) {
   // S5: a wire measured but not assessed for lack of a reference is not a photo limitation
   const other = ids((w) => w.status !== "scored" && w.status !== "service_drop" && !MEASURED_ONLY.has(w.reason_code) && !(w.reason_code === "class_uncertain" && w.sag_ratio != null) && !["chord_below_precision_gate", "too_short", "residual_too_large", "non_positive_a", "endpoint_unavailable"].includes(w.reason_code));
   const edge = ids((w) => (w.flags || []).includes("truncated"));
-  const est = ids((w) => (w.provenance?.centerline_inferred_share ?? 0) >= 0.05);
+  const est = ids((w) => Boolean(w.states?.bridged)); // S15/S17: the server's rule only (comparison.bridged)
   const drops = ids((w) => w.status === "service_drop");
-  if (small.length) out.push({ key: "small", ids: small, text: `${plural(small.length, "wire section")} ${small.length === 1 ? "is" : "are"} too small or too far away in the photo to measure.`,
+  if (small.length) out.push({ key: "small", ids: small, text: `${plural(small.length, "wire")} ${small.length === 1 ? "is" : "are"} too small or too far away in the photo to measure.`,
     help: short < 1000 ? `Use the original, full-resolution photo (this one is ${r.image.width} × ${r.image.height} pixels), or move closer.` : "Move closer or zoom in so these wires appear longer." });
-  if (overlap.length) out.push({ key: "overlap", ids: overlap, text: `${plural(overlap.length, "wire section")} ${overlap.length === 1 ? "overlaps" : "overlap"} or ${overlap.length === 1 ? "crosses" : "cross"} other wires, so ${overlap.length === 1 ? "its" : "their"} shape could not be separated.`,
+  if (overlap.length) out.push({ key: "overlap", ids: overlap, text: `${plural(overlap.length, "wire")} ${overlap.length === 1 ? "overlaps" : "overlap"} or ${overlap.length === 1 ? "crosses" : "cross"} other wires, so ${overlap.length === 1 ? "its" : "their"} shape could not be separated.`,
     help: "Take another photo from a few steps along the street, so the wires separate." });
-  if (other.length) out.push({ key: "other", ids: other, text: `${plural(other.length, "wire section")} could not be measured from this photo.`, help: "A clearer, closer photo may help." });
-  if (edge.length) out.push({ key: "edge", ids: edge, text: `${plural(edge.length, "wire section")} ${edge.length === 1 ? "continues" : "continue"} past the edge of the photo, so the full span is not shown.`,
+  if (other.length) out.push({ key: "other", ids: other, text: `${plural(other.length, "wire")} could not be measured from this photo.`, help: "A clearer, closer photo may help." });
+  if (edge.length) out.push({ key: "edge", ids: edge, text: `${plural(edge.length, "wire")} ${edge.length === 1 ? "continues" : "continue"} past the edge of the photo, so the full span is not shown.`,
     help: "Step back or use a wider angle so each wire is visible from pole to pole." });
-  if (est.length) out.push({ key: "estimated", ids: est, text: `Parts of ${plural(est.length, "wire section")} were hidden or too faint to see. The gaps were filled by estimation and are shown dashed on the photo.`,
+  if (est.length) out.push({ key: "estimated", ids: est, text: `Parts of ${plural(est.length, "wire")} were hidden or too faint to see. The gaps were filled by estimation and are shown dashed on the photo.`,
     help: "A photo with fewer obstructions in front of the wires may help." });
   const q = r.quality || {};
   if (q.grade && q.grade !== "A" && q.reason) {
@@ -126,10 +127,10 @@ export function assessment(r) {
   const veg = hz?.factors?.vegetation || [];
   const vegPower = veg.filter((v) => v.class === "power-distribution-lines" && v.gap_px === 0).map((v) => v.span);
   const vegOther = veg.filter((v) => v.class !== "power-distribution-lines" && v.gap_px === 0).map((v) => v.span);
-  const coverage = total ? `${scored.length} of ${total} wire sections could be assessed${notAssessed ? `; ${notAssessed} could not (see Photo limitations)` : ""}.` : "";
+  const coverage = total ? `${scored.length} of ${total} wires could be assessed${notAssessed ? `; ${notAssessed} could not (see Photo limitations)` : ""}.` : "";
   if (r.status === "error") return { cls: "none", pill: "Not screened", title: "This photo could not be screened.", lines: ["Try the photo again. If it fails again, contact your administrator."], coverage: "" };
   const v = hz?.verdict || "";
-  const sagBit = nHigh ? `${plural(nHigh, "wire section")} ${nHigh === 1 ? "hangs" : "hang"} noticeably low` : "";
+  const sagBit = nHigh ? `${plural(nHigh, "wire")} ${nHigh === 1 ? "hangs" : "hang"} noticeably low` : "";
   if (v.startsWith("INCONCLUSIVE") || (!hz && !scored.length)) {
     // v2.23: INCONCLUSIVE also follows from low coverage or a sagging partial span; state the system's own reason
     const why = (hz?.reasons || []).find((x) => x.startsWith("INCONCLUSIVE"));
@@ -142,20 +143,20 @@ export function assessment(r) {
       lines: [`${r.quality?.reason ? `${limitations(r).find((l) => l.key === "quality")?.text || ""} ` : ""}${why ? why.replace(/^INCONCLUSIVE - RETAKE PHOTO:\s*/, "").replace(/^./, (c) => c.toUpperCase()) + ". " : ""}This is not a low-risk result; a new photo or a field check is needed.`.trim()], coverage };
   }
   if (v === "AT RISK - HIGH") {
-    const bits = [sagBit, vegPower.length ? `vegetation is touching power line ${SECTION(vegPower)}` : ""].filter(Boolean);
+    const bits = [sagBit, vegPower.length ? `vegetation is touching ${SECTION(vegPower)} (power line)` : ""].filter(Boolean);
     return { cls: "high", pill: "High risk found", title: "Some wires on this pole should be checked soon.",
       lines: [`${bits.join(", and ").replace(/^./, (c) => c.toUpperCase())}.`], coverage };
   }
   if (v === "AT RISK - MODERATE") {
-    const bits = [nHigh ? sagBit : nMed ? `${plural(nMed, "wire section")} ${nMed === 1 ? "shows" : "show"} some sag` : "",
-      vegOther.length ? `vegetation is touching ${SECTION(vegOther)}` : "", vegPower.length ? `vegetation is close to or touching power line ${SECTION(vegPower)}` : ""].filter(Boolean);
+    const bits = [nHigh ? sagBit : nMed ? `${plural(nMed, "wire")} ${nMed === 1 ? "shows" : "show"} some sag` : "",
+      vegOther.length ? `vegetation is touching ${SECTION(vegOther)}` : "", vegPower.length ? `vegetation is close to or touching ${SECTION(vegPower)} (power line)` : ""].filter(Boolean);
     return { cls: "medium", pill: "Moderate risk found", title: "Some wires on this pole should be looked at.",
-      lines: [bits.length ? `${bits.join("; ").replace(/^./, (c) => c.toUpperCase())}.` : "See the wire sections below."], coverage };
+      lines: [bits.length ? `${bits.join("; ").replace(/^./, (c) => c.toUpperCase())}.` : "See the wires below."], coverage };
   }
   // NOT AT RISK: nothing corroborated; individual readings are still shown, and the screening is not a clearance
   const lines = [];
   if (nHigh || nMed) {
-    lines.push(`${plural(nHigh + nMed, "wire section")} ${nHigh + nMed === 1 ? "reads" : "read"} as ${nHigh ? "high" : "moderate"} risk on its own. One or two readings like this can come from the photo rather than the wire, so the pole as a whole was not flagged, but ${nHigh + nMed === 1 ? "that section is" : "those sections are"} worth a look.`);
+    lines.push(`${plural(nHigh + nMed, "wire")} ${nHigh + nMed === 1 ? "reads" : "read"} as ${nHigh ? "high" : "moderate"} risk on its own. One or two readings like this can come from the photo rather than the wire, so the pole as a whole was not flagged, but ${nHigh + nMed === 1 ? "that wire is" : "those wires are"} worth a look.`);
   }
   lines.push("This is a screening from one photo, not a safety inspection.");
   return { cls: "low", pill: "No high risk found", title: scored.length ? "No measured wire on this pole was flagged." : "Nothing could be measured in this photo.", lines, coverage };
@@ -169,15 +170,15 @@ export function recommendations(r, a, lims) {
   const veg = r.hazard?.factors?.vegetation || [];
   const vegPower = veg.filter((v) => v.class === "power-distribution-lines" && v.gap_px === 0).map((v) => v.span);
   const vegOther = veg.filter((v) => v.class !== "power-distribution-lines" && v.gap_px === 0).map((v) => v.span);
-  if (high.length) out.push(`Have wire ${SECTION(high)} checked by your electric utility or a qualified electrical professional${high.length > 1 ? `, starting with section ${high[0]}` : ""}.`);
-  if (vegPower.length) out.push(`Report the vegetation touching power line ${SECTION(vegPower)} to your electric utility or barangay. Do not trim branches near the wires yourself.`);
-  if (med.length) out.push(`Include wire ${SECTION(med)} in the next routine inspection.`);
-  if (vegOther.length && !vegPower.length) out.push(`Vegetation is touching cable ${SECTION(vegOther)}. Let the cable operator or barangay know.`);
+  if (high.length) out.push(`Have ${SECTION(high)} checked by your electric utility or a qualified electrical professional${high.length > 1 ? `, starting with wire ${high[0]}` : ""}.`);
+  if (vegPower.length) out.push(`Report the vegetation touching ${SECTION(vegPower)} (power line) to your electric utility or barangay. Do not trim branches near the wires yourself.`);
+  if (med.length) out.push(`Include ${SECTION(med)} in the next routine inspection.`);
+  if (vegOther.length && !vegPower.length) out.push(`Vegetation is touching ${SECTION(vegOther)}. Let the cable operator or barangay know.`);
   const unassessed = lims.filter((l) => ["small", "overlap", "other", "edge", "quality"].includes(l.key));
   // S5: a retake is advised only when it can help (wires not measured or only partly measured), never for a missing reference
   if (a.cls === "none" && r.diagnosis && !r.diagnosis.retake_helps) out.unshift("A new photo will not complete this assessment: no validated sag reference exists. Have a qualified person inspect the pole for any concern.");
   else if (a.cls === "none") out.unshift(`Retake the photo. ${unassessed.map((l) => l.help).filter(Boolean)[0] || "Frame the pole and the full wires on both sides, in good light."}`);
-  else if (unassessed.length) out.push(`Some sections could not be assessed. A clearer photo may help: ${unassessed.map((l) => l.help).filter(Boolean)[0]?.replace(/^./, (c) => c.toLowerCase()) || "frame the full wires in good light."}`);
+  else if (unassessed.length) out.push(`Some wires could not be assessed. A clearer photo may help: ${unassessed.map((l) => l.help).filter(Boolean)[0]?.replace(/^./, (c) => c.toLowerCase()) || "frame the full wires in good light."}`);
   if (high.length || med.length || vegPower.length) out.push("Download the PDF report to share with the inspector.");
   out.push("Do not touch, climb toward or try to move any overhead wire. Treat every wire as live.");
   return out;

@@ -32,12 +32,16 @@ def _w(**kw):
 
 
 # ----------------------------------------------------------------------------- the comparison rule
-def test_shipped_reference_is_three_percent_and_provisional(shipped_cfg):
-    c = shipped_cfg.comparison_reference
+def test_shipped_reference_is_three_percent_and_provisional(s16_cfg, shipped_cfg):
+    # S17 (D-37): shipped as the ERB 95-21 s.19 regulatory reference; its superseded status is still stated
+    sc = shipped_cfg.comparison_reference
+    assert sc.enabled and sc.sag_ratio == 0.03 and sc.status == "regulatory" and sc.upper_boundary == 0.03
+    assert "95-21" in sc.source and "Section 19" in sc.section and "superseded" in sc.status_note
+    assert "not a" in sc.interpretation and "compliance" in sc.interpretation  # screening, not compliance
+    c = s16_cfg.comparison_reference
     assert c.enabled and c.sag_ratio == 0.03 and c.status == "provisional" and "provisional" in c.label
-    assert "ERB Res. 95-21" in c.source and "superseded" in c.source and "not validated" in c.source
     # it is not a scoring reference: S4 stands (no validated reference, nothing is assessed)
-    assert not any(shipped_cfg.crs.delta_lim0.values()) if shipped_cfg.crs.delta_lim0 else True
+    assert not any(s16_cfg.crs.delta_lim0.values()) if s16_cfg.crs.delta_lim0 else True
 
 
 @pytest.mark.parametrize("ratio, res, pos", [
@@ -49,35 +53,37 @@ def test_shipped_reference_is_three_percent_and_provisional(shipped_cfg):
     (0.0269, 0.003, "below"),  # 2.69 + 0.3 = 2.99 < 3.0
     (0.040, 0.011, "at"),      # wire 23 of P-B1D137: 4.0 +/- 1.1 contains 3.0
 ])
-def test_position_uses_only_the_reference_and_the_wires_resolution(shipped_cfg, ratio, res, pos):
-    c = compare_wire(_w(sag_ratio=ratio, sag_ratio_resolution=res), shipped_cfg)
+def test_position_uses_only_the_reference_and_the_wires_resolution(s16_cfg, ratio, res, pos):
+    c = compare_wire(_w(sag_ratio=ratio, sag_ratio_resolution=res), s16_cfg)
     assert c["position"] == pos and c["reference"] == 0.03 and c["status"] == "provisional"
     assert c["difference_pp"] == pytest.approx((ratio - 0.03) * 100, abs=0.01)
     assert c["zones"] == {"at_from": pytest.approx(0.03 - res), "above_from": pytest.approx(0.03 + res), "lower": 0.03, "upper": 0.03}
 
 
-def test_partial_unmeasured_drop_and_uncovered_wires(shipped_cfg):
-    part = compare_wire(_w(reason_code="endpoint_unavailable"), shipped_cfg)
+def test_partial_unmeasured_drop_and_uncovered_wires(s16_cfg):
+    part = compare_wire(_w(reason_code="endpoint_unavailable"), s16_cfg)
     assert part["state"] == "measured_partial" and part["position"] == "above"
-    none = compare_wire(_w(status="fit_failed", reason_code="residual_too_large", sag_ratio=None), shipped_cfg)
+    none = compare_wire(_w(status="fit_failed", reason_code="residual_too_large", sag_ratio=None), s16_cfg)
     assert none["state"] == "not_measured" and none["position"] is None and none["zones"] is None
-    assert compare_wire(_w(status="service_drop", sag_ratio=None), shipped_cfg) is None
-    # S9 (register D-27): the shipped reference covers power lines only; telecom and abandoned wires are not compared
-    assert shipped_cfg.comparison_reference.classes == ["power-distribution-lines"]
-    for cls in ("telecom-cable", "abandoned-wire"):
-        assert compare_wire(_w(**{"class": cls}), shipped_cfg) is None
-    only_telecom = shipped_cfg.model_copy(update={"comparison_reference": shipped_cfg.comparison_reference.model_copy(
+    assert compare_wire(_w(status="service_drop", sag_ratio=None), s16_cfg) is None
+    # S9 (register D-27): the power reference covers power lines only; abandoned wires are not compared.
+    # S15 (D-31): telecom is compared with its own bands, never with the power value
+    assert s16_cfg.comparison_reference.classes == ["power-distribution-lines"]
+    assert compare_wire(_w(**{"class": "abandoned-wire"}), s16_cfg) is None
+    tc = compare_wire(_w(**{"class": "telecom-cable"}), s16_cfg)
+    assert tc["reference_id"] == "telecom" and tc["reference"] != s16_cfg.comparison_reference.sag_ratio
+    only_telecom = s16_cfg.model_copy(update={"comparison_reference": s16_cfg.comparison_reference.model_copy(
         update={"classes": ["telecom-cable"]})})
     assert compare_wire(_w(), only_telecom) is None
-    off = shipped_cfg.model_copy(update={"comparison_reference": shipped_cfg.comparison_reference.model_copy(update={"enabled": False})})
+    off = s16_cfg.model_copy(update={"comparison_reference": s16_cfg.comparison_reference.model_copy(update={"enabled": False})})
     assert compare_wire(_w(), off) is None
 
 
-def test_reference_status_must_be_a_known_kind(shipped_cfg):
+def test_reference_status_must_be_a_known_kind(s16_cfg):
     with pytest.raises(ValueError):
-        type(shipped_cfg.comparison_reference)(status="official")
+        type(s16_cfg.comparison_reference)(status="official")
     with pytest.raises(ValueError):
-        type(shipped_cfg.comparison_reference)(classes=["fence"])
+        type(s16_cfg.comparison_reference)(classes=["fence"])
 
 
 # ---------------------------------------------------------- the S8 page meter tests moved to test_s7_sag_meter.py (S10)
@@ -112,11 +118,19 @@ def _complete(client, scene):
 
 
 def test_comparison_is_never_an_assessment(client, anon, scene):
+    """S17 (D-37): the shipped comparison is the classification (no legacy CRS level or AT RISK verdict revived);
+    every compared power or telecom wire carries one canonical class code."""
     aid = _complete(client, scene)
     for c in (client, anon):
         r = c.get(f"/api/analysis/{aid}/result").json()
-        assert r["comparison"]["sag_ratio"] == 0.03 and r["comparison"]["status"] == "provisional"
-        assert sum(r["comparison"]["counts"].values()) == sum(1 for w in r["wires"] if w["comparison"])
+        assert r["comparison"]["sag_ratio"] == 0.03 and r["comparison"]["status"] == "regulatory"
+        codes = set(r["comparison"]["classifications"].values()) | {
+            v for x in r["comparison"]["by_reference"] for v in x["classifications"].values()}
+        assert all(w["comparison"]["classification"] in codes for w in r["wires"]
+                   if w["comparison"] and w["comparison"]["position"])
+        by = r["comparison"]["by_reference"]
+        assert sum(sum(x["counts"].values()) for x in by) == sum(1 for w in r["wires"] if w["comparison"])
+        assert r["comparison"]["counts"] == next(x["counts"] for x in by if x["id"] == "power")
         assert not any(w["status"] == "scored" or w["level"] or w["sag_bands"] for w in r["wires"])
         assert not r["hazard"]["verdict"].startswith("AT RISK") and r["hazard"]["verdict"] != "NOT AT RISK"
 
@@ -125,13 +139,18 @@ def test_changing_the_configured_reference_changes_every_view(client, scene):
     import pypdfium2 as pdfium
 
     from app.assistant.service import facts_summary, inspection_facts
+    from tests.conftest import s16_comparison
     aid = _complete(client, scene)
     st = client.state
+    st.config = s16_comparison(st.config)  # the non-classifying mode, whose label carries the status
     st.config = st.config.model_copy(update={"comparison_reference": st.config.comparison_reference.model_copy(
         update={"sag_ratio": 0.045, "label": "4.5% check reference (provisional)"})})
     r = client.get(f"/api/analysis/{aid}/result").json()
     assert r["comparison"]["sag_ratio"] == 0.045
-    assert all(w["comparison"]["reference"] == 0.045 for w in r["wires"] if w["comparison"])
+    assert all(w["comparison"]["reference"] == 0.045 for w in r["wires"]
+               if w["comparison"] and w["comparison"]["reference_id"] == "power")
+    assert all(w["comparison"]["reference"] == 0.02 for w in r["wires"]  # the telecom bands are not touched
+               if w["comparison"] and w["comparison"]["reference_id"] == "telecom")
     pdf = client.get(f"/api/reports/{aid}/pdf?regenerate=1")
     doc = pdfium.PdfDocument(io.BytesIO(pdf.content))
     text = "\n".join(doc[i].get_textpage().get_text_range() for i in range(len(doc)))
@@ -161,8 +180,9 @@ def test_withdrawn_historical_levels_stay_withdrawn_with_the_reference(client, s
     assert w["comparison"]["reference"] == 0.03 and w["comparison"]["position"] in ("below", "at", "above")
 
 
-def test_records_without_a_stored_resolution_get_it_derived_on_read_and_unchanged(client, scene, shipped_cfg):
+def test_records_without_a_stored_resolution_get_it_derived_on_read_and_unchanged(client, scene, s16_cfg):
     """Pre-S4 records have no stored resolution; the same S4 formula is applied on read, flagged, and not written."""
+    client.state.config = s16_cfg  # the resolution-widened mode, where the derived resolution moves the zones
     aid = _complete(client, scene)
     with client.state.db.session() as s:
         a = s.get(Analysis, aid)

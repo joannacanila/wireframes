@@ -37,8 +37,9 @@ inspection the user has open. If the sources do not answer the question, say pla
 WIREFRAME documentation and suggest asking an administrator or a qualified professional. Never invent features, \
 pages, buttons, numbers, thresholds, formulas or capabilities. Do not explain formulas or internal parameters.
 
-Be brief and scannable: one short opening sentence, then numbered steps for a procedure or bullets for \
-related points; write interface labels in bold (for example **Map & Dispatch**). Never more than about 120 words. When the \
+Lead with what the user can do in the portal, in its own words (Not yet reviewed, Partially reviewed, Review \
+complete, High / Moderate / Normal triage, problem wires, Processing failed). If you use a technical term, explain it in a few everyday words. Be brief and scannable: one short opening sentence, then numbered steps for a procedure or bullets for \
+related points; write interface labels in bold (for example **Map & Locations**). Never more than about 120 words. When the \
 question is about the open inspection, use its facts. When you state what WIREFRAME does, keep it separate from \
 what you recommend; recommendations always end with having a qualified professional verify the result. Never \
 say or imply that a pole or wire is safe, that a low-risk result certifies anything, that no detected hazard means \
@@ -101,6 +102,10 @@ def inspection_facts(a, cfg=None) -> dict[str, Any]:
     from app.core.config import get_analysis_config
     from app.services.comparison import detection_counts
     public["sag_reference_comparison"] = detection_counts(a, cfg or get_analysis_config())
+    # S14: the operational status first, in the words the portal uses (Needs review, Incomplete, ...)
+    from app.services import ops
+    st_, why, _ = ops.status_of(a, cfg or get_analysis_config())
+    public["status_now"], public["status_reason"] = ops.STATUS_LABEL[st_], why
     return {"public": public, "pole_code": a.pole.pole_code, "inspection_name": a.inspection_name, "id": a.id}
 
 
@@ -108,7 +113,8 @@ def facts_summary(f: dict[str, Any]) -> str:
     """The inspection facts as short plain sentences (shown with every answer on an inspection page)."""
     p = f["public"]
     w = p["wire_sections"]
-    lines = [f"Risk level: {p['risk_level']}. Assessment: {p['assessment']}. Review: {p['review_status']}."]
+    lines = [f"Status: {p['status_now']}. {p['status_reason']}"] if p.get("status_now") else []
+    lines.append(f"Risk level: {p['risk_level']}. Assessment: {p['assessment']}. Review: {p['review_status']}.")
     total = w["high_risk"] + w["moderate_risk"] + w["low_risk"] + w["not_assessed"]
     if total:
         lines.append(f"Wire sections: {w['high_risk']} high risk, {w['moderate_risk']} moderate, {w['low_risk']} low, "

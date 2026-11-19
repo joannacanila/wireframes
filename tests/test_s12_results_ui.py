@@ -9,10 +9,6 @@ uncertainty; a validated tolerance would be configured, never hardcoded. The pag
 from __future__ import annotations
 
 import io
-import json
-import re
-import shutil
-import subprocess
 
 import pytest
 from pydantic import ValidationError
@@ -39,8 +35,13 @@ def _w(ratio=0.031, res=0.002, cls="power-distribution-lines", **kw):
 
 
 # ----------------------------------------------------------------------------- configuration: one source, honest bounds
-def test_shipped_boundaries_are_the_reference_itself_with_no_invented_tolerance(shipped_cfg):
-    ref = reference_info(shipped_cfg)
+
+def _no_telecom_ref(cfg):
+    """The shipped configuration with the S15 telecom reference switched off: the no-reference path."""
+    return cfg.model_copy(update={"telecom_reference": cfg.telecom_reference.model_copy(update={"enabled": False})})
+
+def test_shipped_boundaries_are_the_reference_itself_with_no_invented_tolerance(s16_cfg):
+    ref = reference_info(s16_cfg)
     assert ref["sag_ratio"] == ref["lower_boundary"] == ref["upper_boundary"] == 0.03
     assert ref["status"] == "provisional" and ref["classification_enabled"] is False and ref["uncertainty"] == "resolution"
     assert ref["unit"] and ref["source"] and ref["status_note"] and ref["effective_date"] and ref["tolerance_basis"].startswith("none")
@@ -58,24 +59,29 @@ def test_shipped_boundaries_are_the_reference_itself_with_no_invented_tolerance(
     {"classification_enabled": True},                           # a severity class from a provisional reference
     {"meter_scale_max": 0.03},                                  # the scale must show the red zone
 ])
-def test_configuration_rejects_boundaries_the_evidence_does_not_support(shipped_cfg, bad):
+def test_configuration_rejects_boundaries_the_evidence_does_not_support(s16_cfg, bad):
     with pytest.raises(ValidationError):
-        _cfg(shipped_cfg, **bad)
+        _cfg(s16_cfg, **bad)
 
 
 # ----------------------------------------------------------------------------- applicability
-def test_only_power_lines_of_a_known_type_are_compared_by_default(shipped_cfg):
-    assert compare_wire(_w(), shipped_cfg)["position"]
-    for w, why in ((_w(cls="telecom-cable"), "no_reference_for_telecom"), (_w(cls="abandoned-wire"), "no_reference_for_abandoned"),
+def test_only_power_lines_of_a_known_type_are_compared_by_default(s16_cfg):
+    assert compare_wire(_w(), s16_cfg)["position"]
+    # S15 (D-31): telecom now has its own reference (the telecom path is covered with it switched off)
+    noref = _no_telecom_ref(s16_cfg)
+    w = _w(cls="telecom-cable")
+    assert compare_wire(w, s16_cfg)["reference_id"] == "telecom" and compare_wire(w, noref) is None
+    assert wire_states(w, noref, None)["reference_unavailable_reason"] == "no_reference_for_telecom"
+    for w, why in ((_w(cls="abandoned-wire"), "no_reference_for_abandoned"),
                    (_w(class_status="uncertain"), "type_uncertain"), (_w(status="service_drop"), "drop_wire")):
-        assert compare_wire(w, shipped_cfg) is None
-        s = wire_states(w, shipped_cfg, None)
+        assert compare_wire(w, s16_cfg) is None
+        s = wire_states(w, s16_cfg, None)
         assert s["reference_available"] is False and s["reference_unavailable_reason"] == why and s["comparison"] is None
         assert s["assessed"] is False and s["classification_available"] is False
 
 
-def test_an_explicitly_configured_alternative_reference_is_applied_everywhere_it_is_configured(shipped_cfg):
-    alt = _cfg(shipped_cfg, sag_ratio=0.015, lower_boundary=0.012, upper_boundary=0.018, status="manufacturer",
+def test_an_explicitly_configured_alternative_reference_is_applied_everywhere_it_is_configured(s16_cfg):
+    alt = _cfg(s16_cfg, sag_ratio=0.015, lower_boundary=0.012, upper_boundary=0.018, status="manufacturer",
                classes=["telecom-cable"], label="1.5% installation sag for ADSS cable (manufacturer)",
                tolerance_basis="manufacturer installation tolerance")
     tel, pow_ = _w(0.016, 0.001, cls="telecom-cable"), _w(0.016, 0.001)
@@ -97,175 +103,88 @@ def test_an_explicitly_configured_alternative_reference_is_applied_everywhere_it
     (0.029, 0.0, "below", False),     # no uncertainty: the point estimate alone
     (0.030, 0.0, "at", False),        # exactly at the boundary with no band: "at", no overlap to report
 ])
-def test_position_uses_the_configured_boundaries_and_the_wire_uncertainty(shipped_cfg, ratio, res, pos, overlap):
-    c = compare_wire(_w(ratio, res), shipped_cfg)
+def test_position_uses_the_configured_boundaries_and_the_wire_uncertainty(s16_cfg, ratio, res, pos, overlap):
+    c = compare_wire(_w(ratio, res), s16_cfg)
     assert c["position"] == pos and c["uncertainty_overlaps"] is overlap
     assert c["difference_pp"] == pytest.approx((ratio - 0.03) * 100)
 
 
-def test_a_validated_tolerance_region_widens_amber_and_overlap_is_reported_per_boundary(shipped_cfg):
-    tol = _cfg(shipped_cfg, lower_boundary=0.025, upper_boundary=0.035, status="validated",
-               tolerance_basis="test tolerance", classification_enabled=True)
+def test_a_validated_tolerance_region_widens_amber_and_overlap_is_reported_per_boundary(s16_cfg):
+    # S17 (D-37): a classifying reference places the wire by its point estimate (bounds inclusive); the band is
+    # reported (uncertainty_overlaps) and never moves the class
+    tol = _cfg(s16_cfg, lower_boundary=0.025, upper_boundary=0.035, status="validated",
+               tolerance_basis="test tolerance", classification_enabled=True,
+               classifications={"below": "B", "at": "A", "above": "X"})
     assert compare_wire(_w(0.030, 0.001), tol)["position"] == "at"               # within the tolerance
     assert compare_wire(_w(0.030, 0.001), tol)["uncertainty_overlaps"] is False  # band inside the region
     at_upper = compare_wire(_w(0.035, 0.001), tol)
     assert at_upper["position"] == "at" and at_upper["uncertainty_overlaps"] is True
+    over = compare_wire(_w(0.0351, 0.001), tol)  # band reaches back inside, the value is over: exceeded
+    assert over["position"] == "above" and over["classification"] == "X" and over["uncertainty_overlaps"] is True
     assert compare_wire(_w(0.0365, 0.001), tol)["position"] == "above"
-    assert compare_wire(_w(0.0235, 0.001), tol)["position"] == "below"
+    assert compare_wire(_w(0.0249, 0.001), tol)["position"] == "below"
     assert wire_states(_w(), tol, compare_wire(_w(), tol))["classification_available"] is True
-    assert compare_wire(_w(0.03, 0.001), _cfg(shipped_cfg, uncertainty="none"))["uncertainty"] is None
+    assert compare_wire(_w(0.03, 0.001), _cfg(s16_cfg, uncertainty="none"))["uncertainty"] is None
 
 
-def test_missing_measurement_or_resolution_never_becomes_a_zero(shipped_cfg):
-    c = compare_wire(_w(None, None, status="fit_failed", reason_code="residual_too_large"), shipped_cfg)
+def test_missing_measurement_or_resolution_never_becomes_a_zero(s16_cfg):
+    c = compare_wire(_w(None, None, status="fit_failed", reason_code="residual_too_large"), s16_cfg)
     assert c["position"] is None and c["difference_pp"] is None and c["zones"] is None
-    s = wire_states(_w(None, None, status="fit_failed"), shipped_cfg, c)
+    s = wire_states(_w(None, None, status="fit_failed"), s16_cfg, c)
     assert s["measurement"] == "unmeasured" and s["coverage"] is None and s["within_resolution"] is False
-    c2 = compare_wire(_w(0.02, None), shipped_cfg)
+    c2 = compare_wire(_w(0.02, None), s16_cfg)
     assert c2["uncertainty"] is None and c2["uncertainty_overlaps"] is False and c2["position"] == "below"
-    part = wire_states(_w(0.01, 0.02, reason_code="endpoint_unavailable"), shipped_cfg, None)
+    part = wire_states(_w(0.01, 0.02, reason_code="endpoint_unavailable"), s16_cfg, None)
     assert part["coverage"] == "edge_clipped" and part["within_resolution"] is True
 
 
-# ----------------------------------------------------------------------------- the page's own functions (Node)
-STUBS = """
-const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-const classLabel = (w) => ({ "power-distribution-lines": "Power line", "telecom-cable": "Telecom cable" })[w.class] || "Wire";
-const wireColor = () => "rgb(1,2,3)"; const spanId = (i) => `SP-${String(i).padStart(3, "0")}`;
-const pp = (x) => `${(x * 100).toFixed(1)}%`; const pc = pp;
-const measuredText = (w) => `${pc(w.sag_ratio)}${w.sag_ratio_resolution ? ` ±${(w.sag_ratio_resolution * 100).toFixed(1)}` : ""}`;
-const isMeasured = (w) => w.sag_ratio != null && (w.status === "scored" || w.status === "not_assessed") && !!w.fit?.endpoints;
-const group = (w) => w.level || "none"; const SEVERITY = { high: "Critical", medium: "Minor sag", low: "Within reference", none: "Not assessed" };
-const BAND = SEVERITY; const plainFinding = () => "Unable to assess due to overlapping wires";
-"""
+# S18: the Field Screener's separate technical view (and the Node tests of its meter, card and status
+# functions) was removed at the owner's request; the shared result view's meter is tested in test_s14_ux.py.
 
 
-def _page(expr_cases: list[tuple[str, dict]]) -> list[str]:
-    node = shutil.which("node")
-    if not node:
-        pytest.skip("node is not installed")
-    src = FIELD.read_text()
-    meter = re.search(r"function meter\(w, g\) \{.*?\n\}\n", src, re.S).group(0)
-    meters = src[src.index("/** S12 meters"):src.index("/** S5: the wire's badge.")]
-    card = src[src.index("// S12: coverage and assessment are separate"):src.index("function renderResult(r) {")]
-    js = STUBS + meter + meters + card + f"""
-const cases = {json.dumps(expr_cases)};
-console.log(JSON.stringify(cases.map(([f, a]) => ({{ ref: () => meterRef(a.w, a.pc), type: () => meterType(a.w, a.pc), empty: () => meterEmpty(),
-  card: () => wireCard(a.w, a.pc), status: () => statusPills(a.w) }})[f]())));
-"""
-    return json.loads(subprocess.run([node, "-e", js], capture_output=True, text=True, check=True).stdout)
-
-
-def _api_wire(cfg, **kw):
-    w = _w(**kw)
-    w["comparison"] = compare_wire(w, cfg)
-    w["states"] = wire_states(w, cfg, w["comparison"])
-    return w
-
-
-def _pc(cfg):
-    return pole_comparison({"wires": []}, cfg)
-
-
-def _left(h, cls):
-    return float(re.search(rf'class="{cls}[^"]*" style="left:([0-9.]+)%', h).group(1))
-
-
-def test_reference_meter_draws_three_proportional_zones_from_the_server(shipped_cfg):
-    pc = _pc(shipped_cfg)
-    below, at, above = (_api_wire(shipped_cfg, ratio=r, res=0.002) for r in (0.012, 0.03, 0.06))
-    hb, ha, hx = _page([("ref", {"w": below, "pc": pc}), ("ref", {"w": at, "pc": pc}), ("ref", {"w": above, "pc": pc})])
-    for h in (hb, ha, hx):
-        assert re.findall(r'class="z (z-low|z-medium|z-high)"', h) == ["z-low", "z-medium", "z-high"]
-        assert "rx-meter-ref" in h and "Reference 3.0%" in h and "0%" in h and "10.0%" in h
-        assert "Below reference" in h and "Reference-tolerance region" in h and "Above reference" in h  # legend
-        assert "Provisional comparison: the zones are not severity classes." in h
-        assert not re.search(r"\b(Critical|Minor sag|safe|unsafe|compliant|Moderate)\b", h)
-    # proportional: amber from 2.8 % to 3.2 % on a 0 to 10 % scale; the dot sits at the ratio
-    assert _left(hb, "z z-medium") == pytest.approx(28.0) and _left(hb, "z z-high") == pytest.approx(32.0)
-    assert _left(hb, "rx-meter-dot") == pytest.approx(12.0) and _left(hx, "rx-meter-dot") == pytest.approx(60.0)
-    assert 'rx-zone below' in hb and 'rx-zone at' in ha and 'rx-zone above' in hx
-    assert "Uncertainty overlaps the reference" in ha and "Uncertainty overlaps" not in hb
-    assert "2.80% to 3.20%" in hb  # the region's boundaries are written out, not only coloured
-
-
-def test_reference_meter_handles_overflow_and_a_hairline_tolerance(shipped_cfg):
-    pc = _pc(shipped_cfg)
-    big = _api_wire(shipped_cfg, ratio=0.17, res=0.002)
-    tiny = _api_wire(shipped_cfg, ratio=0.01, res=0.00001)
-    hb, ht = _page([("ref", {"w": big, "pc": pc}), ("ref", {"w": tiny, "pc": pc})])
-    assert "rx-meter-over" in hb and "overflow" in hb and "10.0%+" in hb and "beyond the 10.0% scale" in hb
-    assert _left(hb, "rx-meter-dot") == 100
-    w_amber = float(re.search(r'class="z z-medium" style="left:[0-9.]+%;width:([0-9.]+)%', ht).group(1))
-    assert w_amber == pytest.approx(0.8)  # visible, and no wider than needed
-
-
-def test_no_reference_keeps_the_colourful_meter_and_says_no_comparison_applies(shipped_cfg):
-    pc = _pc(shipped_cfg)
-    tel = _api_wire(shipped_cfg, ratio=0.024, res=0.003, cls="telecom-cable", reason_code="endpoint_unavailable")
-    unk = _api_wire(shipped_cfg, ratio=0.024, res=0.003, class_status="uncertain")
-    ht, hu, he = _page([("type", {"w": tel, "pc": pc}), ("type", {"w": unk, "pc": pc}), ("empty", {})])
-    for h in (ht, hu):
-        assert 'class="rx-meter type"' in h and "--wc:rgb(1,2,3)" in h and "rx-meter-fill" in h and "rx-meter-dot" in h
-        assert "No applicable comparison" in h and "2.4% ±0.3" in h
-        assert 'class="z ' not in h and "rx-meter-ref" not in h and "Reference 3.0%" not in h
-    assert "telecom / fibre cable" in ht and "visible part" in ht and "partial" in ht
-    assert "does not show clearly" in hu
-    assert "Not measured" in he and "rx-meter-dot" not in he
-
-
-def test_inspector_shows_one_status_and_hides_rows_that_do_not_apply(shipped_cfg):
-    pc = _pc(shipped_cfg)
-    pw = _api_wire(shipped_cfg, ratio=0.012, res=0.002, provenance={"observed_px": 850, "inferred_px": 150, "centerline_inferred_share": 0.1, "inferred_segments": [[[0, 0], [1, 1]]]})
-    tel = _api_wire(shipped_cfg, ratio=0.012, res=0.002, cls="telecom-cable")
-    nm = _api_wire(shipped_cfg, ratio=None, res=None, status="fit_failed", reason_code="residual_too_large", fit=None)
-    hp, ht, hn = _page([("card", {"w": pw, "pc": pc}), ("card", {"w": tel, "pc": pc}), ("card", {"w": nm, "pc": pc})])
-    assert "<dt>Reference</dt>" in hp and "<dt>Difference</dt>" in hp and "−1.8 pp" in hp
-    assert "Unassessed (Provisional Comparison Only)" in hp and "rx-meter cmp below" in hp
-    assert "<dt>Reference</dt>" not in ht and "<dt>Difference</dt>" not in ht
-    assert ht.count("Unassessed (No Validated Reference)") == 1 and "telecom / fibre cable" in ht
-    assert "<dt>Chord</dt><dd class=\"\">500 px</dd>" in hp
-    for row in ("Traced fraction", "Interpolation", "Chord", "Sag calculation", "Uncertainty", "Pixel resolution", "Fit diagnostics"):
-        assert f"<dt>{row}</dt>" in hp, row
-    assert "90% of the centreline length" in hp and "10% of the length bridged across 1 gap" in hp  # length, not pixel area and "1 px = 0.200% of the chord" in hp
-    assert '<details class="rx-md"><summary>Measurement details</summary>' in hp
-    assert "Unassessed (Not Measured)" in hn and "Image sag ratio" not in hn and "<dt>Reason</dt>" in hn
-
-
-def test_inventory_status_keeps_coverage_and_assessment_badges_separate(shipped_cfg):
-    flat = _api_wire(shipped_cfg, ratio=0.0005, res=0.002, cls="telecom-cable")
-    pw = _api_wire(shipped_cfg, ratio=0.04, res=0.002)
-    hf, hp = _page([("status", {"w": flat}), ("status", {"w": pw})])
-    assert "Unassessed" in hf and "Reference Unavailable" in hf and "Within Resolution" in hf and "safe" not in hf.replace("not evidence that the wire is safe", "")
-    assert "Unassessed" in hp and "Above reference" in hp and "Reference Unavailable" not in hp
-    js = FIELD.read_text()
-    assert 'const COVER = { full_span: "Full Span", edge_clipped: "Edge Clipped", unmeasured: "Unmeasured", drop: "Drop Wire" };' in js
-    assert "<th scope=\"col\">Wire ID</th><th scope=\"col\">Type</th><th scope=\"col\">Coverage</th><th scope=\"col\" class=\"r\">Image Sag Ratio</th><th scope=\"col\">Status</th>" in js
-
-
-# ----------------------------------------------------------------------------- page structure
 def test_results_page_reading_order_and_single_methodology_section():
     js = FIELD.read_text()
     page = js[js.index("function renderResult(r) {"):js.index("const root = stages.result;")]
-    order = ['class="rx-head"', 'class="rx-actions"', 'id="rx-banner"', 'class="rx-summary', 'class="rx-kpi"', 'class="rx-do"',
-             'class="rx-photo"', 'id="inventory"', 'id="span-detail"', "${methodology(r, pc, LIMS)}"]
+    # S18 (Part 2): What we know -> What you should do next -> How did we know?, from the shared result view. The page
+    # builds section B (next steps, contacts, one emergency line) and the folded methodology, then renders the header
+    # actions, the guard banner, the shared view (A, B, C) and the notice, in that order.
+    # S18 (Phase 11): the folded "How this result was produced" section was removed from the citizen page and is not
+    # replaced by another technical explanation.
+    order = ['class="rv-next" id="next"', 'class="rv-steps"', 'id="contacts"', 'class="rv-emerg"',
+             'class="rv-top"', 'id="pdf"', 'id="copy-msg"',
+             "${guardBanner(r)}", 'resultViewHtml(r, { mode: "citizen", nextHtml: next })',
+             "${NOTICE_FOOTER}"]
     pos = [page.index(x) for x in order]
     assert pos == sorted(pos), dict(zip(order, pos, strict=True))
-    assert "<wf-notice" not in page and js.count('<wf-notice variant="full">') == 1  # inside the methodology section
-    meth = js[js.index("function methodology(r, pc, LIMS)"):]
-    assert "Methodology &amp; Limitations" in meth and "<details" in meth and "r.methodology" in meth
+    assert "How this result was produced" not in page and "rv-method" not in page and "methodology(" not in page
+    rv = (FIELD.parent / "result-view.js").read_text()
+    assert '${knowHtml(r, o)}${o.nextHtml || ""}' in rv and "howHtml(r, o)}</div>`" in rv  # A, then B, then C
+    assert page.count("rv-emerg") == 1 and page.count("tel:911") == 1  # one emergency instruction
+    for staff in ("Not yet reviewed", "Reviewed by", "staff review", "czDiagnosis", "rx-diag"):
+        assert staff not in page, staff
+    # no metric tiles, no engineering controls and no wire table on the citizen page; they stay in the staff view
+    for tech in ('class="rx-kpi"', 'id="adv"', 'data-view="mask"', 'id="opacity"', 'id="inventory"', "measureDetails(",
+                 "meterRef(", "statusPills("):
+        assert tech not in page, tech
+    # S18: no separate technical view in the Field Screener, for anyone (staff details are on the admin inspection page)
+    assert "renderTechnical" not in js and "view=technical" not in js and "Technical view" not in js
+    # S17: the notice markup exists once (NOTICE_FOOTER), at the foot of each view, never inside a collapsed section
+    assert "<wf-notice" not in page and js.count('<wf-notice variant="full">') == 1
+    assert js.count("${NOTICE_FOOTER}") == 1
     for gone in ("rx-phototip", "rx-retake", "rx-callouts", "rx-guide", "rx-limits", "Photo limitations</h2>"):
         assert gone not in page, gone
-    # browse filter, not an engineering threshold
-    assert "const BROWSE_SAG = 0.02;" in js and "Not an engineering threshold." in js
-    assert "${inv.open ? \"Hide\" : \"Show\"} ${flat.length} wire" in js and "with no resolvable sag" in js and "This is not evidence that" in js
+    # S14: no sag-percentage browse filter (it read like a threshold); the secondary filters are categorical only
+    assert "BROWSE_SAG" not in js and "Notable sag" not in js
+    # the citizen safety caveats come from the server (plain.py), not from page code
+    plain = (FIELD.parent.parent.parent / "services" / "plain.py").read_text()
+    assert "This does not mean the location is electrically safe" in plain and "not a safety inspection" in plain
     css = CSS.read_text()
     s12 = css[css.index("S12 results page"):]
     assert "gradient(" not in s12 and "box-shadow: 0 12px" not in s12
 
 
-def test_methodology_covers_the_eleven_topics_from_the_configured_reference(shipped_cfg):
-    t = topics(pole_comparison({"wires": []}, shipped_cfg))
+def test_methodology_covers_the_eleven_topics_from_the_configured_reference(s16_cfg):
+    t = topics(pole_comparison({"wires": []}, s16_cfg))
     assert [x["title"] for x in t] == ["Image sag ratio", "Chord", "Curve fit", "Incomplete visibility", "Interpolation",
                                        "Uncertainty", "Image ratio is not physical sag", "Limits of one 2D photo",
                                        "Reference used", "Wire types without a reference", "Model limitations"]
@@ -287,23 +206,25 @@ def test_the_public_result_carries_the_states_and_the_shared_text(client, scene)
     assert "crs" not in r["wires"][0] and "config" not in r  # still no scores or internals
 
 
-def test_api_csv_pdf_and_assistant_agree(client, scene, shipped_cfg):
+def test_api_csv_pdf_and_assistant_agree(client, scene, s16_cfg):
     import pypdfium2 as pdfium
     aid = upload(client, scene.rgb, scene.labels)
     assert wait_done(client, aid)["status"] == "complete"
     r = client.get(f"/api/analysis/{aid}/result").json()
     dc, pc = r["diagnosis"]["counts"], r["comparison"]
-    assert pc["lower_boundary"] == pc["upper_boundary"] == 0.03 and pc["zone_note"]
+    assert pc["lower_boundary"] == 0.02 and pc["upper_boundary"] == 0.03 and pc["zone_note"]  # S17 bands
     for w in r["wires"]:
         s, c = w["states"], w["comparison"]
         assert s["comparison"] == (c["position"] if c else None)
         assert s["reference_available"] == (c is not None)
-        assert s["assessed"] is False and s["classification_available"] is False
+        assert s["assessed"] is False  # the legacy CRS level stays withdrawn
+        assert s["classification_available"] == (c is not None)
+        assert (c["classification"] is not None) == bool(c and c["position"]) if c else True
         if s["coverage"] == "edge_clipped":
             assert w["reason_code"] == "endpoint_unavailable"
     assert sum(w["states"]["coverage"] == "full_span" for w in r["wires"]) == dc["measured"]
     assert sum(w["states"]["coverage"] == "edge_clipped" for w in r["wires"]) == dc["measured_partial"]
-    assert sum(pc["counts"].values()) == sum(1 for w in r["wires"] if w["comparison"])
+    assert sum(sum(x["counts"].values()) for x in pc["by_reference"]) == sum(1 for w in r["wires"] if w["comparison"])
     assert r["summary_lines"] == summary_lines(r) and f"{dc['detected']} wire" in r["summary_lines"][0]
     assert r["methodology"] == topics(pc)
     csv = client.get(f"/api/admin/inspections/{aid}/findings.csv").text
@@ -311,9 +232,11 @@ def test_api_csv_pdf_and_assistant_agree(client, scene, shipped_cfg):
     pdf = client.get(f"/api/reports/{aid}/pdf")
     doc = pdfium.PdfDocument(io.BytesIO(pdf.content))
     text = " ".join(" ".join(doc[i].get_textpage().get_text_range() for i in range(len(doc))).split())
-    assert r["summary_lines"][0] in text and "5.0 Methodology and Limitations" in text
-    assert text.index("2.0 Recommended Field Actions") < text.index("3.0 Annotated Photographic Evidence")
+    assert r["summary_lines"][0] in text and "6.0 Limitations and Methodology" in text
+    assert text.index("2.0 What To Do Next") < text.index("3.0 Photograph")
     for t in r["methodology"]:
         assert t["title"] in text, t["title"]
-    assert "Keep distance" in text
-    assert "reference-tolerance region" in counts_text(pc) or "so none is compared" in counts_text(pc)
+    assert "Keep a safe distance" in text
+    # S17: the counts name each canonical class (the S16 "reference-tolerance region" no longer exists)
+    assert ("within reference threshold" in counts_text(pc) and "reference threshold exceeded" in counts_text(pc))\
+        or "so none is compared" in counts_text(pc)

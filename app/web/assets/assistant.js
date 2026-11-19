@@ -14,7 +14,7 @@ const SUGGEST = {
   inspections: ["Show failed inspections", "Which poles need review?", "What does not assessed mean?"],
   default: ["What needs urgent review?", "Which inspections failed?", "Summarize the current workload"],
 };
-const PAGE = { inspection: "Inspection", map: "Map & Dispatch", inspections: "Inspections", default: "Dashboard" };
+const PAGE = { inspection: "Inspection", map: "Map & Locations", inspections: "Inspections", default: "Dashboard" };
 const SUGGEST_NAV = { map: "How can I go to the poles?", inspections: "How do I open an inspection report?", inspection: "Explain this inspection's findings", default: "What can you do?" };
 const RISK_CLS = { high: "high", medium: "medium", low: "low", unassessed: "unassessed", failed: "failed", processing: "processing" };
 

@@ -39,8 +39,10 @@ def test_full_flow_with_reference_masks(client, scene):
     doc.close()
     flat = " ".join(text.split())
     # v2.21: one short footer and three scope points replace the repeated notice block
-    assert "field verification required" in flat.lower() and "verified by qualified personnel" in flat
-    assert "SYN-1" in text and "Flagged Spans Schedule" in text and "Field Verification" in text  # v2.20 formal
+    # S17 (Part 5.4): the canonical Important Notice, once, and every page footer points to it
+    from app.core import notice
+    assert flat.count(notice.TEXT) == 1 and "See the Important Notice" in flat
+    assert "SYN-1" in text and "Findings Included in This Report" in text and "Field Verification" in text  # v2.20 formal
     tech = client.get(f"/api/reports/{aid}/pdf?technical=true")
     assert tech.status_code == 200 and b"%PDF" in tech.content[:5]
 

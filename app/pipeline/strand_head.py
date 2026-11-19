@@ -118,9 +118,12 @@ def strand_features(strands, probs: np.ndarray, rgb: np.ndarray, grid: np.ndarra
 class Head:
     """Standardise -> [hand, PCA(dino)] -> 2-layer MLP (power vs telecom), L2 + early stopping by train CV."""
 
-    def __init__(self, stats: dict, state: dict | None = None):
+    def __init__(self, stats: dict, state: dict | None = None, bounds: dict | None = None):
         import torch
         self.stats = stats
+        # S15 (D-31): [min, max] of each hand feature over the fitting strands; inputs outside it (a 136-strand
+        # street, a night sky) are clipped so the MLP is not asked to extrapolate. None = pre-S15 (no clipping).
+        self.bounds = (np.asarray(bounds["lo"]), np.asarray(bounds["hi"])) if bounds else None
         d = len(stats["mu"]) + N_DINO
         self.net = torch.nn.Sequential(torch.nn.Linear(d, 32), torch.nn.ReLU(), torch.nn.Dropout(0.2), torch.nn.Linear(32, 1))
         if state:
@@ -129,6 +132,8 @@ class Head:
 
     def x(self, hand: np.ndarray, dino: np.ndarray) -> np.ndarray:
         s = self.stats
+        if self.bounds is not None:
+            hand = np.clip(hand, *self.bounds)
         h = (hand - np.asarray(s["mu"])) / np.asarray(s["sd"])
         dz = (dino - np.asarray(s["dmu"])) @ np.asarray(s["pca"]).T / np.asarray(s["psd"])
         return np.concatenate([h, dz], 1).astype(np.float32)
@@ -140,10 +145,16 @@ class Head:
 
 
 
-def load_head(path: Path) -> Head:
+def load_head(path: Path, clamp: bool = False) -> Head:
     import torch
     meta = json.loads(path.with_suffix(".json").read_text())
-    return Head(meta["stats"], torch.load(path, map_location="cpu", weights_only=True))
+    bounds = None
+    if clamp:
+        bp = path.with_suffix(".bounds.json")
+        bounds = json.loads(bp.read_text())  # a missing sidecar is a load error: never clamp silently by guesswork
+        if len(bounds["lo"]) != len(meta["stats"]["mu"]):
+            raise ValueError(f"{bp.name} does not match {path.name}")
+    return Head(meta["stats"], torch.load(path, map_location="cpu", weights_only=True), bounds)
 
 
 
@@ -211,6 +222,25 @@ def group_probabilities(p: np.ndarray, lengths: np.ndarray, groups: list[int]) -
     return out
 
 
+class _Boxed:
+    __slots__ = ("mask", "class_share")
+
+    def __init__(self, mask, class_share):
+        self.mask, self.class_share = mask, class_share
+
+
+def to_letterbox(mask: np.ndarray, lb) -> np.ndarray:
+    """An original-size strand mask in the size x size letterbox frame (area resampling keeps 1-2 px strands)."""
+    down = lb.new_w < lb.orig_w
+    m = cv2.resize(mask.astype(np.float32), (lb.new_w, lb.new_h), interpolation=cv2.INTER_AREA if down else cv2.INTER_LINEAR)
+    out = np.zeros((lb.size, lb.size), bool)
+    out[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w] = m >= (0.25 if down else 0.5)
+    if not out.any() and mask.any():  # a strand thinner than the resampling keeps: its nearest-neighbour footprint
+        out[lb.pad_y: lb.pad_y + lb.new_h, lb.pad_x: lb.pad_x + lb.new_w] = cv2.resize(
+            mask.astype(np.uint8), (lb.new_w, lb.new_h), interpolation=cv2.INTER_NEAREST).astype(bool)
+    return out
+
+
 class StrandHead:
     """Lazy, thread-safe wrapper used by the app: ``classify(strands, probs, rgb)`` rewrites class / status."""
 
@@ -223,19 +253,29 @@ class StrandHead:
         if self._head is not None:
             return True
         try:
-            self._head = load_head(self.path)
+            self._head = load_head(self.path, clamp=getattr(self, "clamp", False))
             self._dino = Dino(self.device)
             return True
         except Exception as exc:  # missing weights, offline without a cached DINOv2
             self.error = f"strand head unavailable: {exc}"
             return False
 
-    def classify(self, strands: list, probs: np.ndarray, rgb: np.ndarray) -> bool:
-        """Mutates each strand's wire_class / class_status (and records ``head_p_telecom`` in class_share)."""
+    def classify(self, strands: list, probs: np.ndarray, rgb: np.ndarray, frame: tuple | None = None) -> bool:
+        """Mutates each strand's wire_class / class_status (and records ``head_p_telecom`` in class_share).
+
+        ``frame`` = (letterboxed probabilities, letterboxed uint8 photo, Letterbox): S15 (register D-31) the features
+        are computed in the 1024 letterbox frame the head was fitted in (ml/strand_classifier.py reads the curated
+        1024 x 1024 letterboxed photos). Without it (pre-S15 behaviour) the original-size photo is squeezed to a
+        square for DINOv2 and heights are measured against the photo, not the letterbox."""
         if not strands or not self.load():
             return False
         with self._lock:
-            hand, dn = strand_features(strands, probs, rgb, self._dino.grid(rgb), scale=REF_SIDE / max(rgb.shape[:2]))
+            if frame is not None:
+                lp, lx, lb = frame
+                boxed = [_Boxed(to_letterbox(st.mask, lb), st.class_share) for st in strands]
+                hand, dn = strand_features(boxed, lp, lx, self._dino.grid(lx), scale=REF_SIDE / lb.size)
+            else:
+                hand, dn = strand_features(strands, probs, rgb, self._dino.grid(rgb), scale=REF_SIDE / max(rgb.shape[:2]))
             p = self._head.p_telecom(hand, dn)
         if self.group_gap > 0 and len(strands) > 1:
             keep = [i for i, st in enumerate(strands) if not (st.class_share and

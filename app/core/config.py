@@ -236,11 +236,20 @@ class SegmentationConfig(_Strict):
     span_min_stitched_len: int = Field(0, ge=0)        # minimum stitched span length (skeleton px)
     span_own_component: bool = False                   # v2.14: pixels join only spans in their own mask component
     span_max_lateral_px: float = Field(0.0, ge=0)     # v2.14 option: reject a bridge offset sideways by more (0 = off)
+    # S17 (Part 3.5): the v2.9 X-junction rule (best perfect matching of tangent continuity at a crossing with four
+    # or more piece ends, instead of greedy pairing), exposed for evaluation; 0 = off (greedy, as shipped before)
+    span_xjunction_tol_deg: float = Field(0.0, ge=0, le=90)
+    span_xjunction_min_cross_deg: float = Field(30.0, ge=0, le=90)
     span_strand_classes: bool = False                  # v2.16: geometry on the union wire mask, one class per strand
     span_class_min_share: float = Field(0.0, ge=0, le=1)  # v2.16: below this class-evidence share: type uncertain
     span_wire_tau: float | None = Field(None, gt=0, lt=1)  # v2.17: wire mask = P(any wire) >= tau (None: argmax)
     strand_head: str | None = None                     # v2.17: strand type head (models/strand_head_v217.pt)
     strand_head_min_conf: float = Field(0.55, ge=0.5, le=1)  # v2.17: head top-class probability below: uncertain
+    # S15 (D-31): "letterbox" computes the head features in the 1024 letterbox it was fitted in; "original" is the
+    # pre-S15 path (the photo squeezed to a square). Recorded in the config fingerprint.
+    strand_head_frame: Literal["original", "letterbox"] = "original"
+    # S15 (D-31): clip the head's hand features to the range of its fitting strands (models/<head>.bounds.json)
+    strand_head_clamp: bool = False
 
 
 class CenterlineConfig(_Strict):
@@ -254,6 +263,11 @@ class CatenaryConfig(_Strict):
     max_rel_residual: float = Field(gt=0)
     border_margin_frac: float = Field(ge=0, lt=0.5)
     max_function_evals: int = Field(4000, gt=0)
+    # S15 (D-32, app/pipeline/span_fit.py): split a kinked trace (two straight pieces at an angle) instead of reading
+    # the bend as sag. Off = the pre-S15 single catenary.
+    kink_split: bool = False
+    kink_ratio: float = Field(0.5, gt=0, lt=1)  # two-line RMS below this share of the catenary RMS -> kinked
+    kink_check_from: float = Field(0.004, ge=0)  # relative residual from which the two-line test runs
 
 
 class Levels(_Strict):
@@ -370,7 +384,7 @@ class ComparisonReference(_Strict):
     enabled: bool = True
     sag_ratio: float = Field(0.03, gt=0, lt=0.5)
     unit: str = "image sag-to-span ratio"
-    status: Literal["provisional", "manufacturer", "regulatory-superseded", "validated"] = "provisional"
+    status: Literal["provisional", "guideline", "manufacturer", "regulatory", "regulatory-superseded", "validated"] = "provisional"
     status_note: str = ""
     effective_date: str = ""
     label: str = "3% sag-to-span reference (provisional)"
@@ -382,6 +396,36 @@ class ComparisonReference(_Strict):
     uncertainty: Literal["resolution", "none"] = "resolution"
     classification_enabled: bool = False
     meter_scale_max: float = Field(0.10, gt=0, lt=1)  # display only: ratios above it are drawn as overflow
+    # S15: names of the three zones when they are reference BANDS rather than "reference +/- uncertainty" (telecom /
+    # fiber: typical / design-dependent / beyond the typical ranges). Empty = the S12 neutral names.
+    zone_labels: dict[str, str] = Field(default_factory=dict)
+    # S15: one plain sentence per zone for the citizen page (server-decided; the page holds no thresholds)
+    zone_text: dict[str, str] = Field(default_factory=dict)
+    audience_label: str = ""  # e.g. "power lines", "telecom and fiber cables"
+    # S16 (register D-34): what each zone means for the result, decided here and nowhere else.
+    #   attention_zones  the wire "may need attention": headline count, report default, operational Needs review
+    #   notable_zones    "worth a closer look": shown and ranked, but never counted as attention or queued
+    # Power keeps the S14 rule (above, or inside the uncertainty around 3 %). Telecom / fiber "beyond typical ranges"
+    # is notable only: against labelled wires it was right in 1 of 11 cases (val + test,
+    # docs/thesis/results/s16_uncertainty_residual.json), the power rule in 5 of 8.
+    attention_zones: list[Literal["below", "at", "above"]] = Field(default_factory=lambda: ["at", "above"])
+    notable_zones: list[Literal["below", "at", "above"]] = Field(default_factory=list)
+    # S17 (register D-37): the canonical classification. When ``classification_enabled``, the wire's UNROUNDED image
+    # sag ratio r is placed by the point estimate alone: r < lower -> "below"; lower <= r <= upper -> "at" (both
+    # bounds inclusive, so exactly 3.00 % is within); r > upper -> "above". ``classifications`` names each zone with
+    # one machine-readable code used by the API, PDF, staff view and CSV; the measurement uncertainty is reported
+    # beside it and never moves a wire between classes.
+    classifications: dict[Literal["below", "at", "above"], str] = Field(default_factory=dict)
+    # S17: the reference's provenance, versioned (Part 2.4)
+    version: str = ""
+    title: str = ""
+    issuer: str = ""
+    published: str = ""
+    section: str = ""
+    source_url: str = ""
+    applicability: str = ""
+    interpretation: str = ""
+    boundary_basis: dict[str, str] = Field(default_factory=dict)  # why each boundary exists (regulatory / descriptive)
 
     @model_validator(mode="after")
     def _bounds(self):
@@ -389,8 +433,10 @@ class ComparisonReference(_Strict):
         hi = self.sag_ratio if self.upper_boundary is None else self.upper_boundary
         if not lo <= self.sag_ratio <= hi:
             raise ValueError("comparison_reference: lower_boundary <= sag_ratio <= upper_boundary is required")
-        if self.classification_enabled and self.status != "validated":
-            raise ValueError("comparison_reference: classification_enabled needs status 'validated'")
+        if self.classification_enabled and (self.status == "provisional" or not self.source
+                                            or set(self.classifications) != {"below", "at", "above"}):
+            raise ValueError("comparison_reference: classification needs a cited source, a non-provisional status and "
+                             "a code for each of below / at / above")
         if self.meter_scale_max <= hi:
             raise ValueError("comparison_reference: meter_scale_max must exceed upper_boundary")
         return self
@@ -400,6 +446,26 @@ class ComparisonReference(_Strict):
     def _classes(cls, v: list[str]) -> list[str]:
         _known_classes(dict.fromkeys(v, 0))
         return v
+
+    @field_validator("zone_labels", "zone_text")
+    @classmethod
+    def _zones(cls, v: dict[str, str]) -> dict[str, str]:
+        if set(v) - {"below", "at", "above"}:
+            raise ValueError("zone keys are below / at / above")
+        return v
+
+
+class MeasurementUncertainty(_Strict):
+    """S16 (register D-34): the 90 % band of the image sag ratio, calibrated against labelled wires.
+
+    |error| (q 0.90) = a_px / chord_model_px + b + c * relative_residual, fitted on the validation split by linear
+    quantile regression and checked on the held-out test split (coverage 0.88; the +/-1 px resolution alone covered
+    0.69). ml/experiments/s16_uncertainty.py, docs/thesis/results/s16_uncertainty_residual.json. Display and ranking
+    only; the zone comparison keeps each reference's own ``uncertainty`` setting."""
+    a_px: float = Field(0.05804, ge=0)
+    b: float = Field(0.0, ge=0)
+    c: float = Field(3.30469, ge=0)
+    quantile: float = Field(0.9, gt=0, lt=1)
 
 
 class HazardConfig(_Strict):
@@ -506,8 +572,22 @@ class AnalysisConfig(_Strict):
     vegetation: VegetationConfig = VegetationConfig()
     hazard: HazardConfig = HazardConfig()
     comparison_reference: ComparisonReference = ComparisonReference()
+    # S15 (register D-31): a SEPARATE reference for aerial telecom / fiber cable (contextual bands, never the power
+    # value). Off unless configured; a class may be covered by at most one reference.
+    telecom_reference: ComparisonReference = ComparisonReference(enabled=False, classes=["telecom-cable"])
+    measurement_uncertainty: MeasurementUncertainty = MeasurementUncertainty()
     quality: QualityConfig = QualityConfig()
     guardrail: GuardrailConfig = GuardrailConfig()
+
+    @model_validator(mode="after")
+    def _one_reference_per_class(self):
+        refs = [r for r in (self.comparison_reference, self.telecom_reference) if r.enabled]
+        seen: set[str] = set()
+        for r in refs:
+            if seen & set(r.classes):
+                raise ValueError(f"a wire class is covered by two references: {sorted(seen & set(r.classes))}")
+            seen |= set(r.classes)
+        return self
 
     @property
     def fingerprint(self) -> str:

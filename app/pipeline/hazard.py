@@ -49,6 +49,16 @@ _NOT_ASSESSED = {"endpoint_unavailable": "run off the photo (endpoint not visibl
 _RANK = {NOT: 0, MODERATE: 1, HIGH: 2}
 
 
+def _cause(why: dict[str, int]) -> str:
+    """S15: the main reason measured spans were not assessed. ``no_reference`` means the photo was measured but no
+    validated reference exists for the wire types; it is not a reason to retake the photo."""
+    if not why:
+        return "photo"
+    top = max(why, key=why.get)
+    return {"no_validated_reference": "no_reference", "no_reference_for_class": "no_reference",
+            "endpoint_unavailable": "partial_spans", "class_uncertain": "type_uncertain"}.get(top, "photo")
+
+
 def apply_reliability(hazard: dict | None, quality: dict | None) -> dict | None:
     """An unreadable photo must never read as safe: when the reliability grade is "Retake
     recommended", NOT AT RISK becomes INCONCLUSIVE; a hazard that was found is kept, with a note."""
@@ -56,7 +66,8 @@ def apply_reliability(hazard: dict | None, quality: dict | None) -> dict | None:
         return hazard
     note = f"photo reliability low ({quality.get('reason') or 'model uncertainty high'}); retake to confirm"
     if hazard["verdict"] == NOT:
-        return {**hazard, "verdict": INCONCLUSIVE, "reasons": [f"{INCONCLUSIVE}: {note}"] + hazard["reasons"]}
+        return {**hazard, "verdict": INCONCLUSIVE, "factors": {**(hazard.get("factors") or {}), "inconclusive_cause": "photo"},
+                "reasons": [f"{INCONCLUSIVE}: {note}"] + hazard["reasons"]}
     return {**hazard, "reasons": hazard["reasons"] + [f"NOTE: {note}"]}
 POWER, TELECOM = "power-distribution-lines", "telecom-cable"
 
@@ -139,6 +150,7 @@ def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[in
     ``rule`` is a HazardConfig (sag_rule, p0_high, p0_medium, alpha, low_frame_frac); None keeps
     the v2.8 behaviour. ``frame_rows`` = first and last image rows with photo content."""
     verdict, reasons, f = NOT, [], {}
+    cause: str | None = None  # S15: why a verdict is INCONCLUSIVE (photo | no_reference | partial_spans | type_uncertain)
     sag_rule = getattr(rule, "sag_rule", "any")
 
     def raise_to(v: str, why: str) -> None:
@@ -249,11 +261,11 @@ def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[in
         need = getattr(rule, "min_assessed_share", 0.0)
         cue = sorted(w["index"] for w in unassessed if w.get("unverified_level") in ("medium", "high"))
         if verdict == NOT and need and cue:
-            verdict = INCONCLUSIVE
+            verdict, cause = INCONCLUSIVE, "partial_spans"
             reasons.insert(0, f"{INCONCLUSIVE}: {_spans(cue)} run off the photo and the visible part already sags at "
                               "the Minor or Critical level; the full span could not be measured, so verify on site")
         elif verdict == NOT and need and share < need:
-            verdict = INCONCLUSIVE
+            verdict, cause = INCONCLUSIVE, _cause(why)
             reasons.insert(0, f"{INCONCLUSIVE}: {len(scored)} of {len(scored) + len(unassessed)} measured spans "
                               f"could be assessed ({detail}); a span that was not assessed is unknown, not low risk")
         else:
@@ -263,10 +275,14 @@ def assess(wires: list[dict], veg_masks: list[np.ndarray], image_shape: tuple[in
     # reference, or every trace too short to fit) the photo supports no conclusion either way
     if verdict == NOT and getattr(rule, "min_assessed_share", 0.0) and not scored:
         verdict = INCONCLUSIVE
+        if cause is None:
+            cause = _cause(f.get("not_assessed") or {}) if unassessed else "photo"
         if not (reasons and reasons[0].startswith(INCONCLUSIVE)):
             reasons.insert(0, f"{INCONCLUSIVE}: no span could be assessed for sag; the photo supports no conclusion "
                               "about the wires, so a field inspection is needed")
     reasons.extend(notes)
+    if verdict == INCONCLUSIVE:
+        f["inconclusive_cause"] = cause or "photo"
     hz = Hazard(verdict, reasons, f)
     # v2.11: every span's closest vegetation (the factors keep the 10 closest); not part of as_dict()
     hz.clearance = {r["span"]: {k: r[k] for k in ("gap_px", "gap_m_approx") if k in r} for r in veg_rows}

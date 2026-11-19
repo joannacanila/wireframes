@@ -1,0 +1,328 @@
+{
+ "val": {
+  "all": {
+   "n": 651,
+   "detected": 0.96,
+   "typed_given_detected": 0.963,
+   "measured_given_detected": 0.989,
+   "lost_at": {
+    "detection": 26,
+    "typing": 23,
+    "measurement": 7
+   }
+  },
+  "power-distribution-lines": {
+   "n": 314,
+   "detected": 0.99,
+   "typed_given_detected": 0.945,
+   "measured_given_detected": 0.987,
+   "lost_at": {
+    "detection": 3,
+    "typing": 17,
+    "measurement": 4
+   }
+  },
+  "telecom-cable": {
+   "n": 331,
+   "detected": 0.949,
+   "typed_given_detected": 0.981,
+   "measured_given_detected": 0.99,
+   "lost_at": {
+    "detection": 17,
+    "typing": 6,
+    "measurement": 3
+   }
+  },
+  "abandoned-wire": {
+   "n": 6,
+   "detected": 0.0,
+   "typed_given_detected": 0.0,
+   "measured_given_detected": 0.0,
+   "lost_at": {
+    "detection": 6,
+    "typing": 0,
+    "measurement": 0
+   }
+  },
+  "by_brightness": {
+   "tertiles": [
+    182.067,
+    196.661
+   ],
+   "low": {
+    "n": 226,
+    "detected": 0.929,
+    "typed_given_detected": 0.952,
+    "measured_given_detected": 0.986,
+    "lost_at": {
+     "detection": 16,
+     "typing": 10,
+     "measurement": 3
+    }
+   },
+   "mid": {
+    "n": 275,
+    "detected": 0.971,
+    "typed_given_detected": 0.974,
+    "measured_given_detected": 0.985,
+    "lost_at": {
+     "detection": 8,
+     "typing": 7,
+     "measurement": 4
+    }
+   },
+   "high": {
+    "n": 150,
+    "detected": 0.987,
+    "typed_given_detected": 0.959,
+    "measured_given_detected": 1.0,
+    "lost_at": {
+     "detection": 2,
+     "typing": 6,
+     "measurement": 0
+    }
+   }
+  },
+  "by_n_gt": {
+   "tertiles": [
+    24.979,
+    32.014
+   ],
+   "low": {
+    "n": 98,
+    "detected": 0.959,
+    "typed_given_detected": 0.968,
+    "measured_given_detected": 1.0,
+    "lost_at": {
+     "detection": 4,
+     "typing": 3,
+     "measurement": 0
+    }
+   },
+   "mid": {
+    "n": 224,
+    "detected": 0.969,
+    "typed_given_detected": 0.995,
+    "measured_given_detected": 0.972,
+    "lost_at": {
+     "detection": 7,
+     "typing": 1,
+     "measurement": 6
+    }
+   },
+   "high": {
+    "n": 329,
+    "detected": 0.954,
+    "typed_given_detected": 0.939,
+    "measured_given_detected": 0.997,
+    "lost_at": {
+     "detection": 15,
+     "typing": 19,
+     "measurement": 1
+    }
+   }
+  },
+  "by_sky": {
+   "tertiles": [
+    0.554,
+    0.708
+   ],
+   "low": {
+    "n": 197,
+    "detected": 0.929,
+    "typed_given_detected": 0.978,
+    "measured_given_detected": 0.989,
+    "lost_at": {
+     "detection": 14,
+     "typing": 4,
+     "measurement": 2
+    }
+   },
+   "mid": {
+    "n": 232,
+    "detected": 0.961,
+    "typed_given_detected": 0.951,
+    "measured_given_detected": 0.996,
+    "lost_at": {
+     "detection": 9,
+     "typing": 11,
+     "measurement": 1
+    }
+   },
+   "high": {
+    "n": 222,
+    "detected": 0.986,
+    "typed_given_detected": 0.963,
+    "measured_given_detected": 0.982,
+    "lost_at": {
+     "detection": 3,
+     "typing": 8,
+     "measurement": 4
+    }
+   }
+  }
+ },
+ "test": {
+  "all": {
+   "n": 621,
+   "detected": 0.948,
+   "typed_given_detected": 0.919,
+   "measured_given_detected": 0.993,
+   "lost_at": {
+    "detection": 32,
+    "typing": 48,
+    "measurement": 4
+   }
+  },
+  "power-distribution-lines": {
+   "n": 253,
+   "detected": 0.953,
+   "typed_given_detected": 0.859,
+   "measured_given_detected": 0.992,
+   "lost_at": {
+    "detection": 12,
+    "typing": 34,
+    "measurement": 2
+   }
+  },
+  "telecom-cable": {
+   "n": 361,
+   "detected": 0.95,
+   "typed_given_detected": 0.974,
+   "measured_given_detected": 0.994,
+   "lost_at": {
+    "detection": 18,
+    "typing": 9,
+    "measurement": 2
+   }
+  },
+  "abandoned-wire": {
+   "n": 7,
+   "detected": 0.714,
+   "typed_given_detected": 0.0,
+   "measured_given_detected": 1.0,
+   "lost_at": {
+    "detection": 2,
+    "typing": 5,
+    "measurement": 0
+   }
+  },
+  "by_brightness": {
+   "tertiles": [
+    167.936,
+    194.844
+   ],
+   "low": {
+    "n": 198,
+    "detected": 0.894,
+    "typed_given_detected": 0.955,
+    "measured_given_detected": 0.989,
+    "lost_at": {
+     "detection": 21,
+     "typing": 8,
+     "measurement": 2
+    }
+   },
+   "mid": {
+    "n": 214,
+    "detected": 0.995,
+    "typed_given_detected": 0.897,
+    "measured_given_detected": 0.991,
+    "lost_at": {
+     "detection": 1,
+     "typing": 22,
+     "measurement": 2
+    }
+   },
+   "high": {
+    "n": 209,
+    "detected": 0.952,
+    "typed_given_detected": 0.91,
+    "measured_given_detected": 1.0,
+    "lost_at": {
+     "detection": 10,
+     "typing": 18,
+     "measurement": 0
+    }
+   }
+  },
+  "by_n_gt": {
+   "tertiles": [
+    24.32,
+    30.0
+   ],
+   "low": {
+    "n": 114,
+    "detected": 0.939,
+    "typed_given_detected": 0.963,
+    "measured_given_detected": 1.0,
+    "lost_at": {
+     "detection": 7,
+     "typing": 4,
+     "measurement": 0
+    }
+   },
+   "mid": {
+    "n": 220,
+    "detected": 0.941,
+    "typed_given_detected": 0.913,
+    "measured_given_detected": 0.99,
+    "lost_at": {
+     "detection": 13,
+     "typing": 18,
+     "measurement": 2
+    }
+   },
+   "high": {
+    "n": 287,
+    "detected": 0.958,
+    "typed_given_detected": 0.905,
+    "measured_given_detected": 0.993,
+    "lost_at": {
+     "detection": 12,
+     "typing": 26,
+     "measurement": 2
+    }
+   }
+  },
+  "by_sky": {
+   "tertiles": [
+    0.517,
+    0.717
+   ],
+   "low": {
+    "n": 179,
+    "detected": 0.899,
+    "typed_given_detected": 0.938,
+    "measured_given_detected": 0.988,
+    "lost_at": {
+     "detection": 18,
+     "typing": 10,
+     "measurement": 2
+    }
+   },
+   "mid": {
+    "n": 244,
+    "detected": 0.955,
+    "typed_given_detected": 0.923,
+    "measured_given_detected": 0.991,
+    "lost_at": {
+     "detection": 11,
+     "typing": 18,
+     "measurement": 2
+    }
+   },
+   "high": {
+    "n": 198,
+    "detected": 0.985,
+    "typed_given_detected": 0.897,
+    "measured_given_detected": 1.0,
+    "lost_at": {
+     "detection": 3,
+     "typing": 20,
+     "measurement": 0
+    }
+   }
+  }
+ }
+}

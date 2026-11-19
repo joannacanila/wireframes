@@ -1,9 +1,8 @@
-/* WIREFRAME landing (v2.15): one screen, no scrolling. Same identity as before: near-black ground, logo gold as the
-   one accent, Geist and Geist Mono. The composition is a drafting sheet: hairline supports, the wires between them,
+/* WIREFRAME landing (v2.15): one screen, no scrolling. Same identity as before: near-black ground, one steel accent, IBM Plex Sans and IBM Plex Mono. The composition is a drafting sheet: hairline supports, the wires between them,
    and one wire dimensioned the way the pipeline measures it. */
 
 .lx {
-  --gold: #d4a94a; --ink: #e9ebee; --ink-2: #a4abb5; --ink-3: #6d7480; --hair: rgba(233, 235, 238, 0.14);
+  --gold: #8fbbe8; --ink: #e9ebee; --ink-2: #a4abb5; --ink-3: #8a929c; --hair: rgba(233, 235, 238, 0.14);
   height: 100svh; min-height: 520px; margin: 0; overflow: hidden; position: relative;
   background: #0c0d0f; color: var(--ink);
 }
@@ -23,7 +22,7 @@
 .lx-draw .chord { stroke: var(--gold); stroke-width: 1; stroke-dasharray: 3 4; opacity: 0.7; }
 .lx-draw .sag { stroke: var(--gold); stroke-width: 1; }
 .lx-draw .dot { fill: var(--gold); }
-.lx-draw text { font: 500 11px "Geist Mono", ui-monospace, monospace; fill: var(--ink-2); letter-spacing: 0.02em; }
+.lx-draw text { font: 500 11px "IBM Plex Mono", ui-monospace, monospace; fill: var(--ink-2); letter-spacing: 0.02em; }
 .lx-draw text.key { fill: var(--gold); }
 .lx-draw .enter { stroke-dasharray: var(--len); stroke-dashoffset: var(--len); animation: lx-draw 1400ms cubic-bezier(0.23, 1, 0.32, 1) forwards; animation-delay: var(--d, 0ms); }
 .lx-draw .fade { opacity: 0; animation: lx-fade 500ms ease forwards; animation-delay: var(--d, 0ms); }
@@ -39,10 +38,11 @@
 .lx-act { grid-row: 1; justify-self: center; max-width: 480px; pointer-events: auto;
   opacity: 0; animation: lx-fade 600ms ease 900ms forwards; }
 .lx-act p { margin: 0 0 22px; font-size: 16px; line-height: 1.55; color: var(--ink-2); text-wrap: balance; }
-.lx-go { display: inline-flex; align-items: center; gap: 12px; height: 48px; padding: 0 20px; border-radius: 6px;
-  background: var(--gold); color: #1a1408; font-weight: 600; font-size: 15px;
+.lx-go { display: inline-flex; align-items: center; gap: 14px; height: 60px; padding: 0 30px; border-radius: 8px;
+  background: #e8eaed; color: #0e1012; font-weight: 650; font-size: 17px; letter-spacing: -0.005em;
+  box-shadow: none;
   transition: transform 140ms cubic-bezier(0.23, 1, 0.32, 1), filter 150ms ease; }
-.lx-go svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+.lx-go svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
   transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 .lx-go:hover { filter: brightness(1.06); }
 .lx-go:hover svg { transform: translateX(3px); }
@@ -53,13 +53,17 @@
 .lx-foot { position: absolute; z-index: 3; left: 0; right: 0; bottom: 18px; display: grid; justify-items: center; gap: 8px; text-align: center;
   padding: 0 20px; font-size: 12px; color: var(--ink-3); opacity: 0; animation: lx-fade 600ms ease 1100ms forwards; }
 .lx-foot p { margin: 0; }
-.lx-names { display: flex; gap: 0; font: 500 12px/1 "Geist Mono", ui-monospace, monospace; letter-spacing: 0.18em; color: var(--ink-2); }
+.lx-names { display: flex; gap: 0; font: 500 12px/1 "IBM Plex Mono", ui-monospace, monospace; letter-spacing: 0.18em; color: var(--ink-2); }
 .lx-names span + span::before { content: "·"; margin: 0 0.9em; color: var(--gold); letter-spacing: 0; }
 
 @media (max-height: 680px) { .lx-act p { margin-bottom: 14px; } }
 @media (prefers-reduced-motion: reduce) {
   .lx-draw .enter, .lx-draw .fade, .lx-word, .lx-act, .lx-foot { animation: none; opacity: 1; transform: none; stroke-dashoffset: 0; }
 }
-/* v2.19 notice */
-.lx-foot wf-notice { justify-content: center; max-width: 640px; font-size: 12px; color: var(--text-3); text-align: left; }
-.lx-foot .wf-notice-full { text-align: left; }
+/* S15 notice: one small indicator; the disclaimer is a hover / focus preview and the full notice a dialog */
+.lx-foot wf-notice { position: relative; justify-content: center; font-size: 12px; color: var(--ink-3); }
+.lx-foot .wf-notice-chip { border-color: rgba(233, 235, 238, 0.16); color: var(--ink-2); }
+.lx-foot .wf-notice-tip { background: #15181c; color: var(--ink-2); border-color: rgba(233, 235, 238, 0.14); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45); }
+@media (hover: hover) and (pointer: fine) { .lx-foot .wf-notice-chip:hover { border-color: rgba(143, 187, 232, 0.55); color: var(--ink); } }
+@media (min-width: 701px) { .lx-main { bottom: clamp(100px, 13vh, 124px); } }
+@media (max-width: 700px) { .lx-main { bottom: 128px; } .lx-foot { padding: 0 16px; } .lx-go { height: 58px; padding: 0 26px; } }

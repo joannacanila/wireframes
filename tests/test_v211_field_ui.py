@@ -202,8 +202,11 @@ def test_field_page_and_assets_are_the_v215_screener(client):
     page = client.get("/workspace")
     assert page.status_code == 200
     html = page.text
-    assert 'class="fs-root"' in html and 'data-theme="dark"' in html and "glass" not in html
-    assert "family=Geist" in html and 'id="working"' in html and "sk-scan" in html
+    assert 'class="fs-root"' in html and 'data-theme="light"' in html and "glass" not in html  # S14: light first
+    assert "fx-unsupported" not in html and "Desktop browser required" not in html  # S14: phones and tablets supported
+    assert "/assets/fonts.css" in html and "fonts.googleapis" not in html and 'id="working"' in html and "fx-proc-steps" in html  # S15 processing screen
+    for st in ("upload", "queue", "analyze", "result"):
+        assert f'data-step="{st}"' in html, st
     for gone in ("mode-pill", "Model ready", "Load the sample", 'name="pole_code"', "One photo of the pole",
                  "A field verdict in seconds", "New inspection</p>"):
         assert gone not in html, gone
@@ -214,18 +217,24 @@ def test_field_page_and_assets_are_the_v215_screener(client):
     # "needs attention" first, three-step guidance, short photo limitations, the notice; no technical drawer
     # S12: the approved layout keeps every control under its new name (Layers, the three-step bar, one Methodology &
     # Limitations section, the inventory tabs)
-    for needle in ('data-view="problem"', 'data-view="photo"', 'data-view="all"', 'data-view="mask"', 'data-view="both"',
-                   ">Layers<", 'id="opacity"', 'id="zoom-pct"', 'data-zoom="reset"',
-                   'id="span-detail"', "Reference limit", "percentage points", 'data-tab="m"', 'data-tab="u"',
-                   "Not assessed", "Keep Distance", "Download / Share Report",
-                   "Retake Photo (If Needed)", "Methodology &amp; Limitations", "Overlapping wires can prevent reliable separation",
-                   "Inspection summary", "not a safety inspection", 'wf-notice variant="full"', "inspection_name",
-                   'data-zoom="fit"', "Do not touch"):
+    # S14: simple controls (focus / all wires, lines / original photo, zoom, Fit) with the model layers under "Advanced"
+    # S18: one result page for everyone, built from the shared result view (result-view.js); the Field Screener's
+    # separate technical view (Advanced layers, opacity, wire tabs, span detail) was removed at the owner's request
+    js += client.get("/assets/result-view.js").text
+    for needle in ('data-layer="${k}"', '"problems"', '"mask"', 'data-z="fit"', 'id="rv-find"', 'id="rv-wl-q"',
+                   "Not assessed", "Download report", "Share link", "Copy message", "New photo",
+                   "not a safety inspection", 'wf-notice variant="full"', "inspection_name", "Do not touch",
+                   "call <a href=\"tel:911\">"):
         assert needle in js, needle
+    field = client.get("/assets/field.js").text
+    for gone in ("renderTechnical", "view=technical", "Technical view", ">Advanced<", 'id="opacity"', 'id="span-detail"'):
+        assert gone not in field, gone
     for gone in ("Model ready", "Inspection quality", "#sample", 'id="diag"', "Sag score", "Fit residual",
                  "HIGH RISK FOUND"):
         assert gone not in client.get("/assets/field.js").text.split("// --------------------------------------------------------------"
                                                                      "---- result view")[-1], gone
     css = client.get("/assets/field.css").text
-    assert "fx-shimmer" in css and ".rx-summary" in css and "backdrop-filter" not in css
+    # S17: the skeleton is a static placeholder (no shimmer) and no gold glow remains anywhere in the screener
+    assert "fx-shimmer" not in css and "fx-proc-sweep" not in css and "212, 169, 74" not in css
+    assert ".sk {" in css and ".rx-summary" in css and "backdrop-filter" not in css
     assert "gradient(" not in css.replace("linear-gradient(90deg, transparent", "")

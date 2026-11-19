@@ -61,9 +61,20 @@ def classify_analysis(a: Analysis) -> tuple[str, str | None]:
 
 
 def is_operational(a: Analysis) -> bool:
-    """NULL (not yet classified) is judged by the rules, so a missed backfill can never leak a fixture."""
+    """NULL (not yet classified) is judged by the rules, so a missed backfill can never leak a fixture. S18: an
+    archived inspection is never operational."""
+    if getattr(a, "archived_at", None) is not None:
+        return False
     kind = a.record_kind or classify_analysis(a)[0]
     return kind == "operational"
+
+
+def listed(a: Analysis, include_test: bool = False) -> bool:
+    """S18: shown in lists, counts, the map and exports. ``include_test`` brings test records back; an archived
+    inspection stays out either way (it opens only from its own address)."""
+    if getattr(a, "archived_at", None) is not None:
+        return False
+    return include_test or is_operational(a)
 
 
 def backfill(conn) -> int:
@@ -90,7 +101,8 @@ def list_columns():
     request). Use as ``selectinload(Analysis.detections).load_only(*records.list_columns())``."""
     from app.models.orm import Detection
     return (Detection.id, Detection.analysis_id, Detection.wire_index, Detection.wire_class, Detection.status,
-            Detection.level, Detection.crs, Detection.sag_ratio, Detection.fail_reason, Detection.flags_json)
+            Detection.level, Detection.crs, Detection.sag_ratio, Detection.fail_reason, Detection.flags_json,
+            Detection.chord_px)  # S14: the chord gives the 1 px resolution the comparison needs (no fit_json decode)
 VERDICT_RISK = {"AT RISK - HIGH": "high", "AT RISK - MODERATE": "medium", "NOT AT RISK": "low",
                 "INCONCLUSIVE - RETAKE PHOTO": "unassessed"}
 RISK_LABEL = {"high": "High risk", "medium": "Moderate risk", "low": "Low risk", "unassessed": "Assessment incomplete",
@@ -159,11 +171,16 @@ def wire_counts(a: Analysis) -> dict[str, int]:
     return out
 
 
+# S14: the analysis configuration for the operational status (set once by build_state; the comparison rule needs it)
+ROW_CFG = None
+
+
 def row(a: Analysis, labels: dict[str, str] | None = None) -> dict[str, Any]:
     """One inspection as the operational portal lists it (no scores, no fit parameters). ``labels``: the readable
     pole labels (app/services/labels.py); the pole code stays the identifier."""
     rev = a.reviews[-1] if a.reviews else None
     loc = a.pole.location
+    ops_part = _ops(a)
     return {
         "id": a.id, "pole_code": a.pole.pole_code, "label": (labels or {}).get(a.pole.pole_code),
         "inspection_name": a.inspection_name, "wires_assessed": sum(1 for d in a.detections if d.status == "scored"),
@@ -176,4 +193,90 @@ def row(a: Analysis, labels: dict[str, str] | None = None) -> dict[str, Any]:
         "location": None if loc is None else {"lat": loc.latitude, "lon": loc.longitude, "source": loc.source},
         "thumbnail_url": f"/api/analysis/{a.id}/image", "submitted_via": a.submitted_via,
         "record_kind": a.record_kind or classify_analysis(a)[0],
+        "filename": a.original_filename,
+        **ops_part,
+        **_s18(a, ops_part.get("op_counts") or {}),
     }
+
+
+def _s18(a: Analysis, counts: dict[str, Any]) -> dict[str, Any]:
+    """S18: the three records side by side: machine screening (detected / problem wires, triage risk), the
+    administrative review status, and the administrator's current decision. Never merged into one value."""
+    from app.services import review_flow, screening
+    total = len(a.detections)
+    if a.status in ("processing", "error"):
+        machine, rk, probs = ("processing" if a.status == "processing" else "failed"), None, []
+    else:
+        machine = "processed"
+        probs = counts.get("problem_wires") or []
+        rk = screening.risk(total, probs, review_flow.current_critical(a))
+    d = review_flow.current_decision(a)
+    st = review_flow.status_of(a)
+    return {"machine_state": machine, "detected": total, "problem_count": len(probs), "risk_level": rk,
+            "review_status": st, "review_status_label": review_flow.STATUS_LABEL[st],
+            "decision": None if d is None else {"code": d.decision, "label": d.decision_label, "by": d.reviewer_name,
+                                                "at": d.created_at.isoformat()}}
+
+
+def _loc_check(a: Analysis) -> dict[str, Any]:
+    from app.services.contacts import location_check
+    return location_check(a.pole.barangay, a.city)
+
+
+def _ops(a: Analysis) -> dict[str, Any]:
+    """S14: concise operational status, its reason, readable location and the current assignee."""
+    if ROW_CFG is None:
+        return {}
+    from app.services import ops
+    st, reason, counts = ops.status_of(a, ROW_CFG)
+    asg = a.__dict__.get("assignment") if "assignment" in a.__dict__ else getattr(a, "assignment", None)
+    # S17: the screening result (pole aggregation) beside the queue status, never merged into it
+    res = {"code": counts.get("result"), "label": counts.get("result_label")} if counts.get("result") else None
+    return {"op_status": st, "op_status_label": ops.STATUS_LABEL[st], "op_reason": reason, "op_counts": counts,
+            "result": res,
+            "place": ops.location_label(a),
+            "location_check": _loc_check(a),
+            "assignee": None if asg is None else {"id": asg.assignee_id, "name": asg.assignee_name,
+                                                  "by": asg.assigned_by, "at": asg.assigned_at.isoformat()}}
+
+
+# ----------------------------------------------------------------------------- S16: one set of pole rows
+def latest_rows(s, labels: dict[str, str] | None = None, include_test: bool = False) -> list[dict[str, Any]]:
+    """Each registered pole's latest operational inspection, in any processing state, as ``row()``. The dashboard
+    (queue and metrics) and the map read this one list, so a pole has one status everywhere. Counts made from it are
+    counts of POLES; the Inspections page counts INSPECTIONS (a pole can have several)."""
+    from sqlalchemy import select
+    from sqlalchemy.orm import selectinload
+
+    from app.models.orm import Pole
+    q = select(Analysis).options(
+        selectinload(Analysis.pole).selectinload(Pole.location),
+        selectinload(Analysis.detections).load_only(*list_columns()),
+        selectinload(Analysis.reviews), selectinload(Analysis.assignment), selectinload(Analysis.decisions),
+        selectinload(Analysis.review_progress)).order_by(Analysis.created_at.desc())
+    latest: dict[int, Analysis] = {}
+    n = 0
+    for a in s.scalars(q).all():
+        if listed(a, include_test):
+            n += 1
+            latest.setdefault(a.pole_id, a)
+    s.info["wf_inspections_counted"] = n  # S16: the dashboard's "inspections" count, from the same pass
+    return [row(a, labels) for a in latest.values()]
+
+
+def _coord_text(r: dict) -> str:
+    c = (r.get("place") or {}).get("coords")
+    if not c and r.get("location"):
+        c = (r["location"]["lat"], r["location"]["lon"])
+    return f"{c[0]:.6f}, {c[1]:.6f} {c[0]:.6f},{c[1]:.6f}" if c else ""
+
+
+def matches(r: dict, q: str) -> bool:
+    """S18 search: file name, inspection ID or report ID, pole code or label, inspection name, place, and coordinates
+    (prefix match on "lat, lon", with or without the space)."""
+    k = q.strip().lower()
+    if not k:
+        return True
+    fields = [r.get(f) for f in ("filename", "id", "pole_code", "label", "inspection_name", "barangay", "city")]
+    fields += [(r.get("place") or {}).get("label"), f"wf-{(r.get('id') or '')[:8]}", _coord_text(r)]
+    return any(k in (x or "").lower() for x in fields)

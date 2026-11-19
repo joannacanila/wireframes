@@ -76,9 +76,10 @@ def _stem(w: str) -> str:
     return w
 
 
-@lru_cache(maxsize=1)
-def sections() -> tuple[Section, ...]:
-    text = re.sub(r"<!--.*?-->", "", KB_PATH.read_text(encoding="utf-8"), flags=re.S)
+@lru_cache(maxsize=4)
+def sections(path: Path = KB_PATH) -> tuple[Section, ...]:
+    """The sections of one knowledge file (S14: the staff guide, knowledge.md, or the citizen guide, citizen.md)."""
+    text = re.sub(r"<!--.*?-->", "", path.read_text(encoding="utf-8"), flags=re.S)
     out, cur, title, sid, link = [], [], None, None, None
     for line in text.splitlines():
         m = _HEAD.match(line)
@@ -95,9 +96,9 @@ def sections() -> tuple[Section, ...]:
     return tuple(out)
 
 
-@lru_cache(maxsize=1)
-def _index():
-    secs = sections()
+@lru_cache(maxsize=4)
+def _index(path: Path = KB_PATH):
+    secs = sections(path)
     docs = [_tokens(s.title) * 3 + _tokens(s.body) for s in secs]  # titles weigh more
     df: dict[str, int] = {}
     for d in docs:
@@ -107,9 +108,9 @@ def _index():
     return secs, docs, df, avg
 
 
-def search(query: str, k: int = 4, page: str | None = None) -> list[tuple[Section, float]]:
+def search(query: str, k: int = 4, page: str | None = None, path: Path = KB_PATH) -> list[tuple[Section, float]]:
     """Top-k sections by BM25, a small boost for the section that describes the current page."""
-    secs, docs, df, avg = _index()
+    secs, docs, df, avg = _index(path)
     q = []
     for t in _tokens(query):
         q.append(t)
@@ -136,5 +137,5 @@ def search(query: str, k: int = 4, page: str | None = None) -> list[tuple[Sectio
     return scored[:k]
 
 
-def by_id(sid: str) -> Section | None:
-    return next((s for s in sections() if s.id == sid), None)
+def by_id(sid: str, path: Path = KB_PATH) -> Section | None:
+    return next((s for s in sections(path) if s.id == sid), None)

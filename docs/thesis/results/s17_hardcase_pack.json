@@ -1,0 +1,224 @@
+{
+ "version": "S17-HC-1",
+ "source": "s17_seg_baseline.json (variant: baseline, shipped parameters)",
+ "rule": "score = 2*merges + 2*missed + fragmented + 0.5*false-positive instances",
+ "annotate": [
+  "instance id per wire",
+  "centerline polyline",
+  "both endpoints (or 'leaves frame')",
+  "crossing / occlusion flags per segment",
+  "conductor type (power / telecom / abandoned / unsure)"
+ ],
+ "qa": "double-label 20% of the pack; adjudicate instance-id disagreements before export",
+ "images": [
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145634_jpg.rf.ueGmpdTZlPCN815SP7Hj",
+   "score": 77.0,
+   "failures": {
+    "fragmented": 44,
+    "merges": 10,
+    "missed": 4,
+    "fp_inst": 10
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213223_jpg.rf.INyydOI6nsZYVE2spcJ9",
+   "score": 69.0,
+   "failures": {
+    "fragmented": 46,
+    "merges": 11,
+    "fp_inst": 2
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213741_jpg.rf.rBjgFCkbBP2yZwYCZk9I",
+   "score": 64.5,
+   "failures": {
+    "fragmented": 38,
+    "merges": 12,
+    "missed": 1,
+    "fp_inst": 1
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192859_jpg.rf.CXjslv2SXqiPi9fVdklW",
+   "score": 62.0,
+   "failures": {
+    "fragmented": 35,
+    "merges": 7,
+    "missed": 6,
+    "fp_inst": 2
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213848_jpg.rf.nrkgoKALsfdUPzKesrh6",
+   "score": 57.0,
+   "failures": {
+    "fragmented": 37,
+    "merges": 9,
+    "missed": 1
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192446_jpg.rf.6LaWCIgKqw9S9WoJFMnZ",
+   "score": 54.0,
+   "failures": {
+    "fragmented": 24,
+    "merges": 12,
+    "missed": 3
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221258_jpg.rf.xEnMv4cMoEtoZh42Dek5",
+   "score": 46.0,
+   "failures": {
+    "fragmented": 26,
+    "merges": 8,
+    "missed": 2
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224827_jpg.rf.eLrffGShlpAV1UTcm1GH",
+   "score": 46.0,
+   "failures": {
+    "fragmented": 25,
+    "merges": 10,
+    "fp_inst": 2
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213922_jpg.rf.S4eLa9r8GwICaP1smgX7",
+   "score": 39.0,
+   "failures": {
+    "fragmented": 23,
+    "merges": 7,
+    "fp_inst": 4
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192913_jpg.rf.JIzJFaiw3LvMCDNUmbph",
+   "score": 38.0,
+   "failures": {
+    "fragmented": 27,
+    "merges": 4,
+    "fp_inst": 6
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 192502_jpg.rf.NNzNGPp0suYj2BbRO1kM",
+   "score": 37.0,
+   "failures": {
+    "fragmented": 23,
+    "merges": 6,
+    "missed": 1
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213724_jpg.rf.Lewwj3OA31eBV7VF5VCA",
+   "score": 37.0,
+   "failures": {
+    "fragmented": 21,
+    "merges": 7,
+    "missed": 1
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 145836_jpg.rf.e8Ij9OAF7Iv7XGD2owke",
+   "score": 35.5,
+   "failures": {
+    "fragmented": 18,
+    "merges": 3,
+    "missed": 5,
+    "fp_inst": 3
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224343_jpg.rf.IgYH9U9dB84BFmhdQ7TT",
+   "score": 34.0,
+   "failures": {
+    "fragmented": 23,
+    "merges": 5,
+    "fp_inst": 2
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 213039_jpg.rf.3OaFBNYEa1KQlvg4D2nk",
+   "score": 33.0,
+   "failures": {
+    "fragmented": 19,
+    "merges": 3,
+    "missed": 3,
+    "fp_inst": 4
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 221135_jpg.rf.imJRd2fY2hF4adYZTecv",
+   "score": 33.0,
+   "failures": {
+    "fragmented": 16,
+    "merges": 8,
+    "fp_inst": 2
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__dataset_187_jpg.rf.TyMgd8yXFWQ6UBjOVYrm",
+   "score": 30.5,
+   "failures": {
+    "fragmented": 9,
+    "merges": 8,
+    "missed": 2,
+    "fp_inst": 3
+   }
+  },
+  {
+   "split": "val",
+   "stem": "wireframes_prelabelled_datasets__dataset_369_jpg.rf.RJlm0PwKjNFr0qUU4yf5",
+   "score": 30.5,
+   "failures": {
+    "fragmented": 17,
+    "merges": 2,
+    "missed": 4,
+    "fp_inst": 3
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 224819_jpg.rf.8IG3DVJE9G4ljFq1SfSE",
+   "score": 29.0,
+   "failures": {
+    "fragmented": 15,
+    "merges": 2,
+    "missed": 4,
+    "fp_inst": 4
+   }
+  },
+  {
+   "split": "test",
+   "stem": "wireframes_prelabelled_datasets__Screenshot 2026-11-03 212921_jpg.rf.1gtnzMJiQz4EWQDrxjfA",
+   "score": 28.5,
+   "failures": {
+    "fragmented": 12,
+    "merges": 4,
+    "missed": 3,
+    "fp_inst": 5
+   }
+  }
+ ]
+}

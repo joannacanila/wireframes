@@ -41,18 +41,26 @@ def test_notice_text_is_identical_in_web_and_server_copies():
     js = (ROOT_DIR / "app/web/assets/notice.js").read_text()
     m = re.search(r'export const NOTICE_TEXT = "(.+?)";', js)
     assert m and m.group(1) == notice.TEXT
-    assert notice.TEXT.startswith("WIREFRAME is a decision-support tool intended for preliminary visual screening")
-    assert "qualified professional" in notice.TEXT and "inconclusive or not assessed" in notice.TEXT
+    # S17 (Part 5.4): the canonical notice, verbatim
+    assert notice.TEXT == ("WIREFRAME is an image-based decision-support tool designed to help document visible pole "
+                           "and wire conditions. Its results are preliminary and may contain errors or limitations. "
+                           "Findings should be reviewed by qualified professionals and must not replace an on-site "
+                           "inspection or applicable safety assessment.")
+    assert js.count(notice.TEXT) == 1  # one copy in the page code, no competing variant
 
 
 def test_every_user_facing_page_loads_the_notice(anon):
     for path in ("/", "/workspace", "/admin"):
         assert "notice.js" in anon.get(path).text
-    assert 'variant="landing"' in anon.get("/").text and 'variant="upload"' in anon.get("/workspace").text
+    assert 'variant="landing"' in anon.get("/").text
+    # S15 (Part 6.2): no separate warning block above the upload button; the notice is an indicator in the footer
+    ws = anon.get("/workspace").text
+    assert 'variant="upload"' not in ws and '<footer class="fx-foot"><wf-notice variant="landing">' in ws
     field = (ROOT_DIR / "app/web/assets/field.js").read_text()
     admin = (ROOT_DIR / "app/web/assets/admin.js").read_text()
     assert 'wf-notice variant="full"' in field and 'wf-notice variant="full"' in admin  # results + inspection sheet
-    assert 'wf-notice variant="brief"' in admin  # dashboard
+    # S17: the dashboard keeps the notice as a footer toggle, never as a banner above the work
+    assert '<footer class="pg-foot"><wf-notice variant="brief"></wf-notice></footer>' in admin and "slim-notice" not in admin
 
 
 # ----------------------------------------------------------------------------- test records
@@ -169,7 +177,7 @@ def test_inspection_filters_and_operational_exports(client, scene):
     row = got["items"][0]
     assert {"risk", "completeness", "review", "wires"} <= set(row) and "max_crs" not in row and "mspi" not in row
     csv = client.get("/api/admin/exports/inspections.csv?barangay=Salitran%20I").content.decode("utf-8-sig").splitlines()
-    assert csv[0].startswith('"Important Notice: WIREFRAME is a decision-support tool') and "Pole ID" in csv[2] and "X-1" in csv[3]
+    assert csv[0].lstrip('"').startswith("Important Notice: WIREFRAME is an image-based decision-support tool") and "Pole ID" in csv[2] and "X-1" in csv[3]
     f = client.get(f"/api/admin/inspections/{a}/findings.csv").content.decode("utf-8-sig")
     assert "Important Notice" in f and "Wire,Type,Condition,Finding" in f and "crs" not in f.lower()
 
@@ -224,7 +232,9 @@ def test_assistant_never_certifies_safety(local_assistant):
 def test_assistant_uses_the_open_inspection_within_permissions(local_assistant, inspector, scene):
     aid = _done(local_assistant, scene, pole_code="A-1")
     r = local_assistant.post("/api/assistant/ask", json={"question": "What does this result mean?", "analysis_id": aid}).json()
-    assert r["inspection"]["pole_code"] == "A-1" and r["answer"].startswith("This inspection: Risk level")
+    # S14: the staff assistant leads with the portal's status words, then the assessment facts
+    assert r["inspection"]["pole_code"] == "A-1" and r["answer"].startswith("This inspection: Status: ")
+    assert "Risk level" in r["answer"]
     fake = _done(local_assistant, scene, pole_code="QA-LIVE-1")
     r = inspector.post("/api/assistant/ask", json={"question": "What does this result mean?", "analysis_id": fake}).json()
     assert r["inspection"] is None  # a test record is not shown to an inspector, here either

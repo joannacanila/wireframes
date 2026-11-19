@@ -1,0 +1,66 @@
+{
+ "model": "|error| q0.90 = a / chord_model_px + b + c * rel_residual",
+ "a_px": 0.05804,
+ "b": 0.0,
+ "c": 3.30469,
+ "fitted_on": "val",
+ "coverage_val": 0.898,
+ "coverage_test": 0.881,
+ "median_band_test_pp": 1.08,
+ "telecom_above_5_val_1px": {
+  "flagged": 3,
+  "true": 0,
+  "precision": 0.0,
+  "label_above": 2,
+  "recall": 0.0
+ },
+ "telecom_above_5_val_band": {
+  "flagged": 1,
+  "true": 0,
+  "precision": 0.0,
+  "label_above": 2,
+  "recall": 0.0
+ },
+ "telecom_above_5_test_1px": {
+  "flagged": 4,
+  "true": 1,
+  "precision": 0.25,
+  "label_above": 1,
+  "recall": 1.0
+ },
+ "telecom_above_5_test_band": {
+  "flagged": 0,
+  "true": 0,
+  "precision": null,
+  "label_above": 1,
+  "recall": 0.0
+ },
+ "power_above_3_val_1px": {
+  "flagged": 4,
+  "true": 1,
+  "precision": 0.25,
+  "label_above": 3,
+  "recall": 0.33
+ },
+ "power_above_3_val_band": {
+  "flagged": 2,
+  "true": 1,
+  "precision": 0.5,
+  "label_above": 3,
+  "recall": 0.33
+ },
+ "power_above_3_test_1px": {
+  "flagged": 2,
+  "true": 2,
+  "precision": 1.0,
+  "label_above": 4,
+  "recall": 0.5
+ },
+ "power_above_3_test_band": {
+  "flagged": 0,
+  "true": 0,
+  "precision": null,
+  "label_above": 4,
+  "recall": 0.0
+ }
+}
